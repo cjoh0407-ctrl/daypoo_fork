@@ -120,11 +120,12 @@ htmlcov/
 *.tsbuildinfo
 
 # ================================================
-# 👤 개인 파일 / 로컬 메모 (팀원과 공유 불필요)
+# 🤖 Agent / Skills
 # ================================================
-docs/antigravity/
-TODO.local.md
-NOTES.md
-scratch/
-temp/
-personal/
+.agent/
+**/venv/
+**/.venv/
+**/.pytest_cache/
+**/__pycache__/
+**/.python-version
+**/node_modules/

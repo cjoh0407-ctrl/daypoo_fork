@@ -3,10 +3,10 @@ spring:
     name: backend
 
   datasource:
-    url: jdbc:mysql://localhost:3306/poopmap?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul&characterEncoding=UTF-8
-    username: root
-    password: root
-    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:postgresql://localhost:5432/daypoo
+    username: daypoo
+    password: daypoo
+    driver-class-name: org.postgresql.Driver
 
   jpa:
     hibernate:
@@ -15,7 +15,12 @@ spring:
     properties:
       hibernate:
         format_sql: true
-        dialect: org.hibernate.dialect.MySQLDialect
+        dialect: org.hibernate.spatial.dialect.postgis.PostgisPGDialect
+
+  data:
+    redis:
+      host: localhost
+      port: 6380
 
 springdoc:
   swagger-ui:
