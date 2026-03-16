@@ -1,16 +1,16 @@
 <div align="center">
 
-# 🗺️ PoopMap (대똥여지도)
+# 💩 DayPoo
 
-**대한민국 공중화장실 커뮤니티 지도 서비스**
+**대한민국 건강한 배변 문화를 위한 공간 정보 및 AI 분석 서비스**
 
-_React · Spring Boot · Python/FastAPI · Monorepo_
+_React · Spring Boot · Python/FastAPI · Hexagonal Architecture · LangChain_
 
 [![GitHub Actions](https://img.shields.io/badge/CI%2FCD-GitHub_Actions-2088FF?logo=githubactions&logoColor=white)](https://github.com)
-[![Frontend](https://img.shields.io/badge/Frontend-React_19-61DAFB?logo=react&logoColor=white)](./frontend)
-[![Backend](https://img.shields.io/badge/Backend-Spring_Boot_3.2-6DB33F?logo=springboot&logoColor=white)](./backend)
-[![AI](https://img.shields.io/badge/AI_Service-FastAPI-009688?logo=fastapi&logoColor=white)](./ai-service)
-[![License](https://img.shields.io/badge/License-ISC-yellow)](./LICENSE)
+[![Frontend](https://img.shields.io/badge/Frontend-React_18+-61DAFB?logo=react&logoColor=white)](./frontend)
+[![Backend](https://img.shields.io/badge/Backend-Spring_Boot_3.x-6DB33F?logo=springboot&logoColor=white)](./backend)
+[![AI](https://img.shields.io/badge/AI_Service-Planned-lightgrey?logo=fastapi&logoColor=white)](./docs/onboarding/plan.md#80-ai-및-데이터-파이프라인)
+[![License](https://img.shields.io/badge/License-ISC-yellow)](./LICENSE) ※ 준비 중
 
 </div>
 
@@ -18,50 +18,91 @@ _React · Spring Boot · Python/FastAPI · Monorepo_
 
 ## 📖 프로젝트 소개
 
-**PoopMap(대똥여지도)** 는 대한민국 화장실 정보를 지도 위에 시각화하고, 사용자들이 직접 화장실 정보를 리뷰하고 공유할 수 있는 **커뮤니티 지도 서비스**입니다.
+**DayPoo(대똥여지도)**는 대한민국 화장실 정보를 지도 위에 시각화하고, 사용자의 배변 기록을 AI로 분석하여 건강 솔루션을 제공하는 **프리미엄 건강 관리 및 위치 기반 서비스**입니다.
 
-프론트엔드(React), 백엔드(Spring Boot), AI 서비스(Python/FastAPI)가 통합된 **Monorepo** 환경으로 구성되어 있습니다.
-
----
-
-## 🏗️ 시스템 아키텍처
-
-```
-poopmap/ (Monorepo)
-├── frontend/          # React 19 + Vite + Zustand + React Router
-├── backend/           # Spring Boot 3.2 + Java 21 + JPA + MySQL
-├── ai-service/        # Python + FastAPI (AI 추천 서비스)
-├── .github/           # GitHub Actions CI/CD, PR/Issue 템플릿
-├── .husky/            # Git Hook (Lint-staged, Commitlint)
-└── docs/              # 온보딩 가이드, 아키텍처 문서
-```
+단순한 지도 서비스를 넘어, **헥사고날 아키텍처**를 기반으로 한 견고한 설계와 **LangChain/MCP**를 활용한 지능형 리포팅 시스템을 구축하여 사용자에게 차별화된 가치를 제공합니다.
 
 ---
 
-## 🛠️ 기술 스택
+## 🏗️ 시스템 아키텍처 (C4 Model - Container Level)
 
-| 파트           | 기술                                    | 버전    |
-| -------------- | --------------------------------------- | ------- |
-| **Frontend**   | React                                   | 19.x    |
-|                | Vite                                    | 7.x     |
-|                | React Router                            | 7.x     |
-|                | Zustand (상태관리)                      | 5.x     |
-|                | Axios                                   | 1.x     |
-|                | Lucide React (아이콘)                   | 0.576.x |
-| **Backend**    | Spring Boot                             | 3.2.3   |
-|                | Java                                    | 21      |
-|                | Spring Data JPA                         | -       |
-|                | MySQL                                   | -       |
-|                | Lombok                                  | -       |
-| **AI Service** | Python                                  | 3.11    |
-|                | FastAPI                                 | -       |
-| **DevOps**     | GitHub Actions                          | -       |
-|                | Docker / Docker Compose                 | -       |
-| **코드 품질**  | ESLint + Prettier (Frontend)            | -       |
-|                | Spotless / Google Java Format (Backend) | -       |
-|                | Flake8 + Black + isort (AI Service)     | -       |
-|                | Husky + Lint-staged                     | -       |
-|                | Commitlint (Conventional Commits)       | -       |
+DayPoo는 비즈니스 로직의 격리와 확장성을 위해 **헥사고날 아키텍처(Hexagonal Architecture)**를 채택하였습니다.
+
+```mermaid
+graph TB
+    subgraph Client["🖥️ 프론트엔드 (React + Vite)"]
+        UI[React SPA]
+        KakaoMap[카카오맵 SDK]
+    end
+
+    subgraph Backend["⚙️ Spring Boot 핵심 백엔드"]
+        API[REST API /api/v1]
+        Auth[Security/JWT]
+        Domain[Business Logic / Hexagonal Ports]
+        Admin[Admin Service]
+    end
+
+    subgraph AI["🤖 Python AI 서비스 (Microservice)"]
+        FastAPI[FastAPI Server]
+        LC[LangChain / LangGraph]
+        MCPServer[MCP Server]
+    end
+
+    subgraph Data["💾 데이터 레이어"]
+        PG[(PostgreSQL 16 \n+ PostGIS)]
+        Redis[(Redis \nCache/Rank/Counter)]
+    end
+
+    subgraph External["🌐 외부 의존성"]
+        OAI[OpenAI API]
+        OAuth[Kakao/Google OAuth]
+    end
+
+    UI -->|HTTPS/REST| API
+    API --> Domain
+    Domain -->|JPA/JDBC| PG
+    Domain -->|Lettuce| Redis
+    API -->|gRPC/REST| FastAPI
+    FastAPI --> LC
+    LC --> OAI
+
+    ExternalAI[Claude/Cursor] -->|MCP Protocol| MCPServer
+    MCPServer --> PG
+    Auth --> OAuth
+```
+
+---
+
+## 🛠️ 기술 스택 (Technology Stack)
+
+| 파트           | 기술                         | 설명                                          |
+| :------------- | :--------------------------- | :-------------------------------------------- |
+| **Frontend**   | React 18+, TypeScript, Vite  | 커스텀 Hooks 기반 SPA, 엄격한 타입 시스템     |
+|                | Zustand, Vanilla CSS         | 가벼운 상태 관리, 독자적 Rich UI/UX 스타일링  |
+| **Backend**    | Spring Boot 3.x (Java 21)    | 헥사고날 아키텍처 기반 고가용성 서버          |
+|                | Spring Security + JWT        | Stateless 인증 및 보안 체계                   |
+| **AI Service** | (구현 예정)                  | LangChain 기반 AI 리포트 서비스 개발 계획     |
+| **Data Layer** | PostgreSQL 16 + PostGIS      | 공간 데이터 처리 및 ACID 트랜잭션 보장        |
+|                | Redis                        | '급똥 지수' 실시간 카운터 및 랭킹 데이터 캐싱 |
+| **DevOps**     | GitHub Actions, Docker       | 컨테이너 기반 CI/CD 및 환경 통일              |
+|                | Prometheus, Grafana          | 시스템 메트릭 수집 및 시각화                  |
+
+---
+
+## ✨ 핵심 기능 (Core Features)
+
+### 1. 🚨 급똥 대응 추천 (Emergency Top 3)
+
+- PostGIS 공간 쿼리와 거리/운영시간 가중치 알고리즘을 결합하여 현재 위치에서 가장 최적화된 화장실 3곳을 1초 내에 추천합니다.
+
+### 2. 💩 스마트 방문 인증 (4-Step Verification)
+
+- 사진 없는 No-Photo 인증 방식을 채택하여 개인정보를 보호합니다.
+- GPS 스푸핑 방지 및 체류 시간 검증을 통해 신뢰도 높은 방문 기록을 생성합니다.
+
+### 3. 🤖 AI 건강 리포트 (Health Analysis)
+
+- LangChain을 통해 사용자의 배변 데이터를 분석하여 맞춤형 건강 조언을 제공합니다.
 
 ---
 
@@ -71,8 +112,7 @@ poopmap/ (Monorepo)
 
 - **Node.js** 20 이상
 - **Java JDK 21**
-- **Python 3.11**
-- **MySQL** (또는 Docker)
+- **PostgreSQL 16 + PostGIS** (또는 Docker)
 - **Git**
 
 ---
@@ -85,11 +125,11 @@ poopmap/ (Monorepo)
 # 1. 본인의 GitHub 계정으로 이 저장소를 Fork 합니다.
 
 # 2. Fork한 저장소를 로컬에 Clone 합니다.
-git clone https://github.com/<내-깃허브-계정>/poopmap.git
-cd poopmap
+git clone https://github.com/<내-깃허브-계정>/daypoo.git
+cd daypoo
 
 # 3. 원본 저장소(upstream)를 등록합니다.
-git remote add upstream https://github.com/<Organization>/poopmap.git
+git remote add upstream https://github.com/<Organization>/daypoo.git
 ```
 
 ---
@@ -124,20 +164,6 @@ cd backend
 # DB_URL, DB_USERNAME, DB_PASSWORD 등
 
 ./gradlew bootRun  # http://localhost:8080  (Windows: gradlew.bat bootRun)
-```
-
-#### 🐍 AI Service
-
-```bash
-cd ai-service
-
-# 가상환경 생성 및 활성화
-python -m venv .venv
-.venv\Scripts\activate       # Windows
-# source .venv/bin/activate  # Mac/Linux
-
-pip install -r requirements.txt
-uvicorn main:app --reload     # http://localhost:8000
 ```
 
 #### 🐳 Docker로 한 번에 실행 (선택)
@@ -196,14 +222,13 @@ main                    # 운영 브랜치 (직접 push 금지)
 | --------------------- | ----------------------------- |
 | Frontend (JS/JSX/CSS) | ESLint + Prettier             |
 | Backend (Java)        | Spotless (Google Java Format) |
-| AI Service (Python)   | Black + isort + Flake8        |
 
 ---
 
 ## 📁 디렉토리 구조 상세
 
 ```
-poopmap/
+daypoo/
 ├── .github/
 │   ├── workflows/             # CI/CD (GitHub Actions)
 │   │   ├── ci.yml
@@ -219,20 +244,14 @@ poopmap/
 │   │   └── api/               # Axios API 모듈
 │   └── vite.config.js
 ├── backend/
-│   └── src/main/java/com/ddmap/
-│       ├── controller/        # REST API 컨트롤러
-│       ├── service/           # 비즈니스 로직
-│       ├── domain/            # 엔티티 모델
-│       └── repository/        # JPA 리포지토리
-├── ai-service/
-│   ├── main.py                # FastAPI 엔트리포인트
-│   └── requirements.txt
+│   └── src/main/java/com/ddmap/backend/
+│       ├── adapter/           # 인프라 계정 (in: Web, out: Persistence)
+│       ├── application/       # 비즈니스 유즈케이스 및 포트
+│       └── domain/            # 순수 도메인 엔티티 및 로직
 ├── docs/
-│   ├── onboarding/
-│   │   ├── fork_workflow.md   # Fork 기반 협업 가이드
-│   │   ├── rules_guide.md     # 커밋/린트 규칙 가이드
-│   │   └── initial_setup_plan.md
-│   └── architecture/          # 아키텍처 다이어그램
+│   ├── onboarding/            # 온보딩 가이드 (시작하기, 협업 규칙, 히스토리)
+│   ├── architecture/          # 아키텍처 다이어그램 및 설계 문서
+│   └── swagger/               # API 명세 및 연구 자료
 ├── docker-compose.yml
 ├── commitlint.config.js
 └── package.json               # 루트 (Husky/Commitlint 관리)
@@ -247,19 +266,11 @@ poopmap/
 본격적인 기능 구현(Phase 2)에 앞서 팀원들과의 원활한 협업을 위한 **초기 환경 세팅 및 공통 가이드**가 완료되었습니다.
 
 - **✅ 각 파트별 스캐폴딩 및 Lint 구축**
-  - **Frontend** (`/frontend`): React 19 + Vite 초기화 및 ESLint, Prettier 설정 완료
-  - **Backend** (`/backend`): Spring Boot 3.2 + Java 21 초기화 및 Spotless (Google Java Format) 설정 완료
-  - **AI 서비스** (`/ai-service`): Python 3.11 가상환경 세팅 및 Flake8, Black, isort 설정 완료
 - **✅ 중앙 집중형 협업 시스템 (Git Hook) 도입**
-  - **Husky + Lint-staged**: 커밋 시 변경 파일 위치를 감지해 알맞은 포매터를 자동 실행
-  - **Commitlint**: Conventional Commits 양식 강제 (PR 시 일관된 히스토리 유지)
 - **✅ 팀원 협업 온보딩 가이드라인 가동**
-  - `fork_workflow.md`: Fork 및 PR 기반 협업 사이클 5단계 가이드
-  - `rules_guide.md`: 커밋 양식 예시 및 린트 규칙 설명
-  - GitHub Issue/PR 템플릿 연결 완료
 
 ---
 
 ## 📄 라이선스
 
-이 프로젝트는 [ISC License](./LICENSE)를 따릅니다.
+이 프로젝트는 [ISC License](./LICENSE)를 따릅니다. (준비 중)

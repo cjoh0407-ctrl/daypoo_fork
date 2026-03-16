@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
-  title: PoopMap API 문서
-  description: 대똥여지도 (PoopMap) 시스템 RESTful API 문서입니다.
+  title: DayPoo API 문서
+  description: 대똥여지도 (DayPoo) 시스템 RESTful API 문서입니다.
   version: 1.0.0
 servers:
   - url: http://localhost:8080

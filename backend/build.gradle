@@ -7,7 +7,7 @@ plugins {
 
 group = 'com.ddmap'
 version = '0.0.1-SNAPSHOT'
-description = 'PoopMap Backend'
+description = 'DayPoo Backend'
 
 java {
 	sourceCompatibility = '21'

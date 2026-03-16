@@ -1,6 +1,6 @@
-# 🔄 PoopMap Forking Workflow 가이드
+# 🔄 DayPoo Forking Workflow 가이드
 
-우리 프로젝트(PoopMap)는 원본 저장소(`Upstream`)를 안전하게 보호하고, 각자의 공간에서 자유롭게 실험하며 코드를 작성할 수 있도록 **Fork(포크) 기반 협업 방식**을 채택했습니다.
+우리 프로젝트(DayPoo)는 원본 저장소(`Upstream`)를 안전하게 보호하고, 각자의 공간에서 자유롭게 실험하며 코드를 작성할 수 있도록 **Fork(포크) 기반 협업 방식**을 채택했습니다.
 
 새롭게 합류하신 팀원분들은 아래의 1~5단계를 순서대로 따라 초기 세팅과 일일 개발 사이클을 연습해 보세요!
 
@@ -10,13 +10,13 @@
 
 ### 1단계: 원본 저장소 Fork & Clone
 
-1. PoopMap 원본 GitHub 저장소 페이지(Organization 저장소)에 접속합니다.
+1. DayPoo 원본 GitHub 저장소 페이지(Organization 저장소)에 접속합니다.
 2. 우측 상단의 **[Fork]** 버튼을 눌러 자신의 GitHub 계정으로 저장소를 통째로 복사합니다.
 3. 내 계정으로 복사된(Fork된) 저장소의 주소를 복사한 뒤, 내 컴퓨터(로컬) 터미널을 열고 클론합니다.
    ```bash
    # 팀원의 터미널에서 실행
    git clone [내 깃허브 계정에 Fork된 저장소 주소 URL]
-   cd poopmap
+   cd daypoo
    ```
 
 ### 2단계: 최신 원본 코드 추적 설정 (Upstream 등록)
@@ -25,7 +25,7 @@
 
 ```bash
 # 원본 저장소 주소를 'upstream'이라는 이름으로 등록
-git remote add upstream [PoopMap 원본 저장소 주소 URL]
+git remote add upstream [DayPoo 원본 저장소 주소 URL]
 
 # 제대로 등록되었는지 확인 (origin과 upstream 두 개가 보이면 정상)
 git remote -v

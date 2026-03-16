@@ -30,7 +30,7 @@
 ### 1.2 폴더 구조 규약
 
 ```
-PoopMap/
+DayPoo/
 ├── .github/                # GitHub 템플릿(PR, Issue) 관리
 ├── .husky/                 # 전역 Git 훅(commitlint, lint-staged) 관리
 ├── frontend/               # React(18) + Vite 기반 SPA (Node.js 생태계)
@@ -138,7 +138,7 @@ GitHub에서 PR 제출 (upstream의 main 또는 develop으로 목적지 설정)
   - [ ] `frontend/.prettierrc` 생성: `{ "singleQuote": true, "trailingComma": "all", "printWidth": 100, "tabWidth": 2, "semi": true }` 규칙 적용.
 
 - [ ] 6.3 백엔드(`backend/`) 스캐폴딩 및 린팅 세팅 (Spring Boot 3.2.x, Java 21)
-  - [ ] Spring Initializr API(`curl https://start.spring.io/starter.zip`)를 사용하여 의존성(`web`, `data-jpa`, `mysql`, `lombok`, `validation`)이 포함된 Gradle 프로젝트 다운로드 후 `backend/` 폴더에 압축 해제.
+  - [ ] Spring Initializr API(`curl https://start.spring.io/starter.zip`)를 사용하여 의존성(`web`, `data-jpa`, `postgresql`, `lombok`, `validation`)이 포함된 Gradle 프로젝트 다운로드 후 `backend/` 폴더에 압축 해제.
   - [ ] `backend/build.gradle`에 `spotless-plugin-gradle` 의존성 추가.
   - [ ] Spotless 설정 속성 추가: `java { googleJavaFormat() }` 및 린트 명령 테스트 (`./gradlew spotlessCheck`).
 
@@ -167,5 +167,5 @@ GitHub에서 PR 제출 (upstream의 main 또는 develop으로 목적지 설정)
 
 - [ ] 6.7 로컬 데이터베이스 개발 환경 세팅 (Docker Compose)
   - [ ] 프로젝트 최상단(루트)에 `docker-compose.yml` 파일 생성.
-  - [ ] MySQL 8.0 서비스 설정 스크립트 작성 (포트 3306, 볼륨 마운트, 환경변수 `MYSQL_ROOT_PASSWORD`, `MYSQL_DATABASE=poopmap` 세팅).
+  - [ ] PostgreSQL 16 서비스 설정 스크립트 작성 (포트 5432, 볼륨 마운트, 환경변수 `POSTGRES_PASSWORD`, `POSTGRES_DB=daypoo` 세팅, PostGIS 확장 포함).
   - [ ] Redis 서비스 설정 스크립트 작성 (포트 6379, 캐싱 및 세션/Rate Limit 용도).
