@@ -1,39 +1,63 @@
 import { motion } from 'framer-motion';
+import { useState } from 'react';
 
 interface EmergencyButtonProps {
   onClick: () => void;
 }
 
-const wiggleTransition = {
-  rotate: [0, -10, 10, -10, 10, 0],
-  transition: {
-    duration: 0.5,
-    repeat: Infinity,
-    repeatDelay: 2
-  }
-};
-
 export function EmergencyButton({ onClick }: EmergencyButtonProps) {
+  const [hovered, setHovered] = useState(false);
+
   return (
-    <motion.div
-      className="fixed bottom-8 right-8 z-[900]"
-      initial={{ y: 100, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      transition={{ delay: 1, type: 'spring' }}
+    <motion.button
+      // 둥실둥실 — 상시
+      animate={{ y: [0, -10, 0] }}
+      transition={{
+        duration: 2.2,
+        repeat: 999999, // Infinity 대신 큰 숫자 사용
+        ease: 'easeInOut',
+      }}
+      // hover glow + scale
+      whileHover={{
+        scale: 1.1,
+        boxShadow: '0 0 12px rgba(232,93,93,0.7), 0 0 28px rgba(232,93,93,0.5), 0 0 52px rgba(232,93,93,0.3)',
+      }}
+      onHoverStart={() => setHovered(true)}
+      onHoverEnd={() => setHovered(false)}
+      onClick={onClick}
+      style={{
+        position: 'fixed',
+        bottom: '32px',
+        right: '28px',
+        background: '#E85D5D',
+        color: '#fff',
+        border: 'none',
+        borderRadius: '100px',
+        padding: '12px 20px',
+        fontSize: '15px',
+        fontWeight: 700,
+        cursor: 'pointer',
+        zIndex: 900,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: '2px',
+      }}
     >
-      <motion.button
-        onClick={onClick}
-        whileHover={{ scale: 1.08 }}
-        animate={wiggleTransition}
-        className="flex items-center gap-3 px-8 py-4 shadow-2xl text-white font-bold text-lg md:text-xl transition-all"
-        style={{ 
-          backgroundColor: 'var(--coral)', 
-          borderRadius: '100px',
+      <motion.span
+        animate={hovered ? {
+          rotate: [-18, 18, -18, 18, -18]
+        } : { rotate: 0 }}
+        transition={{
+          duration: 0.28,
+          repeat: hovered ? 999999 : 0,
+          ease: 'easeInOut',
         }}
+        style={{ display: 'inline-block' }}
       >
-        <span className="text-2xl">🚨</span>
-        급똥
-      </motion.button>
-    </motion.div>
+        🚨
+      </motion.span>
+      급똥
+    </motion.button>
   );
 }

@@ -1,57 +1,126 @@
 import { motion, useScroll, useTransform } from 'framer-motion';
-import { useEffect, useState } from 'react';
-import { User, Bell } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 
 export function Navbar() {
   const { scrollY } = useScroll();
-  const [isScrolled, setIsScrolled] = useState(false);
-  const navigate = useNavigate();
 
-  useEffect(() => {
-    return scrollY.onChange((latest) => {
-      setIsScrolled(latest > 50);
-    });
-  }, [scrollY]);
+  // 스크롤 내려도 pill은 유지, 살짝 축소되는 효과
+  const scale = useTransform(scrollY, [0, 100], [1, 0.97]);
 
   return (
-    <motion.nav
-      className="fixed top-0 left-0 right-0 z-[100] px-6 md:px-12 py-4 transition-all duration-300"
+    <div
       style={{
-        backgroundColor: isScrolled ? 'rgba(255, 255, 255, 0.8)' : 'transparent',
-        backdropFilter: isScrolled ? 'blur(10px)' : 'none',
-        borderBottom: isScrolled ? '1px solid var(--border-light)' : 'none',
+        position: 'fixed',
+        top: '24px',
+        left: '50%',
+        transform: 'translateX(-50%)',
+        zIndex: 100,
+        width: '100%',
+        display: 'flex',
+        justifyContent: 'center',
+        padding: '0 24px',
+        pointerEvents: 'none',
       }}
     >
-      <div className="max-w-7xl mx-auto flex items-center justify-between">
-        {/* Logo */}
-        <div 
-          className="text-2xl md:text-3xl font-bold cursor-pointer"
-          style={{ 
-            fontFamily: 'SchoolSafetyNotification, system-ui',
-            color: isScrolled ? 'var(--green-deep)' : 'var(--green-deep)',
+      <motion.nav
+        style={{
+          scale,
+          pointerEvents: 'auto',
+          display: 'flex',
+          alignItems: 'center',
+          background: '#1A2B27',
+          borderRadius: '100px',
+          padding: '12px 20px 12px 32px', // 전체적으로 패딩을 늘려 너비 확보
+          boxShadow: '0 8px 32px rgba(0,0,0,0.25)',
+          gap: '20px', // 요소 간 간격을 12px에서 20px로 확대
+        }}
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: 'easeOut' }}
+      >
+        {/* 좌측 로고 */}
+        <Link
+          to="/"
+          style={{
+            fontFamily: 'SchoolSafetyNotification, sans-serif',
+            fontSize: '22px',
+            color: '#fff',
+            textDecoration: 'none',
+            letterSpacing: '-0.01em',
+            fontWeight: 700,
+            flexShrink: 0,
+            display: 'flex',
+            alignItems: 'center',
+            paddingRight: '2px',
           }}
-          onClick={() => navigate('/')}
         >
-          Day.Poo
+          Day<span style={{ color: '#E8A838' }}>.</span>Poo
+        </Link>
+
+        {/* 구분선 */}
+        <div style={{ width: '1px', height: '16px', background: 'rgba(255,255,255,0.15)' }} />
+
+        {/* 중간 메뉴 (지도, 랭킹) */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }} className="hidden md:flex">
+          {[
+            { label: '지도', path: '/map' },
+            { label: '랭킹', path: '/ranking' },
+          ].map((link) => (
+            <Link
+              key={link.path}
+              to={link.path}
+              style={{
+                fontSize: '15px',
+                color: 'rgba(255,255,255,0.7)',
+                textDecoration: 'none',
+                fontWeight: 500,
+                transition: 'color 0.2s',
+                whiteSpace: 'nowrap',
+              }}
+              onMouseEnter={(e: React.MouseEvent<HTMLAnchorElement>) => { e.currentTarget.style.color = '#fff' }}
+              onMouseLeave={(e: React.MouseEvent<HTMLAnchorElement>) => { e.currentTarget.style.color = 'rgba(255,255,255,0.7)' }}
+            >
+              {link.label}
+            </Link>
+          ))}
         </div>
 
-        {/* Right Actions */}
-        <div className="flex items-center gap-4 md:gap-6">
-          <button 
-            className="p-2 rounded-full hover:bg-black/5 transition-colors"
-            style={{ color: 'var(--text-main)' }}
-          >
-            <Bell size={24} />
-          </button>
-          <button 
-            className="p-2 rounded-full hover:bg-black/5 transition-colors"
-            style={{ color: 'var(--text-main)' }}
-          >
-            <User size={24} />
-          </button>
+        {/* 구분선 */}
+        <div className="hidden md:block" style={{ width: '1px', height: '16px', background: 'rgba(255,255,255,0.15)' }} />
+
+        {/* 우측 메뉴 (로그인, 회원가입) */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
+          {[
+            { label: '로그인', path: '/login' },
+            { label: '회원가입', path: '/signup' },
+          ].map((action) => (
+            <Link
+              key={action.path}
+              to={action.path}
+              style={{
+                fontSize: '14px',
+                color: 'rgba(255,255,255,0.6)',
+                textDecoration: 'none',
+                fontWeight: 500,
+                padding: '6px 12px',
+                borderRadius: '100px',
+                transition: 'all 0.2s',
+                whiteSpace: 'nowrap',
+              }}
+              onMouseEnter={(e: React.MouseEvent<HTMLAnchorElement>) => {
+                e.currentTarget.style.color = '#fff';
+                e.currentTarget.style.background = 'rgba(255,255,255,0.08)';
+              }}
+              onMouseLeave={(e: React.MouseEvent<HTMLAnchorElement>) => {
+                e.currentTarget.style.color = 'rgba(255,255,255,0.6)';
+                e.currentTarget.style.background = 'transparent';
+              }}
+            >
+              {action.label}
+            </Link>
+          ))}
         </div>
-      </div>
-    </motion.nav>
+      </motion.nav>
+    </div>
   );
 }

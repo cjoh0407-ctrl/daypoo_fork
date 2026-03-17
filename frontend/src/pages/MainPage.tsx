@@ -1,40 +1,36 @@
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import { Navbar } from '../components/Navbar';
 import { HeroSection } from '../components/HeroSection';
 import { ReportCard } from '../components/ReportCard';
 import { MapSection } from '../components/MapSection';
+import { Footer } from '../components/Footer';
 import { EmergencyButton } from '../components/EmergencyButton';
 import { EmergencySheet } from '../components/EmergencySheet';
 
 export function MainPage() {
-  const [isSheetOpen, setIsSheetOpen] = useState(false);
-  const mapSectionRef = useRef<HTMLDivElement>(null);
-
-  const scrollToMap = () => {
-    mapSectionRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
+  const [sheetOpen, setSheetOpen] = useState(false);
 
   return (
-    <div className="relative w-full" style={{ backgroundColor: 'var(--bg-light)' }}>
-      {/* Global Navigation */}
+    <div style={{ background: '#F8FAF9' }} className="relative min-h-screen">
       <Navbar />
-
+      
       {/* Hero Section */}
-      <HeroSection onCtaClick={scrollToMap} />
+      <HeroSection onCtaClick={() => document.getElementById('map-scroll-target')?.scrollIntoView({ behavior: 'smooth' })} />
 
       {/* AI Health Report Section */}
       <ReportCard />
 
-      {/* Map Section */}
-      <div ref={mapSectionRef}>
+      {/* Map Section with Scroll Target */}
+      <div id="map-scroll-target">
         <MapSection />
       </div>
 
+      {/* Footer */}
+      <Footer />
+
       {/* Floating Elements */}
-      <EmergencyButton onClick={() => setIsSheetOpen(true)} />
-      
-      {/* Overlays */}
-      <EmergencySheet isOpen={isSheetOpen} onClose={() => setIsSheetOpen(false)} />
+      <EmergencyButton onClick={() => setSheetOpen(true)} />
+      <EmergencySheet isOpen={sheetOpen} onClose={() => setSheetOpen(false)} />
     </div>
   );
 }
