@@ -1,5 +1,6 @@
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { Link } from 'react-router-dom';
+import { AnimatedUnderlink } from './AnimatedUnderlink';
 
 export function Navbar() {
   const { scrollY } = useScroll();
@@ -30,9 +31,9 @@ export function Navbar() {
           alignItems: 'center',
           background: '#1A2B27',
           borderRadius: '100px',
-          padding: '12px 20px 12px 32px', // 전체적으로 패딩을 늘려 너비 확보
+          padding: '12px 24px 12px 32px', // 패딩 최적화
           boxShadow: '0 8px 32px rgba(0,0,0,0.25)',
-          gap: '20px', // 요소 간 간격을 12px에서 20px로 확대
+          gap: '24px', // 요소 간 간격 확대
         }}
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -51,7 +52,7 @@ export function Navbar() {
             flexShrink: 0,
             display: 'flex',
             alignItems: 'center',
-            paddingRight: '2px',
+            paddingRight: '4px',
           }}
         >
           Day<span style={{ color: '#E8A838' }}>.</span>Poo
@@ -61,27 +62,18 @@ export function Navbar() {
         <div style={{ width: '1px', height: '16px', background: 'rgba(255,255,255,0.15)' }} />
 
         {/* 중간 메뉴 (지도, 랭킹) */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }} className="hidden md:flex">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '28px' }} className="hidden md:flex">
           {[
-            { label: '지도', path: '/map' },
-            { label: '랭킹', path: '/ranking' },
+            { label: '지도', path: '/map', variant: 0 },
+            { label: '랭킹', path: '/ranking', variant: 1 },
           ].map((link) => (
-            <Link
+            <AnimatedUnderlink
               key={link.path}
               to={link.path}
-              style={{
-                fontSize: '15px',
-                color: 'rgba(255,255,255,0.7)',
-                textDecoration: 'none',
-                fontWeight: 500,
-                transition: 'color 0.2s',
-                whiteSpace: 'nowrap',
-              }}
-              onMouseEnter={(e: React.MouseEvent<HTMLAnchorElement>) => { e.currentTarget.style.color = '#fff' }}
-              onMouseLeave={(e: React.MouseEvent<HTMLAnchorElement>) => { e.currentTarget.style.color = 'rgba(255,255,255,0.7)' }}
-            >
-              {link.label}
-            </Link>
+              text={link.label}
+              style={{ fontSize: '15px' }}
+              variant={link.variant}
+            />
           ))}
         </div>
 
@@ -89,35 +81,19 @@ export function Navbar() {
         <div className="hidden md:block" style={{ width: '1px', height: '16px', background: 'rgba(255,255,255,0.15)' }} />
 
         {/* 우측 메뉴 (로그인, 회원가입) */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
           {[
-            { label: '로그인', path: '/login' },
-            { label: '회원가입', path: '/signup' },
+            { label: '로그인', path: '/login', variant: 2 },
+            { label: '회원가입', path: '/signup', variant: 3 },
           ].map((action) => (
-            <Link
+            <AnimatedUnderlink
               key={action.path}
               to={action.path}
-              style={{
-                fontSize: '14px',
-                color: 'rgba(255,255,255,0.6)',
-                textDecoration: 'none',
-                fontWeight: 500,
-                padding: '6px 12px',
-                borderRadius: '100px',
-                transition: 'all 0.2s',
-                whiteSpace: 'nowrap',
-              }}
-              onMouseEnter={(e: React.MouseEvent<HTMLAnchorElement>) => {
-                e.currentTarget.style.color = '#fff';
-                e.currentTarget.style.background = 'rgba(255,255,255,0.08)';
-              }}
-              onMouseLeave={(e: React.MouseEvent<HTMLAnchorElement>) => {
-                e.currentTarget.style.color = 'rgba(255,255,255,0.6)';
-                e.currentTarget.style.background = 'transparent';
-              }}
-            >
-              {action.label}
-            </Link>
+              text={action.label}
+              style={{ fontSize: '14px' }}
+              textColor="rgba(255,255,255,0.6)"
+              variant={action.variant}
+            />
           ))}
         </div>
       </motion.nav>
