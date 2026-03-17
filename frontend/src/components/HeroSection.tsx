@@ -109,6 +109,7 @@ export function HeroSection({ onCtaClick }: HeroSectionProps) {
         style={{ backgroundColor: 'var(--bg-light)' }}
       >
         <NovaGlow />
+        <LiquidBlob />
 
         <motion.div
           variants={stagger}
@@ -125,6 +126,7 @@ export function HeroSection({ onCtaClick }: HeroSectionProps) {
                 backgroundColor: 'rgba(45,106,79,0.1)',
                 color: 'var(--green-mid)',
                 border: '1px solid rgba(45,106,79,0.2)',
+                backdropFilter: 'blur(4px)',
               }}
             >
               💩 세상에 없던 배변 건강 지도
