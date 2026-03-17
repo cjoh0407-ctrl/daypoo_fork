@@ -107,11 +107,7 @@ export function HeroSection({ onCtaClick }: HeroSectionProps) {
         className="relative min-h-screen flex flex-col items-center justify-center px-6 text-center overflow-hidden"
         style={{ backgroundColor: 'var(--bg-light)' }}
       >
-        {/* 배경 원 장식 */}
-        <div
-          className="pointer-events-none absolute -top-40 left-1/2 -translate-x-1/2 w-[600px] h-[600px] rounded-full opacity-10"
-          style={{ background: 'radial-gradient(circle, #2D6A4F 0%, transparent 70%)' }}
-        />
+        <NovaGlow />
 
         <motion.div
           variants={stagger}
