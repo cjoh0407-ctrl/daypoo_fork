@@ -1,6 +1,7 @@
 import { motion, useInView, useMotionValue, useSpring } from 'framer-motion';
 import { useEffect, useRef, useState } from 'react';
 import { MapPin, Zap, Brain, ChevronLeft, ChevronRight } from 'lucide-react';
+import { NovaGlow } from './NovaGlow';
 
 interface HeroSectionProps {
   onCtaClick: () => void;
