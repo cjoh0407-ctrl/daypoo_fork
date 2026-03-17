@@ -85,25 +85,6 @@ export function Navbar() {
         {/* 우측 — 로그인 상태 분기 */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
 
-          {/* 알림 벨 (공통) */}
-          <motion.button
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-            className="relative p-2 rounded-full transition-colors"
-            style={{ color: 'rgba(255,255,255,0.6)' }}
-            title="알림"
-          >
-            <Bell size={18} />
-            {hasNotif && (
-              <motion.span
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                className="absolute top-1 right-1 w-2.5 h-2.5 rounded-full"
-                style={{ backgroundColor: '#E85D5D', border: '1.5px solid #1A2B27' }}
-              />
-            )}
-          </motion.button>
-
           {isLoggedIn ? (
             /* 로그인 상태 */
             <>
@@ -145,6 +126,25 @@ export function Navbar() {
               </Link>
             </>
           )}
+
+          {/* 알림 벨 (우측 끝으로 이동) */}
+          <motion.button
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            className="relative p-2 rounded-full transition-colors hover:bg-white/10"
+            style={{ color: 'rgba(255,255,255,0.6)', marginLeft: '4px' }}
+            title="알림"
+          >
+            <Bell size={18} />
+            {hasNotif && (
+              <motion.span
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                className="absolute top-1 right-1 w-2.5 h-2.5 rounded-full"
+                style={{ backgroundColor: '#E85D5D', border: '1.5px solid #1A2B27' }}
+              />
+            )}
+          </motion.button>
         </div>
       </motion.nav>
     </div>

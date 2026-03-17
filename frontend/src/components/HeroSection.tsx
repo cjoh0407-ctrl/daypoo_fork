@@ -31,25 +31,9 @@ function AnimatedCounter({ target, suffix = '' }: { target: number; suffix?: str
   );
 }
 
-// ── 후기 데이터 ────────────────────────────────────────────────────────
+// ── 후기 데이터 (화장실 리뷰로 업데이트) ──────────────────────────────────────────────
 const REVIEWS = [
   {
-    avatar: '🧑',
-    name: '익명의 포유류',
-    location: '서울 강남',
-    text: '급할 때 바로 찾아줘서 진짜 살았어요. 주변 화장실 TOP3가 정확해서 신뢰해요 🙏',
-    score: '쾌변지수 94점',
-  },
-  {
-    avatar: '👩',
-    name: '쾌변러버',
-    location: '부산 해운대',
-    text: 'AI 분석이 신기해요. 제 식습관이랑 배변 패턴을 연결해줘서 실제로 도움이 됐습니다!',
-    score: '연속 쾌변 12일째',
-  },
-  {
-    avatar: '🧔',
-    name: '화장실탐험가',
     location: '대구 중구',
     text: '전국 여행 다니면서 화장실 걱정이 없어졌어요. 공공 화장실 지도가 정말 정확합니다.',
     score: '방문 화장실 47곳',
@@ -156,7 +140,7 @@ export function HeroSection({ onCtaClick }: HeroSectionProps) {
             className="text-[42px] md:text-[84px] font-black leading-[1.05] tracking-tight"
             style={{ color: 'var(--text-main)' }}
           >
-            당신의 흔적이{'\n'}
+            당신의 흔적이 <br />
             <span
               style={{
                 color: 'var(--green-deep)',
