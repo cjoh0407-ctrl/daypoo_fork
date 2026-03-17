@@ -32,19 +32,28 @@ function AnimatedCounter({ target, suffix = '' }: { target: number; suffix?: str
   );
 }
 
-// ── 후기 데이터 (화장실 리뷰로 업데이트) ──────────────────────────────────────────────
+// ── 화장실 리뷰 ──────────────────────────────────────────────
 const REVIEWS = [
   {
-    location: '대구 중구',
-    text: '전국 여행 다니면서 화장실 걱정이 없어졌어요. 공공 화장실 지도가 정말 정확합니다.',
-    score: '방문 화장실 47곳',
+    avatar: '🚽',
+    name: '강남역 쾌적러',
+    location: '강남역 11번 출구 인근',
+    text: '여태까지 가본 공용 화장실 중에 가장 깨끗해요! 앱 덕분에 급한 상황에서 천국을 맛봤습니다.',
+    rating: 5,
   },
   {
-    avatar: '👴',
-    name: '건강지킴이',
-    location: '인천 남동',
-    text: '주간 리포트 보다 보니 물 많이 마시게 됐어요. 습관이 자연스럽게 바뀌더라고요.',
-    score: '30일 기록 달성',
+    avatar: '☕',
+    name: '카공족',
+    location: '잠실역 인근 카페',
+    text: '카메라로 찍은 듯한 상세한 위치 정보 덕분에 헤매지 않고 찾았어요. 청결도 점수가 정확하네요.',
+    rating: 4,
+  },
+  {
+    avatar: '✨',
+    name: '깔끔이',
+    location: '홍대입구역 상가',
+    text: '기록 기능으로 화장실 상태를 공유할 수 있어서 좋아요. 서로 돕는 기분이 드네요!',
+    rating: 5,
   },
 ];
 
@@ -109,7 +118,6 @@ export function HeroSection({ onCtaClick }: HeroSectionProps) {
         style={{ backgroundColor: 'var(--bg-light)' }}
       >
         <NovaGlow />
-        <LiquidBlob />
 
         <motion.div
           variants={stagger}
@@ -364,7 +372,7 @@ export function HeroSection({ onCtaClick }: HeroSectionProps) {
               className="text-3xl md:text-4xl font-black"
               style={{ color: 'var(--text-main)', letterSpacing: '-0.02em' }}
             >
-              실제 사용자의 이야기
+              화장실 리뷰
             </h2>
           </motion.div>
 
