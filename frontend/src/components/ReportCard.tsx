@@ -44,7 +44,7 @@ export function ReportCard() {
   const navigate = useNavigate();
 
   return (
-    <section className="py-24 px-6" style={{ backgroundColor: '#eef5f0' }}>
+    <section className="pt-32 pb-48 px-6" style={{ backgroundColor: '#eef5f0' }}>
       <div className="max-w-5xl mx-auto">
 
         {/* ── 섹션 헤더 ─────────────────────────────────── */}

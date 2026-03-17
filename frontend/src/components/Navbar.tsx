@@ -46,7 +46,7 @@ export function Navbar() {
       >
         {/* 로고 */}
         <Link
-          to="/"
+          to="/main"
           style={{
             fontFamily: 'SchoolSafetyNotification, sans-serif',
             fontSize: '22px',

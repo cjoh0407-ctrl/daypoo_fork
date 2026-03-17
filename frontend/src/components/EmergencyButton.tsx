@@ -25,10 +25,8 @@ export function EmergencyButton({ onClick }: EmergencyButtonProps) {
       onHoverStart={() => setHovered(true)}
       onHoverEnd={() => setHovered(false)}
       onClick={onClick}
+      className="fixed bottom-6 right-6 md:bottom-10 md:right-10 z-[900] flex flex-col items-center gap-0.5"
       style={{
-        position: 'fixed',
-        bottom: '32px',
-        right: '28px',
         background: '#E85D5D',
         color: '#fff',
         border: 'none',
@@ -37,11 +35,6 @@ export function EmergencyButton({ onClick }: EmergencyButtonProps) {
         fontSize: '15px',
         fontWeight: 700,
         cursor: 'pointer',
-        zIndex: 900,
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        gap: '2px',
       }}
     >
       <motion.span

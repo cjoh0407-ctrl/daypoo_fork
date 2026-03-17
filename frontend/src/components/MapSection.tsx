@@ -144,7 +144,7 @@ export function MapSection() {
   }, []);
 
   return (
-    <section className="px-6 md:px-12 py-24" style={{ background: '#F8FAF9' }}>
+    <section className="px-6 md:px-12 pt-32 pb-48" style={{ background: '#F8FAF9' }}>
       <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
 
         {/* 섹션 헤더 */}
