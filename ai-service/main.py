@@ -1,8 +1,10 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from app.api.v1.endpoints import analysis, report
+from app.core.config import settings
 
 app = FastAPI(
-    title="DayPoo AI Service",
+    title=settings.PROJECT_NAME,
     description="Python AI Service for Poop Analysis & Reports",
     version="1.0.0"
 )
@@ -15,6 +17,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# 라우터 등록
+app.include_router(analysis.router, prefix=f"{settings.API_V1_STR}/analysis", tags=["analysis"])
+app.include_router(report.router, prefix=f"{settings.API_V1_STR}/report", tags=["report"])
 
 @app.get("/")
 async def root():

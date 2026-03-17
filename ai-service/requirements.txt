@@ -1,8 +1,12 @@
 fastapi
 uvicorn
 langchain
-langgraph
-groq
-black
-flake8
-isort
+langchain-openai
+pydantic
+pydantic-settings
+python-dotenv
+python-multipart
+redis
+httpx
+jinja2
+loguru

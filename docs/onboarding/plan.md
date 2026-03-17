@@ -1,13 +1,13 @@
-# 💩 DayPoo (대똥여지도) 프로젝트 상세 설계 및 구현 계획서 (v4.0)
+# 💩 DayPoo (대똥여지도) 프로젝트 상세 설계 및 구현 계획서 (v4.2)
 
-> **상태**: 최종 기획 통합 완료
-> **핵심 원칙**: Hexagonal Architecture, No-Photo AI, PostgreSQL/PostGIS/Redis, MCP 연동
+> **상태**: 최종 기획 통합 완료 (v4.2 - MVC 전환 적용)
+> **핵심 원칙**: Layered MVC Architecture, Privacy-First AI (No-Save & No-Sound), PostgreSQL/PostGIS/Redis, MCP 연동
 
 ---
 
 ## 1. 아키텍처 및 기술 스택 블루프린트 (Architecture & Tech Stack Blueprint)
 
-본 프로젝트는 대규모 트래픽 처리와 위치 기반 데이터의 실시간 렌더링, 그리고 AI 서비스의 효율적 연동을 위해 **헥사고날 아키텍처(Hexagonal Architecture)** 및 **MSA(Microservices Architecture) 지향**으로 설계되었습니다.
+본 프로젝트는 대규모 트래픽 처리와 위치 기반 데이터의 실시간 렌더링, 그리고 AI 서비스의 효율적 연동을 위해 **계층형 MVC (Layered MVC) 아키텍처** 및 **MSA(Microservices Architecture) 지향**으로 설계되었습니다.
 
 ### 1.1 시스템 전체 아키텍처 다이어그램 (C4 Model - Container Level)
 
@@ -19,9 +19,9 @@ graph TB
     end
 
     subgraph Backend["⚙️ Spring Boot 핵심 백엔드"]
-        API[REST API /api/v1]
+        API[REST Controller /api/v1]
         Auth[Security/JWT]
-        Domain[Business Logic / Hexagonal Ports]
+        Domain[Service / Repository / Entity]
         Admin[Admin Service]
     end
 
@@ -64,40 +64,49 @@ graph TB
 ### 1.2 기술 스택 블루프린트 (Technology Stack)
 
 #### 🎨 프론트엔드 (Frontend) - 다이내믹 & 프리미엄 UI/UX
-*   **Core**: React.js 18+ (함수형 컴포넌트 & Custom Hooks 패턴), Vite (초고속 빌드 툴).
-*   **Language**: TypeScript (엄격한 타입 시스템을 통한 런타임 에러 방지).
-*   **State Management**: Zustand (전역 상태 관리 - 유저 세션, 다크모드, 맵 필터 상태 등).
-*   **Styling**: Vanilla CSS / CSS Modules (외부 디자인 프레임워크에 의존하지 않고 커스텀 유연성 및 프리미엄 글래스모피즘, 마이크로 애니메이션 등 Rich UI 독자 구현).
-*   **Map Integration**: Kakao Maps API (마커 클러스터링, 다이나믹 커스텀 오버레이 처리).
+
+- **Core**: React.js 18+ (함수형 컴포넌트 & Custom Hooks 패턴), Vite (초고속 빌드 툴).
+- **Language**: TypeScript (엄격한 타입 시스템을 통한 런타임 에러 방지).
+- **State Management**: Zustand (전역 상태 관리 - 유저 세션, 다크모드, 맵 필터 상태 등).
+- **Styling**: Vanilla CSS / CSS Modules (외부 디자인 프레임워크에 의존하지 않고 커스텀 유연성 및 프리미엄 글래스모피즘, 마이크로 애니메이션 등 Rich UI 독자 구현).
+- **Map Integration**: Kakao Maps API (마커 클러스터링, 다이나믹 커스텀 오버레이 처리).
 
 #### ⚙️ 백엔드 (Backend) - 헥사고날 아키텍처 & 고가용성
-*   **Core Framework**: Spring Boot 3.x (Java 21).
-*   **Architecture Pattern**: 헥사고날 아키텍처(Ports and Adapters). 도메인 비즈니스 로직을 외부 인프라(DB, Web)로부터 철저히 격리하여 테스트 용이성 극대화.
-*   **Security**: Spring Security + JWT. Access/Refresh Token을 활용한 Stateless 인증.
-*   **API Design**: RESTful API 구현 및 Swagger/Spring REST Docs를 통한 명세 자동화.
-*   **Dependency Injection**: Spring IoC Container를 활용한 약결합 구조.
+
+- **Core Framework**: Spring Boot 3.x (Java 21).
+- **Architecture Pattern**: 계층형 MVC 아키텍처 (Controller - Service - Repository). JPA 엔티티 안에 핵심 비즈니스 로직을 포함하는 풍부한 도메인 모델 중심으로 빠르고 직관적인 생산성 지향. 데이터 전송 객체(DTO)와 Entity 분리 및 `MapStruct`를 통한 자동화된 객체 매핑(Mapper) 구현.
+- **Security**: Spring Security + JWT. Access/Refresh Token을 활용한 Stateless 인증.
+- **API Design**: RESTful API 구현 및 Swagger/Spring REST Docs를 통한 명세 자동화.
+- **Dependency Injection**: Spring IoC Container를 활용한 약결합 구조.
 
 #### 🤖 AI 및 데이터 파이프라인 (AI & Data Pipeline) - 비동기 & 최적화
-*   **Core Framework**: Python 3.10+, FastAPI (고성능 비동기 API 서버).
-*   **AI Orchestration**: LangChain / LangGraph (LLM 파이프라인, 프롬프트 체이닝, 페르소나 관리).
-*   **Model**: OpenAI GPT-4o / Claude 3 (정밀 분석 및 데일리 리포트 자동 파싱 생성).
-*   **Integration**: Model Context Protocol (MCP) 서버를 구축하여 NotebookLM 및 Claude Code와 데이터를 직접 연동하는 RAG 아키텍처 고도화.
+
+- **Core Framework**: Python 3.10+, FastAPI (고성능 비동기 API 서버).
+- **AI Orchestration**: LangChain / LangGraph (LLM 파이프라인, 프롬프트 체이닝, 페르소나 관리).
+- **Model**: OpenAI GPT-4o / Claude 3 (정밀 분석 및 데일리 리포트 자동 파싱 생성).
+- **Integration**: Model Context Protocol (MCP) 서버를 구축하여 NotebookLM 및 Claude Code와 데이터를 직접 연동하는 RAG 아키텍처 고도화.
 
 #### 💾 데이터 레이어 (Data Architecture) - 확장성 & 공간 쿼리
-*   **Primary RDBMS**: PostgreSQL 16. (ACID 트랜잭션 및 안정성 1순위)
-*   **Spatial Extension**: PostGIS. (반경 50m 거리 검증, 우리 동네 랭킹, 역지오코딩 등 공간 쿼리 최적화)
-*   **In-Memory DB**: Redis. (실시간 '급똥 지수' 카운터, 전국/동네 랭킹 ZSET, 세션 캐싱, Rate Limiting 적용)
-*   **Data Access Pattern**: Spring Data JPA (Entity 매핑) + QueryDSL (복잡한 동적 쿼리 및 통계 추출 쿼리).
+
+- **Primary RDBMS**: PostgreSQL 16. (ACID 트랜잭션 및 안정성 1순위)
+- **Spatial Extension**: PostGIS. (반경 50m 거리 검증, 우리 동네 랭킹, 역지오코딩 등 공간 쿼리 최적화)
+- **In-Memory DB**: Redis. (실시간 '급똥 지수' 카운터, 전국/동네 랭킹 ZSET, 세션 캐싱, Rate Limiting 적용)
+- **Data Access Pattern**: Spring Data JPA (Entity 매핑) + QueryDSL (복잡한 동적 쿼리 및 통계 추출 쿼리).
 
 #### 🚀 인프라 및 데브옵스 (Infrastructure & DevOps)
-*   **Containerization**: Docker & Docker Compose (개발-런타임-프로덕션 환경 완벽 통일).
-*   **CI/CD**: GitHub Actions (자동화된 빌드, 단위/통합 테스트, 무중단 배포 파이프라인).
-*   **Observability**: Prometheus (시스템 메트릭 수집) + Grafana (실시간 대시보드 직관적 시각화).
+
+- **Containerization**: Docker & Docker Compose (개발-런타임-프로덕션 환경 완벽 통일).
+  - `dpage/pgadmin4`를 포함하여 데이터베이스 및 PostGIS 공간 데이터 시각화 GUI 관리 환경 동시 구성.
+- **CI/CD**: GitHub Actions (자동화된 빌드, 단위/통합 테스트, 무중단 배포 파이프라인).
+- **Observability**: Prometheus (시스템 메트릭 수집) + Grafana (실시간 대시보드 직관적 시각화).
 
 ### 1.3 시스템 아키텍처 주요 결정 사항 (ADR: Architecture Decision Records)
-*   **AI 마이크로서비스 영구 분리**: AI 서비스 로직을 Spring Boot 하위 모듈이 아닌 Python(FastAPI) 독립 서버로 완전 분리. LangChain 등 최신 AI 생태계의 풍부한 오픈소스를 직접 활용하고 리소스 스케일아웃을 분리하기 위함.
-*   **디자인 시스템 독립성 (CSS)**: Tailwind 등에 종속되지 않고 Vanilla CSS 기반으로 구축. 사용자에게 WOU(Wow) 모먼트를 주어야 하는 프리미엄 급의 마이크로 애니메이션과 독자적인 다이내믹 UI(Aesthetics)를 타협 없이 완성.
-*   **소프트웨어 기반 GPS 검증**: 하드웨어적(NFC/QR) 한계를 인지하고 100% 소프트웨어 검증(가변 반경 체크 + 체류 시간)으로 선회하되, Redis의 Rate Limiter 알고리즘을 추가하여 어뷰징(매크로 및 GPS 스푸핑 기기)을 방어하는 다중 보안 채택.
+
+- **AI 마이크로서비스 영구 분리**: AI 서비스 로직을 Spring Boot 하위 모듈이 아닌 Python(FastAPI) 독립 서버로 완전 분리. LangChain 등 최신 AI 생태계의 풍부한 오픈소스를 직접 활용하고 리소스 스케일아웃을 분리하기 위함.
+- **계층형 MVC 아키텍처 및 DTO/MapStruct 적용**: 헥사고날 아키텍처의 보일러플레이트 코드로 인한 복잡성을 제거하고 스타트업의 빠른 프로토타이핑을 위해 스프링 부트의 표준이자 실무형 패턴인 '계층형 MVC + JPA'를 선택. Entity와 DTO 간의 데이터 유출 방지 및 API 스펙 강제화를 위해 `MapStruct` 자동 매핑을 도입.
+- **공공데이터 API 연동 및 공간 데이터 GUI**: 약 7만 건 이상의 전국 화장실 공공데이터(`전국공중화장실표준데이터` API 연동)를 PostGIS `Point` 타입으로 인덱싱. 이를 시각적으로 교차 검증하고 데이터베이스를 손쉽게 관리할 수 있도록 `pgAdmin4` GUI 도구를 Docker Compose 구성에 포함.
+- **디자인 시스템 독립성 (CSS)**: Tailwind 등에 종속되지 않고 Vanilla CSS 기반으로 구축. 사용자에게 WOU(Wow) 모먼트를 주어야 하는 프리미엄 급의 마이크로 애니메이션과 독자적인 다이내믹 UI(Aesthetics)를 타협 없이 완성.
+- **소프트웨어 기반 GPS 검증**: 하드웨어적(NFC/QR) 한계를 인지하고 100% 소프트웨어 검증(가변 반경 체크 + 체류 시간)으로 선회하되, Redis의 Rate Limiter 알고리즘을 추가하여 어뷰징(매크로 및 GPS 스푸핑 기기)을 방어하는 다중 보안 채택.
 
 ---
 
@@ -117,9 +126,12 @@ graph TB
   - `Weight = (Distance * 0.7) + (OpeningHours_Weight * 0.3)`
   - PostGIS의 `ST_DistanceSphere` 및 Redis `GEOSEARCH` 활용.
   - **고도화**: 대규모 트래픽 대응을 위해 화장실 혼잡도 및 실시간 가용성을 Redis에 캐싱하여 조회 성능 극대화.
-- **보안 및 검증**:
+- **보보안 및 검증**:
   - **GPS 스푸핑 방지**: 모의 위치(Mock Location) 차단 및 이동 속도(Velocity) 검증.
-  - **유연한 오차 대응**: 지역별 동적 반경(50m~100m) 및 최소 체류 시간(1분) 조건.
+  - **유연한 오차 대응 (Indoor/Shadow)**: 
+    - 건물 내부 또는 지하 화장실에서의 GPS 수신 불안정을 고려하여 **Wi-Fi/Network 기반 위치 보정** 및 유동적 반경 로직 적용.
+    - GPS 수신 불가 시 '근처 화장실 수동 선택' 기능을 제공하되, 최종 인증 시 해당 위치 체류 여부(Network ID 등) 추가 검증.
+  - **오차 반경**: 지역 및 환경에 따라 동적 반경(50m~150m) 및 최소 체류 시간(1분) 조건.
 - **마커 시스템**:
   - **Gray 💩**: 방문하지 않은 공용 화장실.
   - **Colored 💩**: 본인의 방문 인증 기록이 있는 화장실.
@@ -127,7 +139,18 @@ graph TB
 
 ### 2.3 방문 인증 4단계 로직 (The Core)
 
-사용자가 화장실 위치에 도달했을 때(GPS 반경 50m 이내 권장) 활성화되는 기록 프로세스입니다.
+사용자가 화장실 위치에 도달했을 때(GPS 반경 50m 이내 권장) 활성화되는 기록 프로세스입니다. **AI 간편 촬영(추천)** 또는 **직접 입력** 중 선택할 수 있습니다.
+
+#### [NEW] AI 간편 촬영 인증 (추천)
+
+- **개요**: 카메라스킨(WebRTC Canvas)을 통해 촬영된 이미지로 AI가 배변 상태를 즉시 분석하여 아래 4단계를 자동 완성합니다.
+- **개인정보 보호 정책 (Strict Privacy)**: 
+  - **무음 촬영(Fallback 포함)**: WebRTC 미디어 스트림에서 직접 Canvas 프레임을 추출하는 방식을 기본으로 하여 시스템 셔터음 발생을 원천 차단합니다. 브라우저 정책상 셔터음 강제 시 "무음 비디오 캡처" 방식으로 우회합니다.
+  - **In-Memory Pipeline (No-Save)**: 촬영된 데이터는 클라이언트 ➔ 백엔드 ➔ AI 서버 ➔ OpenAI API로 이어지는 전 과정에서 물리 디스크에 저장되지 않고 휘발성 메모리(Byte Array) 상태로만 전송 및 폐기됩니다.
+  - **친절한 고지**: 촬영 화면 진입 시 *"사진은 소리 없이 촬영되며, 분석에만 사용된 후 즉시 삭제되니 안심하세요!"* 라는 안내 팝업 및 '보안 전송 중' 인디케이터를 강조 표출합니다.
+- **AI 어뷰징 방지**: 배변과 관련 없는 이미지(셀카, 실내 내부 등)가 입력될 경우 AI가 이를 감지하여 반려(`Invalid`) 처리하고 사용자에게 재촬영을 안내합니다.
+
+#### 직접 입력 및 AI 분석 수정 (4단계)
 
 1. **Step 1 (형태)**: 브리스톨 7척도 선택. 의학 용어 대신 "딱딱한 알맹이", "부드러운 바나나" 등 직관적 텍스트와 일러스트 병기.
 2. **Step 2 (색상)**: 5~6종 컬러 피커.
@@ -245,7 +268,7 @@ erDiagram
   - **기본 정보**: 화장실명, 주소, 상세 개방 시간, 남녀공용 여부, 카카오맵/네이버지도 길찾기 바로가기, 신고하기 버튼.
   - **평가 요약**: 이모지 기반 간편 평가(😄🤢🧻), 별점 통계, 최근 후기 리스트(최대 5개).
   - **전체 후기**: 중앙 대형 모달에서 무한 스크롤로 전체 목록 제공 및 상단에 **AI 요약 정보** 노출.
-- **인증 UI**: 화장실 반경 진입 시 '기록하기' 버튼 활성화.
+- **인증 UI**: 화장실 반경 진입 시 '기록하기' 버튼 활성화. ('AI 간편 촬영' vs '수동 입력' 옵션 제공 및 사진 미저장/무음 고지 모달 포함)
 
 ### 4.3 마이페이지 (My Page: Profile & Activities)
 
@@ -359,21 +382,25 @@ erDiagram
 
 ### 5.2 [Epic] 방문 인증 및 건강 기록 (Verification & Report)
 
-#### User Story 2: 사진 없는 스마트 인증
+#### User Story 2: 무음/미저장 AI 스마트 인증
 
-**As a** 개인정보 노출을 꺼리는 유저
-**I want** 사진 촬영 없이 텍스트와 일러스트만으로 신뢰도 높은 방문 인증을 하고 싶다
-**So that** 편안하게 내 건강 데이터를 기록하고 보상을 받을 수 있다
+**As a** 건강 기록을 편하게 남기고 싶은 유저
+**I want** 화장실에서 소리 없이 사진을 찍어 AI가 자동으로 내 상태를 분석해 주길 바란다
+**So that** 일일이 입력할 필요 없이 빠르게 기록을 마칠 수 있고, 내 사진이 어디에도 저장되지 않아 안심할 수 있다
 
 - **Acceptance Criteria**
-  - [ ] 유저 위치가 화장실 반경 50m~100m(동적) 이내일 때만 기록 가능.
-  - [ ] 해당 장소에서 1분 이상 가만히 머물러야(체류시간 검증) 인증 버튼 활성화.
-  - [ ] 브리스톨 척도/컬러/컨디션/식단 4단계 입력이 완료되어야 저장됨.
+  - [ ] 유저 위치가 화장실 반경 50m~100m 이내일 때 활성화.
+  - [ ] 촬영 화면 진입 시 "무음 촬영 & 사진 미저장" 안내 UI의 명확한 노출 및 동의 확인.
+  - [ ] 촬영 시 무음 처리 지원 (기기별 Camera API 셔터음 제어).
+  - [ ] 촬영된 이미지는 서버 스토리지에 저장 없이, in-memory로 AI 모델(GPT-4o Vision 등) API 전송 후 즉시 객체 소멸 확인.
+  - [ ] AI 분석 결과가 4단계(형태, 색상 등) 폼에 자동 매핑되고, 수동 수정이 가능함.
+  - [ ] 직접 입력(수동) 옵션도 상시 제공.
   - [ ] 저장 성공 시 실시간 포인트(Gold) 및 경험치 지급 확인.
-- **Tasks** (8h)
-  - [ ] Client-side 모의 위치(Mock Location) 감지 로직 구현.
-  - [ ] Server-side 체류 시간 및 이동 경로 타당성 검증 API.
-  - [ ] 4단계 입력 UI/UX 컴포넌트 개발.
+- **Tasks** (12h)
+  - [ ] Client-side WebRTC/Camera API 기반 커스텀 무음 촬영 모듈 구현.
+  - [ ] 사진 미저장 등 프라이버시 보호를 위한 안내 팝업 및 UI 컴포넌트 개발.
+  - [ ] Vision AI API 연동 및 결과 파싱(JSON 매핑) 파이프라인 개발.
+  - [ ] Server-side 체류 시간 및 이동 경로 타당성 API 검증.
 
 #### User Story 3: AI 건강 리포트 수익화
 
@@ -414,9 +441,10 @@ erDiagram
 
 ### Phase 1: 기반 구축 (Must Have)
 
-1. **DB/Infra**: PostgreSQL PostGIS 설정, Redis Cluster 구축.
-2. **Auth**: Spring Security + OAuth2 + JWT (3초 가입).
-3. **Common**: 공공데이터(화장실 7만건) 벌크 인서트 및 공간 인덱싱.
+1. **DB/Infra**: PostgreSQL PostGIS 및 `pgAdmin4` GUI 연동 설정, Redis Cluster Docker 구축.
+2. **Architecture**: 계층형 MVC 구조 디렉터리 세팅 및 `MapStruct`, `QueryDSL` 등 핵심 라이브러리 초기화.
+3. **Auth**: Spring Security + OAuth2 + JWT (3초 가입) 초기 프레임워크 구현.
+4. **Common**: 외부 API(`전국공중화장실표준데이터`) 연동을 통한 공공데이터(화장실 7만건) 벌크 인서트 모듈 및 PostGIS 공간 인덱싱 적용.
 
 ### Phase 2: 핵심 비즈니스 로직 (Must Have)
 

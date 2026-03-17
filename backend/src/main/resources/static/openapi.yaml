@@ -1,568 +1,342 @@
-openapi: 3.0.3
+openapi: 3.0.1
 info:
-  title: DayPoo API 문서
-  description: 대똥여지도 (DayPoo) 시스템 RESTful API 문서입니다.
-  version: 1.0.0
+  title: DayPoo API
+  description: 💩 DayPoo - 실시간 화장실 찾기 및 건강 리포트 AI 서비스 API
+  version: v1.0.0
 servers:
   - url: http://localhost:8080
-    description: 로컬 서버
+    description: Local Server
+
+paths:
+  /api/v1/auth/signup:
+    post:
+      tags:
+        - Authentication
+      summary: 회원가입
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SignUpRequest"
+      responses:
+        "200":
+          description: OK
+  /api/v1/auth/login:
+    post:
+      tags:
+        - Authentication
+      summary: 로그인
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TokenResponse"
+
+  /api/v1/toilets:
+    get:
+      tags:
+        - Toilets
+      summary: 주변 화장실 검색
+      parameters:
+        - name: latitude
+          in: query
+          required: true
+          schema:
+            type: number
+            format: double
+        - name: longitude
+          in: query
+          required: true
+          schema:
+            type: number
+            format: double
+        - name: radius
+          in: query
+          schema:
+            type: integer
+            default: 1000
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ToiletResponse"
+
+  /api/v1/records:
+    post:
+      tags:
+        - Poo Records
+      summary: 배변 기록 생성 (화장실 방문 인증)
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PooRecordCreateRequest"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PooRecordResponse"
+
+  /api/v1/reports/{type}:
+    get:
+      tags:
+        - Reports
+      summary: AI 건강 리포트 조회
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: type
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [DAILY, WEEKLY, MONTHLY]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthReportResponse"
+
+  /api/v1/shop/items:
+    get:
+      tags:
+        - Shop
+      summary: 상점 아이템 목록 조회
+      parameters:
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [AVATAR_SKIN, MARKER_SKIN]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ItemResponse"
+
+  /api/v1/shop/purchase:
+    post:
+      tags:
+        - Shop
+      summary: 아이템 구매
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: itemId
+          in: query
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: OK
+
+  /api/v1/rankings/global:
+    get:
+      tags:
+        - Rankings
+      summary: 글로벌 랭킹 조회
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RankingResponse"
 
 components:
   securitySchemes:
-    bearerAuth:
+    BearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
 
   schemas:
-    ApiResponse:
+    SignUpRequest:
       type: object
       properties:
-        success:
-          type: boolean
-          example: true
-        data:
-          type: object
-        error:
+        username:
           type: string
-          nullable: true
-          example: null
-        pagination:
-          $ref: "#/components/schemas/Pagination"
-
-    Pagination:
-      type: object
-      properties:
-        page:
-          type: integer
-          example: 1
-        size:
-          type: integer
-          example: 20
-        totalElements:
-          type: integer
-          example: 100
-        totalPages:
-          type: integer
-          example: 5
-
-    UserResponse:
-      type: object
-      properties:
-        id:
-          type: integer
-          example: 1
-        email:
+        password:
           type: string
-          example: user@example.com
         nickname:
           type: string
-          example: 쾌변장인
-        level:
-          type: integer
-          example: 5
-        totalVisits:
-          type: integer
-          example: 12
-        totalReviews:
-          type: integer
-          example: 8
-
+    LoginRequest:
+      type: object
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+    TokenResponse:
+      type: object
+      properties:
+        accessToken:
+          type: string
+        refreshToken:
+          type: string
     ToiletResponse:
       type: object
       properties:
         id:
           type: integer
-          example: 101
+          format: int64
         name:
           type: string
-          example: 강남역 공중화장실
-        address:
-          type: string
-          example: 서울특별시 강남구 강남대로 396
         latitude:
           type: number
-          example: 37.4979
+          format: double
         longitude:
           type: number
-          example: 127.0276
-        operatingHours:
+          format: double
+        address:
           type: string
-          example: 24시간
-        averageRating:
+        openHours:
+          type: string
+        is24h:
+          type: boolean
+        distance:
           type: number
-          example: 4.5
-        reviewCount:
+          format: double
+    PooRecordCreateRequest:
+      type: object
+      properties:
+        toiletId:
           type: integer
-          example: 24
-
-security:
-  - bearerAuth: []
-
-tags:
-  - name: Auth
-    description: 인증/인가 관련 API
-  - name: User
-    description: 사용자 프로필 및 개인 정보 API
-  - name: Toilet
-    description: 화장실 및 지도 관련 API
-  - name: Visit
-    description: 방문 인증 및 리뷰 API
-  - name: Health
-    description: 건강(배변) 기록 및 분석 API
-  - name: Community
-    description: 게시판 및 커뮤니티 API
-  - name: AI
-    description: AI 기반 분석 및 추천 API (프록시)
-
-paths:
-  # ---------------------------------------------
-  # Auth APIs
-  # ---------------------------------------------
-  /api/v1/auth/signup:
-    post:
-      tags: [Auth]
-      summary: 회원가입
-      security: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                email:
-                  type: string
-                password:
-                  type: string
-                nickname:
-                  type: string
-      responses:
-        "200":
-          description: 성공
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ApiResponse"
-
-  /api/v1/auth/login:
-    post:
-      tags: [Auth]
-      summary: 로그인
-      security: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                email:
-                  type: string
-                password:
-                  type: string
-      responses:
-        "200":
-          description: 성공 (토큰 발급)
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: "#/components/schemas/ApiResponse"
-                  - type: object
-                    properties:
-                      data:
-                        type: object
-                        properties:
-                          accessToken:
-                            type: string
-                          refreshToken:
-                            type: string
-
-  /api/v1/auth/oauth/kakao:
-    post:
-      tags: [Auth]
-      summary: 카카오 소셜 로그인
-      security: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                code:
-                  type: string
-      responses:
-        "200":
-          description: 성공
-
-  /api/v1/auth/oauth/google:
-    post:
-      tags: [Auth]
-      summary: 구글 소셜 로그인
-      security: []
-      responses:
-        "200":
-          description: 성공
-
-  /api/v1/auth/refresh:
-    post:
-      tags: [Auth]
-      summary: 토큰 갱신
-      responses:
-        "200":
-          description: 성공
-
-  # ---------------------------------------------
-  # User APIs
-  # ---------------------------------------------
-  /api/v1/users/me:
-    get:
-      tags: [User]
-      summary: 내 프로필 조회
-      responses:
-        "200":
-          description: 성공
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: "#/components/schemas/ApiResponse"
-                  - type: object
-                    properties:
-                      data:
-                        $ref: "#/components/schemas/UserResponse"
-    patch:
-      tags: [User]
-      summary: 프로필 수정
-      responses:
-        "200":
-          description: 성공
-
-  /api/v1/users/me/badges:
-    get:
-      tags: [User]
-      summary: 내 뱃지 목록 조회
-      responses:
-        "200":
-          description: 성공
-
-  /api/v1/users/me/territories:
-    get:
-      tags: [User]
-      summary: 내 영역 목록 조회 (점령한 화장실)
-      responses:
-        "200":
-          description: 성공
-
-  /api/v1/users/me/favorites:
-    get:
-      tags: [User]
-      summary: 즐겨찾기 목록 조회
-      responses:
-        "200":
-          description: 성공
-
-  # ---------------------------------------------
-  # Toilet APIs
-  # ---------------------------------------------
-  /api/v1/toilets:
-    get:
-      tags: [Toilet]
-      summary: 화장실 목록 (지도 영역 기반)
-      parameters:
-        - name: swLat
-          in: query
-          required: true
-          schema:
-            type: number
-        - name: swLng
-          in: query
-          required: true
-          schema:
-            type: number
-        - name: neLat
-          in: query
-          required: true
-          schema:
-            type: number
-        - name: neLng
-          in: query
-          required: true
-          schema:
-            type: number
-      responses:
-        "200":
-          description: 성공
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: "#/components/schemas/ApiResponse"
-                  - type: object
-                    properties:
-                      data:
-                        type: array
-                        items:
-                          $ref: "#/components/schemas/ToiletResponse"
-
-  /api/v1/toilets/{id}:
-    get:
-      tags: [Toilet]
-      summary: 화장실 상세 정보
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-      responses:
-        "200":
-          description: 성공
-
-  /api/v1/toilets/search:
-    get:
-      tags: [Toilet]
-      summary: 화장실 검색 (ElasticSearch 기반)
-      parameters:
-        - name: q
-          in: query
-          required: true
-          schema:
+          format: int64
+        bristolScale:
+          type: integer
+        color:
+          type: string
+        conditionTags:
+          type: array
+          items:
             type: string
-      responses:
-        "200":
-          description: 성공
-
-  /api/v1/toilets/{id}/markers:
-    get:
-      tags: [Toilet]
-      summary: 마커 정보 (방문 등급 등)
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-      responses:
-        "200":
-          description: 성공
-
-  /api/v1/toilets/{id}/reviews:
-    get:
-      tags: [Toilet]
-      summary: 화장실 리뷰 목록
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-      responses:
-        "200":
-          description: 성공
-
-  /api/v1/toilets/nearby:
-    get:
-      tags: [Toilet]
-      summary: 내 근처 화장실
-      parameters:
-        - name: lat
-          in: query
-          required: true
-          schema:
-            type: number
-        - name: lng
-          in: query
-          required: true
-          schema:
-            type: number
-      responses:
-        "200":
-          description: 성공
-
-  # ---------------------------------------------
-  # Visit APIs
-  # ---------------------------------------------
-  /api/v1/visits:
-    post:
-      tags: [Visit]
-      summary: 방문 인증 (GPS 검증)
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                toiletId:
-                  type: integer
-                userLatitude:
-                  type: number
-                userLongitude:
-                  type: number
-      responses:
-        "200":
-          description: 인증 성공
-
-  /api/v1/visits/{id}/review:
-    post:
-      tags: [Visit]
-      summary: 리뷰 작성
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                cleanlinessRating:
-                  type: integer
-                suppliesRating:
-                  type: integer
-                overallRating:
-                  type: integer
-                content:
-                  type: string
-      responses:
-        "200":
-          description: 성공
-
-  /api/v1/visits/me:
-    get:
-      tags: [Visit]
-      summary: 내 방문 기록 조회
-      responses:
-        "200":
-          description: 성공
-
-  # ---------------------------------------------
-  # Health APIs
-  # ---------------------------------------------
-  /api/v1/health/records:
-    post:
-      tags: [Health]
-      summary: 배변 기록 등록
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                bristolType:
-                  type: integer
-                notes:
-                  type: string
-      responses:
-        "200":
-          description: 성공
-    get:
-      tags: [Health]
-      summary: 배변 기록 리스트 조회
-      responses:
-        "200":
-          description: 성공
-
-  /api/v1/health/analyze:
-    post:
-      tags: [Health]
-      summary: AI 건강 분석 요청
-      responses:
-        "200":
-          description: 성공
-
-  /api/v1/health/rhythm:
-    get:
-      tags: [Health]
-      summary: 똥체리듬 데이터 조회
-      responses:
-        "200":
-          description: 성공
-
-  # ---------------------------------------------
-  # Community APIs
-  # ---------------------------------------------
-  /api/v1/posts:
-    get:
-      tags: [Community]
-      summary: 게시글 목록
-      responses:
-        "200":
-          description: 성공
-    post:
-      tags: [Community]
-      summary: 게시글 작성
-      responses:
-        "200":
-          description: 성공
-
-  /api/v1/posts/{id}:
-    get:
-      tags: [Community]
-      summary: 게시글 상세 조회
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-      responses:
-        "200":
-          description: 성공
-
-  /api/v1/posts/{id}/comments:
-    post:
-      tags: [Community]
-      summary: 댓글 작성
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-      responses:
-        "200":
-          description: 성공
-
-  /api/v1/rankings:
-    get:
-      tags: [Community]
-      summary: 전체 랭킹 조회
-      responses:
-        "200":
-          description: 성공
-
-  # ---------------------------------------------
-  # AI APIs
-  # ---------------------------------------------
-  /api/v1/ai/health-analysis:
-    post:
-      tags: [AI]
-      summary: AI 기반 건강 종합 분석 (비동기)
-      responses:
-        "200":
-          description: 성공
-
-  /api/v1/ai/recommend:
-    post:
-      tags: [AI]
-      summary: AI 맞춤형 화장실 추천
-      responses:
-        "200":
-          description: 성공
-
-  /api/v1/ai/emergency:
-    post:
-      tags: [AI]
-      summary: 급똥 모드 (가장 빠른 지름길 가이드)
-      responses:
-        "200":
-          description: 성공
+        dietTags:
+          type: array
+          items:
+            type: string
+        latitude:
+          type: number
+          format: double
+        longitude:
+          type: number
+          format: double
+        imageBase64:
+          type: string
+    PooRecordResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        userId:
+          type: integer
+          format: int64
+        toiletId:
+          type: integer
+          format: int64
+        toiletName:
+          type: string
+        bristolScale:
+          type: integer
+        color:
+          type: string
+        conditionTags:
+          type: array
+          items:
+            type: string
+        dietTags:
+          type: array
+          items:
+            type: string
+        earnedExp:
+          type: integer
+        earnedPoints:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+    HealthReportResponse:
+      type: object
+      properties:
+        userId:
+          type: integer
+          format: int64
+        nickname:
+          type: string
+        reportType:
+          type: string
+        analysisSummary:
+          type: string
+        score:
+          type: integer
+        aiRecommendation:
+          type: string
+        generatedAt:
+          type: string
+          format: date-time
+    ItemResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        description:
+          type: string
+        type:
+          type: string
+        price:
+          type: integer
+          format: int64
+        imageUrl:
+          type: string
+    RankingResponse:
+      type: object
+      properties:
+        type:
+          type: string
+        entries:
+          type: array
+          items:
+            $ref: "#/components/schemas/UserRankResponse"
+    UserRankResponse:
+      type: object
+      properties:
+        rank:
+          type: integer
+        nickname:
+          type: string
+        level:
+          type: integer
+        points:
+          type: integer
+        equippedTitle:
+          type: string
