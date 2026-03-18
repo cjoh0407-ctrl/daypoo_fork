@@ -13,21 +13,21 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class UserTitle extends BaseTimeEntity {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "user_id", nullable = false)
+  private User user;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "title_id", nullable = false)
-    private Title title;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "title_id", nullable = false)
+  private Title title;
 
-    @Builder
-    public UserTitle(User user, Title title) {
-        this.user = user;
-        this.title = title;
-    }
+  @Builder
+  public UserTitle(User user, Title title) {
+    this.user = user;
+    this.title = title;
+  }
 }

@@ -20,22 +20,6 @@ services:
       timeout: 5s
       retries: 5
 
-  pgadmin:
-    image: dpage/pgadmin4:latest
-    container_name: daypoo_pgadmin
-    environment:
-      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
-      PGADMIN_DEFAULT_PASSWORD: ${POSTGRES_PASSWORD}
-    ports:
-      - "5050:80"
-    depends_on:
-      db:
-        condition: service_healthy
-    restart: unless-stopped
-
-    volumes:
-      - pgadmin_data:/var/lib/pgadmin
-
   redis:
     image: redis:7-alpine
     container_name: daypoo_redis
@@ -47,5 +31,4 @@ services:
 
 volumes:
   postgres_data:
-  pgadmin_data:
   redis_data:

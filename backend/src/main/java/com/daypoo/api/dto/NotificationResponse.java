@@ -1,8 +1,8 @@
 package com.daypoo.api.dto;
 
 import com.daypoo.api.entity.NotificationType;
-import lombok.Builder;
 import java.time.LocalDateTime;
+import lombok.Builder;
 
 @Builder
 public record NotificationResponse(
@@ -12,5 +12,4 @@ public record NotificationResponse(
     String content,
     String redirectUrl,
     boolean isRead,
-    LocalDateTime createdAt
-) {}
+    LocalDateTime createdAt) {}

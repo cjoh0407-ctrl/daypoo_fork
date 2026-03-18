@@ -13,33 +13,33 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Inventory extends BaseTimeEntity {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "user_id", nullable = false)
+  private User user;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "item_id", nullable = false)
-    private Item item;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "item_id", nullable = false)
+  private Item item;
 
-    @Column(name = "is_equipped", nullable = false)
-    private boolean isEquipped = false;
+  @Column(name = "is_equipped", nullable = false)
+  private boolean isEquipped = false;
 
-    @Builder
-    public Inventory(User user, Item item, boolean isEquipped) {
-        this.user = user;
-        this.item = item;
-        this.isEquipped = isEquipped;
-    }
+  @Builder
+  public Inventory(User user, Item item, boolean isEquipped) {
+    this.user = user;
+    this.item = item;
+    this.isEquipped = isEquipped;
+  }
 
-    public void equip() {
-        this.isEquipped = true;
-    }
+  public void equip() {
+    this.isEquipped = true;
+  }
 
-    public void unequip() {
-        this.isEquipped = false;
-    }
+  public void unequip() {
+    this.isEquipped = false;
+  }
 }

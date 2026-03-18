@@ -45,7 +45,7 @@ paths:
     get:
       tags:
         - Toilets
-      summary: 주변 화장실 검색
+      summary: 주변 화장실 검색 (50m 반경 등)
       parameters:
         - name: latitude
           in: query
@@ -62,7 +62,8 @@ paths:
         - name: radius
           in: query
           schema:
-            type: integer
+            type: number
+            format: double
             default: 1000
       responses:
         "200":
@@ -73,6 +74,34 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/ToiletResponse"
+
+  /api/v1/toilets/emergency:
+    get:
+      tags:
+        - Toilets
+      summary: 긴급 화장실 추천 (가까운 상위 3개)
+      parameters:
+        - name: latitude
+          in: query
+          required: true
+          schema:
+            type: number
+            format: double
+        - name: longitude
+          in: query
+          required: true
+          schema:
+            type: number
+            format: double
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/EmergencyToiletResponse"
 
   /api/v1/records:
     post:
@@ -94,6 +123,35 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PooRecordResponse"
+
+  /api/v1/admin/toilets/sync:
+    post:
+      tags:
+        - Admin
+      summary: 공중화장실 데이터 동기화 (행안부 API 연동)
+      description: "[ADMIN 전용] 행정안전부 API로부터 최신 화장실 데이터를 가져와 DB와 Redis를 동기화합니다."
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: pageNo
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: numOfRows
+          in: query
+          schema:
+            type: integer
+            default: 100
+      responses:
+        "200":
+          description: 성공
+          content:
+            text/plain:
+              schema:
+                type: string
+        "403":
+          description: 권한 없음 (ADMIN 전용)
 
   /api/v1/reports/{type}:
     get:
@@ -145,9 +203,42 @@ paths:
       summary: 아이템 구매
       security:
         - BearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ShopPurchaseRequest"
+      responses:
+        "200":
+          description: OK
+
+  /api/v1/shop/inventory:
+    get:
+      tags:
+        - Shop
+      summary: 내 인벤토리 조회
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/InventoryResponse"
+
+  /api/v1/shop/inventory/{inventoryId}/toggle:
+    post:
+      tags:
+        - Shop
+      summary: 아이템 장착/해제 토글
+      security:
+        - BearerAuth: []
       parameters:
-        - name: itemId
-          in: query
+        - name: inventoryId
+          in: path
           required: true
           schema:
             type: integer
@@ -156,11 +247,54 @@ paths:
         "200":
           description: OK
 
-  /api/v1/rankings/global:
+  /api/v1/shop/titles:
+    get:
+      tags:
+        - Shop
+      summary: 전체 칭호 목록 및 보유 여부 조회
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TitleResponse"
+
+  /api/v1/shop/titles/{titleId}/equip:
+    post:
+      tags:
+        - Shop
+      summary: 칭호 장착
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: titleId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: OK
+
+  /api/v1/rankings/region:
     get:
       tags:
         - Rankings
-      summary: 글로벌 랭킹 조회
+      summary: 지역별 랭킹 조회
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: regionName
+          in: query
+          required: true
+          schema:
+            type: string
       responses:
         "200":
           description: OK
@@ -168,6 +302,145 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/RankingResponse"
+
+  /api/v1/notifications/subscribe:
+    get:
+      tags:
+        - Notifications
+      summary: 실시간 알림 구독 (SSE)
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: SSE Stream Establishment
+          content:
+            text/event-stream:
+              schema:
+                type: string
+
+  /api/v1/notifications:
+    get:
+      tags:
+        - Notifications
+      summary: 내 알림 목록 조회
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/NotificationResponse"
+
+  /api/v1/notifications/{notificationId}/read:
+    patch:
+      tags:
+        - Notifications
+      summary: 알림 읽음 처리
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: notificationId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: OK
+
+  /api/v1/inquiries:
+    post:
+      tags:
+        - Support
+      summary: 1:1 문의 등록
+      security:
+        - BearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InquiryRequest"
+      responses:
+        "200":
+          description: OK
+    get:
+      tags:
+        - Support
+      summary: 내 문의 내역 조회
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/InquiryResponse"
+
+  /api/v1/faqs:
+    get:
+      tags:
+        - Support
+      summary: FAQ 조회
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/FaqResponse"
+
+  /api/v1/admin/stats:
+    get:
+      tags:
+        - Admin
+      summary: 시스템 통계 조회
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminStatsResponse"
+
+  /api/v1/admin/inquiries/{inquiryId}/answer:
+    post:
+      tags:
+        - Admin
+      summary: 1:1 문의 답변 등록
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: inquiryId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminInquiryAnswerRequest"
+      responses:
+        "200":
+          description: OK
 
 components:
   securitySchemes:
@@ -321,22 +594,124 @@ components:
     RankingResponse:
       type: object
       properties:
-        type:
-          type: string
-        entries:
+        topRankers:
           type: array
           items:
             $ref: "#/components/schemas/UserRankResponse"
-    UserRankResponse:
+        myRank:
+          $ref: "#/components/schemas/UserRankResponse"
+    EmergencyToiletResponse:
       type: object
       properties:
-        rank:
+        id:
           type: integer
-        nickname:
+          format: int64
+        name:
           type: string
-        level:
+        distance:
+          type: number
+          format: double
+        is24h:
+          type: boolean
+    NotificationResponse:
+      type: object
+      properties:
+        id:
           type: integer
-        points:
-          type: integer
-        equippedTitle:
+          format: int64
+        message:
           type: string
+        type:
+          type: string
+        read:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+    InquiryRequest:
+      type: object
+      properties:
+        title:
+          type: string
+        content:
+          type: string
+    InquiryResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        title:
+          type: string
+        content:
+          type: string
+        answer:
+          type: string
+        status:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+    FaqResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        category:
+          type: string
+        question:
+          type: string
+        answer:
+          type: string
+    AdminStatsResponse:
+      type: object
+      properties:
+        totalUsers:
+          type: integer
+        todayNewUsers:
+          type: integer
+        totalRecords:
+          type: integer
+        todayRecords:
+          type: integer
+    AdminInquiryAnswerRequest:
+      type: object
+      properties:
+        answer:
+          type: string
+    InventoryResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        itemId:
+          type: integer
+          format: int64
+        itemName:
+          type: string
+        itemType:
+          type: string
+        isEquipped:
+          type: boolean
+    ShopPurchaseRequest:
+      type: object
+      properties:
+        itemId:
+          type: integer
+          format: int64
+    TitleResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        requirement:
+          type: string
+        isOwned:
+          type: boolean
+        isEquipped:
+          type: boolean
