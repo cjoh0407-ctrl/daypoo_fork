@@ -1,7 +1,7 @@
 package com.daypoo.api.dto;
 
-import lombok.Builder;
 import java.util.List;
+import lombok.Builder;
 
 @Builder
 public record HealthReportResponse(
@@ -10,5 +10,4 @@ public record HealthReportResponse(
     String summary,
     String solution,
     List<String> insights,
-    String analyzedAt
-) {}
+    String analyzedAt) {}

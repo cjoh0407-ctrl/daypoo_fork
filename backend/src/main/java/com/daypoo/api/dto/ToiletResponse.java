@@ -11,5 +11,4 @@ public record ToiletResponse(
     String address,
     String openHours,
     boolean is24h,
-    double distance
-) {}
+    double distance) {}

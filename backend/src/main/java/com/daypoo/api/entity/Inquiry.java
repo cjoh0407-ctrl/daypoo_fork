@@ -13,38 +13,38 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Inquiry extends BaseTimeEntity {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "user_id", nullable = false)
+  private User user;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private InquiryType type;
+  @Enumerated(EnumType.STRING)
+  @Column(nullable = false)
+  private InquiryType type;
 
-    @Column(nullable = false, columnDefinition = "TEXT")
-    private String content;
+  @Column(nullable = false, columnDefinition = "TEXT")
+  private String content;
 
-    @Column(columnDefinition = "TEXT")
-    private String answer;
+  @Column(columnDefinition = "TEXT")
+  private String answer;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private InquiryStatus status = InquiryStatus.PENDING;
+  @Enumerated(EnumType.STRING)
+  @Column(nullable = false)
+  private InquiryStatus status = InquiryStatus.PENDING;
 
-    @Builder
-    public Inquiry(User user, InquiryType type, String content) {
-        this.user = user;
-        this.type = type;
-        this.content = content;
-        this.status = InquiryStatus.PENDING;
-    }
+  @Builder
+  public Inquiry(User user, InquiryType type, String content) {
+    this.user = user;
+    this.type = type;
+    this.content = content;
+    this.status = InquiryStatus.PENDING;
+  }
 
-    public void answer(String answer) {
-        this.answer = answer;
-        this.status = InquiryStatus.COMPLETED;
-    }
+  public void answer(String answer) {
+    this.answer = answer;
+    this.status = InquiryStatus.COMPLETED;
+  }
 }

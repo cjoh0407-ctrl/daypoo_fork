@@ -17,44 +17,44 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class AuthService {
 
-    private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
-    private final JwtProvider jwtProvider;
+  private final UserRepository userRepository;
+  private final PasswordEncoder passwordEncoder;
+  private final JwtProvider jwtProvider;
 
-    @Transactional
-    public void signUp(SignUpRequest request) {
-        if (userRepository.existsByUsername(request.username())) {
-            throw new BusinessException(ErrorCode.USERNAME_ALREADY_EXISTS);
-        }
-        if (userRepository.existsByNickname(request.nickname())) {
-            throw new BusinessException(ErrorCode.NICKNAME_ALREADY_EXISTS);
-        }
-
-        User user = User.builder()
-                .username(request.username())
-                .password(passwordEncoder.encode(request.password()))
-                .nickname(request.nickname())
-                .role(User.Role.ROLE_USER)
-                .build();
-
-        userRepository.save(user);
+  @Transactional
+  public void signUp(SignUpRequest request) {
+    if (userRepository.existsByUsername(request.username())) {
+      throw new BusinessException(ErrorCode.USERNAME_ALREADY_EXISTS);
+    }
+    if (userRepository.existsByNickname(request.nickname())) {
+      throw new BusinessException(ErrorCode.NICKNAME_ALREADY_EXISTS);
     }
 
-    @Transactional
-    public TokenResponse login(LoginRequest request) {
-        User user = userRepository.findByUsername(request.username())
-                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+    User user =
+        User.builder()
+            .username(request.username())
+            .password(passwordEncoder.encode(request.password()))
+            .nickname(request.nickname())
+            .role(User.Role.ROLE_USER)
+            .build();
 
-        if (!passwordEncoder.matches(request.password(), user.getPassword())) {
-            throw new BusinessException(ErrorCode.INVALID_PASSWORD);
-        }
+    userRepository.save(user);
+  }
 
-        String accessToken = jwtProvider.createAccessToken(user.getUsername(), user.getRole().name());
-        String refreshToken = jwtProvider.createRefreshToken(user.getUsername());
+  @Transactional
+  public TokenResponse login(LoginRequest request) {
+    User user =
+        userRepository
+            .findByUsername(request.username())
+            .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
-        return TokenResponse.builder()
-                .accessToken(accessToken)
-                .refreshToken(refreshToken)
-                .build();
+    if (!passwordEncoder.matches(request.password(), user.getPassword())) {
+      throw new BusinessException(ErrorCode.INVALID_PASSWORD);
     }
+
+    String accessToken = jwtProvider.createAccessToken(user.getUsername(), user.getRole().name());
+    String refreshToken = jwtProvider.createRefreshToken(user.getUsername());
+
+    return TokenResponse.builder().accessToken(accessToken).refreshToken(refreshToken).build();
+  }
 }

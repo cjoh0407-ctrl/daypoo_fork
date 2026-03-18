@@ -4,8 +4,4 @@ import lombok.Builder;
 
 @Builder
 public record AdminStatsResponse(
-    long totalUsers,
-    long totalRecords,
-    long pendingInquiries,
-    long totalToilets
-) {}
+    long totalUsers, long totalRecords, long pendingInquiries, long totalToilets) {}

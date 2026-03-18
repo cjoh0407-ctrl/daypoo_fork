@@ -13,23 +13,23 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Faq extends BaseTimeEntity {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    @Column(nullable = false)
-    private String category; // 예: 건강, 결제, 계정
+  @Column(nullable = false)
+  private String category; // 예: 건강, 결제, 계정
 
-    @Column(nullable = false)
-    private String question;
+  @Column(nullable = false)
+  private String question;
 
-    @Column(nullable = false, columnDefinition = "TEXT")
-    private String answer;
+  @Column(nullable = false, columnDefinition = "TEXT")
+  private String answer;
 
-    @Builder
-    public Faq(String category, String question, String answer) {
-        this.category = category;
-        this.question = question;
-        this.answer = answer;
-    }
+  @Builder
+  public Faq(String category, String question, String answer) {
+    this.category = category;
+    this.question = question;
+    this.answer = answer;
+  }
 }

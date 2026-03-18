@@ -1,9 +1,8 @@
 package com.daypoo.api.dto;
 
-import lombok.Builder;
-
 import java.time.LocalDateTime;
 import java.util.List;
+import lombok.Builder;
 
 @Builder
 public record PooRecordResponse(
@@ -17,5 +16,4 @@ public record PooRecordResponse(
     List<String> dietTags,
     Integer earnedExp,
     Integer earnedPoints,
-    LocalDateTime createdAt
-) {}
+    LocalDateTime createdAt) {}

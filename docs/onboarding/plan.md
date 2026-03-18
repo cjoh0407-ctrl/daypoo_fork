@@ -1,7 +1,7 @@
-# 💩 DayPoo (대똥여지도) 프로젝트 상세 설계 및 구현 계획서 (v4.2)
+# 💩 DayPoo 프로젝트 상세 설계 및 구현 계획서 (v4.3)
 
-> **상태**: 최종 기획 통합 완료 (v4.2 - MVC 전환 적용)
-> **핵심 원칙**: Layered MVC Architecture, Privacy-First AI (No-Save & No-Sound), PostgreSQL/PostGIS/Redis, MCP 연동
+> **상태**: 현재 구현 상태 반영 완료 (v4.3 - MVC 패턴 및 기술 스택 동기화)
+> **핵심 원칙**: Layered MVC Architecture, Design-First API Docs (openapi.yaml), PostgreSQL/PostGIS/Redis
 
 ---
 
@@ -71,40 +71,40 @@ graph TB
 - **Styling**: Vanilla CSS / CSS Modules (외부 디자인 프레임워크에 의존하지 않고 커스텀 유연성 및 프리미엄 글래스모피즘, 마이크로 애니메이션 등 Rich UI 독자 구현).
 - **Map Integration**: Kakao Maps API (마커 클러스터링, 다이나믹 커스텀 오버레이 처리).
 
-#### ⚙️ 백엔드 (Backend) - 헥사고날 아키텍처 & 고가용성
+#### ⚙️ 백엔드 (Backend) - MVC 패턴 & 고가용성
 
-- **Core Framework**: Spring Boot 3.x (Java 21).
-- **Architecture Pattern**: 계층형 MVC 아키텍처 (Controller - Service - Repository). JPA 엔티티 안에 핵심 비즈니스 로직을 포함하는 풍부한 도메인 모델 중심으로 빠르고 직관적인 생산성 지향. 데이터 전송 객체(DTO)와 Entity 분리 및 `MapStruct`를 통한 자동화된 객체 매핑(Mapper) 구현.
+- **Core Framework**: Spring Boot 3.4.3 (Java 21).
+- **Architecture Pattern**: 표준 계층형 MVC 아키텍처 (Controller - Service - Repository). JPA 엔티티 안에 핵심 비즈니스 로직을 포함하는 풍부한 도메인 모델 중심으로 빠르고 직관적인 생산성 지향. 데이터 전송 객체(DTO)와 Entity 분리 및 `MapStruct`를 통한 자동화된 객체 매핑(Mapper) 구현.
 - **Security**: Spring Security + JWT. Access/Refresh Token을 활용한 Stateless 인증.
-- **API Design**: RESTful API 구현 및 Swagger/Spring REST Docs를 통한 명세 자동화.
+- **API Design**: Design-First 방식 채택 (`openapi.yaml` 선설계) 및 Swagger UI 연동.
 - **Dependency Injection**: Spring IoC Container를 활용한 약결합 구조.
 
 #### 🤖 AI 및 데이터 파이프라인 (AI & Data Pipeline) - 비동기 & 최적화
 
-- **Core Framework**: Python 3.10+, FastAPI (고성능 비동기 API 서버).
+- **Core Framework**: Python 3.12+, FastAPI (고성능 비동기 API 서버).
 - **AI Orchestration**: LangChain / LangGraph (LLM 파이프라인, 프롬프트 체이닝, 페르소나 관리).
-- **Model**: OpenAI GPT-4o / Claude 3 (정밀 분석 및 데일리 리포트 자동 파싱 생성).
-- **Integration**: Model Context Protocol (MCP) 서버를 구축하여 NotebookLM 및 Claude Code와 데이터를 직접 연동하는 RAG 아키텍처 고도화.
+- **Model**: OpenAI GPT-4o (정밀 분석 및 데일리 리포트 자동 파싱 생성).
 
 #### 💾 데이터 레이어 (Data Architecture) - 확장성 & 공간 쿼리
 
-- **Primary RDBMS**: PostgreSQL 16. (ACID 트랜잭션 및 안정성 1순위)
-- **Spatial Extension**: PostGIS. (반경 50m 거리 검증, 우리 동네 랭킹, 역지오코딩 등 공간 쿼리 최적화)
-- **In-Memory DB**: Redis. (실시간 '급똥 지수' 카운터, 전국/동네 랭킹 ZSET, 세션 캐싱, Rate Limiting 적용)
-- **Data Access Pattern**: Spring Data JPA (Entity 매핑) + QueryDSL (복잡한 동적 쿼리 및 통계 추출 쿼리).
+- **Primary RDBMS**: PostgreSQL 16 + PostGIS. (MySQL 8.0에서 전환하여 위치 기반 공간 쿼리 최적화)
+- **In-Memory DB**: Redis 7. (실시간 카운터, 전국/동네 랭킹 ZSET, 세션 캐싱, Rate Limiting 적용)
+- **Data Access Pattern**: Spring Data JPA (Entity 매핑) + QueryDSL (복잡한 동적 쿼리 및 통계 추출).
 
 #### 🚀 인프라 및 데브옵스 (Infrastructure & DevOps)
 
 - **Containerization**: Docker & Docker Compose (개발-런타임-프로덕션 환경 완벽 통일).
-  - `dpage/pgadmin4`를 포함하여 데이터베이스 및 PostGIS 공간 데이터 시각화 GUI 관리 환경 동시 구성.
+- **DB Management**: DBeaver 등 외부 GUI 도구 사용 권장 (프로젝트 경량화를 위해 pgAdmin 제거).
 - **CI/CD**: GitHub Actions (자동화된 빌드, 단위/통합 테스트, 무중단 배포 파이프라인).
 - **Observability**: Prometheus (시스템 메트릭 수집) + Grafana (실시간 대시보드 직관적 시각화).
 
 ### 1.3 시스템 아키텍처 주요 결정 사항 (ADR: Architecture Decision Records)
 
 - **AI 마이크로서비스 영구 분리**: AI 서비스 로직을 Spring Boot 하위 모듈이 아닌 Python(FastAPI) 독립 서버로 완전 분리. LangChain 등 최신 AI 생태계의 풍부한 오픈소스를 직접 활용하고 리소스 스케일아웃을 분리하기 위함.
-- **계층형 MVC 아키텍처 및 DTO/MapStruct 적용**: 헥사고날 아키텍처의 보일러플레이트 코드로 인한 복잡성을 제거하고 스타트업의 빠른 프로토타이핑을 위해 스프링 부트의 표준이자 실무형 패턴인 '계층형 MVC + JPA'를 선택. Entity와 DTO 간의 데이터 유출 방지 및 API 스펙 강제화를 위해 `MapStruct` 자동 매핑을 도입.
-- **공공데이터 API 연동 및 공간 데이터 GUI**: 약 7만 건 이상의 전국 화장실 공공데이터(`전국공중화장실표준데이터` API 연동)를 PostGIS `Point` 타입으로 인덱싱. 이를 시각적으로 교차 검증하고 데이터베이스를 손쉽게 관리할 수 있도록 `pgAdmin4` GUI 도구를 Docker Compose 구성에 포함.
+- **표준 MVC 아키텍처 채택**: 개발 속도와 직관적인 구조를 위해 표준 Layered MVC 패턴을 적용. `com.daypoo.api` 하위에 `controller`, `service`, `repository`, `entity` 구조를 명확히 분리하여 유지보수성 확보.
+- **Design-First API 문서화**: 코드를 작성하기 전 `openapi.yaml`을 통해 API 명세를 선행 설계하고, 이를 Swagger UI로 시각화하여 프론트엔드와 협업 효율성 극대화.
+- **PostgreSQL/PostGIS 전환**: 초기 MySQL 계획에서 공간 데이터 처리에 특화된 PostgreSQL 및 PostGIS 확장 도입으로 결정. 약 7만 건 이상의 전국 화장실 데이터를 효율적으로 쿼리 가능.
+- **인프라 간소화**: 로컬 개발 환경의 오버헤드를 줄이기 위해 pgAdmin 서비스를 제거하고, 디비버(DBeaver) 등 외부 범용 GUI 도구 사용을 권장.
 - **디자인 시스템 독립성 (CSS)**: Tailwind 등에 종속되지 않고 Vanilla CSS 기반으로 구축. 사용자에게 WOU(Wow) 모먼트를 주어야 하는 프리미엄 급의 마이크로 애니메이션과 독자적인 다이내믹 UI(Aesthetics)를 타협 없이 완성.
 - **소프트웨어 기반 GPS 검증**: 하드웨어적(NFC/QR) 한계를 인지하고 100% 소프트웨어 검증(가변 반경 체크 + 체류 시간)으로 선회하되, Redis의 Rate Limiter 알고리즘을 추가하여 어뷰징(매크로 및 GPS 스푸핑 기기)을 방어하는 다중 보안 채택.
 
@@ -128,7 +128,7 @@ graph TB
   - **고도화**: 대규모 트래픽 대응을 위해 화장실 혼잡도 및 실시간 가용성을 Redis에 캐싱하여 조회 성능 극대화.
 - **보보안 및 검증**:
   - **GPS 스푸핑 방지**: 모의 위치(Mock Location) 차단 및 이동 속도(Velocity) 검증.
-  - **유연한 오차 대응 (Indoor/Shadow)**: 
+  - **유연한 오차 대응 (Indoor/Shadow)**:
     - 건물 내부 또는 지하 화장실에서의 GPS 수신 불안정을 고려하여 **Wi-Fi/Network 기반 위치 보정** 및 유동적 반경 로직 적용.
     - GPS 수신 불가 시 '근처 화장실 수동 선택' 기능을 제공하되, 최종 인증 시 해당 위치 체류 여부(Network ID 등) 추가 검증.
   - **오차 반경**: 지역 및 환경에 따라 동적 반경(50m~150m) 및 최소 체류 시간(1분) 조건.
@@ -144,10 +144,10 @@ graph TB
 #### [NEW] AI 간편 촬영 인증 (추천)
 
 - **개요**: 카메라스킨(WebRTC Canvas)을 통해 촬영된 이미지로 AI가 배변 상태를 즉시 분석하여 아래 4단계를 자동 완성합니다.
-- **개인정보 보호 정책 (Strict Privacy)**: 
+- **개인정보 보호 정책 (Strict Privacy)**:
   - **무음 촬영(Fallback 포함)**: WebRTC 미디어 스트림에서 직접 Canvas 프레임을 추출하는 방식을 기본으로 하여 시스템 셔터음 발생을 원천 차단합니다. 브라우저 정책상 셔터음 강제 시 "무음 비디오 캡처" 방식으로 우회합니다.
   - **In-Memory Pipeline (No-Save)**: 촬영된 데이터는 클라이언트 ➔ 백엔드 ➔ AI 서버 ➔ OpenAI API로 이어지는 전 과정에서 물리 디스크에 저장되지 않고 휘발성 메모리(Byte Array) 상태로만 전송 및 폐기됩니다.
-  - **친절한 고지**: 촬영 화면 진입 시 *"사진은 소리 없이 촬영되며, 분석에만 사용된 후 즉시 삭제되니 안심하세요!"* 라는 안내 팝업 및 '보안 전송 중' 인디케이터를 강조 표출합니다.
+  - **친절한 고지**: 촬영 화면 진입 시 _"사진은 소리 없이 촬영되며, 분석에만 사용된 후 즉시 삭제되니 안심하세요!"_ 라는 안내 팝업 및 '보안 전송 중' 인디케이터를 강조 표출합니다.
 - **AI 어뷰징 방지**: 배변과 관련 없는 이미지(셀카, 실내 내부 등)가 입력될 경우 AI가 이를 감지하여 반려(`Invalid`) 처리하고 사용자에게 재촬영을 안내합니다.
 
 #### 직접 입력 및 AI 분석 수정 (4단계)

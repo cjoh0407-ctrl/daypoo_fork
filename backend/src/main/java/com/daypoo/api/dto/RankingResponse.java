@@ -1,10 +1,7 @@
 package com.daypoo.api.dto;
 
-import lombok.Builder;
 import java.util.List;
+import lombok.Builder;
 
 @Builder
-public record RankingResponse(
-    List<UserRankResponse> topRankers,
-    UserRankResponse myRank
-) {}
+public record RankingResponse(List<UserRankResponse> topRankers, UserRankResponse myRank) {}

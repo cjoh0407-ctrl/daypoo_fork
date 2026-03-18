@@ -14,10 +14,10 @@ spring:
   jpa:
     hibernate:
       ddl-auto: update
-    show-sql: true
+    show-sql: false
     properties:
       hibernate:
-        format_sql: true
+        format_sql: false
         dialect: org.hibernate.dialect.PostgreSQLDialect
         
   data:
@@ -66,12 +66,19 @@ app:
 
 public-data:
   api-key: ${PUBLIC_DATA_API_KEY}
+  url: ${PUBLIC_DATA_URL:https://apis.data.go.kr/1741000/public_restroom_info/info}
 
 ai-service:
   url: ${AI_SERVICE_URL}
 
 logging:
   level:
-    org.hibernate.SQL: DEBUG
-    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
-    com.daypoo: DEBUG
+    root: INFO
+    com.daypoo: INFO
+
+springdoc:
+  swagger-ui:
+    url: /openapi.yaml
+    path: /swagger-ui.html
+  api-docs:
+    enabled: true # 스웨거 UI 구동을 위해 활성화 필요

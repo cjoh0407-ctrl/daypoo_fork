@@ -13,32 +13,32 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Item extends BaseTimeEntity {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    @Column(nullable = false)
-    private String name;
+  @Column(nullable = false)
+  private String name;
 
-    @Column(nullable = false)
-    private String description;
+  @Column(nullable = false)
+  private String description;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private ItemType type;
+  @Enumerated(EnumType.STRING)
+  @Column(nullable = false)
+  private ItemType type;
 
-    @Column(nullable = false)
-    private long price;
+  @Column(nullable = false)
+  private long price;
 
-    @Column(name = "image_url")
-    private String imageUrl;
+  @Column(name = "image_url")
+  private String imageUrl;
 
-    @Builder
-    public Item(String name, String description, ItemType type, long price, String imageUrl) {
-        this.name = name;
-        this.description = description;
-        this.type = type;
-        this.price = price;
-        this.imageUrl = imageUrl;
-    }
+  @Builder
+  public Item(String name, String description, ItemType type, long price, String imageUrl) {
+    this.name = name;
+    this.description = description;
+    this.type = type;
+    this.price = price;
+    this.imageUrl = imageUrl;
+  }
 }
