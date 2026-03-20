@@ -12,5 +12,5 @@ public record SignUpRequest(
         String password,
     @NotBlank(message = "이메일은 필수입니다.") @Email(message = "이메일 형식이 올바르지 않습니다.") String email,
     @NotBlank(message = "닉네임은 필수입니다.")
-        @Size(min = 2, max = 10, message = "닉네임은 2자 이상 10자 이하로 입력해주세요.")
+        @Size(min = 2, max = 12, message = "닉네임은 2자 이상 12자 이하로 입력해주세요.")
         String nickname) {}

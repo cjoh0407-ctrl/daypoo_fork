@@ -1,6 +1,8 @@
 package com.daypoo.api.controller;
 
 import com.daypoo.api.dto.LoginRequest;
+import com.daypoo.api.dto.PasswordChangeRequest;
+import com.daypoo.api.dto.ProfileUpdateRequest;
 import com.daypoo.api.dto.SignUpRequest;
 import com.daypoo.api.dto.SocialSignUpRequest;
 import com.daypoo.api.dto.TokenResponse;
@@ -12,6 +14,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 @Tag(name = "Authentication", description = "인증 및 회원가입 API")
@@ -29,6 +32,25 @@ public class AuthController {
   public ResponseEntity<UserResponse> getCurrentUser() {
     UserResponse response = authService.getCurrentUserInfo();
     return ResponseEntity.ok(response);
+  }
+
+  @Operation(summary = "프로필 수정", description = "로그인한 사용자의 닉네임을 수정합니다.")
+  @ApiResponse(responseCode = "200", description = "프로필 수정 성공")
+  @PatchMapping("/me")
+  public ResponseEntity<String> updateProfile(
+      Authentication authentication, @Valid @RequestBody ProfileUpdateRequest request) {
+    authService.updateProfile(authentication.getName(), request);
+    return ResponseEntity.ok("프로필이 수정되었습니다.");
+  }
+
+  @Operation(summary = "비밀번호 변경", description = "현재 비밀번호 확인 후 새로운 비밀번호로 변경합니다.")
+  @ApiResponse(responseCode = "200", description = "비밀번호 변경 성공")
+  @ApiResponse(responseCode = "400", description = "비밀번호 불일치 또는 유효성 검사 실패")
+  @PatchMapping("/password")
+  public ResponseEntity<String> changePassword(
+      Authentication authentication, @Valid @RequestBody PasswordChangeRequest request) {
+    authService.changePassword(authentication.getName(), request);
+    return ResponseEntity.ok("비밀번호가 변경되었습니다.");
   }
 
   @Operation(summary = "아이디 중복 확인", description = "입력한 아이디(이메일)의 중복 여부를 확인합니다.")
@@ -84,6 +106,33 @@ public class AuthController {
   public ResponseEntity<String> findId(@RequestParam String nickname) {
     String foundEmail = authService.findIdByNickname(nickname);
     return ResponseEntity.ok(foundEmail);
+  }
+
+  @Operation(summary = "토큰 재발급", description = "리프레시 토큰을 사용하여 새로운 액세스 토큰을 발급합니다.")
+  @ApiResponse(responseCode = "200", description = "재발급 성공")
+  @ApiResponse(responseCode = "400", description = "유효하지 않은 리프레시 토큰")
+  @PostMapping("/refresh")
+  public ResponseEntity<TokenResponse> refresh(@RequestParam String refreshToken) {
+    TokenResponse response = authService.refresh(refreshToken);
+    return ResponseEntity.ok(response);
+  }
+
+  @Operation(summary = "로그아웃", description = "현재 로그아웃 처리를 수행합니다. (서버 측 토큰 무효화 준비)")
+  @ApiResponse(responseCode = "200", description = "로그아웃 성공")
+  @PostMapping("/logout")
+  public ResponseEntity<String> logout(Authentication authentication) {
+    authService.logout(authentication.getName());
+    return ResponseEntity.ok("로그아웃되었습니다.");
+  }
+
+  @Operation(summary = "회원 탈퇴", description = "사용자의 모든 데이터를 삭제하고 탈퇴 처리를 수행합니다.")
+  @ApiResponse(responseCode = "200", description = "탈퇴 성공")
+  @ApiResponse(responseCode = "400", description = "비밀번호 불일치")
+  @DeleteMapping("/me")
+  public ResponseEntity<String> withdraw(
+      Authentication authentication, @RequestParam String password) {
+    authService.withdraw(authentication.getName(), password);
+    return ResponseEntity.ok("회원 탈퇴가 완료되었습니다.");
   }
 
   @Operation(summary = "비밀번호 재설정", description = "이메일을 입력받아 해당 이메일로 임시 비밀번호를 발송합니다.")

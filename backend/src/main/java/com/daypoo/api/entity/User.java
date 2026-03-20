@@ -2,6 +2,8 @@ package com.daypoo.api.entity;
 
 import com.daypoo.api.global.BaseTimeEntity;
 import jakarta.persistence.*;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -45,6 +47,24 @@ public class User extends BaseTimeEntity {
   @Column(nullable = false)
   private Role role;
 
+  @OneToMany(mappedBy = "user", cascade = CascadeType.REMOVE, orphanRemoval = true)
+  private List<PooRecord> records = new ArrayList<>();
+
+  @OneToMany(mappedBy = "user", cascade = CascadeType.REMOVE, orphanRemoval = true)
+  private List<UserTitle> titles = new ArrayList<>();
+
+  @OneToMany(mappedBy = "user", cascade = CascadeType.REMOVE, orphanRemoval = true)
+  private List<Notification> notifications = new ArrayList<>();
+
+  @OneToMany(mappedBy = "user", cascade = CascadeType.REMOVE, orphanRemoval = true)
+  private List<Inventory> inventories = new ArrayList<>();
+
+  @OneToMany(mappedBy = "user", cascade = CascadeType.REMOVE, orphanRemoval = true)
+  private List<Payment> payments = new ArrayList<>();
+
+  @OneToMany(mappedBy = "user", cascade = CascadeType.REMOVE, orphanRemoval = true)
+  private List<Inquiry> inquiries = new ArrayList<>();
+
   @Builder
   public User(String username, String password, String email, String nickname, Role role) {
     this.username = username;
@@ -82,6 +102,10 @@ public class User extends BaseTimeEntity {
 
   public void equipTitle(Long titleId) {
     this.equippedTitleId = titleId;
+  }
+
+  public void updateNickname(String nickname) {
+    this.nickname = nickname;
   }
 
   public void updatePassword(String password) {

@@ -3,6 +3,8 @@ package com.daypoo.api.controller;
 import com.daypoo.api.dto.*;
 import com.daypoo.api.entity.ItemType;
 import com.daypoo.api.entity.User;
+import com.daypoo.api.global.exception.BusinessException;
+import com.daypoo.api.global.exception.ErrorCode;
 import com.daypoo.api.repository.UserRepository;
 import com.daypoo.api.service.ShopService;
 import java.util.List;
@@ -73,6 +75,6 @@ public class ShopController {
   private User getUserByUsername(String username) {
     return userRepository
         .findByUsername(username)
-        .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+        .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
   }
 }

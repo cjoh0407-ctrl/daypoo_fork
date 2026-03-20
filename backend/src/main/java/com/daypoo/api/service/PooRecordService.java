@@ -6,6 +6,8 @@ import com.daypoo.api.dto.PooRecordResponse;
 import com.daypoo.api.entity.PooRecord;
 import com.daypoo.api.entity.Toilet;
 import com.daypoo.api.entity.User;
+import com.daypoo.api.global.exception.BusinessException;
+import com.daypoo.api.global.exception.ErrorCode;
 import com.daypoo.api.mapper.PooRecordMapper;
 import com.daypoo.api.repository.PooRecordRepository;
 import com.daypoo.api.repository.ToiletRepository;
@@ -14,6 +16,8 @@ import java.util.Collections;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -43,12 +47,12 @@ public class PooRecordService {
     User user =
         userRepository
             .findByUsername(username)
-            .orElseThrow(() -> new RuntimeException("User not found: " + username));
+            .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
     // 위치 검증 (확대된 150m 반경 사용)
     boolean isNear = locationVerificationService.isWithinAllowedDistance(toiletId, lat, lon);
     if (!isNear) {
-      throw new RuntimeException("화장실 반경 내에 있지 않습니다.");
+      throw new BusinessException(ErrorCode.LOCATION_OUT_OF_RANGE);
     }
 
     // 도착 시간 기록
@@ -63,12 +67,12 @@ public class PooRecordService {
     User user =
         userRepository
             .findByUsername(username)
-            .orElseThrow(() -> new RuntimeException("User not found: " + username));
+            .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
     Toilet toilet =
         toiletRepository
             .findById(request.toiletId())
-            .orElseThrow(() -> new RuntimeException("Toilet not found: " + request.toiletId()));
+            .orElseThrow(() -> new BusinessException(ErrorCode.ENTITY_NOT_FOUND));
 
     // 2. 물리적 위치 반경 검증 (개발 환경에서는 경고만 출력)
     boolean isNear =
@@ -152,15 +156,30 @@ public class PooRecordService {
         toilet.getId());
 
     // 8. Response 조합
-    return PooRecordResponse.builder()
-        .id(savedRecord.getId())
-        .toiletId(toilet.getId())
-        .toiletName(toilet.getName())
-        .bristolScale(savedRecord.getBristolScale())
-        .color(savedRecord.getColor())
-        .conditionTags(safeConditionTags)
-        .dietTags(safeDietTags)
-        .createdAt(savedRecord.getCreatedAt())
-        .build();
+    return recordMapper.toResponse(savedRecord);
+  }
+
+  @Transactional(readOnly = true)
+  public Page<PooRecordResponse> getMyRecords(String username, Pageable pageable) {
+    User user =
+        userRepository
+            .findByUsername(username)
+            .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+    return recordRepository.findByUserOrderByCreatedAtDesc(user, pageable).map(recordMapper::toResponse);
+  }
+
+  @Transactional(readOnly = true)
+  public PooRecordResponse getRecord(String username, Long recordId) {
+    PooRecord record =
+        recordRepository
+            .findById(recordId)
+            .orElseThrow(() -> new BusinessException(ErrorCode.ENTITY_NOT_FOUND));
+
+    if (!record.getUser().getUsername().equals(username)) {
+      throw new BusinessException(ErrorCode.HANDLE_ACCESS_DENIED);
+    }
+
+    return recordMapper.toResponse(record);
   }
 }

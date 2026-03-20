@@ -1,6 +1,8 @@
 package com.daypoo.api.service;
 
 import com.daypoo.api.dto.LoginRequest;
+import com.daypoo.api.dto.PasswordChangeRequest;
+import com.daypoo.api.dto.ProfileUpdateRequest;
 import com.daypoo.api.dto.SignUpRequest;
 import com.daypoo.api.dto.SocialSignUpRequest;
 import com.daypoo.api.dto.TokenResponse;
@@ -166,5 +168,72 @@ public class AuthService {
             tempPassword);
 
     emailService.sendEmail(user.getEmail(), subject, text);
+  }
+
+  @Transactional
+  public void updateProfile(String username, ProfileUpdateRequest request) {
+    User user =
+        userRepository
+            .findByUsername(username)
+            .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+    // 닉네임이 현재와 다를 경우만 중복 체크
+    if (!user.getNickname().equals(request.nickname())) {
+      checkNicknameDuplicate(request.nickname());
+      user.updateNickname(request.nickname());
+    }
+  }
+
+  @Transactional
+  public void changePassword(String username, PasswordChangeRequest request) {
+    User user =
+        userRepository
+            .findByUsername(username)
+            .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+    if (!passwordEncoder.matches(request.currentPassword(), user.getPassword())) {
+      throw new BusinessException(ErrorCode.INVALID_PASSWORD);
+    }
+
+    user.updatePassword(passwordEncoder.encode(request.newPassword()));
+  }
+
+  @Transactional(readOnly = true)
+  public TokenResponse refresh(String refreshToken) {
+    if (!jwtProvider.validateToken(refreshToken)) {
+      throw new BusinessException(ErrorCode.INVALID_TOKEN);
+    }
+
+    Claims claims = jwtProvider.getClaims(refreshToken);
+    String username = claims.getSubject();
+
+    User user =
+        userRepository
+            .findByUsername(username)
+            .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+    String newAccessToken = jwtProvider.createAccessToken(user.getUsername(), user.getRole().name());
+
+    return TokenResponse.builder().accessToken(newAccessToken).refreshToken(refreshToken).build();
+  }
+
+  @Transactional
+  public void logout(String username) {
+    // Redis 블랙리스트 등을 사용하여 토큰을 무효화하는 로직을 여기에 구현할 수 있습니다.
+    // 현재는 로그아웃 성공 메시지만 반환하는 수준으로 처리합니다.
+  }
+
+  @Transactional
+  public void withdraw(String username, String password) {
+    User user =
+        userRepository
+            .findByUsername(username)
+            .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+    if (!passwordEncoder.matches(password, user.getPassword())) {
+      throw new BusinessException(ErrorCode.INVALID_PASSWORD);
+    }
+
+    userRepository.delete(user);
   }
 }

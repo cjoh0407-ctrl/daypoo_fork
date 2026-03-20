@@ -9,8 +9,12 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -51,5 +55,24 @@ public class PooRecordController {
 
     PooRecordResponse response = recordService.createRecord(username, request);
     return ResponseEntity.ok(response);
+  }
+
+  @Operation(summary = "내 배변 기록 목록 조회", description = "현재 로그인한 사용자의 모든 배변 기록을 최신순으로 조회합니다. (페이징 지원)")
+  @ApiResponse(responseCode = "200", description = "조회 성공")
+  @GetMapping
+  public ResponseEntity<Page<PooRecordResponse>> getMyRecords(
+      Authentication authentication, Pageable pageable) {
+    String username = authentication.getName();
+    return ResponseEntity.ok(recordService.getMyRecords(username, pageable));
+  }
+
+  @Operation(summary = "배변 기록 상세 조회", description = "특정 배변 기록의 상세 정보를 조회합니다.")
+  @ApiResponse(responseCode = "200", description = "조회 성공")
+  @ApiResponse(responseCode = "404", description = "기록을 찾을 수 없음")
+  @GetMapping("/{id}")
+  public ResponseEntity<PooRecordResponse> getRecord(
+      Authentication authentication, @PathVariable("id") Long id) {
+    String username = authentication.getName();
+    return ResponseEntity.ok(recordService.getRecord(username, id));
   }
 }

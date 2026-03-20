@@ -1,5 +1,52 @@
 # Modification History
 
+## [2026-03-21 00:30:00] 백엔드 기능 고도화: 업적 시스템 완성, 인증 확장 및 에러 핸들링 통일 (BE-06 ~ BE-09)
+
+### 작업 내용
+- **업적 시스템 완성 (BE-06)**: `UNIQUE_TOILETS` 업적(다양한 화장실 방문) 로직을 구현하고, 칭호 획득 시 실시간 알림(`ACHIEVEMENT` 타입)이 발송되도록 `NotificationService`와 연동했습니다.
+- **로그아웃 및 회원 탈퇴 API 구현 (BE-07)**: 보안 강화를 위해 로그아웃 엔드포인트를 추가하고, 회원 탈퇴 시 해당 사용자의 모든 연관 데이터(배변 기록, 칭호, 알림, 인벤토리 등)가 자동으로 삭제되도록 `User` 엔티티의 JPA Cascade 설정을 완료했습니다.
+- **소셜 로그인 서비스 코드 정리 (BE-08)**: `CustomOAuth2UserService`에서 미사용 필드 및 임포트를 제거하고, 린트 경고를 해결하여 코드 품질을 개선했습니다.
+- **통합 에러 핸들링 및 BusinessException 적용 (BE-09)**: 컨트롤러 계층의 예외 처리 로직을 `BusinessException`으로 통일했습니다. `IllegalArgumentException`을 적절한 `ErrorCode`를 가진 예외로 교체하고, 불필요한 `try-catch` 블록을 제거하여 `GlobalExceptionHandler`가 일관되게 에러를 처리하도록 리팩토링했습니다.
+
+### 상세 변경 내역
+- `backend/src/main/java/com/daypoo/api/repository/PooRecordRepository.java`: `countDistinctToiletsByUser` 쿼리 메서드 추가.
+- `backend/src/main/java/com/daypoo/api/service/TitleAchievementService.java`: `UNIQUE_TOILETS` 체크 로직 구현 및 알림 발송 연동.
+- `backend/src/main/java/com/daypoo/api/entity/NotificationType.java`: `ACHIEVEMENT` 열거형 추가.
+- `backend/src/main/java/com/daypoo/api/entity/User.java`: 연관 엔티티들에 대한 `CascadeType.REMOVE` 및 `orphanRemoval=true` 설정 추가.
+- `backend/src/main/java/com/daypoo/api/service/AuthService.java`: `logout` (스텁) 및 `withdraw` (비밀번호 검증 및 삭제) 메서드 구현.
+- `backend/src/main/java/com/daypoo/api/controller/AuthController.java`: `POST /logout`, `DELETE /me` 엔드포인트 추가.
+- `backend/src/main/java/com/daypoo/api/service/CustomOAuth2UserService.java`: 미사용 필드 및 로컬 변수 제거.
+- `backend/src/main/java/com/daypoo/api/controller/SupportController.java`, `ReportController.java`, `ShopController.java`, `NotificationController.java`: `BusinessException` 적용 및 에러 핸들링 로직 정돈.
+
+### 결과/영향
+- 업적 달성 시 사용자에게 즉각적인 알림 피드백을 제공하여 서비스 참여도를 높였습니다.
+- 회원 탈퇴 시 데이터 무결성을 보장하며, 시스템 전반의 에러 응답 형식이 일관되게 유지되어 클라이언트와의 통신 안정성이 향상되었습니다.
+- 백엔드 코드의 유지보수성이 개선되었습니다.
+
+## [2026-03-20 21:30:00] 백엔드 보안 강화 및 주요 기능 API 구현 (BE-02 ~ BE-05)
+
+### 작업 내용
+- **Admin API 보안 강화 (BE-02)**: `/api/v1/admin/**` 경로의 접근 권한을 `ROLE_ADMIN`으로 제한하여 누구나 접근 가능한 보안 취약점을 해결했습니다.
+- **배변 기록 조회 API 추가 (BE-03)**: 사용자가 본인의 과거 배변 기록을 최신순으로 페이징 조회하거나 특정 기록의 상세 내용을 확인할 수 있는 API를 구현했습니다.
+- **프로필(닉네임) 수정 및 비밀번호 변경 API 구현 (BE-04)**: 마이페이지에서 사용할 수 있도록 닉네임 중복 체크를 포함한 프로필 수정 기능과 기존 비밀번호 확인을 포함한 비밀번호 변경 기능을 추가했습니다.
+- **JWT Refresh Token 갱신 API 구현 (BE-05)**: 액세스 토큰 만료 시 리프레시 토큰을 통해 새로운 액세스 토큰을 발급받을 수 있는 엔드포인트를 추가하여 로그인 유지 기능을 강화했습니다.
+- **예외 처리 구조화**: 기존의 `RuntimeException`을 `BusinessException` 및 `ErrorCode` 체계로 전환하여 일관된 에러 응답을 제공하도록 리팩토링했습니다.
+
+### 상세 변경 내역
+- `backend/src/main/java/com/daypoo/api/security/SecurityConfig.java`: Admin 경로 권한 설정 변경.
+- `backend/src/main/java/com/daypoo/api/repository/PooRecordRepository.java`: Pageable 기반 유저 기록 조회 쿼리 추가.
+- `backend/src/main/java/com/daypoo/api/service/PooRecordService.java`: 조회 로직 구현 및 예외 처리 고도화.
+- `backend/src/main/java/com/daypoo/api/controller/PooRecordController.java`: GET 엔드포인트 2종 추가.
+- `backend/src/main/java/com/daypoo/api/entity/User.java`: `updateNickname` 비즈니스 로직 추가.
+- `backend/src/main/java/com/daypoo/api/dto/ProfileUpdateRequest.java`: 신규 DTO 생성.
+- `backend/src/main/java/com/daypoo/api/dto/PasswordChangeRequest.java`: 신규 DTO 생성.
+- `backend/src/main/java/com/daypoo/api/service/AuthService.java`: 프로필 수정, 비밀번호 변경, 토큰 재발급 로직 통합.
+- `backend/src/main/java/com/daypoo/api/controller/AuthController.java`: PATCH(프로필, 비밀번호) 및 POST(refresh) 엔드포인트 추가.
+
+### 결과/영향
+- 서버 보안이 강화되었으며, 사용자가 본인의 활동 기록을 확인하고 개인 정보를 수정할 수 있는 필수 백엔드 기반이 마련되었습니다.
+- 프론트엔드 마이페이지 작업(`FE-04`, `FE-05`)을 위한 API 연동 준비가 완료되었습니다.
+
 ## [2026-03-20 14:15:00] 아이디/비밀번호 찾기 기능 구현 및 이메일 시스템 연동
 
 ### 작업 내용

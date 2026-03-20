@@ -48,7 +48,7 @@ public class SecurityConfig {
                 auth.requestMatchers(HttpMethod.OPTIONS, "/**")
                     .permitAll()
                     .requestMatchers("/api/v1/admin/**")
-                    .permitAll()
+                    .hasRole("ADMIN")
                     .requestMatchers(
                         "/api/v1/auth/**",
                         "/api/v1/auth/password/**",
