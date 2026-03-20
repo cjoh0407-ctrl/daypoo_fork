@@ -1,14 +1,9 @@
 package com.daypoo.api.service;
 
-import com.daypoo.api.entity.User;
-import com.daypoo.api.repository.UserRepository;
 import com.daypoo.api.security.GoogleOAuth2UserInfo;
 import com.daypoo.api.security.KakaoOAuth2UserInfo;
 import com.daypoo.api.security.OAuth2UserInfo;
 import java.util.Collections;
-import java.util.UUID;
-import lombok.RequiredArgsConstructor;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
@@ -17,11 +12,7 @@ import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 
 @Service
-@RequiredArgsConstructor
 public class CustomOAuth2UserService extends DefaultOAuth2UserService {
-
-  private final UserRepository userRepository;
-  private final PasswordEncoder passwordEncoder;
 
   @Override
   public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
@@ -47,7 +38,6 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     String provider = oAuth2UserInfo.getProvider();
     String providerId = oAuth2UserInfo.getProviderId();
     String email = oAuth2UserInfo.getEmail();
-    String nickname = oAuth2UserInfo.getName();
 
     // 소셜 로그인 회원의 경우 username은 provider_providerId 로 생성
     String username = provider + "_" + providerId;
@@ -59,7 +49,6 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
     // 실제 로그인이 완료된 후 SuccessHandler에서 DB 존재 여부를 체크하여
     // 기존 회원이 아니면 프론트엔드의 닉네임 설정 페이지로 리다이렉트합니다.
-
 
     return new DefaultOAuth2User(
         Collections.emptyList(), oAuth2User.getAttributes(), userNameAttributeName);
