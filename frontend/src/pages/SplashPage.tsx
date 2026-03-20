@@ -1,9 +1,9 @@
 import { AnimatePresence, motion, useMotionValue } from 'framer-motion';
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useTransitionContext } from '../context/TransitionContext';
 import { BlobBackground } from '../components/BlobBackground';
 import { CustomCursor } from '../components/CustomCursor';
-import { useTransitionContext } from '../context/TransitionContext';
+import { FramerSlideInButton } from '../components/FramerSlideInButton';
 
 const containerVariants = {
   initial: { opacity: 0, y: 40 },
@@ -11,7 +11,7 @@ const containerVariants = {
     opacity: 1,
     y: 0,
     transition: {
-      staggerChildren: 0.2, // 각 요소가 등장하는 간격을 늘림
+      staggerChildren: 0.2,
       delayChildren: 0.1,
     },
   },
@@ -35,7 +35,6 @@ export function SplashPage() {
     setIsReady(true);
   }, []);
 
-  // Initialize mouse motion values
   const mouseX = useMotionValue(
     typeof window !== 'undefined' ? window.innerWidth / 2 : 0
   );
@@ -44,7 +43,7 @@ export function SplashPage() {
   );
 
   const handleStart = () => {
-    transitionTo('/main'); // 메인 페이지 경로
+    transitionTo('/main');
   };
 
   return (
@@ -59,7 +58,6 @@ export function SplashPage() {
       <CustomCursor />
       <BlobBackground />
 
-      {/* ✅ 콘텐츠 래퍼 — background 제거, 블롭이 비치게 */}
       <div className="relative z-10 flex min-h-screen items-center justify-center text-white">
         <AnimatePresence>
           {phase === 'idle' && isReady && (
@@ -85,7 +83,7 @@ export function SplashPage() {
                   >
                     <span>Day</span>
                     <motion.span
-                      className="mx-0.5 inline-block text-amber"
+                      className="mx-0.5 inline-block text-[#52b788]"
                       initial={{ scale: 0, rotate: -45 }}
                       animate={{ scale: 1, rotate: 0 }}
                       transition={{
@@ -118,16 +116,10 @@ export function SplashPage() {
                 <div className="h-px w-20 bg-gradient-to-r from-transparent via-white/40 to-transparent" />
               </motion.div>
 
-              <motion.div variants={fadeUp} className="mt-8">
-                <button
-                  type="button"
-                  onClick={handleStart}
-                  data-magnetic-target="true"
-                  className="group relative inline-flex items-center justify-center rounded-full bg-amber px-16 py-5 text-lg md:text-xl font-semibold text-green-deep transition-transform duration-200 hover:-translate-y-0.5 focus:outline-none"
-                >
-                  <span className="relative z-10">시작하기</span>
-                  <span className="absolute inset-0 rounded-full bg-white/20 opacity-0 transition-opacity duration-200 group-hover:opacity-100" />
-                </button>
+              <motion.div variants={fadeUp} className="mt-8 text-white">
+                <FramerSlideInButton onClick={handleStart} primary className="px-16 py-5 text-lg md:text-xl">
+                  시작하기
+                </FramerSlideInButton>
               </motion.div>
 
               <motion.p
@@ -145,4 +137,3 @@ export function SplashPage() {
     </div>
   );
 }
-

@@ -475,6 +475,7 @@ function SignupForm({ onSwitch, onSuccess }: { onSwitch: () => void; onSuccess?:
     try {
       await api.post('/auth/signup', {
         username: email,
+        email: email,      // 이메일 필드 추가됨
         password: password,
         nickname: nickname,
         // birthDate: `${birthYear}-${birthMonth.padStart(2, '0')}-${birthDay.padStart(2, '0')}`, // 백엔드 준비 후 주석 해제

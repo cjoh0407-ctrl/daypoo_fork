@@ -1,13 +1,63 @@
-import { motion, useInView, useMotionValue, useSpring, AnimatePresence } from 'framer-motion';
-import { useEffect, useRef, useState, useCallback } from 'react';
-import { MapPin, Zap, Brain, ChevronLeft, ChevronRight, Sparkles, ArrowRight } from 'lucide-react';
-import { NovaGlow } from './NovaGlow';
+import { motion, useMotionValue, useSpring, useMotionTemplate, animate } from 'framer-motion';
+import { useRef } from 'react';
+import { MapPin, Map, Activity, Sparkles } from 'lucide-react';
+import { FluidFlow } from './FluidFlow';
 import { BlobStatsSection } from './BlobStatsSection';
 import { TimelineSteps } from './TimelineSteps';
+import { FramerSlideInButton } from './FramerSlideInButton';
 
 interface HeroSectionProps {
   onCtaClick: () => void;
+  openAuth: (mode: 'login' | 'signup') => void;
 }
+
+// ── Smooth Reveal Heading ──────────────────────────────────────────
+function RevealHeading({ children }: { children: React.ReactNode }) {
+  const maskOpacity = useMotionValue(0);
+
+  const handleMouseEnter = () => {
+    animate(maskOpacity, 1, { duration: 0.15, ease: "easeOut" });
+  };
+
+  const handleMouseLeave = () => {
+    animate(maskOpacity, 0, { duration: 0.4, ease: "easeInOut" });
+  };
+
+  return (
+    <div 
+      onPointerEnter={handleMouseEnter}
+      onPointerLeave={handleMouseLeave}
+      onPointerMove={() => {
+        if (maskOpacity.get() === 0) handleMouseEnter();
+      }}
+      className="relative w-full cursor-default z-40"
+    >
+      {/* Expanded Hover Detection Area (Invisible) */}
+      <div className="absolute -inset-x-12 -inset-y-40 z-0" />
+
+      {/* 1. Base Layer: Hidden (Total Invisible for Layout) */}
+      <div className="relative select-none opacity-0">
+        {children}
+      </div>
+
+      {/* 2. Reveal Layer: Smooth Fade In/Out */}
+      <motion.div 
+        className="absolute inset-0 pointer-events-none select-none z-20"
+        style={{ 
+          opacity: maskOpacity 
+        }}
+      >
+        <div style={{ color: '#FFFFFF' }}>
+          {children}
+        </div>
+      </motion.div>
+
+      {/* 3. Fallback/Initial Layer (Already handled by 1 & 2) */}
+    </div>
+  );
+}
+
+// ──────────────────────────────────────────────────────────────────────────
 
 // ════════════════════════════════════════════════════════════
 //  CIRCULAR CAROUSEL (사용되지 않지만 코드는 유지)
@@ -16,7 +66,7 @@ interface HeroSectionProps {
 const SLIDES = [
   {
     id: 0,
-    tag: '🗺 전국 커버리지',
+    tag: <div className="flex items-center gap-1.5"><Map size={14} /><span>전국 커버리지</span></div>,
     tagBg: '#e8f3ec',
     tagColor: '#2D6A4F',
     accentColor: '#1B4332',
@@ -27,14 +77,14 @@ const SLIDES = [
     bullets: [
       { color: '#2D6A4F', label: '24시간 개방', value: '18,400곳' },
       { color: '#52b788', label: '장애인 접근', value: '31,200곳' },
-      { color: '#E8A838', label: '오늘 신규 등록', value: '12곳 🔴' },
+      { color: '#E8A838', label: '오늘 신규 등록', value: '12곳' },
     ],
     cardBg: 'linear-gradient(145deg, #ffffff 0%, #f4faf6 100%)',
     border: '#d4e8db',
   },
   {
     id: 1,
-    tag: '💩 실시간 활동',
+    tag: <div className="flex items-center gap-1.5"><Activity size={14} /><span>실시간 활동</span></div>,
     tagBg: '#fdf3de',
     tagColor: '#b5810f',
     accentColor: '#E8A838',
@@ -52,7 +102,7 @@ const SLIDES = [
   },
   {
     id: 2,
-    tag: '✨ AI 건강 분석',
+    tag: <div className="flex items-center gap-1.5"><Sparkles size={14} /><span>AI 건강 분석</span></div>,
     tagBg: '#fce8e8',
     tagColor: '#c0392b',
     accentColor: '#52b788',
@@ -71,22 +121,22 @@ const SLIDES = [
 ];
 
 
-export function HeroSection({ onCtaClick }: HeroSectionProps) {
+export function HeroSection({ onCtaClick, openAuth }: HeroSectionProps) {
   const fadeUp = {
     hidden: { opacity: 0, y: 36 },
-    show: { opacity: 1, y: 0, transition: { duration: 0.7, ease: 'easeOut' as const } },
+    show: { opacity: 1, y: 0, transition: { duration: 0.4, ease: 'easeOut' as const } },
   };
   const stagger = {
     hidden: {},
-    show: { transition: { staggerChildren: 0.18 } },
+    show: { transition: { staggerChildren: 0.1 } },
   };
 
   return (
     <>
-      {/* 1. HERO + STATS (Unified Background with Glow) */}
+      {/* 1. HERO + STATS (Unified Background with Interactive Fluid Flow) */}
       <div className="relative" style={{ backgroundColor: 'var(--bg-light)' }}>
-        <NovaGlow />
-
+        <FluidFlow />
+        
         <section
           className="relative z-10 min-h-screen flex flex-col items-center justify-center px-6 text-center overflow-hidden"
           style={{ backgroundColor: 'transparent' }}
@@ -98,78 +148,49 @@ export function HeroSection({ onCtaClick }: HeroSectionProps) {
             viewport={{ once: true }}
             className="max-w-4xl relative z-10"
           >
-
-            <motion.h1
-              variants={fadeUp}
-              className="text-[34px] sm:text-[42px] md:text-[84px] font-black leading-[1.1] md:leading-[1.05] tracking-tight"
-              style={{ color: 'var(--text-main)' }}
-            >
-              당신의 흔적이 <br />
-              <span
-                style={{
-                  color: 'var(--green-deep)',
-                  background: 'linear-gradient(135deg, #1B4332 0%, #2D6A4F 100%)',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                }}
+            <RevealHeading>
+              <h1
+                className="text-[48px] sm:text-[64px] md:text-[124px] font-black leading-[1] md:leading-[0.95] tracking-tight"
+                style={{ color: 'var(--text-main)' }}
               >
+                당신의 흔적이 <br />
                 건강이 됩니다
-              </span>
-            </motion.h1>
-
-            <motion.p
-              variants={fadeUp}
-              className="mt-6 text-lg md:text-2xl max-w-2xl mx-auto"
-              style={{ color: 'var(--text-sec)', lineHeight: 1.6 }}
-            >
-              매일의 배변 기록으로 만드는 나만의 건강 지도.
-              <br className="hidden md:block" />
-              전국 화장실 데이터 + AI 분석이 합쳐졌습니다.
-            </motion.p>
-
-            <motion.div variants={fadeUp} className="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
-              <button
-                onClick={onCtaClick}
-                className="group px-10 py-4 text-lg font-bold text-white transition-all hover:scale-105 active:scale-95 shadow-lg flex items-center justify-center gap-2"
-                style={{
-                  backgroundColor: 'var(--green-deep)',
-                  borderRadius: '100px',
-                  boxShadow: '0 8px 32px rgba(27,67,50,0.35)',
-                }}
+              </h1>
+              <p
+                className="mt-8 text-lg md:text-2xl max-w-3xl mx-auto font-medium leading-relaxed"
+                style={{ color: 'var(--text-main)' }}
               >
-                <MapPin size={20} />
-                지금 화장실 찾기
-                <motion.span
-                  animate={{ x: [0, 4, 0] }}
-                  transition={{ duration: 1.5, repeat: Number.POSITIVE_INFINITY }}
+                매일의 배변 기록으로 만드는 나만의 건강 지도.
+                <br className="hidden md:block" />
+                전국 화장실 데이터 + AI 분석이 합쳐졌습니다.
+              </p>
+
+              <div className="mt-12 flex flex-col sm:flex-row gap-8 justify-center items-center">
+                <FramerSlideInButton onClick={onCtaClick} primary>
+                  <MapPin size={22} className="text-white opacity-80" />
+                  <span>지금 화장실 찾기</span>
+                  <motion.span
+                    animate={{ x: [0, 5, 0] }}
+                    transition={{ duration: 1.5, repeat: Infinity }}
+                  >
+                    →
+                  </motion.span>
+                </FramerSlideInButton>
+
+                <FramerSlideInButton 
+                  onClick={() => document.getElementById('steps-section')?.scrollIntoView({ behavior: 'smooth' })}
                 >
-                  →
-                </motion.span>
-              </button>
-
-              <button
-                onClick={() =>
-                  document.getElementById('steps-section')?.scrollIntoView({ behavior: 'smooth' })
-                }
-                className="px-10 py-4 text-lg font-semibold transition-all hover:scale-105 active:scale-95"
-                style={{
-                  borderRadius: '100px',
-                  border: '1.5px solid rgba(27,67,50,0.25)',
-                  color: 'var(--green-deep)',
-                  backgroundColor: 'transparent',
-                }}
+                  <span>서비스 둘러보기</span>
+                </FramerSlideInButton>
+              </div>
+              <motion.p
+                variants={fadeUp}
+                className="mt-6 text-sm font-bold"
+                style={{ color: 'var(--text-main)', opacity: 0.6 }}
               >
-                서비스 둘러보기
-              </button>
-            </motion.div>
-
-            <motion.p
-              variants={fadeUp}
-              className="mt-4 text-sm"
-              style={{ color: 'var(--text-sec)', opacity: 0.6 }}
-            >
-              로그인 없이도 화장실 찾기 가능
-            </motion.p>
+                로그인 없이도 화장실 찾기 가능
+              </motion.p>
+            </RevealHeading>
           </motion.div>
 
           <motion.div
@@ -193,7 +214,7 @@ export function HeroSection({ onCtaClick }: HeroSectionProps) {
         </div>
 
         {/* 하단 페이드 아웃 오버레이 (배경 끊김 방지) */}
-        <div 
+        <div
           className="absolute bottom-0 left-0 right-0 h-64 pointer-events-none z-20"
           style={{
             background: 'linear-gradient(to bottom, transparent, var(--bg-light))'
@@ -226,10 +247,9 @@ export function HeroSection({ onCtaClick }: HeroSectionProps) {
             </h2>
           </motion.div>
 
-          <TimelineSteps />
+          <TimelineSteps openAuth={openAuth} />
         </div>
       </section>
-
     </>
   );
 }

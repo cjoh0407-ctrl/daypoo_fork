@@ -18,7 +18,7 @@ const STATS: StatConfig[] = [
     target: 72000,
     format: (v) => v >= 1000 ? `${Math.round(v / 1000)}천+` : `${v}`,
     label: '전국 화장실 지도',
-    desc: '공공데이터 기반 실시간 위치 정보',
+    desc: '공공데이터 기반\n실시간 위치 정보',
     icon: <MapPin size={22} />,
     color: '#E8A838',
   },
@@ -78,21 +78,21 @@ function GlassPillarCard({
       animate={inView ? { opacity: 1, y: 0 } : {}}
       transition={{ duration: 2.2, delay: delay / 1000, ease: [0.16, 1, 0.3, 1] }}
       whileHover={{ y: -15, scale: 1.02 }}
-      className={`relative flex flex-col items-center group cursor-default w-full ${isCenter ? 'max-w-[340px]' : 'max-w-[300px]'}`}
+      className={`relative flex flex-col items-center group cursor-default w-full ${isCenter ? 'max-w-[310px]' : 'max-w-[270px]'}`}
       style={{ zIndex: isCenter ? 20 : 10 }}
     >
       {/* 카드 본체 (Glassmorphism) */}
       <div className="relative w-full rounded-[48px] overflow-hidden p-8 md:p-10 flex flex-col items-center text-center transition-all duration-700"
         style={{
-          background: 'rgba(255, 255, 255, 0.4)',
-          backdropFilter: 'blur(20px)',
-          WebkitBackdropFilter: 'blur(20px)',
-          border: '1.5px solid rgba(255, 255, 255, 0.5)',
+          background: 'rgba(255, 255, 255, 0.6)',
+          backdropFilter: 'blur(24px)',
+          WebkitBackdropFilter: 'blur(24px)',
+          border: '1.5px solid rgba(255, 255, 255, 0.3)',
           boxShadow: isCenter 
             ? '0 30px 60px rgba(0,0,0,0.06), inset 0 0 20px rgba(255,255,255,0.2)' 
             : '0 20px 40px rgba(0,0,0,0.04)',
           height: 'auto',
-          minHeight: isCenter ? '440px' : '400px',
+          minHeight: isCenter ? '380px' : '340px',
         }}
       >
         {/* 내부 글로우 (Hover 시 활성화) */}
@@ -109,20 +109,20 @@ function GlassPillarCard({
             boxShadow: '0 8px 24px rgba(0,0,0,0.08)',
             border: `1px solid ${stat.color}20`
           }}>
-          <div className="absolute inset-0 rounded-full animate-ping opacity-10" style={{ backgroundColor: stat.color }} />
+          <div className="absolute inset-0 rounded-full animate-ping opacity-5 bg-[#1B4332]" />
           <div style={{ color: stat.color }}>{stat.icon}</div>
         </div>
 
         {/* 텍스트 영역 */}
         <div className="flex-1 flex flex-col justify-center">
-          <h4 className="text-xs font-black uppercase tracking-[0.2em] mb-4 text-gray-400">
+          <h4 className="text-xs font-black uppercase tracking-[0.2em] mb-4 text-[#1B4332]">
             {stat.label}
           </h4>
-          <span className="font-black tracking-tighter block leading-none text-[#1B4332] mb-4"
+          <span className="font-black tracking-[-0.05em] block leading-none text-[#1B4332] mb-4"
             style={{ fontSize: isCenter ? '64px' : '52px' }}>
             {display}
           </span>
-          <p className="text-sm font-bold text-gray-500/80 leading-relaxed max-w-[180px]">
+          <p className="text-sm font-bold text-[#1B4332] leading-relaxed max-w-[180px] whitespace-pre-line">
             {stat.desc}
           </p>
         </div>

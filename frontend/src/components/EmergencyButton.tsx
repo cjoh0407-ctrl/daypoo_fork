@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import { useState } from 'react';
+import { Siren } from 'lucide-react';
 
 interface EmergencyButtonProps {
   onClick: () => void;
@@ -48,7 +49,7 @@ export function EmergencyButton({ onClick }: EmergencyButtonProps) {
         }}
         style={{ display: 'inline-block' }}
       >
-        🚨
+        <Siren size={20} />
       </motion.span>
       급똥
     </motion.button>

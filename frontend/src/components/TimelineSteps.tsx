@@ -1,5 +1,6 @@
 import { motion, useScroll, useSpring, useTransform, useMotionTemplate, useMotionValue } from 'framer-motion';
 import { useRef, MouseEvent } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { MapPin, Zap, Brain, Sparkles, ArrowRight } from 'lucide-react';
 
 interface Step {
@@ -17,21 +18,21 @@ const STEPS: Step[] = [
     icon: <MapPin size={26} />,
     title: '전국 화장실 실시간 탐색',
     desc: '내 주변 7만 개 공용 화장실 데이터를\n가장 빠르게 찾아보세요.',
-    color: '#1B4332',
+    color: '#2D6A4F',
   },
   {
     id: 2,
     icon: <Zap size={26} />,
     title: '스마트한 배변 기록',
     desc: '다녀온 후 브리스톨 척도로 3초 만에\n나의 컨디션을 기록하세요.',
-    color: '#2D6A4F',
+    color: '#E8A838',
   },
   {
     id: 3,
     icon: <Brain size={26} />,
     title: 'AI 건강 리포트 분석',
     desc: '누적된 데이터를 기반으로 AI가\n나의 장 건강 상태를 분석합니다.',
-    color: '#40916C', // 좀 더 밝은 녹색
+    color: '#52b788',
   },
   {
     id: 4,
@@ -44,7 +45,7 @@ const STEPS: Step[] = [
 ];
 
 // ── Spotlight Card Component ──────────────────────────────────────────
-function SpotlightCard({ step, index, scrollYProgress }: { step: Step; index: number; scrollYProgress: any }) {
+function SpotlightCard({ step, index, scrollYProgress, onAction }: { step: Step; index: number; scrollYProgress: any; onAction?: () => void }) {
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
 
@@ -61,7 +62,7 @@ function SpotlightCard({ step, index, scrollYProgress }: { step: Step; index: nu
       viewport={{ once: true, margin: '-50px' }}
       transition={{ duration: 0.8, delay: index * 0.1 }}
       onMouseMove={handleMouseMove}
-      className={`relative w-full p-8 md:p-14 rounded-[32px] md:rounded-[48px] transition-all duration-500 group overflow-hidden ${
+      className={`relative w-full p-8 md:p-10 rounded-[32px] md:rounded-[40px] transition-all duration-500 group overflow-hidden ${
         step.isAction 
           ? 'bg-[#1B4332] text-white shadow-[0_32px_80px_rgba(27,67,50,0.3)]' 
           : 'bg-white shadow-[0_12px_40px_rgba(0,0,0,0.03)] border border-gray-100'
@@ -109,6 +110,7 @@ function SpotlightCard({ step, index, scrollYProgress }: { step: Step; index: nu
           <motion.button
             whileHover={{ scale: 1.02, boxShadow: '0 20px 40px rgba(0,0,0,0.2)' }}
             whileTap={{ scale: 0.98 }}
+            onClick={onAction}
             className="w-full md:w-auto px-12 py-5 bg-amber-400 text-[#1B4332] font-black rounded-[20px] shadow-xl flex items-center justify-center gap-3 transition-all"
           >
             지금 가입하기
@@ -120,8 +122,18 @@ function SpotlightCard({ step, index, scrollYProgress }: { step: Step; index: nu
   );
 }
 
-export function TimelineSteps() {
+export function TimelineSteps({ openAuth }: { openAuth: (mode: 'login' | 'signup') => void }) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
+
+  const handleAction = () => {
+    const token = localStorage.getItem('accessToken');
+    if (token) {
+      navigate('/mypage');
+    } else {
+      openAuth('signup'); // "지금 가입하기" 이므로 signup 모달
+    }
+  };
   
   const { scrollYProgress } = useScroll({
     target: containerRef,
@@ -132,27 +144,43 @@ export function TimelineSteps() {
   const pathLength = useTransform(scrollScale, [0, 1], [0, 1]);
 
   return (
-    <div ref={containerRef} className="relative max-w-6xl mx-auto py-12 md:py-32 px-6 md:px-12">
-      {/* ── 타임라인 수직 라인 (좌측 배치) ────────────────────────────── */}
-      <div className="absolute left-8 md:left-24 top-48 bottom-48 w-[2px] bg-gray-100 transform translate-x-[-1px] hidden md:block" />
-      <motion.div 
-        className="absolute left-8 md:left-24 top-48 bottom-48 w-[2px] transform translate-x-[-1px] origin-top bg-gradient-to-b from-[#1B4332] via-[#2D6A4F] to-[#40916C] hidden md:block"
-        style={{ scaleY: pathLength }}
-      />
+    <div ref={containerRef} className="relative max-w-6xl mx-auto py-12 md:py-24 px-6 md:px-12">
+      {/* ── 타임라인 수직 라인 (Gauge Bar Style) ── */}
+      <div className="absolute left-8 md:left-12 top-[120px] bottom-[120px] w-[2px] -translate-x-1/2 hidden md:block group/timeline">
+        {/* 전체 트랙 (연한 회색) */}
+        <div className="absolute inset-0 bg-gray-100 rounded-full" />
+        
+        {/* 진행 게이지 (색상) */}
+        <motion.div
+          className="absolute inset-0 bg-[#1B4332] origin-top rounded-full"
+          style={{ scaleY: pathLength }}
+        />
 
-      <div className="relative flex flex-col gap-12 md:gap-40">
+        {/* 시작 도트 (Track Start) */}
+        <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-[10px] h-[10px] rounded-full bg-gray-100 ring-2 ring-white z-10" />
+        
+        {/* 끝 도트 (Track End) */}
+        <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-[10px] h-[10px] rounded-full bg-gray-100 ring-2 ring-white z-10" />
+
+        {/* 움직이는 헤드 도트 (Gauge Head) */}
+        <motion.div 
+          className="absolute left-1/2 -translate-x-1/2 w-4 h-4 rounded-full bg-[#1B4332] border-[3px] border-white shadow-lg z-30"
+          style={{ 
+            top: useTransform(scrollScale, [0, 1], ["0%", "100%"]),
+            translateY: "-50%"
+          }}
+        />
+      </div>
+
+      <div className="relative flex flex-col gap-12 md:gap-20">
         {STEPS.map((step, i) => (
-          <div key={step.id} className="relative pl-0 md:pl-40 flex items-center justify-center md:justify-start">
-            {/* 타임라인 도트 indicator */}
-            <motion.div 
-              className="absolute left-8 md:left-24 transform translate-x-[-50%] w-7 h-7 rounded-full border-[5px] border-white z-20 shadow-[0_12px_24px_rgba(0,0,0,0.15)] ring-4 ring-white/50 hidden md:block"
-              style={{ 
-                backgroundColor: step.color,
-                scale: useTransform(scrollYProgress, [i * 0.25, i * 0.25 + 0.1], [0.85, 1.25])
-              }}
+          <div key={step.id} className="relative pl-0 md:pl-24 lg:pl-40 flex items-center justify-center md:justify-start">
+            <SpotlightCard 
+              step={step} 
+              index={i} 
+              scrollYProgress={scrollYProgress} 
+              onAction={step.isAction ? handleAction : undefined}
             />
-
-            <SpotlightCard step={step} index={i} scrollYProgress={scrollYProgress} />
           </div>
         ))}
       </div>

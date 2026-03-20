@@ -18,13 +18,16 @@ export function MainPage({ openAuth }: { openAuth: (mode: 'login' | 'signup') =>
       
       {/* Hero Section */}
       <div className="relative overflow-hidden">
-        <HeroSection onCtaClick={() => document.getElementById('map-scroll-target')?.scrollIntoView({ behavior: 'smooth' })} />
+        <HeroSection 
+          onCtaClick={() => document.getElementById('map-scroll-target')?.scrollIntoView({ behavior: 'smooth' })} 
+          openAuth={openAuth}
+        />
         <WaveDivider fill="#eef5f0" />
       </div>
 
       {/* AI Health Report Section */}
       <div className="relative overflow-hidden">
-        <ReportCard />
+        <ReportCard openAuth={openAuth} />
         <WaveDivider fill="#F8FAF9" />
       </div>
 

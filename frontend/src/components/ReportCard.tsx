@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { Lock, TrendingUp, Sparkles, ArrowRight } from 'lucide-react';
+import { Lock, TrendingUp, Sparkles, ArrowRight, Utensils, Droplets, Moon } from 'lucide-react';
 import {
   PieChart, Pie, Cell, ResponsiveContainer,
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -24,24 +24,33 @@ const BAR_DATA = [
 // 블러 처리된 AI 인사이트 항목 (가입 유도)
 const LOCKED_INSIGHTS = [
   {
-    icon: '🍽️',
+    icon: <Utensils size={24} className="text-[#1B4332]" />,
     label: '식습관 분석',
     preview: '매운 음식 섭취와 장 자극 패턴이 관찰되고 있어요',
   },
   {
-    icon: '💧',
+    icon: <Droplets size={24} className="text-[#1B4332]" />,
     label: '수분 섭취 연관성',
     preview: '수분이 부족한 날 브리스톨 지수가 낮아지는 경향이...',
   },
   {
-    icon: '😴',
+    icon: <Moon size={24} className="text-[#1B4332]" />,
     label: '수면 & 장 리듬',
     preview: '수면 패턴과 배변 타이밍 사이에 유의미한 상관관계가...',
   },
 ];
 
-export function ReportCard() {
+export function ReportCard({ openAuth }: { openAuth: (mode: 'login' | 'signup') => void }) {
   const navigate = useNavigate();
+
+  const handleReportAction = () => {
+    const token = localStorage.getItem('accessToken');
+    if (token) {
+      navigate('/mypage');
+    } else {
+      openAuth('signup');
+    }
+  };
 
   return (
     <section className="pt-40 pb-64 px-6" style={{ backgroundColor: '#eef5f0' }}>
@@ -114,10 +123,10 @@ export function ReportCard() {
                 </h3>
               </div>
               <span
-                className="px-3 py-1 rounded-full text-sm font-bold"
+                className="px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1"
                 style={{ backgroundColor: 'rgba(232,168,56,0.12)', color: 'var(--amber)' }}
               >
-                ✨ AI 분석 완료
+                <Sparkles size={14} /> AI 분석 완료
               </span>
             </div>
 
@@ -196,15 +205,15 @@ export function ReportCard() {
               style={{ backgroundColor: 'rgba(232,168,56,0.08)', border: '1px solid rgba(232,168,56,0.2)' }}
             >
               <div
-                className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 text-lg"
-                style={{ backgroundColor: 'var(--amber)' }}
+                className="w-10 h-10 rounded-full flex items-center justify-center shrink-0"
+                style={{ backgroundColor: 'var(--amber)', color: '#fff' }}
               >
-                ✨
+                <Sparkles size={20} />
               </div>
               <div>
                 <p className="text-xs font-bold mb-0.5" style={{ color: 'var(--amber)' }}>AI 한줄 조언</p>
                 <p className="text-sm font-medium" style={{ color: 'var(--text-main)' }}>
-                  "매운 음식 줄이면 쾌변 점수 더 올라가요 🌶️ 수분 섭취도 늘려보세요!"
+                  "매운 음식 줄이면 쾌변 점수 더 올라가요. 수분 섭취도 늘려보세요!"
                 </p>
               </div>
             </motion.div>
@@ -273,7 +282,7 @@ export function ReportCard() {
             <motion.button
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.97 }}
-              onClick={() => navigate('/signup')}
+              onClick={handleReportAction}
               className="w-full p-4 rounded-2xl flex items-center justify-center gap-2 font-bold transition-all"
               style={{
                 backgroundColor: 'var(--amber)',

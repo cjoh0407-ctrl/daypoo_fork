@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, ArrowRight, Mail, KeyRound, CheckCircle2, AlertCircle, RotateCcw, ChevronDown } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Mail, KeyRound, CheckCircle2, AlertCircle, ChevronDown } from 'lucide-react';
+import { api } from '../services/apiClient';
 
 // ── 타입 ──────────────────────────────────────────────────────────────
 type ForgotMode = 'password' | 'email';
-type Step = 'input' | 'verify' | 'done';
+type Step = 'input' | 'done'; // verify 단계 제거
 
 // ── 상단 헤더 (Navbar Style) ──────────────────────────────────────────
 function PageHeader() {
@@ -90,18 +91,6 @@ function AnimatedBeamBackground() {
           </g>
         ))}
       </svg>
-      
-      {/* 기존 글로우 효과 (색감 보강) */}
-      <div style={{
-        position: 'absolute', top: '15%', left: '10%',
-        width: '45vw', height: '45vw', borderRadius: '50%',
-        background: 'radial-gradient(circle, rgba(82,183,136,0.06) 0%, transparent 70%)',
-      }} />
-      <div style={{
-        position: 'absolute', bottom: '15%', right: '10%',
-        width: '40vw', height: '40vw', borderRadius: '50%',
-        background: 'radial-gradient(circle, rgba(232,168,56,0.06) 0%, transparent 70%)',
-      }} />
     </div>
   );
 }
@@ -153,9 +142,6 @@ function InputField({
             <AlertCircle size={11} />{error}
           </motion.p>
         )}
-        {!error && hint && (
-          <p className="text-xs" style={{ color: '#7a9e8a' }}>{hint}</p>
-        )}
       </AnimatePresence>
     </div>
   );
@@ -171,16 +157,9 @@ function BirthDropdowns({
   onMonthChange: (v: string) => void; 
   onDayChange: (v: string) => void; 
 }) {
-  const currentYear = 2026;
-  const years = Array.from({ length: currentYear - 1920 + 1 }, (_, i) => currentYear - i);
+  const years = Array.from({ length: 2026 - 1920 + 1 }, (_, i) => 2026 - i);
   const months = Array.from({ length: 12 }, (_, i) => i + 1);
-  
-  const getDaysInMonth = (y: number, m: number) => {
-    return new Date(y, m, 0).getDate();
-  };
-
-  const daysCount = year && month ? getDaysInMonth(parseInt(year), parseInt(month)) : 31;
-  const days = Array.from({ length: daysCount }, (_, i) => i + 1);
+  const days = Array.from({ length: 31 }, (_, i) => i + 1);
 
   const SelectWrapper = ({ value, onChange, options, placeholder, suffix }: any) => (
     <div className="relative group flex-1">
@@ -193,7 +172,7 @@ function BirthDropdowns({
         <option value="" disabled>{placeholder}</option>
         {options.map((opt: any) => <option key={opt} value={opt}>{opt}{suffix}</option>)}
       </select>
-      <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-[#7a9e8a] transition-colors group-hover:text-[#1B4332]">
+      <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-[#7a9e8a]">
         <ChevronDown size={14} />
       </div>
     </div>
@@ -208,106 +187,29 @@ function BirthDropdowns({
   );
 }
 
-// ── OTP 인풋 (6자리) ──────────────────────────────────────────────────
-function OtpInput({ value, onChange }: { value: string; onChange: (v: string) => void }) {
-  const digits = Array.from({ length: 6 }, (_, i) => value[i] ?? '');
-
-  const handleChange = (idx: number, v: string) => {
-    const clean = v.replace(/\D/g, '').slice(-1);
-    const arr = [...value.padEnd(6, ' ')].map((c, i) => (i === idx ? clean : c));
-    onChange(arr.join('').trimEnd());
-    // 자동 포커스 이동
-    if (clean && idx < 5) {
-      const next = document.getElementById(`otp-${idx + 1}`);
-      next?.focus();
-    }
-  };
-
-  const handleKeyDown = (idx: number, e: React.KeyboardEvent) => {
-    if (e.key === 'Backspace' && !value[idx] && idx > 0) {
-      const prev = document.getElementById(`otp-${idx - 1}`);
-      prev?.focus();
-    }
-  };
-
-  return (
-    <div className="flex gap-2 justify-center">
-      {digits.map((d, i) => (
-        <input
-          key={i}
-          id={`otp-${i}`}
-          type="text"
-          inputMode="numeric"
-          maxLength={1}
-          value={d.trim()}
-          onChange={(e) => handleChange(i, e.target.value)}
-          onKeyDown={(e) => handleKeyDown(i, e)}
-          className="w-11 h-12 rounded-xl text-center text-lg font-black outline-none transition-all duration-200"
-          style={{
-            background: d.trim() ? '#fff' : '#f4faf6',
-            border: d.trim() ? '1.5px solid #1B4332' : '1.5px solid #d4e8db',
-            color: '#1B4332',
-            boxShadow: d.trim() ? '0 0 0 3px rgba(27,67,50,0.06)' : 'none',
-            caretColor: '#1B4332',
-          }}
-        />
-      ))}
-    </div>
-  );
-}
-
 // ── 비밀번호 찾기 폼 ─────────────────────────────────────────────────
 function PasswordForgot({ onBack }: { onBack: () => void }) {
   const navigate = useNavigate();
   const [step, setStep] = useState<Step>('input');
   const [email, setEmail] = useState('');
-  const [otp, setOtp] = useState('');
-  const [newPw, setNewPw] = useState('');
-  const [newPwConfirm, setNewPwConfirm] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
-  const [resendCount, setResendCount] = useState(0);
 
-  const validateEmail = () => {
-    const e: Record<string, string> = {};
-    if (!email) e.email = '이메일을 입력해주세요';
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) e.email = '올바른 이메일 형식이 아니에요';
-    setErrors(e);
-    return !Object.keys(e).length;
-  };
-
-  const validateOtp = () => {
-    const e: Record<string, string> = {};
-    if (otp.trim().length < 6) e.otp = '6자리 코드를 모두 입력해주세요';
-    if (!newPw) e.newPw = '새 비밀번호를 입력해주세요';
-    else if (newPw.length < 8) e.newPw = '8자 이상 입력해주세요';
-    if (newPw !== newPwConfirm) e.newPwConfirm = '비밀번호가 일치하지 않아요';
-    setErrors(e);
-    return !Object.keys(e).length;
-  };
-
-  const handleSend = async () => {
-    if (!validateEmail()) return;
+  const handleReset = async () => {
+    if (!email) {
+      setErrors({ email: '이메일을 입력해주세요' });
+      return;
+    }
     setLoading(true);
-    await new Promise((r) => setTimeout(r, 800)); // TODO: API
-    setLoading(false);
-    setStep('verify');
-  };
-
-  const handleVerify = async () => {
-    if (!validateOtp()) return;
-    setLoading(true);
-    await new Promise((r) => setTimeout(r, 900)); // TODO: API
-    setLoading(false);
-    setStep('done');
-  };
-
-  const handleResend = async () => {
-    setResendCount((c) => c + 1);
-    setOtp('');
-    setLoading(true);
-    await new Promise((r) => setTimeout(r, 600));
-    setLoading(false);
+    try {
+      // POST /api/v1/auth/password/reset?email=xxx
+      await api.post(`/auth/password/reset?email=${encodeURIComponent(email)}`, null);
+      setStep('done');
+    } catch (err: any) {
+      setErrors({ email: err.response?.data?.message || '비밀번호 재설정 요청에 실패했습니다.' });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const slideVar = {
@@ -318,9 +220,7 @@ function PasswordForgot({ onBack }: { onBack: () => void }) {
 
   return (
     <AnimatePresence mode="wait">
-
-      {/* ── STEP: input ── */}
-      {step === 'input' && (
+      {step === 'input' ? (
         <motion.div key="input" variants={slideVar} initial="enter" animate="center" exit="exit"
           transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}>
           <div className="flex items-center gap-3 mb-6">
@@ -333,7 +233,7 @@ function PasswordForgot({ onBack }: { onBack: () => void }) {
                 비밀번호 찾기
               </h2>
               <p className="text-sm" style={{ color: '#7a9e8a' }}>
-                가입한 이메일로 인증코드를 보내드려요
+                이메일로 임시 비밀번호를 보내드려요
               </p>
             </div>
           </div>
@@ -344,7 +244,7 @@ function PasswordForgot({ onBack }: { onBack: () => void }) {
 
             <motion.button
               whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
-              onClick={handleSend} disabled={loading}
+              onClick={handleReset} disabled={loading}
               className="w-full py-3.5 rounded-xl font-black text-sm flex items-center justify-center gap-2"
               style={{
                 background: loading ? 'rgba(27,67,50,0.4)' : 'linear-gradient(135deg, #1B4332 0%, #2D6A4F 100%)',
@@ -353,117 +253,22 @@ function PasswordForgot({ onBack }: { onBack: () => void }) {
                 cursor: loading ? 'not-allowed' : 'pointer',
               }}
             >
-              {loading
-                ? <motion.span animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-                    style={{ display: 'inline-block', fontSize: '16px' }}>💩</motion.span>
-                : <>인증코드 받기 <ArrowRight size={14} /></>}
+              {loading ? <motion.span animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}>💩</motion.span> : <>임시 비밀번호 발송 <ArrowRight size={14} /></>}
             </motion.button>
           </div>
         </motion.div>
-      )}
-
-      {/* ── STEP: verify ── */}
-      {step === 'verify' && (
-        <motion.div key="verify" variants={slideVar} initial="enter" animate="center" exit="exit"
-          transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}>
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0"
-              style={{ background: '#e8f3ec' }}>
-              <Mail size={20} style={{ color: '#1B4332' }} />
-            </div>
-            <div>
-              <h2 className="font-black text-lg" style={{ color: '#1a2b22', letterSpacing: '-0.03em' }}>
-                인증코드 확인
-              </h2>
-              <p className="text-sm" style={{ color: '#7a9e8a' }}>
-                <span className="font-semibold" style={{ color: '#1B4332' }}>{email}</span>으로 보냈어요
-              </p>
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-5">
-            {/* OTP */}
-            <div>
-              <label className="text-xs font-bold block mb-3" style={{ color: '#5a7a6a', letterSpacing: '0.06em' }}>
-                6자리 인증코드
-              </label>
-              <OtpInput value={otp} onChange={setOtp} />
-              <AnimatePresence>
-                {errors.otp && (
-                  <motion.p initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-                    className="flex items-center justify-center gap-1.5 text-xs mt-2" style={{ color: '#E85D5D' }}>
-                    <AlertCircle size={11} />{errors.otp}
-                  </motion.p>
-                )}
-              </AnimatePresence>
-              <div className="flex justify-center mt-3">
-                <button onClick={handleResend}
-                  className="flex items-center gap-1.5 text-xs font-semibold transition-colors"
-                  style={{ color: '#7a9e8a' }}>
-                  <RotateCcw size={11} />
-                  코드 재발송{resendCount > 0 && ` (${resendCount}회)`}
-                </button>
-              </div>
-            </div>
-
-            {/* 새 비밀번호 */}
-            <InputField label="새 비밀번호" type="password" value={newPw} onChange={setNewPw}
-              placeholder="8자 이상" error={errors.newPw} autoComplete="new-password" />
-            <InputField label="새 비밀번호 확인" type="password" value={newPwConfirm} onChange={setNewPwConfirm}
-              placeholder="비밀번호 재입력" error={errors.newPwConfirm} autoComplete="new-password"
-              rightEl={
-                newPwConfirm && newPw === newPwConfirm
-                  ? <CheckCircle2 size={15} color="#52b788" />
-                  : null
-              }
-            />
-
-            <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
-              onClick={handleVerify} disabled={loading}
-              className="w-full py-3.5 rounded-xl font-black text-sm flex items-center justify-center gap-2"
-              style={{
-                background: loading ? 'rgba(27,67,50,0.4)' : 'linear-gradient(135deg, #1B4332 0%, #2D6A4F 100%)',
-                color: '#fff',
-                boxShadow: loading ? 'none' : '0 4px 18px rgba(27,67,50,0.22)',
-                cursor: loading ? 'not-allowed' : 'pointer',
-              }}>
-              {loading
-                ? <motion.span animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-                    style={{ display: 'inline-block', fontSize: '16px' }}>💩</motion.span>
-                : <>비밀번호 변경하기 ✓</>}
-            </motion.button>
-          </div>
-        </motion.div>
-      )}
-
-      {/* ── STEP: done ── */}
-      {step === 'done' && (
+      ) : (
         <motion.div key="done" variants={slideVar} initial="enter" animate="center" exit="exit"
-          transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
           className="flex flex-col items-center text-center py-4">
-          <motion.div
-            initial={{ scale: 0 }} animate={{ scale: 1 }}
-            transition={{ type: 'spring', stiffness: 400, damping: 20, delay: 0.1 }}
-            className="w-16 h-16 rounded-full flex items-center justify-center mb-4"
-            style={{ background: '#e8f3ec' }}>
+          <div className="w-16 h-16 rounded-full flex items-center justify-center mb-4" style={{ background: '#e8f3ec' }}>
             <CheckCircle2 size={32} style={{ color: '#1B4332' }} />
-          </motion.div>
-          <h2 className="font-black text-xl mb-2" style={{ color: '#1a2b22', letterSpacing: '-0.03em' }}>
-            비밀번호 변경 완료!
-          </h2>
-          <p className="text-sm mb-6" style={{ color: '#7a9e8a', lineHeight: 1.7 }}>
-            새 비밀번호로 로그인해보세요.<br />안전하게 장 건강을 기록하세요 💩
+          </div>
+          <h2 className="font-black text-xl mb-2">메일 발송 완료!</h2>
+          <p className="text-sm mb-6 text-[#7a9e8a]">
+            입력하신 이메일로 8자리 임시 비밀번호가 발송되었습니다.<br />로그인 후 비밀번호를 꼭 변경해주세요!
           </p>
-          <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
-            onClick={() => navigate('/main')}
-            className="w-full py-3.5 rounded-xl font-black text-sm"
-            style={{
-              background: 'linear-gradient(135deg, #E8A838 0%, #d4922a 100%)',
-              color: '#1B4332',
-              boxShadow: '0 4px 18px rgba(232,168,56,0.28)',
-            }}>
-            로그인하러 가기 →
-          </motion.button>
+          <button onClick={() => navigate('/main')} className="w-full py-3.5 rounded-xl font-black text-sm transition-all"
+            style={{ background: '#E8A838', color: '#1B4332' }}>로그인하러 가기 →</button>
         </motion.div>
       )}
     </AnimatePresence>
@@ -471,36 +276,35 @@ function PasswordForgot({ onBack }: { onBack: () => void }) {
 }
 
 // ── 이메일 찾기 폼 ───────────────────────────────────────────────────
-function EmailForgot({ onBack }: { onBack: () => void }) {
+function EmailForgot() {
   const navigate = useNavigate();
   const [step, setStep] = useState<Step>('input');
   const [nickname, setNickname] = useState('');
-  const [birthYear, setBirthYear] = useState('');
-  const [birthMonth, setBirthMonth] = useState('');
-  const [birthDay, setBirthDay] = useState('');
   const [foundEmail, setFoundEmail] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
 
-  const validate = () => {
-    const e: Record<string, string> = {};
-    if (!nickname.trim()) e.nickname = '닉네임을 입력해주세요';
-    const y = parseInt(birthYear), m = parseInt(birthMonth), d = parseInt(birthDay);
-    if (!birthYear || !birthMonth || !birthDay) e.birth = '생년월일을 모두 입력해주세요';
-    else if (y < 1900 || y > new Date().getFullYear()) e.birth = '올바른 연도를 입력해주세요';
-    else if (m < 1 || m > 12) e.birth = '올바른 월을 입력해주세요';
-    else if (d < 1 || d > 31) e.birth = '올바른 일을 입력해주세요';
-    setErrors(e);
-    return !Object.keys(e).length;
-  };
+  // 생년월일은 UI 유지를 위해 남겨두지만 현재 백엔드는 nickname만 사용함
+  const [birthYear, setBirthYear] = useState('');
+  const [birthMonth, setBirthMonth] = useState('');
+  const [birthDay, setBirthDay] = useState('');
 
   const handleFind = async () => {
-    if (!validate()) return;
+    if (!nickname.trim()) {
+      setErrors({ nickname: '닉네임을 입력해주세요' });
+      return;
+    }
     setLoading(true);
-    await new Promise((r) => setTimeout(r, 900)); // TODO: API
-    setLoading(false);
-    setFoundEmail('he***@example.com'); // TODO: 실제 마스킹된 이메일
-    setStep('done');
+    try {
+      // GET /api/v1/auth/find-id?nickname=xxx
+      const res = await api.get(`/auth/find-id?nickname=${encodeURIComponent(nickname)}`);
+      setFoundEmail(res.data || res); // 서버에 따라 res.data 혹은 res 자체가 문자열일 수 있음
+      setStep('done');
+    } catch (err: any) {
+      setErrors({ nickname: err.response?.data?.message || '등록된 정보를 찾을 수 없습니다.' });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const slideVar = {
@@ -511,9 +315,7 @@ function EmailForgot({ onBack }: { onBack: () => void }) {
 
   return (
     <AnimatePresence mode="wait">
-
-      {/* ── STEP: input ── */}
-      {step === 'input' && (
+      {step === 'input' ? (
         <motion.div key="input" variants={slideVar} initial="enter" animate="center" exit="exit"
           transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}>
           <div className="flex items-center gap-3 mb-6">
@@ -526,7 +328,7 @@ function EmailForgot({ onBack }: { onBack: () => void }) {
                 이메일 찾기
               </h2>
               <p className="text-sm" style={{ color: '#7a9e8a' }}>
-                닉네임과 생년월일로 이메일을 찾아드려요
+                닉네임으로 가입된 이메일을 찾아드려요
               </p>
             </div>
           </div>
@@ -535,27 +337,10 @@ function EmailForgot({ onBack }: { onBack: () => void }) {
             <InputField label="닉네임" value={nickname} onChange={setNickname}
               placeholder="가입 시 등록한 닉네임" error={errors.nickname} />
 
-            {/* 생년월일 */}
-            <div>
-              <label className="text-xs font-bold block mb-1.5" style={{ color: '#5a7a6a', letterSpacing: '0.06em' }}>
-                생년월일
-              </label>
-              <BirthDropdowns
-                year={birthYear}
-                month={birthMonth}
-                day={birthDay}
-                onYearChange={setBirthYear}
-                onMonthChange={setBirthMonth}
-                onDayChange={setBirthDay}
-              />
-              <AnimatePresence>
-                {errors.birth && (
-                  <motion.p initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-                    className="flex items-center gap-1.5 text-xs mt-1.5" style={{ color: '#E85D5D' }}>
-                    <AlertCircle size={11} />{errors.birth}
-                  </motion.p>
-                )}
-              </AnimatePresence>
+            <div className="opacity-60">
+              <label className="text-xs font-bold block mb-1.5" style={{ color: '#5a7a6a' }}>생년월일 (선택)</label>
+              <BirthDropdowns year={birthYear} month={birthMonth} day={birthDay}
+                onYearChange={setBirthYear} onMonthChange={setBirthMonth} onDayChange={setBirthDay} />
             </div>
 
             <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
@@ -567,63 +352,23 @@ function EmailForgot({ onBack }: { onBack: () => void }) {
                 boxShadow: loading ? 'none' : '0 4px 18px rgba(27,67,50,0.22)',
                 cursor: loading ? 'not-allowed' : 'pointer',
               }}>
-              {loading
-                ? <motion.span animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-                    style={{ display: 'inline-block', fontSize: '16px' }}>💩</motion.span>
-                : <>이메일 찾기 <ArrowRight size={14} /></>}
+              {loading ? <motion.span animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}>💩</motion.span> : <>이메일 찾기 <ArrowRight size={14} /></>}
             </motion.button>
           </div>
         </motion.div>
-      )}
-
-      {/* ── STEP: done ── */}
-      {step === 'done' && (
+      ) : (
         <motion.div key="done" variants={slideVar} initial="enter" animate="center" exit="exit"
-          transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
           className="flex flex-col items-center text-center py-4">
-          <motion.div
-            initial={{ scale: 0 }} animate={{ scale: 1 }}
-            transition={{ type: 'spring', stiffness: 400, damping: 20, delay: 0.1 }}
-            className="w-16 h-16 rounded-full flex items-center justify-center mb-4"
-            style={{ background: '#fdf3de' }}>
+          <div className="w-16 h-16 rounded-full flex items-center justify-center mb-4" style={{ background: '#fdf3de' }}>
             <Mail size={28} style={{ color: '#b5810f' }} />
-          </motion.div>
-          <h2 className="font-black text-xl mb-2" style={{ color: '#1a2b22', letterSpacing: '-0.03em' }}>
-            이메일을 찾았어요!
-          </h2>
-          <p className="text-sm mb-2" style={{ color: '#7a9e8a' }}>
-            가입한 이메일 주소예요
-          </p>
-
-          {/* 이메일 표시 */}
-          <div className="w-full px-5 py-4 rounded-2xl mb-6"
-            style={{ background: '#f4faf6', border: '1.5px solid #d4e8db' }}>
-            <p className="font-black text-lg" style={{ color: '#1B4332', letterSpacing: '-0.02em' }}>
-              {foundEmail}
-            </p>
-            <p className="text-xs mt-1" style={{ color: '#7a9e8a' }}>
-              보안을 위해 일부 정보가 가려졌어요
-            </p>
           </div>
-
-          <div className="w-full flex flex-col gap-2.5">
-            <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
-              onClick={() => navigate('/main')}
-              className="w-full py-3.5 rounded-xl font-black text-sm"
-              style={{
-                background: 'linear-gradient(135deg, #E8A838 0%, #d4922a 100%)',
-                color: '#1B4332',
-                boxShadow: '0 4px 18px rgba(232,168,56,0.28)',
-              }}>
-              로그인하러 가기 →
-            </motion.button>
-            <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
-              onClick={() => { setStep('input'); setNickname(''); setBirthYear(''); setBirthMonth(''); setBirthDay(''); }}
-              className="w-full py-3 rounded-xl font-bold text-sm"
-              style={{ background: '#f4faf6', color: '#5a7a6a', border: '1.5px solid #d4e8db' }}>
-              다시 찾기
-            </motion.button>
+          <h2 className="font-black text-xl mb-2">이메일을 찾았어요!</h2>
+          <div className="w-full px-5 py-4 rounded-2xl mb-6 bg-[#f4faf6] border border-[#d4e8db]">
+            <p className="font-black text-lg text-[#1B4332]">{foundEmail}</p>
+            <p className="text-xs mt-1 text-[#7a9e8a]">일부 정보가 마스킹 되었습니다.</p>
           </div>
+          <button onClick={() => navigate('/main')} className="w-full py-3.5 rounded-xl font-black text-sm transition-all"
+            style={{ background: '#E8A838', color: '#1B4332' }}>로그인하러 가기 →</button>
         </motion.div>
       )}
     </AnimatePresence>
@@ -648,88 +393,34 @@ export function ForgotPage() {
   };
 
   return (
-    <div
-      className="min-h-screen flex items-center justify-center px-4 py-12 relative overflow-hidden"
-      style={{ background: '#F8FAF9' }}
-    >
-      {/* 배경 장식 */}
+    <div className="min-h-screen flex items-center justify-center px-4 py-12 relative overflow-hidden bg-[#F8FAF9]">
       <AnimatedBeamBackground />
-
-      <motion.div
-        initial={{ opacity: 0, y: 28 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.65, ease: [0.16, 1, 0.3, 1] }}
-        className="relative z-10 w-full"
-        style={{ maxWidth: '540px' }}
-      >
+      <motion.div initial={{ opacity: 0, y: 28 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.65 }}
+        className="relative z-10 w-full max-w-[540px]">
         <PageHeader />
-        {/* 카드 */}
-        <div
-          className="rounded-[28px] p-8"
-          style={{
-            background: '#fff',
-            border: '1px solid #d4e8db',
-            boxShadow: '0 8px 40px rgba(27,67,50,0.09)',
-          }}
-        >
-          {/* 탭 전환 */}
-          <div
-            className="flex rounded-2xl p-1 mb-5"
-            style={{ background: '#f4faf6', border: '1px solid #d4e8db' }}
-          >
+        <div className="rounded-[28px] p-8 bg-white border border-[#d4e8db] shadow-xl">
+          <div className="flex rounded-2xl p-1 mb-5 bg-[#f4faf6] border border-[#d4e8db]">
             {([
               { key: 'email',    label: '📧 이메일 찾기' },
               { key: 'password', label: '🔑 비밀번호 찾기' },
             ] as const).map((t) => (
-              <button
-                key={t.key}
-                onClick={() => switchMode(t.key)}
-                className="flex-1 py-2.5 rounded-xl text-sm font-bold transition-all relative"
-                style={{ color: mode === t.key ? '#1B4332' : '#7a9e8a' }}
-              >
-                {mode === t.key && (
-                  <motion.div
-                    layoutId="tabBg"
-                    className="absolute inset-0 rounded-xl"
-                    style={{ background: '#fff', border: '1px solid #d4e8db', boxShadow: '0 2px 8px rgba(27,67,50,0.08)' }}
-                    transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-                  />
-                )}
+              <button key={t.key} onClick={() => switchMode(t.key)} className="flex-1 py-2.5 rounded-xl text-sm font-bold transition-all relative"
+                style={{ color: mode === t.key ? '#1B4332' : '#7a9e8a' }}>
+                {mode === t.key && <motion.div layoutId="tabBg" className="absolute inset-0 rounded-xl bg-white border border-[#d4e8db] shadow-sm" />}
                 <span className="relative z-10">{t.label}</span>
               </button>
             ))}
           </div>
 
-          {/* 폼 전환 */}
-          <div className="overflow-hidden">
-            <AnimatePresence mode="wait" custom={modeDir}>
-              <motion.div
-                key={mode}
-                custom={modeDir}
-                variants={modeVar}
-                initial="enter" animate="center" exit="exit"
-                transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-              >
-                {mode === 'password'
-                  ? <PasswordForgot onBack={() => navigate(-1)} />
-                  : <EmailForgot onBack={() => navigate(-1)} />
-                }
-              </motion.div>
-            </AnimatePresence>
-          </div>
+          <AnimatePresence mode="wait" custom={modeDir}>
+            <motion.div key={mode} custom={modeDir} variants={modeVar} initial="enter" animate="center" exit="exit"
+              transition={{ duration: 0.3 }}>
+              {mode === 'password' ? <PasswordForgot onBack={() => navigate(-1)} /> : <EmailForgot />}
+            </motion.div>
+          </AnimatePresence>
         </div>
-
-        {/* 하단 안내 */}
-        <p className="text-center mt-4 text-sm" style={{ color: '#7a9e8a' }}>
-          계정이 기억나셨나요?{' '}
-          <Link to="/main"
-            className="font-bold transition-colors"
-            style={{ color: '#1B4332', textDecoration: 'none' }}
-            onMouseEnter={(e) => (e.currentTarget.style.color = '#2D6A4F')}
-            onMouseLeave={(e) => (e.currentTarget.style.color = '#1B4332')}
-          >
-            로그인하기
-          </Link>
+        <p className="text-center mt-4 text-sm text-[#7a9e8a]">
+          계정이 기억나셨나요? <Link to="/main" className="font-bold text-[#1B4332] no-underline">로그인하기</Link>
         </p>
       </motion.div>
     </div>
