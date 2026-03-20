@@ -1,5 +1,18 @@
 # Modification History
 
+## [2026-03-20 10:45:00] 백엔드 빌드 오류 수정 및 서버 구동
+
+### 작업 내용
+- **빌드 오류 수정**: `PaymentService.java`에서 누락된 `PaymentRepository` 및 `Payment` 엔티티 임포트를 추가하여 컴파일 에러를 해결했습니다.
+- **서버 구동 및 상태 확인**: 백엔드 서버를 8080 포트에서 정상적으로 실행했습니다.
+
+### 상세 변경 내역
+- `backend/src/main/java/com/daypoo/api/service/PaymentService.java`: `com.daypoo.api.entity.Payment` 및 `com.daypoo.api.repository.PaymentRepository` 임포트 구문 추가.
+- `plan_backend_run.md`: 작업을 위한 단계별 계획서 작성 및 업데이트.
+
+### 결과/영향
+- 백엔드 서버가 정상적으로 빌드 및 실행되어 프론트엔드와의 연동 테스트가 가능한 상태가 되었습니다.
+
 ## [2026-03-19 12:10:00] 스크롤바 기본화 및 디자인 일관성 고도화
 
 ### 작업 내용

@@ -25,7 +25,7 @@ public class GeocodingService {
   private final ObjectMapper objectMapper;
   private final GeometryUtil geometryUtil;
 
-  @Value("${kakao.client-id}") // REST API 키로 활용
+  @Value("${KAKAO_CLIENT_ID}") // REST API 키로 활용
   private String kakaoApiKey;
 
   private static final String KAKAO_GEOCODE_URL =
