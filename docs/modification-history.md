@@ -1,5 +1,6 @@
 # Modification History
 
+
 ## [2026-03-23 11:08:00] 신규 관리자 계정 자동 생성 로직 추가 (DataInitializer)
 
 ### 작업 내용
@@ -66,6 +67,62 @@
 
 ### 결과/영향
 - 백엔드 서버가 정상적으로 기동 가능한 상태가 되었으며, 프론트엔드와의 API 연동 성공률이 향상되었습니다.
+
+## [2026-03-20 23:42:15] DB 스키마 설계도(schema.sql) 최신화 및 동기화
+
+### 작업 내용
+- **기존 테이블 명세 수정**:
+    - `users` 테이블에 `email` 컬럼(UNIQUE, NOT NULL)을 추가하여 자바 엔티티와 구조를 일치시켰습니다.
+    - `poo_records` 테이블의 `region_code` 컬럼명을 `region_name`으로 변경하여 엔티티 매핑 오류를 방지했습니다.
+- **누락된 신규 테이블 추가**: 자바 엔티티로는 존재하지만 스키마 파일에는 없던 `items`, `inventories`, `payments`, `notifications` 테이블 생성 구문을 추가했습니다.
+- **제약 조건 정비**: 각 테이블 간의 외래키(Foreign Key) 관계를 정의하여 데이터 무결성을 강화했습니다.
+
+### 상세 변경 내역
+- `backend/src/main/resources/schema.sql`: 전체 구조 업데이트 및 신규 테이블 정의 추가.
+
+### 결과/영향
+- 팀원들의 로컬 환경 및 테스트 환경에서 `schema.sql`을 통해 DB를 초기화할 때 엔티티와 스키마 불일치로 인한 런타임 에러(Undefined column 등)가 발생하지 않도록 조치되었습니다.
+
+
+## [2026-03-20 23:37:30] 백엔드 안정화: 엔티티 매핑 오류 수정 및 API 경로 확장
+
+### 작업 내용
+- **[CRITICAL] 엔티티 매핑 오류 수정**: `Payment` 엔티티와 `User` 엔티티 간의 `@ManyToOne` 연관관계를 올바르게 매핑하여 Hibernate 기동 오류를 해결했습니다.
+- **연관 코드 리팩토링**: `Payment.builder()`를 사용하는 `PaymentService` 및 `AdminService`의 로직을 수정하여 `User` 객체를 올바르게 주입하도록 업데이트하고, 관련 린트 경고(미사용 변수 등)를 제거했습니다.
+- **프론트엔드 API 연동 대응**: 프론트엔드 마이페이지에서 호출하는 `/api/v1/auth/profile` 경로를 백엔드 `AuthController`에서 지원하도록 엔드포인트 별칭을 추가했습니다.
+- **서버 기동 확인**: `./gradlew clean bootRun`을 통해 8080 포트에서 서버가 정상적으로 부팅 및 동작함을 확인했습니다. (공공데이터 동기화 및 메일 발송 테스트 완료)
+
+### 상세 변경 내역
+- `backend/src/main/java/com/daypoo/api/entity/Payment.java`: `User` 객체 참조 필드 및 다대일 매핑 추가, 빌더 수정.
+- `backend/src/main/java/com/daypoo/api/service/PaymentService.java`: 결제 시 실제 `User` 엔티티를 찾아 매핑 및 포인트 지급 로직 개선.
+- `backend/src/main/java/com/daypoo/api/service/AdminService.java`: 테스트 데이터 생성 시 유효한 유저 참조를 포함하도록 수정 및 미사용 변수 제거.
+- `backend/src/main/java/com/daypoo/api/controller/AuthController.java`: `updateProfile` 메서드에 `/profile` 매핑 추가.
+
+### 결과/영향
+- 백엔드 서버가 안정적으로 실행되는 상태이며, 프론트엔드의 마이페이지 프로필 수정 및 결제 내역 저장 기능이 백엔드와 정상적으로 통신할 수 있는 기반이 마련되었습니다.
+
+
+## [2026-03-20 23:28:45] 원격 저장소 동기화 (Git Pull) 및 프로젝트 개선 사항 반영
+
+### 작업 내용
+- **원격 저장소 동기화**: GitHub에서 머지된 최신 변경 사항(13개 파일)을 로컬 환경에 반영했습니다.
+- **프론트엔드 기능 대폭 업데이트**: 소셜 로그인 가입 페이지, 알림 패널, 전역 상태 관리(AuthContext), 에러 바운더리 등 주요 기능이 추가되었습니다.
+- **프로젝트 개선 계획서 도입**: 전체적인 미구현 기능 및 개선 로직을 정리한 `plan_project_improvement.md` 파일이 최상위에 추가되었습니다.
+
+### 상세 변경 내역
+- `frontend/src/pages/SocialSignupPage.tsx`: 소셜 로그인 신규 사용자를 위한 닉네임 설정 페이지 및 라우트 연동.
+- `frontend/src/context/AuthContext.tsx`: React Context를 이용한 전역 인증 상태 관리 및 로그인 유지 로직 도입.
+- `frontend/src/components/NotificationPanel.tsx`: 실시간 알림 목록 및 읽음 처리를 위한 UI 컴포넌트 추가.
+- `frontend/src/components/ErrorBoundary.tsx`, `LoadingSkeleton.tsx`: 서비스 안정성 및 UX 개선을 위한 공통 컴포넌트 추가.
+- `frontend/src/services/apiClient.ts`: PUT, PATCH, DELETE 메서드 지원 추가.
+- `plan_project_improvement.md`: 향후 개발 로드맵 및 개선 사항 정의 문서 추가.
+- 기타 `MapSection.tsx`, `Navbar.tsx`, `MyPage.tsx` 등 주요 컴포넌트의 API 연동 로직 대폭 개선.
+
+### 결과/영향
+- 로컬 환경이 원격 저장소의 최신 상태와 동기화되었으며, 미구현 상태였던 소셜 로그인 및 알림 시스템 등의 필수 기능 기반이 마련되었습니다.
+- 추가된 `plan_project_improvement.md`를 통해 체계적인 후속 작업 진행이 가능해졌습니다.
+
+
 
 ## [2026-03-21 00:30:00] 백엔드 기능 고도화: 업적 시스템 완성, 인증 확장 및 에러 핸들링 통일 (BE-06 ~ BE-09)
 

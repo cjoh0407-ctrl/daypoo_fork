@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS users (
     id BIGSERIAL PRIMARY KEY,
     username VARCHAR(100) UNIQUE NOT NULL,
     password VARCHAR(255) NOT NULL,
+    email VARCHAR(100) UNIQUE NOT NULL,
     nickname VARCHAR(50) UNIQUE NOT NULL,
     equipped_title_id BIGINT,
     level INT DEFAULT 1,
@@ -14,6 +15,30 @@ CREATE TABLE IF NOT EXISTS users (
     role VARCHAR(20) DEFAULT 'ROLE_USER',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Items (Shop catalog)
+CREATE TABLE IF NOT EXISTS items (
+    id BIGSERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    description VARCHAR(255) NOT NULL,
+    type VARCHAR(50) NOT NULL, -- EnumType.STRING (HEAD, HAND, BODY, etc.)
+    price BIGINT NOT NULL,
+    image_url VARCHAR(255),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Inventory (User owned items)
+CREATE TABLE IF NOT EXISTS inventories (
+    id BIGSERIAL PRIMARY KEY,
+    user_id BIGINT NOT NULL,
+    item_id BIGINT NOT NULL,
+    is_equipped BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    FOREIGN KEY (item_id) REFERENCES items(id)
 );
 
 -- Title items catalog
@@ -26,7 +51,7 @@ CREATE TABLE IF NOT EXISTS titles (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- User titles intersection (Inventory)
+-- User titles intersection (Inventory for titles)
 CREATE TABLE IF NOT EXISTS user_titles (
     id BIGSERIAL PRIMARY KEY,
     user_id BIGINT NOT NULL,
@@ -61,10 +86,36 @@ CREATE TABLE IF NOT EXISTS poo_records (
     color VARCHAR(20),
     condition_tags TEXT,
     diet_tags TEXT,
-    region_code VARCHAR(50),
+    region_name VARCHAR(50), -- Matching field name in PooRecord entity
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id),
     FOREIGN KEY (toilet_id) REFERENCES toilets(id)
+);
+
+-- Payments (Toss Payments history)
+CREATE TABLE IF NOT EXISTS payments (
+    id BIGSERIAL PRIMARY KEY,
+    username VARCHAR(100) NOT NULL,
+    user_id BIGINT NOT NULL,
+    order_id VARCHAR(100) NOT NULL,
+    amount BIGINT NOT NULL,
+    payment_key VARCHAR(100) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+-- Notifications (User alerts)
+CREATE TABLE IF NOT EXISTS notifications (
+    id BIGSERIAL PRIMARY KEY,
+    user_id BIGINT NOT NULL,
+    type VARCHAR(50) NOT NULL, -- EnumType.STRING (ACHIEVEMENT, SYSTEM, etc.)
+    title VARCHAR(255) NOT NULL,
+    content TEXT NOT NULL,
+    redirect_url VARCHAR(255),
+    is_read BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
 -- Support Inquiries

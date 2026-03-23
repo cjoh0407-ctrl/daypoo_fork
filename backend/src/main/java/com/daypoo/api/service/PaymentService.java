@@ -64,6 +64,11 @@ public class PaymentService {
               .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
       // 결제 내역 저장
+      com.daypoo.api.entity.User user =
+          userRepository
+              .findByUsername(username)
+              .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
       paymentRepository.save(
           Payment.builder()
               .username(username)
