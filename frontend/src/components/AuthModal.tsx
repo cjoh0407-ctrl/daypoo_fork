@@ -278,7 +278,7 @@ function LoginForm({ onSwitch, onSuccess, onClose }: { onSwitch: () => void; onS
       });
       if (res && typeof res === 'object' && res.accessToken) {
         // 전역 인증 상태 업데이트
-        authLogin(res.accessToken, res.refreshToken || '');
+        await authLogin(res.accessToken, res.refreshToken || '');
 
         // ROLE_ADMIN 여부 확인 (JWT 디코딩)
         try {
