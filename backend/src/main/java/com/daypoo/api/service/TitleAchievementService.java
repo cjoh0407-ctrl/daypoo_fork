@@ -59,7 +59,7 @@ public class TitleAchievementService {
   private void grantTitle(User user, Title title) {
     UserTitle userTitle = UserTitle.builder().user(user).title(title).build();
     userTitleRepository.save(userTitle);
-    log.info("New title granted to user {}: {}", user.getUsername(), title.getName());
+    log.info("New title granted to user {}: {}", user.getEmail(), title.getName());
 
     // 알림 발송 (Push/In-app)
     String notificationTitle = "새로운 칭호 획득!";

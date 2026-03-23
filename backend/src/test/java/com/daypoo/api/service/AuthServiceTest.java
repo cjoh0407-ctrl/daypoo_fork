@@ -43,13 +43,12 @@ class AuthServiceTest {
 
   @BeforeEach
   void setUp() {
-    signUpRequest = new SignUpRequest("testUser", "password123", "test@example.com", "PoopKing");
-    loginRequest = new LoginRequest("testUser", "password123");
+    signUpRequest = new SignUpRequest("password123", "test@example.com", "PoopKing");
+    loginRequest = new LoginRequest("test@example.com", "password123");
     testUser =
         User.builder()
-            .username("testUser")
-            .password("encodedPassword")
             .email("test@example.com")
+            .password("encodedPassword")
             .nickname("PoopKing")
             .role(User.Role.ROLE_USER)
             .build();
@@ -59,7 +58,7 @@ class AuthServiceTest {
   @DisplayName("성공: 회원가입")
   void signUp_success() {
     // given
-    given(userRepository.existsByUsername(anyString())).willReturn(false);
+    given(userRepository.existsByEmail(anyString())).willReturn(false);
     given(userRepository.existsByNickname(anyString())).willReturn(false);
     given(passwordEncoder.encode(anyString())).willReturn("encodedPassword");
 
@@ -71,15 +70,15 @@ class AuthServiceTest {
   }
 
   @Test
-  @DisplayName("실패: 중복된 사용자명으로 회원가입")
-  void signUp_fail_duplicateUsername() {
+  @DisplayName("실패: 중복된 이메일로 회원가입")
+  void signUp_fail_duplicateEmail() {
     // given
-    given(userRepository.existsByUsername(anyString())).willReturn(true);
+    given(userRepository.existsByEmail(anyString())).willReturn(true);
 
     // when & then
     assertThatThrownBy(() -> authService.signUp(signUpRequest))
         .isInstanceOf(BusinessException.class)
-        .hasFieldOrPropertyWithValue("errorCode", ErrorCode.USERNAME_ALREADY_EXISTS);
+        .hasFieldOrPropertyWithValue("errorCode", ErrorCode.EMAIL_ALREADY_EXISTS);
 
     verify(userRepository, never()).save(any(User.class));
   }
@@ -88,7 +87,7 @@ class AuthServiceTest {
   @DisplayName("성공: 로그인 및 토큰 발급")
   void login_success() {
     // given
-    given(userRepository.findByUsername(anyString())).willReturn(Optional.of(testUser));
+    given(userRepository.findByEmail(anyString())).willReturn(Optional.of(testUser));
     given(passwordEncoder.matches(anyString(), anyString())).willReturn(true);
     given(jwtProvider.createAccessToken(anyString(), anyString())).willReturn("access-token");
     given(jwtProvider.createRefreshToken(anyString())).willReturn("refresh-token");
@@ -107,7 +106,7 @@ class AuthServiceTest {
   @DisplayName("실패: 존재하지 않는 사용자로 로그인")
   void login_fail_userNotFound() {
     // given
-    given(userRepository.findByUsername(anyString())).willReturn(Optional.empty());
+    given(userRepository.findByEmail(anyString())).willReturn(Optional.empty());
 
     // when & then
     assertThatThrownBy(() -> authService.login(loginRequest))
@@ -119,7 +118,7 @@ class AuthServiceTest {
   @DisplayName("실패: 잘못된 비밀번호로 로그인")
   void login_fail_invalidPassword() {
     // given
-    given(userRepository.findByUsername(anyString())).willReturn(Optional.of(testUser));
+    given(userRepository.findByEmail(anyString())).willReturn(Optional.of(testUser));
     given(passwordEncoder.matches(anyString(), anyString())).willReturn(false);
 
     // when & then

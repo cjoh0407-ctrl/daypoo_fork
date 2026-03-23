@@ -20,10 +20,10 @@ public class RankingController {
   /** 전체 랭킹 조회 */
   @GetMapping("/global")
   public ResponseEntity<RankingResponse> getGlobalRanking(
-      @AuthenticationPrincipal String username) {
+      @AuthenticationPrincipal String email) {
     User user =
-        (username != null && !"anonymousUser".equals(username))
-            ? userRepository.findByUsername(username).orElse(null)
+        (email != null && !"anonymousUser".equals(email))
+            ? userRepository.findByEmail(email).orElse(null)
             : null;
     return ResponseEntity.ok(rankingService.getGlobalRanking(user));
   }
@@ -31,10 +31,10 @@ public class RankingController {
   /** 지역 랭킹 조회 */
   @GetMapping("/region")
   public ResponseEntity<RankingResponse> getRegionRanking(
-      @AuthenticationPrincipal String username, @RequestParam String regionName) {
+      @AuthenticationPrincipal String email, @RequestParam String regionName) {
     User user =
-        (username != null && !"anonymousUser".equals(username))
-            ? userRepository.findByUsername(username).orElse(null)
+        (email != null && !"anonymousUser".equals(email))
+            ? userRepository.findByEmail(email).orElse(null)
             : null;
     return ResponseEntity.ok(rankingService.getRegionRanking(user, regionName));
   }
@@ -42,10 +42,10 @@ public class RankingController {
   /** 건강왕 랭킹 조회 */
   @GetMapping("/health")
   public ResponseEntity<RankingResponse> getHealthRanking(
-      @AuthenticationPrincipal String username) {
+      @AuthenticationPrincipal String email) {
     User user =
-        (username != null && !"anonymousUser".equals(username))
-            ? userRepository.findByUsername(username).orElse(null)
+        (email != null && !"anonymousUser".equals(email))
+            ? userRepository.findByEmail(email).orElse(null)
             : null;
     return ResponseEntity.ok(rankingService.getHealthRanking(user));
   }
