@@ -1,6 +1,7 @@
 package com.daypoo.api.controller;
 
 import com.daypoo.api.dto.PooCheckInRequest;
+import com.daypoo.api.dto.PooCheckInResponse;
 import com.daypoo.api.dto.PooRecordCreateRequest;
 import com.daypoo.api.dto.PooRecordResponse;
 import com.daypoo.api.service.PooRecordService;
@@ -29,16 +30,17 @@ public class PooRecordController {
   private final PooRecordService recordService;
 
   @Operation(
-      summary = "화장실 도착 체크인",
-      description = "화장실 반경 내에 도착했음을 기록합니다. 이 시점부터 1분이 지나야 배변 기록 생성이 가능합니다.")
-  @ApiResponse(responseCode = "200", description = "체크인 성공")
+      summary = "화장실 도착 체크인 / Fast Check-in",
+      description = "화장실 반경 내에 도착했음을 기록하고 남은 대기 시간을 반환합니다. 다중 요청 시 최초 도착 시간으로 계산됩니다.")
+  @ApiResponse(responseCode = "200", description = "체크인 성공 및 대기 시간 반환")
   @PostMapping("/check-in")
-  public ResponseEntity<Void> checkIn(
+  public ResponseEntity<PooCheckInResponse> checkIn(
       Authentication authentication, @Valid @RequestBody PooCheckInRequest request) {
 
     String email = authentication.getName();
-    recordService.checkIn(email, request.toiletId(), request.latitude(), request.longitude());
-    return ResponseEntity.ok().build();
+    PooCheckInResponse response =
+        recordService.checkIn(email, request.toiletId(), request.latitude(), request.longitude());
+    return ResponseEntity.ok(response);
   }
 
   @Operation(

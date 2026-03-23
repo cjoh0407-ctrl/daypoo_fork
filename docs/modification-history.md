@@ -64,6 +64,15 @@
   - `framer-motion`: 각 탭 진입 애니메이션 및 카드 상호작용 효과 고도화.
 - **결과/영향:** 마이페이지의 모든 탭을 리포트 탭 수준의 고품질 UI로 끌어올렸으며, 게이미피케이션 요소(미션, 수집률)를 통해 사용자 체류 시간과 앱 몰입도를 증대시킴.
 
+## [2026-03-23 18:31:00] 스마트 방문 인증(Fast Check-in) 백엔드 로직 구현
+- **작업 내용**: 위치 기반 백그라운드 자동 체크인 지원을 위한 `Check-in API` 응답 고도화 및 DTO 추가
+- **상세 변경 내역**:
+  - `LocationVerificationService.java`: `recordArrivalTime` 메서드를 `getOrSetArrivalTime`으로 변경. Redis의 `setIfAbsent` 특성을 활용해 "최초 도착 시간(System.currentTimeMillis)"을 기록 및 직접 리턴하도록 개선.
+  - `PooCheckInResponse.java`: 프론트엔드 타이머에 필요한 `firstArrivalTime`, `elapsedSeconds`, `remainedSeconds`를 포함한 응답 객체(DTO) 생성.
+  - `PooRecordService.java` & `PooRecordController.java`: `POST /api/v1/records/check-in` 엔드포인트의 반환값을 `Void`에서 `PooCheckInResponse`로 수정하고 남은 체류 시간을 연산하도록 로직 개선.
+  - `docs/PLAN_FAST_CHECKIN.md`: 스마트 방문 인증 시스템 도입을 위한 아키텍처 및 액션 플랜 문서 생성.
+- **결과/영향**: 앱을 열어둔 시점(수 백그라운드)부터 체류 시간을 소급 인정하는 '패스트 체크인'의 백엔드 지원이 완벽히 구축되어, 향후 프론트엔드의 `watchPosition` 활용 폴링에 유연하게 대응 가능합니다.
+
 ## [2026-03-23 16:55:00] AI 핵심 기능 테스트 환경 구축 및 데이터 정합성 버그 수정
 - **작업 내용**: JPA Auditing 활성화 및 Mock AI 서비스 고도화(Multipart/HealthReport), 프론트엔드 연동 문서 작성
 - **상세 변경 내역**:
