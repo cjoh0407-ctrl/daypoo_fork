@@ -29,17 +29,23 @@ public class DataInitializer implements CommandLineRunner {
     log.info("🏁 DataInitializer started...");
 
     // 1. Admin & Users
-    if (userRepository.count() == 0) {
-      log.info("Creating default users (admin@admin.com, user1@daypoo.com, user2@daypoo.com)...");
+    // admin@admin.com 계정이 없을 때만 생성 (안전한 초기화)
+    if (!userRepository.existsByEmail("admin@admin.com")) {
+        log.info("Admin account not found. Creating default admin (admin@admin.com)...");
+        userRepository.save(
+            User.builder()
+                .password(passwordEncoder.encode("admin1234"))
+                .nickname("관리자")
+                .email("admin@admin.com")
+                .role(Role.ROLE_ADMIN)
+                .build());
+    } else {
+        log.info("Admin account (admin@admin.com) already exists. Skipping creation.");
+    }
 
-      userRepository.save(
-          User.builder()
-              .password(passwordEncoder.encode("admin1234"))
-              .nickname("슈퍼관리자")
-              .email("admin@admin.com")
-              .role(Role.ROLE_ADMIN)
-              .build());
-
+    // 테스트용 일반 유저들
+    if (!userRepository.existsByEmail("user1@daypoo.com")) {
+      log.info("Creating user1@daypoo.com...");
       userRepository.save(
           User.builder()
               .password(passwordEncoder.encode("1234"))
@@ -47,7 +53,10 @@ public class DataInitializer implements CommandLineRunner {
               .email("user1@daypoo.com")
               .role(Role.ROLE_USER)
               .build());
+    }
 
+    if (!userRepository.existsByEmail("user2@daypoo.com")) {
+      log.info("Creating user2@daypoo.com...");
       userRepository.save(
           User.builder()
               .password(passwordEncoder.encode("1234"))
@@ -55,8 +64,6 @@ public class DataInitializer implements CommandLineRunner {
               .email("user2@daypoo.com")
               .role(Role.ROLE_USER)
               .build());
-
-      log.info("Default users created.");
     }
 
     // 2. Toilets

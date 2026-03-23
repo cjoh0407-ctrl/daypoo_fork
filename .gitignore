@@ -95,6 +95,7 @@ docker-compose.override.yml
 # 📝 로그 파일
 # ================================================
 *.log
+*_log.txt
 logs/
 npm-debug.log*
 yarn-debug.log*
