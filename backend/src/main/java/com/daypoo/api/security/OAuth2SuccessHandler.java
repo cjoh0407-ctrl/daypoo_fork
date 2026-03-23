@@ -1,9 +1,11 @@
 package com.daypoo.api.security;
 
+import com.daypoo.api.entity.User;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
@@ -60,9 +62,11 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
     String targetUrl;
 
     // 가입 여부 확인
-    if (userRepository.findByEmail(email).isPresent()) {
+    Optional<User> optionalUser = userRepository.findByEmail(email);
+    if (optionalUser.isPresent()) {
+      User user = optionalUser.get();
       // 기존 회원: 로그인 처리
-      String accessToken = jwtProvider.createAccessToken(email, "ROLE_USER");
+      String accessToken = jwtProvider.createAccessToken(email, user.getRole().name());
       String refreshToken = jwtProvider.createRefreshToken(email);
 
       targetUrl =

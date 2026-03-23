@@ -122,10 +122,11 @@ CREATE TABLE IF NOT EXISTS inquiries (
     id BIGSERIAL PRIMARY KEY,
     user_id BIGINT NOT NULL,
     type VARCHAR(50) NOT NULL,
+    title VARCHAR(1000) NOT NULL,
     content TEXT NOT NULL,
     answer TEXT,
     status VARCHAR(20) DEFAULT 'PENDING',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    answered_at TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id)
 );
