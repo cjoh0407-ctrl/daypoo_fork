@@ -1,6 +1,7 @@
 package com.daypoo.api.service;
 
 import com.daypoo.api.dto.AiAnalysisResponse;
+import com.daypoo.api.dto.PooCheckInResponse;
 import com.daypoo.api.dto.PooRecordCreateRequest;
 import com.daypoo.api.dto.PooRecordResponse;
 import com.daypoo.api.entity.PooRecord;
@@ -12,6 +13,9 @@ import com.daypoo.api.mapper.PooRecordMapper;
 import com.daypoo.api.repository.PooRecordRepository;
 import com.daypoo.api.repository.ToiletRepository;
 import com.daypoo.api.repository.UserRepository;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Collections;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -43,7 +47,7 @@ public class PooRecordService {
 
   /** 화장실 도착 체크인 담당 */
   @Transactional
-  public void checkIn(String email, Long toiletId, double lat, double lon) {
+  public PooCheckInResponse checkIn(String email, Long toiletId, double lat, double lon) {
     User user =
         userRepository
             .findByEmail(email)
@@ -55,9 +59,19 @@ public class PooRecordService {
       throw new BusinessException(ErrorCode.LOCATION_OUT_OF_RANGE);
     }
 
-    // 도착 시간 기록
-    locationVerificationService.recordArrivalTime(user.getId(), toiletId);
-    log.info("User {} checked-in at toilet {}.", email, toiletId);
+    // 도착 시간 기록 및 반환 (Fast Check-in 로직 대응)
+    long arrivalTimeMillis =
+        locationVerificationService.getOrSetArrivalTime(user.getId(), toiletId);
+    log.info(
+        "User {} checked-in at toilet {}. Arrival Time: {}", email, toiletId, arrivalTimeMillis);
+
+    long elapsedSeconds = (System.currentTimeMillis() - arrivalTimeMillis) / 1000;
+    long remainedSeconds = Math.max(0, 60 - elapsedSeconds);
+
+    LocalDateTime firstArrivalTime =
+        LocalDateTime.ofInstant(Instant.ofEpochMilli(arrivalTimeMillis), ZoneId.systemDefault());
+
+    return new PooCheckInResponse(toiletId, firstArrivalTime, elapsedSeconds, remainedSeconds);
   }
 
   @Transactional

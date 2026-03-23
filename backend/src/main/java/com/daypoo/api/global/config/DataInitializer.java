@@ -30,25 +30,26 @@ public class DataInitializer implements CommandLineRunner {
 
     // 1. Admin & Users
     // admin@admin.com 계정이 없을 때만 생성 (안전한 초기화)
-    userRepository.findByEmail("admin@admin.com").ifPresentOrElse(
-        existingAdmin -> {
-            if (existingAdmin.getRole() != Role.ROLE_ADMIN) {
+    userRepository
+        .findByEmail("admin@admin.com")
+        .ifPresentOrElse(
+            existingAdmin -> {
+              if (existingAdmin.getRole() != Role.ROLE_ADMIN) {
                 log.info("Updating existing admin@admin.com role to ROLE_ADMIN...");
                 existingAdmin.updateRole(Role.ROLE_ADMIN);
                 userRepository.save(existingAdmin);
-            }
-        },
-        () -> {
-            log.info("Admin account not found. Creating default admin (admin@admin.com)...");
-            userRepository.save(
-                User.builder()
-                    .password(passwordEncoder.encode("admin1234"))
-                    .nickname("관리자")
-                    .email("admin@admin.com")
-                    .role(Role.ROLE_ADMIN)
-                    .build());
-        }
-    );
+              }
+            },
+            () -> {
+              log.info("Admin account not found. Creating default admin (admin@admin.com)...");
+              userRepository.save(
+                  User.builder()
+                      .password(passwordEncoder.encode("admin1234"))
+                      .nickname("관리자")
+                      .email("admin@admin.com")
+                      .role(Role.ROLE_ADMIN)
+                      .build());
+            });
 
     // 테스트용 일반 유저들
     if (!userRepository.existsByEmail("user1@daypoo.com")) {

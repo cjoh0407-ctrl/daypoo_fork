@@ -16,12 +16,13 @@ async function runTests() {
     const headers = { Authorization: `Bearer ${token}` };
 
     console.log('\n--- [2] Check-in Test ---');
-    await axios.post(`${BASE_URL}/records/check-in`, {
+    const checkInRes = await axios.post(`${BASE_URL}/records/check-in`, {
       toiletId: TOILET_ID,
       latitude: LATITUDE,
       longitude: LONGITUDE
     }, { headers });
     console.log('✅ Check-in successful at 오류시장.');
+    console.log('Check-in Response:', JSON.stringify(checkInRes.data, null, 2));
 
     console.log('\n--- [3] AI Record Creation Test ---');
     const recordRes = await axios.post(`${BASE_URL}/records`, {
