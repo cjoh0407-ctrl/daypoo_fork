@@ -56,7 +56,7 @@ public class HealthReportService {
         new AiReportRequest(user.getId().toString(), "WEEKLY", recordDataList);
 
     // AI 서비스 호출
-    log.info("Requesting weekly AI report for user: {}", user.getUsername());
+    log.info("Requesting weekly AI report for user: {}", user.getEmail());
     return aiClient.analyzeHealthReport(request);
   }
 }

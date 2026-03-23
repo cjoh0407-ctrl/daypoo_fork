@@ -36,8 +36,8 @@ public class PooRecordController {
   public ResponseEntity<Void> checkIn(
       Authentication authentication, @Valid @RequestBody PooCheckInRequest request) {
 
-    String username = authentication.getName();
-    recordService.checkIn(username, request.toiletId(), request.latitude(), request.longitude());
+    String email = authentication.getName();
+    recordService.checkIn(email, request.toiletId(), request.latitude(), request.longitude());
     return ResponseEntity.ok().build();
   }
 
@@ -50,10 +50,10 @@ public class PooRecordController {
   public ResponseEntity<PooRecordResponse> createRecord(
       Authentication authentication, @Valid @RequestBody PooRecordCreateRequest request) {
 
-    // 로그인된 유저의 username 추출
-    String username = authentication.getName();
+    // 로그인된 유저의 email 추출
+    String email = authentication.getName();
 
-    PooRecordResponse response = recordService.createRecord(username, request);
+    PooRecordResponse response = recordService.createRecord(email, request);
     return ResponseEntity.ok(response);
   }
 
@@ -64,8 +64,8 @@ public class PooRecordController {
   @GetMapping
   public ResponseEntity<Page<PooRecordResponse>> getMyRecords(
       Authentication authentication, Pageable pageable) {
-    String username = authentication.getName();
-    return ResponseEntity.ok(recordService.getMyRecords(username, pageable));
+    String email = authentication.getName();
+    return ResponseEntity.ok(recordService.getMyRecords(email, pageable));
   }
 
   @Operation(summary = "배변 기록 상세 조회", description = "특정 배변 기록의 상세 정보를 조회합니다.")
@@ -74,7 +74,7 @@ public class PooRecordController {
   @GetMapping("/{id}")
   public ResponseEntity<PooRecordResponse> getRecord(
       Authentication authentication, @PathVariable("id") Long id) {
-    String username = authentication.getName();
-    return ResponseEntity.ok(recordService.getRecord(username, id));
+    String email = authentication.getName();
+    return ResponseEntity.ok(recordService.getRecord(email, id));
   }
 }

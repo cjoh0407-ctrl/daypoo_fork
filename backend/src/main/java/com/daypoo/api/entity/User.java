@@ -19,9 +19,6 @@ public class User extends BaseTimeEntity {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
-  @Column(nullable = false, unique = true, length = 100)
-  private String username;
-
   @Column(nullable = false)
   private String password;
 
@@ -66,8 +63,7 @@ public class User extends BaseTimeEntity {
   private List<Inquiry> inquiries = new ArrayList<>();
 
   @Builder
-  public User(String username, String password, String email, String nickname, Role role) {
-    this.username = username;
+  public User(String password, String email, String nickname, Role role) {
     this.password = password;
     this.email = email;
     this.nickname = nickname;

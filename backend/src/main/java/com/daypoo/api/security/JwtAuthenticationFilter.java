@@ -30,12 +30,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     if (token != null && jwtProvider.validateToken(token)) {
       Claims claims = jwtProvider.getClaims(token);
-      String username = claims.getSubject();
+      String email = claims.getSubject();
       String role = claims.get("role", String.class);
 
       Authentication authentication =
           new UsernamePasswordAuthenticationToken(
-              username, null, Collections.singleton(new SimpleGrantedAuthority(role)));
+              email, null, Collections.singleton(new SimpleGrantedAuthority(role)));
 
       SecurityContextHolder.getContext().setAuthentication(authentication);
     }

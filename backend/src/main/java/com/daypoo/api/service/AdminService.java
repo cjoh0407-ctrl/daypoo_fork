@@ -46,7 +46,7 @@ public class AdminService {
       // 실제 데이터 기반 (데이터가 없을 경우 0)
       long dailyUsers =
           paymentRepository.findAllByCreatedAtBetween(start, end).stream()
-              .map(Payment::getUsername)
+              .map(Payment::getEmail)
               .distinct()
               .count();
 
@@ -101,7 +101,7 @@ public class AdminService {
 
         paymentRepository.save(
             Payment.builder()
-                .username(user.getUsername())
+                .email(user.getEmail())
                 .user(user)
                 .orderId(UUID.randomUUID().toString().substring(0, 8))
                 .amount((long) ((Math.random() * 5 + 1) * 10000)) // 1만~5만원

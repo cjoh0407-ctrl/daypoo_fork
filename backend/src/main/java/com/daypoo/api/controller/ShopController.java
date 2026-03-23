@@ -11,7 +11,6 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -32,8 +31,8 @@ public class ShopController {
   /** 아이템 구매 */
   @PostMapping("/purchase")
   public ResponseEntity<Void> purchaseItem(
-      @AuthenticationPrincipal String username, @RequestBody ShopPurchaseRequest request) {
-    User user = getUserByUsername(username);
+      @AuthenticationPrincipal String email, @RequestBody ShopPurchaseRequest request) {
+    User user = getUserByEmail(email);
     shopService.purchaseItem(user, request.itemId());
     return ResponseEntity.ok().build();
   }
@@ -41,16 +40,16 @@ public class ShopController {
   /** 내 인벤토리 조회 */
   @GetMapping("/inventory")
   public ResponseEntity<List<InventoryResponse>> getUserInventory(
-      @AuthenticationPrincipal String username) {
-    User user = getUserByUsername(username);
+      @AuthenticationPrincipal String email) {
+    User user = getUserByEmail(email);
     return ResponseEntity.ok(shopService.getUserInventory(user));
   }
 
   /** 아이템 장착/해제 토글 */
   @PostMapping("/inventory/{inventoryId}/toggle")
   public ResponseEntity<Void> toggleEquipItem(
-      @AuthenticationPrincipal String username, @PathVariable Long inventoryId) {
-    User user = getUserByUsername(username);
+      @AuthenticationPrincipal String email, @PathVariable Long inventoryId) {
+    User user = getUserByEmail(email);
     shopService.toggleEquipItem(user, inventoryId);
     return ResponseEntity.ok().build();
   }
@@ -58,23 +57,23 @@ public class ShopController {
   /** 전체 칭호 목록 및 유저 보유 여부 조회 */
   @GetMapping("/titles")
   public ResponseEntity<List<TitleResponse>> getAllTitles(
-      @AuthenticationPrincipal String username) {
-    User user = getUserByUsername(username);
+      @AuthenticationPrincipal String email) {
+    User user = getUserByEmail(email);
     return ResponseEntity.ok(shopService.getAllTitles(user));
   }
 
   /** 칭호 장착 */
   @PostMapping("/titles/{titleId}/equip")
   public ResponseEntity<Void> equipTitle(
-      @AuthenticationPrincipal String username, @PathVariable Long titleId) {
-    User user = getUserByUsername(username);
+      @AuthenticationPrincipal String email, @PathVariable Long titleId) {
+    User user = getUserByEmail(email);
     shopService.equipTitle(user, titleId);
     return ResponseEntity.ok().build();
   }
 
-  private User getUserByUsername(String username) {
+  private User getUserByEmail(String email) {
     return userRepository
-        .findByUsername(username)
+        .findByEmail(email)
         .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
   }
 }

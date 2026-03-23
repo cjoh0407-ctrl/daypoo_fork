@@ -25,21 +25,21 @@ public class DataInitializer implements CommandLineRunner {
   @Override
   public void run(String... args) throws Exception {
     log.info("🏁 DataInitializer started...");
+    
     // 1. Admin & Users
     if (userRepository.count() == 0) {
-      log.info("Creating default users (admin, user1, user2)...");
+      log.info("Creating default users (admin@admin.com, user1@daypoo.com, user2@daypoo.com)...");
+      
       userRepository.save(
           User.builder()
-              .username("admin")
-              .password(passwordEncoder.encode("1234"))
-              .nickname("관리자")
-              .email("admin@daypoo.com")
+              .password(passwordEncoder.encode("admin1234"))
+              .nickname("슈퍼관리자")
+              .email("admin@admin.com")
               .role(User.Role.ROLE_ADMIN)
               .build());
 
       userRepository.save(
           User.builder()
-              .username("user1")
               .password(passwordEncoder.encode("1234"))
               .nickname("급똥전문가")
               .email("user1@daypoo.com")
@@ -48,30 +48,16 @@ public class DataInitializer implements CommandLineRunner {
 
       userRepository.save(
           User.builder()
-              .username("user2")
               .password(passwordEncoder.encode("1234"))
               .nickname("장건강지킴이")
               .email("user2@daypoo.com")
               .role(User.Role.ROLE_USER)
               .build());
+              
+      log.info("Default users created.");
     }
 
-    // 2. 관리자 계정 추가 (admin@admin.com / admin1234)
-    if (userRepository.findByUsername("admin@admin.com").isEmpty()) {
-      log.info("Creating super admin (admin@admin.com)...");
-      userRepository.save(
-          User.builder()
-              .username("admin@admin.com")
-              .password(passwordEncoder.encode("admin1234"))
-              .nickname("슈퍼관리자")
-              .email("admin@admin.com")
-              .role(User.Role.ROLE_ADMIN)
-              .build());
-    } else {
-      log.info("Super admin (admin@admin.com) already exists.");
-    }
-
-    // 3. Toilets
+    // 2. Toilets
     if (toiletRepository.count() == 0) {
       toiletRepository.save(
           Toilet.builder()
@@ -108,34 +94,33 @@ public class DataInitializer implements CommandLineRunner {
 
     // 3. Inquiries
     if (inquiryRepository.count() == 0) {
-      User user = userRepository.findByUsername("user1").orElse(null);
+      User user = userRepository.findByEmail("user1@daypoo.com").orElse(null);
       if (user != null) {
+        inquiryRepository.save(
+            Inquiry.builder()
+                .user(user)
+                .type(InquiryType.PAYMENT_ITEM)
+                .title("아이템 구매 후 인벤토리 확인이 안 돼요")
+                .content("휴지 팩을 구매했는데 인벤토리에 들어오지 않았습니다. 확인 부탁드립니다.")
+                .build());
 
-      inquiryRepository.save(
-          Inquiry.builder()
-              .user(user)
-              .type(InquiryType.PAYMENT_ITEM)
-              .title("아이템 구매 후 인벤토리 확인이 안 돼요")
-              .content("휴지 팩을 구매했는데 인벤토리에 들어오지 않았습니다. 확인 부탁드립니다.")
-              .build());
+        inquiryRepository.save(
+            Inquiry.builder()
+                .user(user)
+                .type(InquiryType.TOILET_ERROR)
+                .title("강남역 화장실 위치가 좀 달라요")
+                .content("지도의 위치와 실제 위치가 약 50m 정도 차이가 납니다. 수정 요청드려요.")
+                .build());
 
-      inquiryRepository.save(
-          Inquiry.builder()
-              .user(user)
-              .type(InquiryType.TOILET_ERROR)
-              .title("강남역 화장실 위치가 좀 달라요")
-              .content("지도의 위치와 실제 위치가 약 50m 정도 차이가 납니다. 수정 요청드려요.")
-              .build());
-
-      inquiryRepository.save(
-          Inquiry.builder()
-              .user(user)
-              .type(InquiryType.OTHERS)
-              .title("AI 건강분석 결과가 이상합니다")
-              .content("오늘 아침 기록을 분석했는데 비정상적으로 좋게 나왔어요. 원래 이런가요?")
-              .build());
+        inquiryRepository.save(
+            Inquiry.builder()
+                .user(user)
+                .type(InquiryType.OTHERS)
+                .title("AI 건강분석 결과가 이상합니다")
+                .content("오늘 아침 기록을 분석했는데 비정상적으로 좋게 나왔어요. 원래 이런가요?")
+                .build());
+      }
     }
     log.info("✅ DataInitializer completed.");
   }
-}
 }

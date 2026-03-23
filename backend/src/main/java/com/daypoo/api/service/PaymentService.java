@@ -37,8 +37,8 @@ public class PaymentService {
   private static final String TOSS_CONFIRM_URL = "https://api.tosspayments.com/v1/payments/confirm";
 
   @Transactional
-  public void confirmPayment(String username, String paymentKey, String orderId, Long amount) {
-    log.info("Processing Payment: orderId={}, amount={}, user={}", orderId, amount, username);
+  public void confirmPayment(String email, String paymentKey, String orderId, Long amount) {
+    log.info("Processing Payment: orderId={}, amount={}, user={}", orderId, amount, email);
 
     validateSecretKey();
 
@@ -60,7 +60,7 @@ public class PaymentService {
       // 결제 유저 조회
       User user =
           userRepository
-              .findByUsername(username)
+              .findByEmail(email)
               .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
       // 결제 내역 저장
@@ -68,7 +68,7 @@ public class PaymentService {
 
       paymentRepository.save(
           Payment.builder()
-              .username(username)
+              .email(email)
               .user(user)
               .orderId(orderId)
               .amount(amount)
@@ -76,7 +76,7 @@ public class PaymentService {
               .build());
 
       addPointsToUser(user, amount);
-      log.info("✅ Payment confirmed, recorded, and points awarded for user: {}", username);
+      log.info("✅ Payment confirmed, recorded, and points awarded for user: {}", email);
 
     } catch (HttpClientErrorException e) {
       handleTossError(e);

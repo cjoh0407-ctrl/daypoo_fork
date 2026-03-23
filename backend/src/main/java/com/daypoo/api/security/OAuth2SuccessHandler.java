@@ -60,10 +60,10 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
     String targetUrl;
 
     // 가입 여부 확인
-    if (userRepository.findByUsername(username).isPresent()) {
+    if (userRepository.findByEmail(email).isPresent()) {
       // 기존 회원: 로그인 처리
-      String accessToken = jwtProvider.createAccessToken(username, "ROLE_USER");
-      String refreshToken = jwtProvider.createRefreshToken(username);
+      String accessToken = jwtProvider.createAccessToken(email, "ROLE_USER");
+      String refreshToken = jwtProvider.createRefreshToken(email);
 
       targetUrl =
           frontendUrl
@@ -74,7 +74,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
       log.info("Existing OAuth2 User Login Success! Redirecting to: {}", targetUrl);
     } else {
       // 신규 회원: 닉네임 설정 페이지로 유도
-      String registrationToken = jwtProvider.createRegistrationToken(username, email, "ROLE_USER");
+      String registrationToken = jwtProvider.createRegistrationToken(email, "ROLE_USER");
       targetUrl = frontendUrl + "/signup/social?registration_token=" + registrationToken;
       log.info("New OAuth2 User Detected! Redirecting to nickname setup: {}", targetUrl);
     }

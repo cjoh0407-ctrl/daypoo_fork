@@ -45,10 +45,10 @@ public class RankingDataSeeder implements CommandLineRunner {
       String encodedPassword = passwordEncoder.encode("password123!");
 
       for (String[] mock : mockUsers) {
-        if (!userRepository.existsByUsername(mock[0])) {
+        if (!userRepository.existsByEmail(mock[0])) {
           User user =
               User.builder()
-                  .username(mock[0])
+                  .email(mock[0])
                   .password(encodedPassword)
                   .nickname(mock[1])
                   .role(User.Role.ROLE_USER)

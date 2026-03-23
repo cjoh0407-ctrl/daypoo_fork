@@ -43,10 +43,10 @@ public class PooRecordService {
 
   /** 화장실 도착 체크인 담당 */
   @Transactional
-  public void checkIn(String username, Long toiletId, double lat, double lon) {
+  public void checkIn(String email, Long toiletId, double lat, double lon) {
     User user =
         userRepository
-            .findByUsername(username)
+            .findByEmail(email)
             .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
     // 위치 검증 (확대된 150m 반경 사용)
@@ -57,16 +57,16 @@ public class PooRecordService {
 
     // 도착 시간 기록
     locationVerificationService.recordArrivalTime(user.getId(), toiletId);
-    log.info("User {} checked-in at toilet {}.", username, toiletId);
+    log.info("User {} checked-in at toilet {}.", email, toiletId);
   }
 
   @Transactional
-  public PooRecordResponse createRecord(String username, PooRecordCreateRequest request) {
+  public PooRecordResponse createRecord(String email, PooRecordCreateRequest request) {
 
     // 1. 엔티티 검증
     User user =
         userRepository
-            .findByUsername(username)
+            .findByEmail(email)
             .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
     Toilet toilet =
@@ -81,7 +81,7 @@ public class PooRecordService {
     if (!isNear) {
       log.warn(
           "User {} is outside radius for toilet {}. Proceeding anyway (dev mode).",
-          username,
+          email,
           request.toiletId());
     }
 
@@ -91,7 +91,7 @@ public class PooRecordService {
     if (!stayedEnough) {
       log.warn(
           "User {} has not stayed long enough at toilet {}. Proceeding anyway (dev mode).",
-          username,
+          email,
           request.toiletId());
     }
 
@@ -100,7 +100,7 @@ public class PooRecordService {
     if (!allowed) {
       log.warn(
           "User {} hit cooldown for toilet {}. Proceeding anyway (dev mode).",
-          username,
+          email,
           request.toiletId());
     }
 
@@ -150,7 +150,7 @@ public class PooRecordService {
 
     log.info(
         "User {} earned {} EXP and {} Points for recording toilet {}. Global/Region rank updated.",
-        username,
+        email,
         REWARD_EXP,
         REWARD_POINTS,
         toilet.getId());
@@ -160,10 +160,10 @@ public class PooRecordService {
   }
 
   @Transactional(readOnly = true)
-  public Page<PooRecordResponse> getMyRecords(String username, Pageable pageable) {
+  public Page<PooRecordResponse> getMyRecords(String email, Pageable pageable) {
     User user =
         userRepository
-            .findByUsername(username)
+            .findByEmail(email)
             .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
     return recordRepository
@@ -172,13 +172,13 @@ public class PooRecordService {
   }
 
   @Transactional(readOnly = true)
-  public PooRecordResponse getRecord(String username, Long recordId) {
+  public PooRecordResponse getRecord(String email, Long recordId) {
     PooRecord record =
         recordRepository
             .findById(recordId)
             .orElseThrow(() -> new BusinessException(ErrorCode.ENTITY_NOT_FOUND));
 
-    if (!record.getUser().getUsername().equals(username)) {
+    if (!record.getUser().getEmail().equals(email)) {
       throw new BusinessException(ErrorCode.HANDLE_ACCESS_DENIED);
     }
 

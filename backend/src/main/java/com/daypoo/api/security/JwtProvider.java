@@ -27,25 +27,25 @@ public class JwtProvider {
     this.refreshTokenValidity = refreshTokenValidity * 1000;
   }
 
-  public String createAccessToken(String username, String role) {
+  public String createAccessToken(String email, String role) {
     long now = (new Date()).getTime();
     Date validity = new Date(now + this.accessTokenValidity);
 
     return Jwts.builder()
-        .subject(username)
+        .subject(email)
         .claim("role", role)
         .signWith(key)
         .expiration(validity)
         .compact();
   }
 
-  public String createRegistrationToken(String username, String email, String role) {
+  public String createRegistrationToken(String email, String role) {
     long now = (new Date()).getTime();
     long FIVE_MINUTES = 5 * 60 * 1000;
     Date validity = new Date(now + FIVE_MINUTES);
 
     return Jwts.builder()
-        .subject(username)
+        .subject(email)
         .claim("email", email)
         .claim("role", role)
         .claim("type", "registration")
@@ -54,11 +54,11 @@ public class JwtProvider {
         .compact();
   }
 
-  public String createRefreshToken(String username) {
+  public String createRefreshToken(String email) {
     long now = (new Date()).getTime();
     Date validity = new Date(now + this.refreshTokenValidity);
 
-    return Jwts.builder().subject(username).signWith(key).expiration(validity).compact();
+    return Jwts.builder().subject(email).signWith(key).expiration(validity).compact();
   }
 
   public boolean validateToken(String token) {

@@ -41,19 +41,17 @@ public class AuthService {
       throw new BusinessException(ErrorCode.INVALID_TOKEN);
     }
 
-    String username = claims.getSubject();
     String email = claims.get("email", String.class);
     String roleClaim = claims.get("role", String.class);
 
     checkNicknameDuplicate(request.nickname());
 
-    // 중복 가입 방지 (혹시 그 사이에 가입했을 수도 있으니)
-    if (userRepository.existsByUsername(username)) {
-      throw new BusinessException(ErrorCode.USERNAME_ALREADY_EXISTS);
+    // 중복 가입 방지
+    if (userRepository.existsByEmail(email)) {
+      throw new BusinessException(ErrorCode.EMAIL_ALREADY_EXISTS);
     }
 
     User user = User.builder()
-        .username(username)
         .password(passwordEncoder.encode(UUID.randomUUID().toString()))
         .email(email)
         .nickname(request.nickname())
@@ -62,17 +60,17 @@ public class AuthService {
 
     userRepository.save(user);
 
-    String accessToken = jwtProvider.createAccessToken(user.getUsername(), user.getRole().name());
-    String refreshToken = jwtProvider.createRefreshToken(user.getUsername());
+    String accessToken = jwtProvider.createAccessToken(user.getEmail(), user.getRole().name());
+    String refreshToken = jwtProvider.createRefreshToken(user.getEmail());
 
     return TokenResponse.builder().accessToken(accessToken).refreshToken(refreshToken).build();
   }
 
   @Transactional(readOnly = true)
   public UserResponse getCurrentUserInfo() {
-    String username = SecurityContextHolder.getContext().getAuthentication().getName();
+    String email = SecurityContextHolder.getContext().getAuthentication().getName();
     User user = userRepository
-        .findByUsername(username)
+        .findByEmail(email)
         .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
     return UserResponse.from(user);
@@ -80,15 +78,10 @@ public class AuthService {
 
   @Transactional
   public void signUp(SignUpRequest request) {
-    checkUsernameDuplicate(request.username());
+    checkEmailDuplicate(request.email());
     checkNicknameDuplicate(request.nickname());
 
-    if (userRepository.existsByEmail(request.email())) {
-      throw new BusinessException(ErrorCode.EMAIL_ALREADY_EXISTS);
-    }
-
     User user = User.builder()
-        .username(request.username())
         .password(passwordEncoder.encode(request.password()))
         .email(request.email())
         .nickname(request.nickname())
@@ -112,9 +105,9 @@ public class AuthService {
     return email.substring(0, 2) + "***" + email.substring(atIndex);
   }
 
-  public void checkUsernameDuplicate(String username) {
-    if (userRepository.existsByUsername(username)) {
-      throw new BusinessException(ErrorCode.USERNAME_ALREADY_EXISTS);
+  public void checkEmailDuplicate(String email) {
+    if (userRepository.existsByEmail(email)) {
+      throw new BusinessException(ErrorCode.EMAIL_ALREADY_EXISTS);
     }
   }
 
@@ -127,15 +120,15 @@ public class AuthService {
   @Transactional
   public TokenResponse login(LoginRequest request) {
     User user = userRepository
-        .findByUsername(request.username())
+        .findByEmail(request.email())
         .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
     if (!passwordEncoder.matches(request.password(), user.getPassword())) {
       throw new BusinessException(ErrorCode.INVALID_PASSWORD);
     }
 
-    String accessToken = jwtProvider.createAccessToken(user.getUsername(), user.getRole().name());
-    String refreshToken = jwtProvider.createRefreshToken(user.getUsername());
+    String accessToken = jwtProvider.createAccessToken(user.getEmail(), user.getRole().name());
+    String refreshToken = jwtProvider.createRefreshToken(user.getEmail());
 
     return TokenResponse.builder().accessToken(accessToken).refreshToken(refreshToken).build();
   }
@@ -165,9 +158,9 @@ public class AuthService {
   }
 
   @Transactional
-  public void updateProfile(String username, ProfileUpdateRequest request) {
+  public void updateProfile(String email, ProfileUpdateRequest request) {
     User user = userRepository
-        .findByUsername(username)
+        .findByEmail(email)
         .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
     // 닉네임이 현재와 다를 경우만 중복 체크
@@ -178,9 +171,9 @@ public class AuthService {
   }
 
   @Transactional
-  public void changePassword(String username, PasswordChangeRequest request) {
+  public void changePassword(String email, PasswordChangeRequest request) {
     User user = userRepository
-        .findByUsername(username)
+        .findByEmail(email)
         .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
     if (!passwordEncoder.matches(request.currentPassword(), user.getPassword())) {
@@ -197,27 +190,27 @@ public class AuthService {
     }
 
     Claims claims = jwtProvider.getClaims(refreshToken);
-    String username = claims.getSubject();
+    String email = claims.getSubject();
 
     User user = userRepository
-        .findByUsername(username)
+        .findByEmail(email)
         .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
-    String newAccessToken = jwtProvider.createAccessToken(user.getUsername(), user.getRole().name());
+    String newAccessToken = jwtProvider.createAccessToken(user.getEmail(), user.getRole().name());
 
     return TokenResponse.builder().accessToken(newAccessToken).refreshToken(refreshToken).build();
   }
 
   @Transactional
-  public void logout(String username) {
+  public void logout(String email) {
     // Redis 블랙리스트 등을 사용하여 토큰을 무효화하는 로직을 여기에 구현할 수 있습니다.
     // 현재는 로그아웃 성공 메시지만 반환하는 수준으로 처리합니다.
   }
 
   @Transactional
-  public void withdraw(String username, String password) {
+  public void withdraw(String email, String password) {
     User user = userRepository
-        .findByUsername(username)
+        .findByEmail(email)
         .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
     if (!passwordEncoder.matches(password, user.getPassword())) {

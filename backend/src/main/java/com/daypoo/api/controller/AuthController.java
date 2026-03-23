@@ -53,13 +53,13 @@ public class AuthController {
     return ResponseEntity.ok("비밀번호가 변경되었습니다.");
   }
 
-  @Operation(summary = "아이디 중복 확인", description = "입력한 아이디(이메일)의 중복 여부를 확인합니다.")
-  @ApiResponse(responseCode = "200", description = "사용 가능한 아이디")
-  @ApiResponse(responseCode = "400", description = "이미 존재하는 아이디")
-  @GetMapping("/check-username")
-  public ResponseEntity<String> checkUsername(@RequestParam String username) {
-    authService.checkUsernameDuplicate(username);
-    return ResponseEntity.ok("사용 가능한 아이디입니다.");
+  @Operation(summary = "이메일 중복 확인", description = "입력한 이메일의 중복 여부를 확인합니다.")
+  @ApiResponse(responseCode = "200", description = "사용 가능한 이메일")
+  @ApiResponse(responseCode = "400", description = "이미 존재하는 이메일")
+  @GetMapping("/check-email")
+  public ResponseEntity<String> checkEmail(@RequestParam String email) {
+    authService.checkEmailDuplicate(email);
+    return ResponseEntity.ok("사용 가능한 이메일입니다.");
   }
 
   @Operation(summary = "닉네임 중복 확인", description = "입력한 닉네임의 중복 여부를 확인합니다.")

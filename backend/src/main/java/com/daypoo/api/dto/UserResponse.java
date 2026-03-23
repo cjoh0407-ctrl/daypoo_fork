@@ -7,7 +7,7 @@ import lombok.Builder;
 @Builder
 public record UserResponse(
     Long id,
-    String username,
+    String email,
     String nickname,
     String role,
     int level,
@@ -17,7 +17,7 @@ public record UserResponse(
   public static UserResponse from(User user) {
     return UserResponse.builder()
         .id(user.getId())
-        .username(user.getUsername())
+        .email(user.getEmail())
         .nickname(user.getNickname())
         .role(user.getRole().name())
         .level(user.getLevel())
