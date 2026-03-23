@@ -3,7 +3,7 @@ import { motion, AnimatePresence, useInView } from 'framer-motion';
 import { Navbar } from '../components/Navbar';
 import { Footer } from '../components/Footer';
 import { WaveDivider } from '../components/WaveDivider';
-import { Crown, TrendingUp, TrendingDown, Minus, ShoppingBag, X, MapPin, Star } from 'lucide-react';
+import { Crown, TrendingUp, TrendingDown, Minus, ShoppingBag, X, MapPin, Star, Trophy, Activity } from 'lucide-react';
 import { useRankings } from '../hooks/useRankings';
 
 // ── 타입 ──────────────────────────────────────────────────────────────
@@ -40,10 +40,10 @@ function ConicGlow({ color, thickness = 1.5, borderRadius = '16px' }: { color: s
 }
 
 // ── 데이터 ────────────────────────────────────────────────────────────
-const TAB_CONFIG: { key: TabKey; label: string; desc: string; icon: string }[] = [
-  { key: 'total',  label: '전체 랭킹',    desc: '누적 인증 횟수 기준',          icon: '🏆' },
-  { key: 'local',  label: '우리 동네 왕',  desc: '현재 위치 기반 지역 랭킹',     icon: '📍' },
-  { key: 'health', label: '건강왕',        desc: 'AI 쾌변 점수 기준',            icon: '💚' },
+const TAB_CONFIG: { key: TabKey; label: string; desc: string; icon: React.ReactNode }[] = [
+  { key: 'total',  label: '전체 랭킹',    desc: '누적 인증 횟수 기준',          icon: <Trophy size={14} /> },
+  { key: 'local',  label: '우리 동네 왕',  desc: '현재 위치 기반 지역 랭킹',     icon: <MapPin size={14} /> },
+  { key: 'health', label: '건강왕',        desc: 'AI 쾌변 점수 기준',            icon: <Activity size={14} /> },
 ];
 
 // ── 순위 변화 아이콘 ──────────────────────────────────────────────────
@@ -238,7 +238,7 @@ function Podium({ users, onSelect }: { users: RankUser[]; onSelect: (u: RankUser
               {user.emoji}
             </div>
           </div>
-          {isFirst && <div className="absolute -top-5 -right-2 text-2xl rotate-12 drop-shadow-md">👑</div>}
+          {isFirst && <div className="absolute -top-5 -right-2 text-amber-500 drop-shadow-md"><Crown size={24} /></div>}
         </div>
 
         {/* 텍스트 */}
@@ -426,7 +426,7 @@ export function RankingPage({ openAuth }: { openAuth: (mode: 'login' | 'signup')
   const myRankData = (isDataValid && (data as any).myRank) ? {
     rank: Number((data as any).myRank.rank || 0),
     nick: (data as any).myRank.nickname || '나',
-    emoji: '🙋',
+    emoji: <Activity size={18} />,
     score: Number((data as any).myRank.score || 0),
     change: 0,
     top: 10,
@@ -466,7 +466,7 @@ export function RankingPage({ openAuth }: { openAuth: (mode: 'login' | 'signup')
                 className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-bold mb-6"
                 style={{ background: 'rgba(232,168,56,0.1)', color: '#E8A838', border: '1px solid rgba(232,168,56,0.2)' }}
               >
-                🏆 명예의 전당
+                <Trophy size={14} /> 명예의 전당
               </span>
               <h1
                 className="font-black leading-tight"
@@ -602,9 +602,9 @@ export function RankingPage({ openAuth }: { openAuth: (mode: 'login' | 'signup')
                     <motion.div
                       animate={{ rotate: 360 }}
                       transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                      className="text-4xl"
+                      className="text-emerald-600"
                     >
-                      💩
+                      <Activity size={32} />
                     </motion.div>
                     <p className="text-sm font-bold text-gray-400">랭킹 데이터를 불러오는 중...</p>
                   </div>

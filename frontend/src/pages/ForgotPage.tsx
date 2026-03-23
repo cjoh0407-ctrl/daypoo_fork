@@ -400,14 +400,17 @@ export function ForgotPage() {
         <PageHeader />
         <div className="rounded-[28px] p-8 bg-white border border-[#d4e8db] shadow-xl">
           <div className="flex rounded-2xl p-1 mb-5 bg-[#f4faf6] border border-[#d4e8db]">
-            {([
-              { key: 'email',    label: '📧 이메일 찾기' },
-              { key: 'password', label: '🔑 비밀번호 찾기' },
-            ] as const).map((t) => (
-              <button key={t.key} onClick={() => switchMode(t.key)} className="flex-1 py-2.5 rounded-xl text-sm font-bold transition-all relative"
+            {[
+              { key: 'email' as ForgotMode,    label: '이메일 찾기', icon: <Mail size={15} /> },
+              { key: 'password' as ForgotMode, label: '비밀번호 찾기', icon: <KeyRound size={15} /> },
+            ].map((t) => (
+              <button key={t.key} onClick={() => switchMode(t.key)} className="flex-1 py-2.5 rounded-xl text-sm font-bold transition-all relative flex items-center justify-center gap-1.5"
                 style={{ color: mode === t.key ? '#1B4332' : '#7a9e8a' }}>
                 {mode === t.key && <motion.div layoutId="tabBg" className="absolute inset-0 rounded-xl bg-white border border-[#d4e8db] shadow-sm" />}
-                <span className="relative z-10">{t.label}</span>
+                <div className="relative z-10 flex items-center gap-1.5">
+                  {t.icon}
+                  <span>{t.label}</span>
+                </div>
               </button>
             ))}
           </div>

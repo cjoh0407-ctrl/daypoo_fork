@@ -1,7 +1,8 @@
+import React, { useRef, MouseEvent } from 'react';
 import { motion, useScroll, useSpring, useTransform, useMotionTemplate, useMotionValue } from 'framer-motion';
-import { useRef, MouseEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MapPin, Zap, Brain, Sparkles, ArrowRight } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 interface Step {
   id: number;
@@ -44,8 +45,8 @@ const STEPS: Step[] = [
   },
 ];
 
-// ── Spotlight Card Component ──────────────────────────────────────────
-function SpotlightCard({ step, index, scrollYProgress, onAction }: { step: Step; index: number; scrollYProgress: any; onAction?: () => void }) {
+// ── Spotlight Card Component (최신 트렌디한 가로형 레이아웃) ──────────────────────────
+function SpotlightCard({ step, index, onAction }: { step: Step; index: number; onAction?: () => void }) {
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
 
@@ -57,66 +58,75 @@ function SpotlightCard({ step, index, scrollYProgress, onAction }: { step: Step;
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 30 }}
-      whileInView={{ opacity: 1, y: 0 }}
+      initial={{ opacity: 0, scale: 0.95, y: 40 }}
+      whileInView={{ opacity: 1, scale: 1, y: 0 }}
       viewport={{ once: true, margin: '-50px' }}
-      transition={{ duration: 0.8, delay: index * 0.1 }}
+      transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1], delay: index * 0.1 }}
       onMouseMove={handleMouseMove}
-      className={`relative w-full p-8 md:p-10 rounded-[32px] md:rounded-[40px] transition-all duration-500 group overflow-hidden ${
+      className={`relative w-full p-10 md:p-14 rounded-[48px] transition-all duration-700 group overflow-hidden ${
         step.isAction 
-          ? 'bg-[#1B4332] text-white shadow-[0_32px_80px_rgba(27,67,50,0.3)]' 
-          : 'bg-white shadow-[0_12px_40px_rgba(0,0,0,0.03)] border border-gray-100'
+          ? 'bg-[#1B4332] text-white shadow-[0_40px_100px_rgba(27,67,50,0.35)]' 
+          : 'bg-white shadow-[0_20px_50px_rgba(0,0,0,0.04)] border border-gray-100'
       }`}
     >
-      {/* Spotlight 배경 (Radial Gradient) */}
+      {/* 배경 대형 아이콘 (오른쪽 빈 공간을 채우는 데코레이션) */}
+      <div className={`absolute -right-12 -bottom-12 opacity-[0.03] transition-transform duration-1000 group-hover:scale-110 group-hover:-rotate-12 ${step.isAction ? 'text-white' : ''}`} style={{ color: step.isAction ? '#fff' : step.color }}>
+        {React.isValidElement(step.icon) && React.cloneElement(step.icon as React.ReactElement<any>, { size: 320 })}
+      </div>
+
+      {/* Spotlight 효과 */}
       <motion.div
-        className="pointer-events-none absolute -inset-px rounded-[48px] opacity-0 transition duration-300 group-hover:opacity-100"
+        className="pointer-events-none absolute -inset-px rounded-[48px] opacity-0 transition duration-500 group-hover:opacity-100"
         style={{
           background: useMotionTemplate`
             radial-gradient(
-              650px circle at ${mouseX}px ${mouseY}px,
-              ${step.isAction ? 'rgba(255,255,255,0.1)' : step.color + '15'},
+              800px circle at ${mouseX}px ${mouseY}px,
+              ${step.isAction ? 'rgba(255,255,255,0.08)' : step.color + '10'},
               transparent 80%
             )
           `,
         }}
       />
 
-      <div className="relative z-10">
-        {/* 단계 번호 및 아이콘 */}
-        <div className="flex items-center gap-6 mb-10">
-          <div className={`w-16 h-16 rounded-[24px] flex items-center justify-center shadow-lg transform transition-transform group-hover:scale-110 duration-500 ${step.isAction ? 'bg-white/10' : 'bg-white border border-gray-50'}`} 
+      <div className="relative z-10 flex flex-col md:flex-row items-center gap-10 md:gap-16">
+        {/* 좌측: 번호와 아이콘 (강조) */}
+        <div className="flex-shrink-0 relative">
+          <div className={`w-24 h-24 rounded-[32px] flex items-center justify-center shadow-2xl transform transition-all duration-700 group-hover:rotate-[10deg] ${step.isAction ? 'bg-white/10 ring-1 ring-white/20' : 'bg-white border border-gray-50'}`} 
             style={{ color: step.isAction ? '#fff' : step.color }}>
-            {step.icon}
+            {React.isValidElement(step.icon) && React.cloneElement(step.icon as React.ReactElement<any>, { size: 36 })}
           </div>
-          <div className="flex flex-col">
-            <span className={`text-[10px] font-black tracking-[0.3em] uppercase mb-1 ${step.isAction ? 'text-white/30' : 'text-gray-300'}`}>
-              Roadmap Step 0{step.id}
-            </span>
-            <div className={`h-1 w-12 rounded-full ${step.isAction ? 'bg-amber-400/30' : 'bg-gray-100'}`} />
+          <div className="absolute -top-3 -right-3 w-10 h-10 rounded-full bg-[#E8A838] flex items-center justify-center text-white font-black text-sm shadow-lg border-4 border-white">
+            0{step.id}
           </div>
         </div>
 
-        {/* 제목 및 설명 */}
-        <h3 className={`text-3xl md:text-4xl font-black mb-6 tracking-tight leading-tight ${step.isAction ? 'text-white' : 'text-[#1B4332]'}`}>
-          {step.title}
-        </h3>
-        <p className={`text-lg md:text-xl leading-relaxed whitespace-pre-line mb-8 ${step.isAction ? 'text-white/60' : 'text-gray-500/80 font-medium'}`}>
-          {step.desc}
-        </p>
+        {/* 우측: 텍스트 정보 (레이아웃 개선) */}
+        <div className="flex-1 text-center md:text-left">
+          <div className="flex flex-col mb-4">
+            <span className={`text-[12px] font-black tracking-[0.4em] uppercase mb-2 ${step.isAction ? 'text-emerald-400/50' : 'text-emerald-800/20'}`}>
+              Roadmap Strategy
+            </span>
+            <h3 className={`text-3xl md:text-5xl font-black mb-4 tracking-tighter leading-[1.1] ${step.isAction ? 'text-white' : 'text-[#1B4332]'}`}>
+              {step.title}
+            </h3>
+          </div>
+          <p className={`text-lg md:text-xl leading-relaxed whitespace-pre-line ${step.isAction ? 'text-white/60' : 'text-gray-500/80 font-medium'}`}>
+            {step.desc}
+          </p>
 
-        {/* 액션 버튼 (마지막 단계 전용) */}
-        {step.isAction && (
-          <motion.button
-            whileHover={{ scale: 1.02, boxShadow: '0 20px 40px rgba(0,0,0,0.2)' }}
-            whileTap={{ scale: 0.98 }}
-            onClick={onAction}
-            className="w-full md:w-auto px-12 py-5 bg-amber-400 text-[#1B4332] font-black rounded-[20px] shadow-xl flex items-center justify-center gap-3 transition-all"
-          >
-            지금 가입하기
-            <ArrowRight size={22} />
-          </motion.button>
-        )}
+          {/* 버튼 (마지막 단계) */}
+          {step.isAction && (
+            <motion.button
+              whileHover={{ scale: 1.05, boxShadow: '0 25px 50px rgba(0,0,0,0.3)' }}
+              whileTap={{ scale: 0.95 }}
+              onClick={onAction}
+              className="mt-10 px-14 py-6 bg-amber-400 text-[#1B4332] font-black rounded-[24px] shadow-2xl flex items-center justify-center gap-4 transition-all"
+            >
+              지금 시작하기
+              <ArrowRight size={24} />
+            </motion.button>
+          )}
+        </div>
       </div>
     </motion.div>
   );
@@ -125,13 +135,19 @@ function SpotlightCard({ step, index, scrollYProgress, onAction }: { step: Step;
 export function TimelineSteps({ openAuth }: { openAuth: (mode: 'login' | 'signup') => void }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+  const { isAuthenticated, user } = useAuth();
 
   const handleAction = () => {
-    const token = localStorage.getItem('accessToken');
-    if (token) {
-      navigate('/mypage');
+    if (isAuthenticated) {
+      // PRO 또는 PREMIUM 사용자가 아니면 결제 페이지로 이동
+      if (user?.role === 'PRO' || user?.role === 'PREMIUM') {
+        navigate('/mypage');
+      } else {
+        navigate('/premium');
+      }
     } else {
-      openAuth('signup'); // "지금 가입하기" 이므로 signup 모달
+      // 로그인이 되어 있지 않으면 로그인 모달 표시
+      openAuth('login');
     }
   };
   
@@ -178,7 +194,6 @@ export function TimelineSteps({ openAuth }: { openAuth: (mode: 'login' | 'signup
             <SpotlightCard 
               step={step} 
               index={i} 
-              scrollYProgress={scrollYProgress} 
               onAction={step.isAction ? handleAction : undefined}
             />
           </div>

@@ -142,34 +142,26 @@ export function MapSection() {
         <motion.div
           initial={{ opacity: 0, y: 40 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.4, margin: "-100px" }}
-          transition={{ duration: 1.5, ease: [0.16, 1, 0.3, 1] }}
-          className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12"
+          viewport={{ once: true, amount: 0.4 }}
+          transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
+          className="text-center mb-16 space-y-6"
         >
-          <div className="space-y-3">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#1B4332]/[0.05] border border-[#1B4332]/[0.1]">
-              <MapPin size={12} className="text-[#1B4332]" />
+          <div className="flex flex-col items-center gap-4">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#1B4332]/[0.05] border border-[#1B4332]/[0.1] shadow-sm">
+              <MapPin size={14} className="text-[#1B4332]" />
               <span className="text-[10px] font-black uppercase tracking-widest text-[#1B4332]">Local Explorer</span>
             </div>
-            <h2 className="text-4xl md:text-5xl font-black text-[#1A2B27] tracking-tight">내 주변 화장실 지도</h2>
-            <p className="text-base text-[#1A2B27]/50 max-w-lg leading-relaxed">
-              가장 가까운 화장실을 실시간으로 확인하세요.<br />
-              <span className="font-bold text-[#1B4332]">24시간 개방</span> 화장실을 우선적으로 추천해 드립니다.
+            <h2 className="text-4xl md:text-6xl font-black text-[#1A2B27] tracking-tight leading-[1.1]">
+              내 주변 <span className="text-[#1B4332]">화장실 지도</span>
+            </h2>
+            <p className="text-lg md:text-xl text-[#1A2B27]/50 max-w-2xl mx-auto leading-relaxed">
+              지금 바로 당신 곁의 가장 쾌적한 공간을 확인하세요.<br className="hidden md:block" />
+              <span className="font-bold text-[#1B4332]">실시간 데이터</span>를 기반으로 가장 가까운 대안을 제시합니다.
             </p>
           </div>
-
-          <motion.button
-            whileHover={{ scale: 1.05, x: 4 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => navigate('/map')}
-            className="group flex items-center gap-3 px-8 py-4 rounded-2xl font-black text-sm transition-all"
-            style={{ backgroundColor: '#1B4332', color: 'white', boxShadow: '0 12px 30px rgba(27,67,50,0.25)' }}
-          >
-            전체 지도 모드 <Maximize2 size={16} className="group-hover:rotate-12 transition-transform" />
-          </motion.button>
         </motion.div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start mb-12">
           {/* 지도 영역 (7/12) */}
           <motion.div
             initial={{ opacity: 0, scale: 0.92, filter: 'blur(12px)' }}
@@ -227,9 +219,19 @@ export function MapSection() {
           </motion.div>
 
           {/* 목록 영역 (5/12) */}
-          <div className="lg:col-span-4 flex flex-col gap-4 h-full lg:h-[580px]">
+          <div className="lg:col-span-4 flex flex-col gap-6 h-full lg:h-[580px]">
+            {/* 전체 지도 모드 버튼 (Compact) */}
+            <motion.button
+              whileHover={{ scale: 1.02, x: 4 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => navigate('/map')}
+              className="group flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl font-black text-[11px] uppercase tracking-wider transition-all shadow-md bg-[#1B4332] text-white hover:shadow-[#1B4332]/20"
+            >
+              전체 지도 모드 <Maximize2 size={14} className="group-hover:rotate-12 transition-transform" />
+            </motion.button>
+
             {/* 상태 바 */}
-            <div className="flex items-center justify-between px-2 mb-1">
+            <div className="flex items-center justify-between px-2">
               <h4 className="text-sm font-black text-[#1A2B27]">근처 화장실 목록</h4>
               <span className="text-[10px] font-bold text-[#1B4332] px-2 py-1 rounded-lg bg-[#1B4332]/[0.05]">
                 {toilets.length} Available
@@ -344,6 +346,7 @@ export function MapSection() {
             </div>
           </div>
         </div>
+
       </div>
     </section>
   );

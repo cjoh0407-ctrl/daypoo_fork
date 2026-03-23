@@ -16,6 +16,7 @@ import { PaymentSuccessPage } from './pages/PaymentSuccessPage';
 import { AuthCallback } from './pages/AuthCallback';
 import { AdminPage } from './pages/AdminPage';
 import { SocialSignupPage } from './pages/SocialSignupPage';
+import { PremiumPage } from './pages/PremiumPage';
 import { AuthProvider } from './context/AuthContext';
 import { ErrorBoundary } from './components/ErrorBoundary';
 
@@ -57,6 +58,7 @@ function App() {
               <Route path="/auth/callback" element={<AuthCallback />} />
               <Route path="/signup/social" element={<SocialSignupPage />} />
               <Route path="/payment/success" element={<PaymentSuccessPage />} />
+              <Route path="/premium" element={<PremiumPage />} />
               <Route path="/admin" element={<AdminPage />} />
               <Route path="*" element={<NotFoundPage />} />
             </Routes>

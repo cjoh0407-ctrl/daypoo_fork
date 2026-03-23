@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { Lock, TrendingUp, Sparkles, ArrowRight, Utensils, Droplets, Moon } from 'lucide-react';
+import { HighlightReveal } from './HighlightReveal';
 import {
   PieChart, Pie, Cell, ResponsiveContainer,
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -91,7 +92,13 @@ export function ReportCard({ openAuth }: { openAuth: (mode: 'login' | 'signup') 
             className="text-3xl md:text-5xl font-black"
             style={{ color: 'var(--text-main)', letterSpacing: '-0.02em' }}
           >
-            당신의 장이 말하고 있어요
+            당신의 <HighlightReveal 
+              text="장이 말하고 있어요" 
+              highlightColor="#E8A838"
+              highlightStyle="underline"
+              animationDelay={0.8}
+              translateY={8}
+            />
           </h2>
           <p className="mt-4 text-lg" style={{ color: 'var(--text-sec)' }}>
             기록만 하면 AI가 알아서 분석합니다

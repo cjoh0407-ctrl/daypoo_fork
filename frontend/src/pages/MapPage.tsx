@@ -143,11 +143,12 @@ export function MapPage({ openAuth }: { openAuth: (mode: 'login' | 'signup') => 
     });
   }, [toggleFavorite]);
 
+  const [checkInTime, setCheckInTime] = useState<number | null>(null);
+
   // ── 방문 인증 (로그인 확인 + 체크인) ────────────────────────────
   const handleVisitRequest = useCallback(async () => {
     const isLogged = !!localStorage.getItem('accessToken');
     if (!isLogged) {
-      // ★ 현재 화장실 정보를 세션에 저장 후 팝업 닫기 → 로그인 모달 띄우기
       if (selectedToilet) {
         sessionStorage.setItem('lastSelectedToilet', JSON.stringify(selectedToilet));
       }
@@ -159,15 +160,17 @@ export function MapPage({ openAuth }: { openAuth: (mode: 'login' | 'signup') => 
     if (!selectedToilet || !pos) return;
 
     try {
-      // 백엔드 체크인 호출 (1분 타이머 시작)
+      // 백엔드 체크인 호출 (1분 타이머 시작 기준점)
       await api.post('/records/check-in', {
         toiletId: Number(selectedToilet.id),
         latitude: pos.lat,
         longitude: pos.lng
       });
+      setCheckInTime(Date.now());
     } catch (e: any) {
-      // 체크인 실패 시에도 모달은 일단 띄워줌 (위치 검증은 기록 저장 시 다시 수행)
-      console.warn('체크인 사전 호출 실패 (무시):', e.message);
+      console.warn('체크인 사전 호출 실패:', e.message);
+      // 이미 체크인 되어있을 수도 있으므로 현재 시간을 기준으로 타이머 시작
+      setCheckInTime(Date.now());
     }
 
     setTargetForVisit(selectedToilet);
@@ -410,7 +413,12 @@ export function MapPage({ openAuth }: { openAuth: (mode: 'login' | 'signup') => 
         {/* 방문 인증 모달 */}
         <AnimatePresence>
           {targetForVisit && (
-            <VisitModal toilet={targetForVisit} onClose={() => setTargetForVisit(null)} onComplete={handleVisitComplete} />
+            <VisitModal 
+              toilet={targetForVisit} 
+              onClose={() => setTargetForVisit(null)} 
+              onComplete={handleVisitComplete} 
+              checkInTime={checkInTime} 
+            />
           )}
         </AnimatePresence>
       </div>
