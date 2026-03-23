@@ -28,11 +28,13 @@ function LoginPage() {
 }
 
 function App() {
+  const [onAuthSuccess, setOnAuthSuccess] = useState<(() => void) | null>(null);
   const [authOpen, setAuthOpen] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
 
-  const openAuth = useCallback((mode: 'login' | 'signup') => {
+  const openAuth = useCallback((mode: 'login' | 'signup', callback?: () => void) => {
     setAuthMode(mode);
+    setOnAuthSuccess(() => callback || null);
     setAuthOpen(true);
   }, []);
 
@@ -62,7 +64,10 @@ function App() {
               isOpen={authOpen} 
               onClose={() => setAuthOpen(false)} 
               defaultMode={authMode}
-              onSuccess={() => {}}
+              onSuccess={() => {
+                if (onAuthSuccess) onAuthSuccess();
+                setOnAuthSuccess(null);
+              }}
             />
           </TransitionProvider>
         </AuthProvider>

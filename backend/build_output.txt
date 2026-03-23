@@ -1,1 +1,47 @@
-To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/8.5/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+
+> Task :compileJava
+D:\poop-map\backend\src\main\java\com\daypoo\api\service\TitleAchievementService.java:62: error: cannot find symbol
+    log.info("New title granted to user {}: {}", user.getUsername(), title.getName());
+                                                     ^
+  symbol:   method getUsername()
+  location: variable user of type User
+D:\poop-map\backend\src\main\java\com\daypoo\api\controller\RankingController.java:26: error: cannot find symbol
+            ? userRepository.findByUsername(username).orElse(null)
+                            ^
+  symbol:   method findByUsername(String)
+  location: variable userRepository of type UserRepository
+D:\poop-map\backend\src\main\java\com\daypoo\api\controller\RankingController.java:37: error: cannot find symbol
+            ? userRepository.findByUsername(username).orElse(null)
+                            ^
+  symbol:   method findByUsername(String)
+  location: variable userRepository of type UserRepository
+D:\poop-map\backend\src\main\java\com\daypoo\api\controller\RankingController.java:48: error: cannot find symbol
+            ? userRepository.findByUsername(username).orElse(null)
+                            ^
+  symbol:   method findByUsername(String)
+  location: variable userRepository of type UserRepository
+D:\poop-map\backend\src\main\java\com\daypoo\api\controller\SupportController.java:49: error: cannot find symbol
+        .findByUsername(username)
+        ^
+  symbol:   method findByUsername(String)
+  location: variable userRepository of type UserRepository
+Note: D:\poop-map\backend\src\main\java\com\daypoo\api\security\CookieUtils.java uses or overrides a deprecated API.
+Note: Recompile with -Xlint:deprecation for details.
+Note: Some input files use unchecked or unsafe operations.
+Note: Recompile with -Xlint:unchecked for details.
+5 errors
+
+> Task :compileJava FAILED
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':compileJava'.
+> Compilation failed; see the compiler error output for details.
+
+* Try:
+> Run with --info option to get more log output.
+> Run with --scan to get full insights.
+
+BUILD FAILED in 4s
+1 actionable task: 1 executed

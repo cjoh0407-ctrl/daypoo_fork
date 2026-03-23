@@ -16,7 +16,7 @@ import { MyPageSkeleton } from '../components/LoadingSkeleton';
 type TabKey = 'home' | 'collection' | 'report' | 'settings';
 
 interface UserProfile {
-  username: string;
+  email: string;
   nickname: string;
   points?: number;
   birthDate?: string;
@@ -1155,7 +1155,7 @@ function SettingsTab({ user, refreshUser, logout }: { user: UserProfile | null; 
   };
 
   const rows = [
-    { label: '이메일',   value: user?.username || '데이터 없음', action: null },
+    { label: '이메일',   value: user?.email || '데이터 없음', action: null },
     { label: '닉네임',   value: user?.nickname  || '데이터 없음', action: '변경', onClick: () => { setInputValue(user?.nickname || ''); setModalType('nickname'); } },
     { label: '비밀번호', value: '********', action: '변경', onClick: () => { setInputValue(''); setModalType('password'); } },
     { label: '가입일',   value: user?.createdAt ? (user.createdAt as string).split('T')[0] : '-', action: null },
@@ -1258,7 +1258,6 @@ export function MyPage({ openAuth }: { openAuth: (mode: 'login' | 'signup') => v
   useEffect(() => {
     if (!loading) {
       if (!isAuthenticated) {
-        navigate('/');
         openAuth('login');
       } else {
         fetchRecords();

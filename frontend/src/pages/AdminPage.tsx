@@ -1,1172 +1,420 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   LayoutDashboard, Users, MapPin, MessageSquare,
   ShoppingBag, Settings, ChevronRight, ChevronLeft,
   TrendingUp, AlertTriangle, Activity, DollarSign,
-  Check, X, Edit2, Trash2, LogOut, Bell,
-  BarChart3, Eye, Ban, RefreshCw, Plus,
-  Shield, FileText, Zap,
+  LogOut, Bell, RefreshCw, Plus, Shield, Zap, Search, Clock, Calendar
 } from 'lucide-react';
 import {
-  AreaChart, Area, LineChart, Line, BarChart, Bar,
-  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  Legend,
+  AreaChart, Area, PieChart, Pie, Cell,
+  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts';
-import { api } from '../services/apiClient';
 
-// ── 타입 ──────────────────────────────────────────────────────────────
-interface AdminStats {
-  totalUsers: number;
-  totalToilets: number;
-  pendingInquiries: number;
-  todayNewUsers: number;
-  todayInquiries: number;
-  weeklyTrend: {
-    date: string;
-    users: number;
-    inquiries: number;
-    sales: number;
-  }[];
-}
-type AdminTab =
-  | 'dashboard' | 'users' | 'toilets' | 'cs' | 'store' | 'system';
+// ── Shared Constants & Types ──────────────────────────────────────────
+type AdminTab = 'dashboard' | 'users' | 'toilets' | 'cs' | 'store' | 'system';
 
-// ── 차트 데이터 ───────────────────────────────────────────────────────
-const CHART_DATA = {
-  daily: [
-    { label:'03/13', sales:42000, users:180 },
-    { label:'03/14', sales:38000, users:165 },
-    { label:'03/15', sales:55000, users:220 },
-    { label:'03/16', sales:61000, users:245 },
-    { label:'03/17', sales:47000, users:198 },
-    { label:'03/18', sales:72000, users:287 },
-    { label:'03/19', sales:84500, users:312 },
-  ],
-  weekly: [
-    { label:'1월4주', sales:280000, users:1200 },
-    { label:'2월1주', sales:310000, users:980 },
-    { label:'2월2주', sales:245000, users:1340 },
-    { label:'2월3주', sales:390000, users:1560 },
-    { label:'2월4주', sales:420000, users:1420 },
-    { label:'3월1주', sales:510000, users:1780 },
-    { label:'3월2주', sales:580000, users:1950 },
-  ],
-  monthly: [
-    { label:'10월', sales:820000, users:4200 },
-    { label:'11월', sales:960000, users:5100 },
-    { label:'12월', sales:1240000, users:6800 },
-    { label:'1월',  sales:1050000, users:5900 },
-    { label:'2월',  sales:1380000, users:7200 },
-    { label:'3월',  sales:1620000, users:8400 },
-  ],
+const COLORS = {
+  primary: '#1B4332',
+  secondary: '#2D6A4F',
+  accent: '#E8A838',
+  error: '#FF4B4B',
+  warning: '#F4A261',
+  info: '#3B82F6',
+  surface: '#FFFFFF',
+  background: '#f8faf9',
+  border: 'rgba(26,43,39,0.08)',
+  textPrimary: '#1A2B27',
+  textSecondary: 'rgba(26,43,39,0.5)',
 };
 
-const API_COST_DATA = [
-  { day:'13일', cost:3.2 }, { day:'14일', cost:2.8 },
-  { day:'15일', cost:4.1 }, { day:'16일', cost:5.2 },
-  { day:'17일', cost:3.7 }, { day:'18일', cost:4.8 },
-  { day:'19일', cost:4.23 },
-];
+// ── Sub-Components: Common Elements ──────────────────────────────────
+const GlassCard = ({ children, className = '', glowColor = 'rgba(27,67,50,0.05)' }: { children: React.ReactNode, className?: string, glowColor?: string }) => (
+  <motion.div
+    initial={{ opacity: 0, y: 20 }}
+    animate={{ opacity: 1, y: 0 }}
+    whileHover={{ y: -4, boxShadow: `0 20px 40px ${glowColor}` }}
+    transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+    className={`relative overflow-hidden rounded-[24px] p-6 ${className}`}
+    style={{
+      background: 'rgba(255, 255, 255, 0.8)',
+      backdropFilter: 'blur(20px)',
+      border: `1px solid ${COLORS.border}`,
+      boxShadow: '0 8px 30px rgba(0,0,0,0.03)',
+    }}
+  >
+    {children}
+  </motion.div>
+);
 
-// ── 사이드바 메뉴 ─────────────────────────────────────────────────────
-const NAV_ITEMS: {
-  key: AdminTab; label: string; icon: React.ReactNode; badge?: number;
-}[] = [
-  { key:'dashboard', label:'대시보드',    icon:<LayoutDashboard size={18}/> },
-  { key:'users',     label:'유저 관리',   icon:<Users size={18}/>,        badge:3 },
-  { key:'toilets',   label:'화장실 관리', icon:<MapPin size={18}/>,       badge:7 },
-  { key:'cs',        label:'문의/FAQ',    icon:<MessageSquare size={18}/>, badge:12 },
-  { key:'store',     label:'상점 관리',   icon:<ShoppingBag size={18}/> },
-  { key:'system',    label:'시스템 설정', icon:<Settings size={18}/> },
-];
-
-// ── KPI 카드 ──────────────────────────────────────────────────────────
-function KpiCard({
-  label, value, change, changeUp, color, fillPct, icon,
-}: {
-  label: string; value: string; change: string; changeUp: boolean;
-  color: string; fillPct: number; icon: React.ReactNode;
-}) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 16 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-      className="rounded-2xl p-5 flex flex-col gap-3"
-      style={{ background:'#fff', border:'1px solid rgba(26,43,39,0.08)', boxShadow:'0 2px 12px rgba(26,43,39,0.04)' }}
-    >
-      <div className="flex items-center justify-between">
-        <span className="text-[13px] font-bold uppercase tracking-widest" style={{ color:'rgba(26,43,39,0.4)' }}>
-          {label}
-        </span>
-        <div className="w-9 h-9 rounded-xl flex items-center justify-center"
-          style={{ background:`${color}15`, color }}>
-          {icon}
-        </div>
+const StatWidget = ({ title, value, trend, isUp, icon: Icon, color }: any) => (
+  <GlassCard glowColor={`${color}15`}>
+    <div className="flex justify-between items-start mb-4">
+      <div className="p-3 rounded-[18px]" style={{ background: `${color}12`, color }}>
+        <Icon size={22} />
       </div>
-      <div>
-        <p className="font-black text-3xl leading-none" style={{ color, letterSpacing:'-0.04em' }}>
-          {value}
-        </p>
-        <p className="text-[14px] font-semibold mt-2.5 flex items-center gap-1"
-          style={{ color: changeUp ? '#52b788' : '#E85D5D' }}>
-          <TrendingUp size={15} style={{ transform: changeUp ? 'none' : 'scaleY(-1)' }} />
-          {change}
-        </p>
+      <div className={`flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-full ${isUp ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'}`}>
+        <TrendingUp size={12} className={isUp ? '' : 'rotate-180'} />
+        {trend}
       </div>
-      {/* 미니 진행바 */}
-      <div className="h-1.5 rounded-full overflow-hidden" style={{ background:'rgba(26,43,39,0.07)' }}>
-        <motion.div
-          initial={{ width: 0 }}
-          animate={{ width: `${fillPct}%` }}
-          transition={{ duration: 1, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
-          className="h-full rounded-full"
-          style={{ background: color }}
-        />
-      </div>
-    </motion.div>
-  );
-}
-
-// ── 커스텀 툴팁 ───────────────────────────────────────────────────────
-function ChartTooltip({ active, payload, label }: any) {
-  if (!active || !payload?.length) return null;
-  return (
-    <div className="rounded-xl p-3" style={{
-      background:'#fff', border:'1px solid rgba(26,43,39,0.1)',
-      boxShadow:'0 8px 24px rgba(26,43,39,0.1)', fontSize:'13px',
-    }}>
-      <p className="font-bold mb-2" style={{ color:'rgba(26,43,39,0.5)', fontSize:'12px' }}>{label}</p>
-      {payload.map((p: any, i: number) => (
-        <p key={i} className="font-black" style={{ color: p.color }}>
-          {p.name === 'sales' ? `₩${p.value.toLocaleString()}` : `${p.value}명`}
-        </p>
-      ))}
     </div>
-  );
-}
+    <div className="flex flex-col">
+      <span className="text-xs font-black uppercase tracking-widest mb-1" style={{ color: COLORS.textSecondary }}>{title}</span>
+      <span className="text-3xl font-black" style={{ color: COLORS.textPrimary, letterSpacing: '-0.04em' }}>{value}</span>
+    </div>
+    <div className="mt-4 h-1.5 w-full bg-black/5 rounded-full overflow-hidden">
+      <motion.div 
+        initial={{ width: 0 }} 
+        animate={{ width: '70%' }} 
+        transition={{ duration: 1, ease: 'easeInOut' }}
+        className="h-full rounded-full" 
+        style={{ background: color }} 
+      />
+    </div>
+  </GlassCard>
+);
 
-// ── 대시보드 탭 ───────────────────────────────────────────────────────
-function DashboardTab() {
-  const [period, setPeriod] = useState<'daily'|'weekly'|'monthly'>('daily');
-  const [liveUsers, setLiveUsers] = useState(247);
-  const [stats, setStats] = useState<AdminStats | null>(null);
-  const [loading, setLoading] = useState(true);
+const CustomTooltip = ({ active, payload, label }: any) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="p-4 rounded-2xl shadow-2xl border bg-white/90 backdrop-blur-md" style={{ borderColor: COLORS.border }}>
+        <p className="text-[11px] font-black uppercase tracking-wider mb-2" style={{ color: COLORS.textSecondary }}>{label}</p>
+        {payload.map((entry: any, index: number) => (
+          <div key={index} className="flex items-center justify-between gap-6 mb-1">
+            <span className="text-xs font-bold flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full" style={{ background: entry.color }} />
+              {entry.name}
+            </span>
+            <span className="text-sm font-black" style={{ color: COLORS.textPrimary }}>
+              {entry.value.toLocaleString()}
+            </span>
+          </div>
+        ))}
+      </div>
+    );
+  }
+  return null;
+};
 
+// ── Screen: Dashboard (Overview) ──────────────────────────────────────
+const DashboardView = () => {
+  const [liveUsers, setLiveUsers] = useState(342);
+  
   useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const data = await api.get('/admin/stats');
-        setStats(data);
-      } catch (err) {
-        console.error('어드민 통계 로드 실패:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchStats();
-
-    const t = setInterval(() => {
-      setLiveUsers((n) => Math.max(200, n + Math.round((Math.random() - 0.4) * 4)));
-    }, 5000);
-    return () => clearInterval(t);
+    const interval = setInterval(() => {
+      setLiveUsers(prev => Math.max(300, prev + Math.floor(Math.random() * 7 - 3)));
+    }, 3000);
+    return () => clearInterval(interval);
   }, []);
 
-  const stagger = { hidden:{}, show:{ transition:{ staggerChildren:0.07 } } };
+  const trendData = [
+    { name: '03.17', users: 1200, sales: 450 },
+    { name: '03.18', users: 1500, sales: 620 },
+    { name: '03.19', users: 1800, sales: 840 },
+    { name: '03.20', users: 2400, sales: 1100 },
+    { name: '03.21', users: 2100, sales: 950 },
+    { name: '03.22', users: 2900, sales: 1350 },
+    { name: '03.23', users: 3400, sales: 1620 },
+  ];
 
-  return (
-    <motion.div variants={stagger} initial="hidden" animate="show" className="flex flex-col gap-5">
-
-      {/* KPI 4개 */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <KpiCard label="실시간 접속자" value={loading ? '...' : String(liveUsers)} change="지난 1시간 +18%"
-          changeUp color="#1B4332" fillPct={72} icon={<Activity size={18}/>} />
-        <KpiCard label="전체 유저 수" value={loading ? '...' : (stats?.totalUsers.toLocaleString() || '0')} change={`오늘 +${stats?.todayNewUsers || 0}명`}
-          changeUp color="#E8A838" fillPct={85} icon={<Users size={18}/>} />
-        <KpiCard label="전체 화장실" value={loading ? '...' : (stats?.totalToilets.toLocaleString() || '0')} change="어제 대비 +2건"
-          changeUp color="#2D6A4F" fillPct={55} icon={<MapPin size={18}/>} />
-        <KpiCard label="답변 대기 문의" value={loading ? '...' : String(stats?.pendingInquiries || 0)} change={`전체 ${stats?.todayInquiries || 0}건`}
-          changeUp={false} color="#E85D5D" fillPct={42} icon={<MessageSquare size={18}/>} />
-      </div>
-
-      {/* 매출 차트 + 급똥/AI 비용 */}
-      <div className="grid grid-cols-3 gap-5">
-
-        {/* 매출 라인 차트 — LineChart Pro 스타일 */}
-        <div className="col-span-2 rounded-2xl p-6"
-          style={{ background:'#fff', border:'1px solid rgba(26,43,39,0.08)', boxShadow:'0 2px 12px rgba(26,43,39,0.04)' }}>
-          <div className="flex items-center justify-between mb-5">
-            <div>
-              <p className="font-black text-lg" style={{ color:'#1A2B27', letterSpacing:'-0.03em' }}>매출 및 유저 추이</p>
-              <p className="text-[13px] mt-0.5" style={{ color:'rgba(26,43,39,0.4)' }}>상점 아이템 판매 합계</p>
-            </div>
-            <div className="flex rounded-xl p-0.5 gap-0.5" style={{ background:'rgba(26,43,39,0.05)' }}>
-              {(['daily','weekly','monthly'] as const).map((p) => (
-                <button key={p} onClick={() => setPeriod(p)}
-                  className="relative px-3.5 py-2 rounded-xl text-xs font-bold transition-colors"
-                  style={{ color: period===p ? '#1B4332' : 'rgba(26,43,39,0.4)' }}>
-                  {period===p && (
-                    <motion.div layoutId="periodBg" className="absolute inset-0 rounded-xl"
-                      style={{ background:'#fff', boxShadow:'0 1px 4px rgba(26,43,39,0.1)' }}
-                      transition={{ type:'spring', stiffness:400, damping:30 }} />
-                  )}
-                  <span className="relative z-10">{p==='daily'?'일간':p==='weekly'?'주간':'월간'}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* 범례 */}
-          <div className="flex items-center gap-4 mb-4">
-            <span className="flex items-center gap-1.5 text-xs font-semibold" style={{ color:'rgba(26,43,39,0.5)' }}>
-              <span className="w-3 h-1 rounded-full inline-block" style={{ background:'#1B4332' }}/>매출
-            </span>
-            <span className="flex items-center gap-1.5 text-xs font-semibold" style={{ color:'rgba(26,43,39,0.5)' }}>
-              <span className="w-3 h-1 rounded-full inline-block" style={{ background:'#E8A838' }}/>신규 유저
-            </span>
-          </div>
-
-          <AnimatePresence mode="wait">
-            <motion.div key={period}
-              initial={{ opacity:0, y:8 }} animate={{ opacity:1, y:0 }} exit={{ opacity:0 }}
-              transition={{ duration:0.3 }}>
-              <ResponsiveContainer width="100%" height={220}>
-                <AreaChart data={stats?.weeklyTrend || []} margin={{ top:4, right:4, bottom:0, left:-10 }}>
-                  <defs>
-                    <linearGradient id="salesGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#1B4332" stopOpacity={0.12}/>
-                      <stop offset="95%" stopColor="#1B4332" stopOpacity={0}/>
-                    </linearGradient>
-                    <linearGradient id="usersGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#E8A838" stopOpacity={0.1}/>
-                      <stop offset="95%" stopColor="#E8A838" stopOpacity={0}/>
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(26,43,39,0.06)" vertical={false}/>
-                  <XAxis dataKey="date" axisLine={false} tickLine={false}
-                    tick={{ fill:'rgba(26,43,39,0.35)', fontSize:12 }} />
-                  <YAxis yAxisId="sales" orientation="left" axisLine={false} tickLine={false}
-                    tick={{ fill:'rgba(26,43,39,0.35)', fontSize:12 }}
-                    tickFormatter={(v) => `₩${Math.round(v/1000)}K`} />
-                  <YAxis yAxisId="users" orientation="right" axisLine={false} tickLine={false}
-                    tick={{ fill:'rgba(232,168,56,0.6)', fontSize:12 }} />
-                  <Tooltip content={<ChartTooltip />} />
-                  <Area yAxisId="sales" type="monotone" dataKey="sales" name="sales"
-                    stroke="#1B4332" strokeWidth={2.5} fill="url(#salesGrad)"
-                    dot={false} activeDot={{ r:5, fill:'#1B4332' }} />
-                  <Area yAxisId="users" type="monotone" dataKey="users" name="users"
-                    stroke="#E8A838" strokeWidth={2} strokeDasharray="5 3"
-                    fill="url(#usersGrad)"
-                    dot={false} activeDot={{ r:4, fill:'#E8A838' }} />
-                </AreaChart>
-              </ResponsiveContainer>
-            </motion.div>
-          </AnimatePresence>
-        </div>
-
-        {/* 우측: AI 비용 + 급똥 */}
-        <div className="flex flex-col gap-4">
-          {/* AI API 비용 바차트 */}
-          <div className="rounded-2xl p-5 flex-1"
-            style={{ background:'#fff', border:'1px solid rgba(26,43,39,0.08)', boxShadow:'0 2px 12px rgba(26,43,39,0.04)' }}>
-            <div className="flex items-center justify-between mb-1">
-              <p className="font-black text-[16px]" style={{ color:'#1A2B27', letterSpacing:'-0.02em' }}>AI API 비용</p>
-              <span className="font-black text-xl" style={{ color:'#E85D5D' }}>$4.23</span>
-            </div>
-            <p className="text-[13px] mb-2" style={{ color:'rgba(26,43,39,0.4)' }}>일일 예산 $10 기준 42%</p>
-            <div className="h-1.5 rounded-full overflow-hidden mb-3" style={{ background:'rgba(26,43,39,0.07)' }}>
-              <motion.div initial={{ width:0 }} animate={{ width:'42%' }}
-                transition={{ duration:1, delay:0.5 }}
-                className="h-full rounded-full"
-                style={{ background:'#E85D5D' }} />
-            </div>
-            <ResponsiveContainer width="100%" height={90}>
-              <BarChart data={API_COST_DATA} margin={{ top:0, right:0, bottom:0, left:-28 }}>
-                <CartesianGrid strokeDasharray="2 2" stroke="rgba(26,43,39,0.05)" vertical={false}/>
-                <XAxis dataKey="day" axisLine={false} tickLine={false}
-                  tick={{ fill:'rgba(26,43,39,0.3)', fontSize:11 }} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fontSize:11, fill:'rgba(26,43,39,0.3)' }} />
-                <Bar dataKey="cost" radius={[3,3,0,0]}
-                  fill="#E85D5D" fillOpacity={0.7} />
-              </BarChart>
-            </ResponsiveContainer>
-            <div className="flex justify-between text-xs mt-2" style={{ color:'rgba(26,43,39,0.4)' }}>
-              <span>이번 달 누적</span>
-              <span className="font-black" style={{ color:'#E85D5D' }}>$87.40 / $300</span>
-            </div>
-          </div>
-
-          {/* 급똥 핫스팟 */}
-          <div className="rounded-2xl p-5"
-            style={{ background:'#fff', border:'1px solid rgba(26,43,39,0.08)', boxShadow:'0 2px 12px rgba(26,43,39,0.04)' }}>
-            <div className="flex items-center justify-between mb-4">
-              <p className="font-black text-[16px]" style={{ color:'#1A2B27', letterSpacing:'-0.02em' }}>🚨 급똥 핫스팟</p>
-              <span className="text-sm" style={{ color:'rgba(26,43,39,0.35)' }}>최근 1시간</span>
-            </div>
-            {[
-              { region:'강남구', count:48, color:'#E85D5D', pct:90 },
-              { region:'마포구', count:31, color:'#E8A838', pct:65 },
-              { region:'서초구', count:21, color:'#52b788', pct:45 },
-              { region:'송파구', count:14, color:'#2D6A4F', pct:30 },
-            ].map((h) => (
-              <div key={h.region} className="flex items-center gap-2 mb-3">
-                <span className="text-[15px] font-semibold w-14 flex-shrink-0" style={{ color:'#1A2B27' }}>{h.region}</span>
-                <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background:'rgba(26,43,39,0.07)' }}>
-                  <motion.div initial={{ width:0 }} animate={{ width:`${h.pct}%` }}
-                    transition={{ duration:0.8, delay:0.2 }}
-                    className="h-full rounded-full" style={{ background:h.color }} />
-                </div>
-                <span className="text-[15px] font-black w-8 text-right" style={{ color:h.color }}>{h.count}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* 하단 3컬럼 */}
-      <div className="grid grid-cols-3 gap-5">
-        {/* 최근 유저 */}
-        <div className="rounded-2xl p-6"
-          style={{ background:'#fff', border:'1px solid rgba(26,43,39,0.08)', boxShadow:'0 2px 12px rgba(26,43,39,0.04)' }}>
-          <div className="flex items-center justify-between mb-5">
-            <p className="font-black text-base" style={{ color:'#1A2B27', letterSpacing:'-0.02em' }}>최근 가입 유저</p>
-            <button onClick={() => (window as any).setAdminTab?.('users')} className="text-sm font-bold" style={{ color:'#2D6A4F', background:'none', border:'none', cursor:'pointer' }}>전체 보기 →</button>
-          </div>
-          {[
-            { nick:'급똥전문가', date:'03/19', status:'정상', color:'#52b788' },
-            { nick:'장건강지킴이', date:'03/19', status:'정상', color:'#52b788' },
-            { nick:'새벽배변러', date:'03/18', status:'주의', color:'#E8A838' },
-            { nick:'섬유질왕', date:'03/17', status:'정지', color:'#E85D5D' },
-          ].map((u) => (
-            <div key={u.nick} className="flex items-center justify-between py-3"
-              style={{ borderBottom:'1px solid rgba(26,43,39,0.05)' }}>
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-black"
-                  style={{ background:'rgba(27,67,50,0.08)', color:'#1B4332' }}>
-                  {u.nick[0]}
-                </div>
-                <span className="text-[13px] font-semibold" style={{ color:'#1A2B27' }}>{u.nick}</span>
-              </div>
-              <div className="flex items-center gap-2.5">
-                <span className="text-xs" style={{ color:'rgba(26,43,39,0.35)' }}>{u.date}</span>
-                <span className="text-xs font-bold px-2.5 py-1 rounded-full"
-                  style={{ background:`${u.color}15`, color:u.color }}>{u.status}</span>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* 미답변 문의 */}
-        <div className="rounded-2xl p-6"
-          style={{ background:'#fff', border:'1px solid rgba(26,43,39,0.08)', boxShadow:'0 2px 12px rgba(26,43,39,0.04)' }}>
-          <div className="flex items-center justify-between mb-5">
-            <p className="font-black text-base" style={{ color:'#1A2B27', letterSpacing:'-0.02em' }}>미답변 문의</p>
-            <span className="text-sm font-bold px-2.5 py-1 rounded-full"
-              style={{ background:'rgba(232,93,93,0.1)', color:'#E85D5D' }}>12건</span>
-          </div>
-          {[
-            { title:'아이템 구매 후 없어요', cat:'결제', time:'2시간 전', urgent:true },
-            { title:'화장실 위치 오류 신고', cat:'정보 오류', time:'4시간 전', urgent:false },
-            { title:'AI 분석 이상한 것 같아요', cat:'건강 분석', time:'6시간 전', urgent:false },
-          ].map((q, i) => (
-            <div key={i} className="flex items-start gap-2.5 py-3"
-              style={{ borderBottom: i<2 ? '1px solid rgba(26,43,39,0.05)' : 'none' }}>
-              <div className="w-1.5 h-1.5 rounded-full mt-2 flex-shrink-0"
-                style={{ background: q.urgent ? '#E85D5D' : '#E8A838' }} />
-              <div className="flex-1 min-w-0">
-                <p className="text-[14px] font-semibold truncate" style={{ color:'#1A2B27' }}>{q.title}</p>
-                <p className="text-xs mt-0.5" style={{ color:'rgba(26,43,39,0.4)' }}>{q.cat} · {q.time}</p>
-              </div>
-              <button onClick={() => (window as any).setAdminTab?.('cs')} className="text-xs font-bold px-3 py-2 rounded-lg flex-shrink-0 transition-colors hover:bg-green-50"
-                style={{ border:'1px solid rgba(27,67,50,0.15)', color:'#1B4332', cursor:'pointer' }}>
-                답변
-              </button>
-            </div>
-          ))}
-        </div>
-
-        {/* 빠른 작업 + 경고 */}
-        <div className="flex flex-col gap-4">
-          <div className="rounded-2xl p-6 flex-1"
-            style={{ background:'#fff', border:'1px solid rgba(26,43,39,0.08)', boxShadow:'0 2px 12px rgba(26,43,39,0.04)' }}>
-            <p className="font-black text-[15px] mb-4" style={{ color:'#1A2B27', letterSpacing:'-0.02em' }}>빠른 작업</p>
-            <div className="grid grid-cols-2 gap-3">
-              {[
-                { icon:'🚻', label:'화장실 신고', tab:'toilets', color:'rgba(27,67,50,0.07)' },
-                { icon:'💬', label:'FAQ 편집', tab:'cs', color:'rgba(232,168,56,0.07)' },
-                { icon:'🛍', label:'아이템 등록', tab:'store', color:'rgba(82,183,136,0.07)' },
-                { icon:'📋', label:'시스템 로그', tab:'system', color:'rgba(26,43,39,0.04)' },
-              ].map((a) => (
-                <motion.button key={a.label} 
-                  whileHover={{ scale:1.05, y:-2, boxShadow:'0 4px 12px rgba(26,43,39,0.08)' }} 
-                  whileTap={{ scale:0.95 }}
-                  onClick={() => (window as any).setAdminTab?.(a.tab as any)}
-                  className="flex flex-col items-center gap-2 p-3.5 rounded-xl text-[13px] font-bold transition-shadow"
-                  style={{ background:a.color, border:'1px solid rgba(26,43,39,0.08)', color:'#1A2B27' }}>
-                  <span style={{ fontSize:'24px' }}>{a.icon}</span>
-                  {a.label}
-                </motion.button>
-              ))}
-            </div>
-          </div>
-          <div className="rounded-2xl p-5"
-            style={{ background:'rgba(232,93,93,0.05)', border:'1px solid rgba(232,93,93,0.15)' }}>
-            <div className="flex items-center gap-2 mb-2">
-              <AlertTriangle size={18} style={{ color:'#E85D5D' }} />
-              <p className="text-base font-black" style={{ color:'#E85D5D' }}>주의 필요</p>
-            </div>
-            <p className="text-sm leading-relaxed" style={{ color:'rgba(26,43,39,0.6)' }}>
-              화장실 신고 <strong>7건</strong> 미처리<br/>
-              AI 비용 일일 예산 <strong>42%</strong> 소진
-            </p>
-          </div>
-        </div>
-      </div>
-    </motion.div>
-  );
-}
-
-// ── 유저 관리 탭 ──────────────────────────────────────────────────────
-function UsersTab() {
-  const [search, setSearch] = useState('');
-  const users = [
-    { nick:'황금변기왕', email:'he***@gmail.com', joined:'2026-01-15', count:1204, points:2500, status:'정상' },
-    { nick:'변비탈출러', email:'va***@naver.com', joined:'2026-02-03', count:847, points:1200, status:'주의' },
-    { nick:'새벽배변러', email:'ni***@kakao.com', joined:'2026-03-01', count:498, points:300, status:'정지' },
-    { nick:'급똥전문가', email:'ab***@gmail.com', joined:'2026-03-19', count:12, points:0, status:'정상' },
-  ].filter(u => u.nick.includes(search) || u.email.includes(search));
-
-  const statusStyle = (s: string) => ({
-    '정상': { bg:'rgba(82,183,136,0.1)', color:'#2D6A4F' },
-    '주의': { bg:'rgba(232,168,56,0.1)', color:'#b5810f' },
-    '정지': { bg:'rgba(232,93,93,0.1)', color:'#E85D5D' },
-  }[s] ?? { bg:'rgba(26,43,39,0.06)', color:'rgba(26,43,39,0.4)' });
-
-  return (
-    <motion.div initial={{ opacity:0, y:16 }} animate={{ opacity:1, y:0 }}
-      transition={{ duration:0.4 }} className="flex flex-col gap-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="font-black text-xl" style={{ color:'#1A2B27', letterSpacing:'-0.03em' }}>유저 관리</p>
-          <p className="text-sm mt-0.5" style={{ color:'rgba(26,43,39,0.45)' }}>총 3,241명 · 오늘 신규 18명</p>
-        </div>
-        <input value={search} onChange={e=>setSearch(e.target.value)}
-          placeholder="닉네임·이메일 검색..."
-          className="outline-none text-sm"
-          style={{ padding:'9px 14px', borderRadius:'12px', border:'1px solid rgba(26,43,39,0.1)', width:'220px', color:'#1A2B27', background:'#fff' }} />
-      </div>
-      <div className="rounded-2xl overflow-hidden"
-        style={{ background:'#fff', border:'1px solid rgba(26,43,39,0.08)', boxShadow:'0 2px 12px rgba(26,43,39,0.04)' }}>
-        <table className="w-full" style={{ borderCollapse:'collapse' }}>
-          <thead>
-            <tr style={{ borderBottom:'1px solid rgba(26,43,39,0.07)' }}>
-              {['닉네임','이메일','가입일','인증 수','포인트','상태','작업'].map(h => (
-                <th key={h} className="text-left px-5 py-4 text-[13px] font-bold uppercase tracking-wide"
-                  style={{ color:'rgba(26,43,39,0.5)' }}>{h}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {users.map((u, i) => (
-              <motion.tr key={u.nick} initial={{ opacity:0, x:-8 }} animate={{ opacity:1, x:0 }}
-                transition={{ delay:i*0.06 }}
-                style={{ borderBottom: i<users.length-1 ? '1px solid rgba(26,43,39,0.05)' : 'none' }}>
-                <td className="px-5 py-3.5">
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-black"
-                      style={{ background:'rgba(27,67,50,0.08)', color:'#1B4332' }}>{u.nick[0]}</div>
-                    <span className="text-sm font-bold" style={{ color:'#1A2B27' }}>{u.nick}</span>
-                  </div>
-                </td>
-                <td className="px-5 py-3.5 text-sm" style={{ color:'rgba(26,43,39,0.5)' }}>{u.email}</td>
-                <td className="px-5 py-3.5 text-sm" style={{ color:'rgba(26,43,39,0.5)' }}>{u.joined}</td>
-                <td className="px-5 py-3.5 text-sm font-black" style={{ color:'#E8A838' }}>{u.count.toLocaleString()}</td>
-                <td className="px-5 py-3.5 text-sm font-semibold" style={{ color:'#1A2B27' }}>{u.points.toLocaleString()}P</td>
-                <td className="px-5 py-3.5">
-                  <span className="text-[11px] font-bold px-2.5 py-1 rounded-full"
-                    style={{ background:statusStyle(u.status).bg, color:statusStyle(u.status).color }}>
-                    {u.status}
-                  </span>
-                </td>
-                <td className="px-5 py-3.5">
-                  <div className="flex gap-2">
-                    <motion.button whileHover={{ scale:1.05 }} whileTap={{ scale:0.95 }}
-                      className="text-[11px] font-bold px-3 py-1.5 rounded-lg"
-                      style={{ border:'1px solid rgba(27,67,50,0.15)', color:'#1B4332', background:'rgba(27,67,50,0.04)' }}>
-                      상세
-                    </motion.button>
-                    {u.status === '정지' ? (
-                      <motion.button whileHover={{ scale:1.05 }} whileTap={{ scale:0.95 }}
-                        className="text-[11px] font-bold px-3 py-1.5 rounded-lg"
-                        style={{ border:'1px solid rgba(82,183,136,0.2)', color:'#2D6A4F', background:'rgba(82,183,136,0.05)' }}>
-                        해제
-                      </motion.button>
-                    ) : (
-                      <motion.button whileHover={{ scale:1.05 }} whileTap={{ scale:0.95 }}
-                        className="text-[11px] font-bold px-3 py-1.5 rounded-lg"
-                        style={{ border:'1px solid rgba(232,93,93,0.2)', color:'#E85D5D', background:'rgba(232,93,93,0.04)' }}>
-                        정지
-                      </motion.button>
-                    )}
-                  </div>
-                </td>
-              </motion.tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </motion.div>
-  );
-}
-
-// ── 화장실 관리 탭 ────────────────────────────────────────────────────
-function ToiletsTab() {
-  const [selectedReport, setSelectedReport] = useState<number|null>(null);
-  const [reports, setReports] = useState([
-    { id:0, name:'강남구청 공중화장실', type:'위치 오류', user:'황금변기왕', time:'2시간 전', desc:'"현재 핀이 실제 화장실에서 50m 벗어나 있어요. 지도에서 확인해주세요."', urgent:true },
-    { id:1, name:'서울시청 화장실', type:'정보 오류', user:'변비탈출러', time:'5시간 전', desc:'"운영 시간이 24시간이 아닌데 24시간으로 표시되고 있어요."', urgent:false },
-    { id:2, name:'홍대 공중화장실', type:'청결 신고', user:'섬유질왕', time:'8시간 전', desc:'"화장실 내부 상태가 매우 불량합니다. 청소가 필요해 보여요."', urgent:false },
-  ]);
-
-  const handleAction = (id: number, action: '승인' | '반려') => {
-    alert(`${action}되었습니다.`);
-    setReports(prev => prev.filter(r => r.id !== id));
-    setSelectedReport(null);
-  };
-
-  return (
-    <motion.div initial={{ opacity:0, y:16 }} animate={{ opacity:1, y:0 }}
-      transition={{ duration:0.4 }} className="flex flex-col gap-4">
-      <div>
-        <p className="font-black text-xl" style={{ color:'#1A2B27', letterSpacing:'-0.03em' }}>화장실 관리</p>
-        <p className="text-sm mt-0.5" style={{ color:'rgba(26,43,39,0.45)' }}>신고 대기 7건 · 전체 화장실 72,841개</p>
-      </div>
-
-      <div className="grid grid-cols-5 gap-4">
-        {/* 신고 목록 */}
-        <div className="col-span-2 rounded-2xl p-5"
-          style={{ background:'#fff', border:'1px solid rgba(26,43,39,0.08)', boxShadow:'0 2px 12px rgba(26,43,39,0.04)' }}>
-          <div className="flex items-center justify-between mb-4">
-            <p className="font-black text-sm" style={{ color:'#1A2B27' }}>📥 신고함</p>
-            <span className="text-[10px] font-bold px-2 py-1 rounded-full"
-              style={{ background:'rgba(232,93,93,0.1)', color:'#E85D5D' }}>7건 대기</span>
-          </div>
-          <div className="flex flex-col gap-2">
-            {reports.map((r) => (
-              <motion.div key={r.id} whileHover={{ scale:1.01 }} onClick={() => setSelectedReport(r.id)}
-                className="p-3.5 rounded-xl cursor-pointer transition-all"
-                style={{
-                  background: selectedReport===r.id ? 'rgba(27,67,50,0.06)' : 'rgba(26,43,39,0.02)',
-                  border: selectedReport===r.id ? '1.5px solid rgba(27,67,50,0.2)' : '1px solid rgba(26,43,39,0.08)',
-                }}>
-                <div className="flex items-start justify-between gap-2 mb-1.5">
-                  <span className="text-xs font-black" style={{ color:'#1A2B27' }}>{r.name}</span>
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full flex-shrink-0"
-                    style={{ background: r.urgent ? 'rgba(232,93,93,0.1)' : 'rgba(232,168,56,0.1)',
-                      color: r.urgent ? '#E85D5D' : '#b5810f' }}>{r.type}</span>
-                </div>
-                <p className="text-[11px]" style={{ color:'rgba(26,43,39,0.5)' }}>{r.user} · {r.time}</p>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-
-        {/* 신고 상세 */}
-        <div className="col-span-3 rounded-2xl overflow-hidden"
-          style={{ background:'#fff', border:'1px solid rgba(26,43,39,0.08)', boxShadow:'0 2px 12px rgba(26,43,39,0.04)' }}>
-          <AnimatePresence mode="wait">
-            {selectedReport !== null ? (
-              <motion.div key={selectedReport}
-                initial={{ opacity:0, x:16 }} animate={{ opacity:1, x:0 }} exit={{ opacity:0 }}
-                className="h-full flex flex-col p-5">
-                {/* 신고 정보 */}
-                <div className="mb-4">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full"
-                      style={{ background:'rgba(232,168,56,0.1)', color:'#b5810f' }}>
-                      {reports[selectedReport].type}
-                    </span>
-                    <span className="text-[11px]" style={{ color:'rgba(26,43,39,0.4)' }}>
-                      {reports[selectedReport].user} · {reports[selectedReport].time}
-                    </span>
-                  </div>
-                  <p className="font-black text-base" style={{ color:'#1A2B27', letterSpacing:'-0.02em' }}>
-                    {reports[selectedReport].name}
-                  </p>
-                  <p className="text-sm mt-1.5 leading-relaxed" style={{ color:'rgba(26,43,39,0.6)' }}>
-                    {reports[selectedReport].desc}
-                  </p>
-                </div>
-
-                {/* 지도 뷰어 영역 */}
-                <div className="flex-1 rounded-xl overflow-hidden mb-4 flex items-center justify-center"
-                  style={{ background:'#e8f0ec', border:'1px solid rgba(27,67,50,0.15)', minHeight:'200px' }}>
-                  <div className="text-center">
-                    <p className="text-2xl mb-2">🗺️</p>
-                    <p className="text-sm font-bold" style={{ color:'#1B4332' }}>카카오맵 지도 뷰어</p>
-                    <p className="text-xs mt-1" style={{ color:'rgba(27,67,50,0.5)' }}>
-                      🔵 현재 좌표 (DB) · 🔴 신고 좌표 비교
-                    </p>
-                    <div className="flex gap-4 mt-3 justify-center text-xs font-semibold">
-                      <span style={{ color:'#3B82F6' }}>● 현재: 37.5172, 127.0473</span>
-                      <span style={{ color:'#E85D5D' }}>● 신고: 37.5178, 127.0481</span>
-                    </div>
-                    <p className="text-[11px] mt-2" style={{ color:'rgba(26,43,39,0.4)' }}>
-                      실제 환경에서 카카오맵 SDK 연결 필요
-                    </p>
-                  </div>
-                </div>
-
-                {/* 승인/반려 버튼 */}
-                <div className="flex gap-3">
-                  <motion.button whileHover={{ scale:1.02 }} whileTap={{ scale:0.97 }}
-                    onClick={() => setSelectedReport(null)}
-                    className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-black text-sm"
-                    style={{ background:'linear-gradient(135deg,#1B4332,#2D6A4F)', color:'#fff',
-                      boxShadow:'0 4px 16px rgba(27,67,50,0.25)' }}>
-                    <Check size={15}/> 승인 · 좌표 반영
-                  </motion.button>
-                  <motion.button whileHover={{ scale:1.02 }} whileTap={{ scale:0.97 }}
-                    onClick={() => setSelectedReport(null)}
-                    className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-sm"
-                    style={{ border:'1px solid rgba(232,93,93,0.25)', color:'#E85D5D', background:'rgba(232,93,93,0.05)' }}>
-                    <X size={15}/> 반려 · 거절
-                  </motion.button>
-                </div>
-              </motion.div>
-            ) : (
-              <motion.div key="empty" initial={{ opacity:0 }} animate={{ opacity:1 }}
-                className="h-full flex flex-col items-center justify-center py-16">
-                <MapPin size={32} style={{ color:'rgba(26,43,39,0.2)' }} />
-                <p className="text-sm font-semibold mt-3" style={{ color:'rgba(26,43,39,0.35)' }}>
-                  신고 항목을 클릭해서 검토하세요
-                </p>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-      </div>
-    </motion.div>
-  );
-}
-
-// ── 문의/FAQ 탭 ───────────────────────────────────────────────────────
-function CsTab() {
-  const [replyTarget, setReplyTarget] = useState<number|null>(null);
-  const [replyText, setReplyText] = useState('');
-  const inquiries = [
-    { id:0, title:'아이템 구매 후 인벤토리에 없어요', cat:'결제/아이템', user:'급똥전문가', time:'2시간 전', urgent:true },
-    { id:1, title:'화장실 위치가 잘못 표시돼 있어요', cat:'정보 오류', user:'변비탈출러', time:'4시간 전', urgent:false },
-    { id:2, title:'AI 분석 결과가 이상해요', cat:'건강 분석', user:'섬유질왕', time:'6시간 전', urgent:false },
+  const pieData = [
+    { name: '프리미엄 (PRO)', value: 400, color: COLORS.primary },
+    { name: '베이직', value: 300, color: '#52b788' },
+    { name: '무료', value: 300, color: COLORS.accent },
   ];
 
   return (
-    <motion.div initial={{ opacity:0, y:16 }} animate={{ opacity:1, y:0 }}
-      transition={{ duration:0.4 }} className="flex flex-col gap-4">
-      <p className="font-black text-xl" style={{ color:'#1A2B27', letterSpacing:'-0.03em' }}>문의/FAQ 관리</p>
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+        <StatWidget title="현재 접속자" value={liveUsers} trend="+12.5%" isUp color={COLORS.primary} icon={Activity} />
+        <StatWidget title="누적 가입자" value="82.4K" trend="+4.3%" isUp color={COLORS.accent} icon={Users} />
+        <StatWidget title="최근 수익" value="₩2.4M" trend="+18.2%" isUp color={COLORS.secondary} icon={DollarSign} />
+        <StatWidget title="시스템 경고" value="3건" trend="-2%" isUp={false} color={COLORS.error} icon={AlertTriangle} />
+      </div>
 
-      <div className="grid grid-cols-2 gap-4">
-        {/* 1:1 문의 */}
-        <div className="rounded-2xl p-5"
-          style={{ background:'#fff', border:'1px solid rgba(26,43,39,0.08)', boxShadow:'0 2px 12px rgba(26,43,39,0.04)' }}>
-          <div className="flex items-center justify-between mb-4">
-            <p className="font-black text-sm" style={{ color:'#1A2B27' }}>1:1 문의 답변</p>
-            <div className="flex gap-2">
-              <span className="text-[10px] font-bold px-2 py-1 rounded-full"
-                style={{ background:'rgba(232,93,93,0.1)', color:'#E85D5D' }}>미답변 12</span>
-              <span className="text-[10px] font-bold px-2 py-1 rounded-full"
-                style={{ background:'rgba(82,183,136,0.1)', color:'#2D6A4F' }}>완료 48</span>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <GlassCard className="lg:col-span-2">
+          <div className="flex items-center justify-between mb-8">
+            <div>
+              <h3 className="text-xl font-black" style={{ letterSpacing: '-0.03em' }}>성장 지표 시각화</h3>
+              <p className="text-sm" style={{ color: COLORS.textSecondary }}>가입 유저 및 상점 매출 추세</p>
             </div>
           </div>
-          <div className="flex flex-col gap-2">
-            {inquiries.map((q) => (
-              <div key={q.id}>
-                <div className="flex items-start gap-2 p-3 rounded-xl"
-                  style={{ background: replyTarget===q.id ? 'rgba(27,67,50,0.04)' : 'transparent',
-                    border: replyTarget===q.id ? '1px solid rgba(27,67,50,0.12)' : '1px solid transparent' }}>
-                  <div className="w-1.5 h-1.5 rounded-full mt-1.5 flex-shrink-0"
-                    style={{ background: q.urgent ? '#E85D5D' : '#E8A838' }} />
-                  <div className="flex-1">
-                    <p className="text-xs font-bold" style={{ color:'#1A2B27' }}>{q.title}</p>
-                    <p className="text-[10px] mt-0.5" style={{ color:'rgba(26,43,39,0.4)' }}>
-                      {q.cat} · {q.user} · {q.time}
-                    </p>
+          <div className="h-[320px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={trendData}>
+                <defs>
+                  <linearGradient id="colorUsers" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor={COLORS.primary} stopOpacity={0.25}/>
+                    <stop offset="95%" stopColor={COLORS.primary} stopOpacity={0}/>
+                  </linearGradient>
+                  <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor={COLORS.accent} stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor={COLORS.accent} stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(0,0,0,0.05)" />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 11, fontWeight: 700, fill: '#999' }} dy={10} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fontWeight: 700, fill: '#999' }} />
+                <Tooltip content={<CustomTooltip />} />
+                <Area type="monotone" dataKey="users" name="신규 방문" stroke={COLORS.primary} strokeWidth={3} fillOpacity={1} fill="url(#colorUsers)" />
+                <Area type="monotone" dataKey="sales" name="매출 건수" stroke={COLORS.accent} strokeWidth={3} fillOpacity={1} fill="url(#colorSales)" />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </GlassCard>
+
+        <GlassCard>
+           <h3 className="text-xl font-black mb-1" style={{ letterSpacing: '-0.03em' }}>멤버십 세그먼트</h3>
+           <p className="text-sm mb-6" style={{ color: COLORS.textSecondary }}>사용자 티어 분포 비율</p>
+           <div className="h-[220px] w-full relative">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie data={pieData} innerRadius={60} outerRadius={80} paddingAngle={8} dataKey="value" stroke="none">
+                    {pieData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                 <span className="text-[10px] font-black uppercase text-black/40">총 유저</span>
+                 <span className="text-2xl font-black text-black">1.0K</span>
+              </div>
+           </div>
+           <div className="mt-6 space-y-3">
+              {pieData.map((item) => (
+                <div key={item.name} className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2.5 h-2.5 rounded-full" style={{ background: item.color }} />
+                    <span className="text-xs font-bold text-black/60">{item.name}</span>
                   </div>
-                  <motion.button whileHover={{ scale:1.05 }} whileTap={{ scale:0.95 }}
-                    onClick={() => setReplyTarget(replyTarget===q.id ? null : q.id)}
-                    className="text-[10px] font-black px-2.5 py-1.5 rounded-lg flex-shrink-0"
-                    style={{ background:'#1B4332', color:'#fff', border:'none' }}>
-                    답변
-                  </motion.button>
+                  <span className="text-sm font-black text-black/80">{((item.value / 1000) * 100).toFixed(0)}%</span>
                 </div>
-                <AnimatePresence>
-                  {replyTarget === q.id && (
-                    <motion.div initial={{ height:0, opacity:0 }} animate={{ height:'auto', opacity:1 }}
-                      exit={{ height:0, opacity:0 }} transition={{ duration:0.25 }}
-                      style={{ overflow:'hidden' }}>
-                      <div className="px-3 pb-3">
-                        <textarea value={replyText} onChange={e=>setReplyText(e.target.value)}
-                          placeholder="답변을 입력하세요..."
-                          rows={3}
-                          className="w-full outline-none text-xs resize-none"
-                          style={{ padding:'10px 12px', borderRadius:'10px',
-                            border:'1px solid rgba(26,43,39,0.1)', color:'#1A2B27',
-                            background:'rgba(26,43,39,0.02)', lineHeight:'1.6' }} />
-                        <div className="flex gap-2 mt-2">
-                          <motion.button whileHover={{ scale:1.02 }} whileTap={{ scale:0.97 }}
-                            onClick={() => { setReplyTarget(null); setReplyText(''); }}
-                            className="flex-1 py-2 rounded-xl font-black text-xs"
-                            style={{ background:'linear-gradient(135deg,#1B4332,#2D6A4F)', color:'#fff', border:'none' }}>
-                            답변 등록
-                          </motion.button>
-                          <button onClick={() => setReplyTarget(null)}
-                            className="px-3 py-2 rounded-xl text-xs font-semibold"
-                            style={{ border:'1px solid rgba(26,43,39,0.1)', color:'rgba(26,43,39,0.5)' }}>
-                            취소
-                          </button>
-                        </div>
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* FAQ 편집 */}
-        <div className="rounded-2xl p-5"
-          style={{ background:'#fff', border:'1px solid rgba(26,43,39,0.08)', boxShadow:'0 2px 12px rgba(26,43,39,0.04)' }}>
-          <div className="flex items-center justify-between mb-4">
-            <p className="font-black text-sm" style={{ color:'#1A2B27' }}>FAQ 편집</p>
-            <motion.button whileHover={{ scale:1.05 }} whileTap={{ scale:0.95 }}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold"
-              style={{ border:'1px solid rgba(27,67,50,0.2)', color:'#1B4332', background:'rgba(27,67,50,0.04)' }}>
-              <Plus size={12}/> 추가
-            </motion.button>
-          </div>
-          <div className="flex flex-col gap-2">
-            {[
-              { q:'AI 건강 분석 결과는 의학적으로 정확한가요?', cat:'건강/AI분석' },
-              { q:'화장실 정보가 틀린데 어떻게 수정하나요?', cat:'이용방법' },
-              { q:'획득한 칭호는 어떻게 적용하나요?', cat:'결제/아바타' },
-            ].map((f, i) => (
-              <div key={i} className="flex items-center gap-3 p-3 rounded-xl"
-                style={{ background:'rgba(26,43,39,0.02)', border:'1px solid rgba(26,43,39,0.07)' }}>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full flex-shrink-0"
-                  style={{ background:'rgba(27,67,50,0.1)', color:'#1B4332' }}>{f.cat}</span>
-                <p className="flex-1 text-xs font-semibold truncate" style={{ color:'#1A2B27' }}>{f.q}</p>
-                <div className="flex gap-1.5 flex-shrink-0">
-                  <motion.button whileHover={{ scale:1.1 }} whileTap={{ scale:0.9 }}>
-                    <Edit2 size={13} style={{ color:'rgba(26,43,39,0.4)' }}/>
-                  </motion.button>
-                  <motion.button whileHover={{ scale:1.1 }} whileTap={{ scale:0.9 }}>
-                    <Trash2 size={13} style={{ color:'#E85D5D' }}/>
-                  </motion.button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </motion.div>
-  );
-}
-
-// ── 상점 관리 탭 ──────────────────────────────────────────────────────
-function StoreTab() {
-  const [items, setItems] = useState([
-    { id:1, name:'👑 황금 왕관', type:'헤드', price:500, sold:284, status:'판매중' },
-    { id:2, name:'💎 다이아 마커', type:'마커', price:1200, sold:156, status:'판매중' },
-    { id:3, name:'🦋 나비 날개', type:'이펙트', price:800, sold:98, status:'한정 10개' },
-    { id:4, name:'🌟 별빛 오라', type:'이펙트', price:500, sold:67, status:'판매중' },
-  ]);
-
-  const handleEdit = (name: string) => alert(`${name} 수정 모드로 진입합니다.`);
-  const handleStop = (id: number) => {
-    if(confirm('정말 판매를 중단하시겠습니까?')) {
-      setItems(prev => prev.map(item => item.id === id ? { ...item, status: '중단됨' } : item));
-      alert('판매 중단되었습니다.');
-    }
-  };
-
-  return (
-    <motion.div initial={{ opacity:0, y:16 }} animate={{ opacity:1, y:0 }}
-      transition={{ duration:0.4 }} className="flex flex-col gap-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="font-black text-xl" style={{ color:'#1A2B27', letterSpacing:'-0.03em' }}>상점 관리</p>
-          <p className="text-sm mt-0.5" style={{ color:'rgba(26,43,39,0.45)' }}>아이템 카탈로그 · 칭호 관리</p>
-        </div>
-        <motion.button whileHover={{ scale:1.02 }} whileTap={{ scale:0.97 }}
-          onClick={() => alert('신규 아이템 등록 창을 엽니다.')}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl font-black text-sm"
-          style={{ background:'linear-gradient(135deg,#1B4332,#2D6A4F)', color:'#fff',
-            boxShadow:'0 4px 16px rgba(27,67,50,0.22)' }}>
-          <Plus size={15}/> 아이템 등록
-        </motion.button>
-      </div>
-      <div className="rounded-2xl overflow-hidden"
-        style={{ background:'#fff', border:'1px solid rgba(26,43,39,0.08)', boxShadow:'0 2px 12px rgba(26,43,39,0.04)' }}>
-        <table className="w-full" style={{ borderCollapse:'collapse' }}>
-          <thead>
-            <tr style={{ borderBottom:'1px solid rgba(26,43,39,0.07)' }}>
-              {['아이템명','타입','가격','판매 수','매출','상태','작업'].map(h => (
-                <th key={h} className="text-left px-5 py-3.5 text-[11px] font-bold uppercase tracking-wide"
-                  style={{ color:'rgba(26,43,39,0.4)' }}>{h}</th>
               ))}
-            </tr>
-          </thead>
-          <tbody>
-            {items.map((item, i) => (
-              <tr key={item.id} style={{ borderBottom: i<items.length-1 ? '1px solid rgba(26,43,39,0.05)' : 'none' }}>
-                <td className="px-5 py-3.5 text-sm font-bold" style={{ color:'#1A2B27' }}>{item.name}</td>
-                <td className="px-5 py-3.5">
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full"
-                    style={{ background:'rgba(27,67,50,0.08)', color:'#1B4332' }}>{item.type}</span>
-                </td>
-                <td className="px-5 py-3.5 text-sm font-semibold" style={{ color:'#1A2B27' }}>{item.price.toLocaleString()}P</td>
-                <td className="px-5 py-3.5 text-sm font-black" style={{ color:'#E8A838' }}>{item.sold}</td>
-                <td className="px-5 py-3.5 text-sm font-semibold" style={{ color:'#2D6A4F' }}>
-                  ₩{(item.price * item.sold * 10).toLocaleString()}
-                </td>
-                <td className="px-5 py-3.5">
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full"
-                    style={{
-                      background: item.status==='판매중' ? 'rgba(82,183,136,0.1)' : item.status==='중단됨' ? 'rgba(232,93,93,0.1)' : 'rgba(232,168,56,0.1)',
-                      color: item.status==='판매중' ? '#2D6A4F' : item.status==='중단됨' ? '#E85D5D' : '#b5810f',
-                    }}>{item.status}</span>
-                </td>
-                <td className="px-5 py-3.5">
-                  <div className="flex gap-2">
-                    <motion.button whileHover={{ scale:1.05 }} whileTap={{ scale:0.95 }}
-                      onClick={() => handleEdit(item.name)}
-                      className="text-[11px] font-bold px-2.5 py-1.5 rounded-lg"
-                      style={{ border:'1px solid rgba(26,43,39,0.1)', color:'rgba(26,43,39,0.6)' }}>
-                      수정
-                    </motion.button>
-                    <motion.button whileHover={{ scale:1.05 }} whileTap={{ scale:0.95 }}
-                      onClick={() => handleStop(item.id)}
-                      className="text-[11px] font-bold px-2.5 py-1.5 rounded-lg"
-                      style={{ border:'1px solid rgba(232,93,93,0.2)', color:'#E85D5D' }}>
-                      중단
-                    </motion.button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+           </div>
+        </GlassCard>
       </div>
-    </motion.div>
-  );
-}
 
-// ── 시스템 설정 탭 ────────────────────────────────────────────────────
-function SystemTab() {
-  const [prompt, setPrompt] = useState(
-    '친근하고 따뜻한 톤으로 배변 건강에 대한 조언을 제공하세요.\n의학적 진단은 피하고, 일반적인 건강 가이드 수준으로 작성하세요.\n이모지를 적절히 활용해 읽기 쉽게 만들어주세요.'
-  );
-
-  return (
-    <motion.div initial={{ opacity:0, y:16 }} animate={{ opacity:1, y:0 }}
-      transition={{ duration:0.4 }} className="flex flex-col gap-4">
-      <p className="font-black text-xl" style={{ color:'#1A2B27', letterSpacing:'-0.03em' }}>시스템 설정</p>
-
-      <div className="grid grid-cols-2 gap-4">
-        {/* AI 프롬프트 */}
-        <div className="rounded-2xl p-5"
-          style={{ background:'#fff', border:'1px solid rgba(26,43,39,0.08)', boxShadow:'0 2px 12px rgba(26,43,39,0.04)' }}>
-          <div className="flex items-center gap-2 mb-1">
-            <Zap size={16} style={{ color:'#E8A838' }}/>
-            <p className="font-black text-sm" style={{ color:'#1A2B27' }}>AI 프롬프트 관리</p>
-          </div>
-          <p className="text-[11px] mb-3" style={{ color:'rgba(26,43,39,0.45)' }}>OpenAI 건강 분석 조언 톤앤매너</p>
-          <textarea value={prompt} onChange={e=>setPrompt(e.target.value)} rows={5}
-            className="w-full outline-none text-xs resize-none"
-            style={{ padding:'12px', borderRadius:'12px', border:'1px solid rgba(26,43,39,0.1)',
-              color:'#1A2B27', background:'rgba(26,43,39,0.02)', lineHeight:'1.7' }} />
-          <div className="flex gap-2 mt-3">
-            <motion.button whileHover={{ scale:1.02 }} whileTap={{ scale:0.97 }}
-              className="flex-1 py-2.5 rounded-xl font-black text-sm"
-              style={{ background:'linear-gradient(135deg,#1B4332,#2D6A4F)', color:'#fff', border:'none' }}>
-              저장
-            </motion.button>
-            <button className="px-4 py-2.5 rounded-xl text-sm font-semibold"
-              style={{ border:'1px solid rgba(26,43,39,0.1)', color:'rgba(26,43,39,0.5)' }}>
-              초기화
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+        <GlassCard>
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-xl font-black">실시간 시스템 로그</h3>
+            <button className="text-xs font-bold text-[#2d6a4f] hover:underline flex items-center gap-1">
+              전체 보기 <ChevronRight size={14} />
             </button>
           </div>
-        </div>
-
-        {/* 작업 로그 */}
-        <div className="rounded-2xl p-5"
-          style={{ background:'#fff', border:'1px solid rgba(26,43,39,0.08)', boxShadow:'0 2px 12px rgba(26,43,39,0.04)' }}>
-          <div className="flex items-center gap-2 mb-4">
-            <FileText size={16} style={{ color:'#2D6A4F' }}/>
-            <p className="font-black text-sm" style={{ color:'#1A2B27' }}>최근 작업 로그</p>
-          </div>
-          <div className="flex flex-col gap-2">
+          <div className="space-y-4">
             {[
-              { time:'03/19 14:32', admin:'관리자', action:'유저 \'새벽배변러\' 계정 정지', type:'warn' },
-              { time:'03/19 11:15', admin:'관리자', action:'FAQ \'브리스톨 척도란?\' 수정', type:'info' },
-              { time:'03/18 16:45', admin:'관리자', action:'강남구청 화장실 좌표 업데이트', type:'success' },
-              { time:'03/18 10:20', admin:'관리자', action:'AI 프롬프트 톤 수정 저장', type:'info' },
-              { time:'03/17 15:30', admin:'관리자', action:'다이아 마커 아이템 한정 설정', type:'info' },
-            ].map((log, i) => (
-              <div key={i} className="flex items-start gap-3 p-3 rounded-xl"
-                style={{ background:'rgba(26,43,39,0.02)', border:'1px solid rgba(26,43,39,0.06)' }}>
-                <div className="w-1.5 h-1.5 rounded-full mt-1.5 flex-shrink-0"
-                  style={{ background: log.type==='warn' ? '#E85D5D' : log.type==='success' ? '#52b788' : '#E8A838' }} />
-                <div>
-                  <p className="text-xs font-bold" style={{ color:'#1A2B27' }}>{log.action}</p>
-                  <p className="text-[10px] mt-0.5" style={{ color:'rgba(26,43,39,0.4)' }}>
-                    {log.time} · {log.admin}
-                  </p>
+              { id: 1, type: '보안', msg: '신규 관리자 "DayPoo_Admin" IP 접속 허용', time: '방금 전', color: COLORS.primary, icon: Shield },
+              { id: 2, type: '결제', msg: '프리미엄 상점 황금 변기 아이템 결제 건수 증가', time: '5분 전', color: COLORS.accent, icon: ShoppingBag },
+              { id: 3, type: '경고', msg: '마포구 인근 공중화장실 데이터 동기화 지연', time: '14분 전', color: COLORS.error, icon: AlertTriangle },
+              { id: 4, type: '시스템', msg: '자동화 백업 및 AI 추천 로그 캐시 초기화 완료', time: '45분 전', color: COLORS.info, icon: RefreshCw },
+            ].map((log) => (
+              <div key={log.id} className="flex items-start gap-4 p-4 rounded-2xl bg-black/[0.02] border border-black/[0.03] transition-colors hover:bg-black/[0.04]">
+                <div className="p-2.5 rounded-xl border" style={{ borderColor: `${log.color}20`, color: log.color, background: `${log.color}08` }}>
+                  <log.icon size={16} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex justify-between items-center mb-0.5">
+                    <span className="text-[10px] font-black tracking-widest" style={{ color: log.color }}>{log.type}</span>
+                    <span className="text-[10px] text-black/30 font-bold">{log.time}</span>
+                  </div>
+                  <p className="text-sm font-bold text-black/80 truncate">{log.msg}</p>
                 </div>
               </div>
             ))}
           </div>
-        </div>
-      </div>
-    </motion.div>
-  );
-}
+        </GlassCard>
 
-// ══════════════════════════════════════════════════════════════════════
-// RAIL NAVIGATION 사이드바
-// - collapsed(아이콘만) ↔ expanded(텍스트+아이콘) 토글
-// - hover 툴팁, layoutId 활성 pill 슬라이드
-// ══════════════════════════════════════════════════════════════════════
-function RailSidebar({
-  active, onChange,
-}: { active: AdminTab; onChange: (t: AdminTab) => void }) {
-  const [expanded, setExpanded] = useState(true);
-  const [tooltip, setTooltip] = useState<string|null>(null);
-
-  return (
-    <motion.div
-      animate={{ width: expanded ? 220 : 68 }}
-      transition={{ type:'spring', stiffness:320, damping:30 }}
-      className="flex flex-col flex-shrink-0 overflow-hidden"
-      style={{ background:'#1B4332', minHeight:'100vh', position:'relative' }}
-    >
-      {/* 로고 */}
-      <div className="flex items-center justify-between px-4 py-5"
-        style={{ borderBottom:'1px solid rgba(255,255,255,0.07)', minHeight:'72px' }}>
-        <AnimatePresence>
-          {expanded && (
-            <motion.div initial={{ opacity:0, x:-8 }} animate={{ opacity:1, x:0 }} exit={{ opacity:0 }}>
-              <div className="text-white text-xl" style={{ fontFamily:'SchoolSafetyNotification, sans-serif', fontWeight:700, letterSpacing:'-0.01em' }}>
-                Day<span style={{ color:'#E8A838' }}>.</span>Poo
+        <div className="grid grid-cols-2 gap-6">
+           <GlassCard className="flex flex-col items-center justify-center text-center group cursor-pointer" glowColor={`${COLORS.primary}20`}>
+              <div className="w-16 h-16 rounded-3xl bg-[#1B4332]/10 text-[#1B4332] flex items-center justify-center mb-4 transition-transform group-hover:scale-110 group-hover:rotate-6">
+                 <Plus size={32} />
               </div>
-              <div className="text-[12px] font-bold uppercase tracking-widest mt-0.5"
-                style={{ color:'rgba(255,255,255,0.4)' }}>Admin</div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-        <motion.button
-          whileHover={{ scale:1.1 }} whileTap={{ scale:0.9 }}
-          onClick={() => setExpanded(!expanded)}
-          className="flex items-center justify-center rounded-xl flex-shrink-0"
-          style={{ width:32, height:32, background:'rgba(255,255,255,0.08)', color:'rgba(255,255,255,0.6)', border:'none', cursor:'pointer' }}>
-          {expanded ? <ChevronLeft size={14}/> : <ChevronRight size={14}/>}
-        </motion.button>
-      </div>
+              <h4 className="font-black text-lg">상점 아이템 추가</h4>
+              <p className="text-xs text-black/40 mt-1">새로운 칭호나 아바타를<br/>단독 카탈로그에 등록하세요</p>
+           </GlassCard>
+           
+           <GlassCard className="flex flex-col items-center justify-center text-center group cursor-pointer" glowColor={`${COLORS.error}20`}>
+              <div className="w-16 h-16 rounded-3xl bg-[#FF4B4B]/10 text-[#FF4B4B] flex items-center justify-center mb-4 transition-transform group-hover:scale-110 group-hover:-rotate-6">
+                 <AlertTriangle size={32} />
+              </div>
+              <h4 className="font-black text-lg">신고 현황 확인</h4>
+              <p className="text-xs text-black/40 mt-1">대기 중인 12건의<br/>화장실 신고를 긴급 처리하세요</p>
+           </GlassCard>
 
-      {/* 네비 항목 */}
-      <nav className="flex-1 px-3 py-3" style={{ overflowY:'auto' }}>
-        {NAV_ITEMS.map((item) => (
-          <div key={item.key} className="relative mb-1"
-            onMouseEnter={() => !expanded && setTooltip(item.label)}
-            onMouseLeave={() => setTooltip(null)}>
-            <button
-              onClick={() => onChange(item.key)}
-              className="relative w-full flex items-center gap-3 rounded-xl transition-colors"
-              style={{
-                padding: expanded ? '10px 12px' : '10px',
-                justifyContent: expanded ? 'flex-start' : 'center',
-                color: active===item.key ? '#E8A838' : 'rgba(255,255,255,0.5)',
-                border: 'none', background: 'transparent', cursor: 'pointer',
-              }}
-            >
-              {/* 활성 배경 pill */}
-              {active===item.key && (
-                <motion.div layoutId="railActive" className="absolute inset-0 rounded-xl"
-                  style={{ background:'rgba(232,168,56,0.15)', border:'1px solid rgba(232,168,56,0.25)' }}
-                  transition={{ type:'spring', stiffness:400, damping:32 }} />
-              )}
-              <span className="relative z-10 flex-shrink-0">{item.icon}</span>
-              <AnimatePresence>
-                {expanded && (
-                  <motion.span initial={{ opacity:0, width:0 }} animate={{ opacity:1, width:'auto' }}
-                    exit={{ opacity:0, width:0 }} transition={{ duration:0.2 }}
-                    className="relative z-10 text-sm font-bold whitespace-nowrap overflow-hidden"
-                    style={{ color: active===item.key ? '#E8A838' : 'rgba(255,255,255,0.6)' }}>
-                    {item.label}
-                  </motion.span>
-                )}
-              </AnimatePresence>
-              {/* 배지 */}
-              {item.badge && item.badge > 0 && (
-                <motion.span initial={{ scale:0 }} animate={{ scale:1 }}
-                  className="z-10 text-[10px] font-black rounded-full flex items-center justify-center"
-                  style={{
-                    position: expanded ? 'static' : 'absolute',
-                    top: expanded ? 'auto' : -2,
-                    right: expanded ? 'auto' : -2,
-                    marginLeft: expanded ? 'auto' : 0,
-                    width:16, height:16,
-                    background:'#E85D5D', color:'#fff', flexShrink:0,
-                    boxShadow: expanded ? 'none' : '0 2px 6px rgba(232,93,93,0.4)',
-                  }}>
-                  {item.badge}
-                </motion.span>
-              )}
-            </button>
-
-            {/* 툴팁 (collapsed 상태) */}
-            <AnimatePresence>
-              {!expanded && tooltip===item.label && (
-                <motion.div initial={{ opacity:0, x:-4 }} animate={{ opacity:1, x:0 }} exit={{ opacity:0 }}
-                  className="absolute left-full top-1/2 -translate-y-1/2 ml-3 z-50 pointer-events-none"
-                  style={{ whiteSpace:'nowrap' }}>
-                  <div className="px-3 py-1.5 rounded-xl text-xs font-bold"
-                    style={{ background:'#1A2B27', color:'#fff', boxShadow:'0 4px 16px rgba(0,0,0,0.25)' }}>
-                    {item.label}
-                    {item.badge ? <span className="ml-1.5 text-[10px] text-red-400">{item.badge}</span> : null}
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-        ))}
-      </nav>
-
-      {/* 하단 관리자 프로필 */}
-      <div className="px-3 py-3" style={{ borderTop:'1px solid rgba(255,255,255,0.07)' }}>
-        <div className="flex items-center gap-3 p-2.5 rounded-xl"
-          style={{ background:'rgba(255,255,255,0.06)' }}>
-          <div className="w-8 h-8 rounded-full flex items-center justify-center font-black text-sm flex-shrink-0"
-            style={{ background:'#E8A838', color:'#1B4332' }}>A</div>
-          <AnimatePresence>
-            {expanded && (
-              <motion.div initial={{ opacity:0 }} animate={{ opacity:1 }} exit={{ opacity:0 }}
-                className="flex-1 min-w-0">
-                <p className="text-xs font-bold text-white truncate">관리자</p>
-                <p className="text-[10px]" style={{ color:'rgba(255,255,255,0.4)' }}>Super Admin</p>
-              </motion.div>
-            )}
-          </AnimatePresence>
-          {expanded && (
-            <motion.button whileHover={{ scale:1.1 }} whileTap={{ scale:0.9 }}
-              style={{ color:'rgba(255,255,255,0.35)', background:'none', border:'none', cursor:'pointer' }}>
-              <LogOut size={14}/>
-            </motion.button>
-          )}
+           <div className="col-span-2 p-6 rounded-[24px] bg-gradient-to-br from-[#1B4332] to-[#2D6A4F] text-white overflow-hidden relative shadow-xl shadow-green-900/30">
+              <div className="relative z-10">
+                <h4 className="text-xl font-black mb-1">시스템 최적화 점검</h4>
+                <p className="text-sm text-white/70 mb-6">현재 리소스 캐싱 사용률이 높습니다.<br/>정리하여 퍼포먼스를 극대화하세요.</p>
+                <motion.button 
+                  whileHover={{ scale: 1.05 }} 
+                  whileTap={{ scale: 0.95 }}
+                  className="px-6 py-3 rounded-2xl bg-white text-[#1B4332] font-black text-xs shadow-xl"
+                >
+                  지금 즉시 최적화 실행
+                </motion.button>
+              </div>
+              <Zap className="absolute -right-8 -bottom-8 w-48 h-48 opacity-10 rotate-12" />
+           </div>
         </div>
       </div>
-    </motion.div>
+    </div>
   );
-}
+};
 
-// ── AdminPage 메인 ─────────────────────────────────────────────────────
+// ── Main Page Layout: Admin Dashboard ─────────────────────────────────
 export function AdminPage() {
   const [activeTab, setActiveTab] = useState<AdminTab>('dashboard');
-  const [prevTab, setPrevTab] = useState<AdminTab>('dashboard');
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [currentTime, setCurrentTime] = useState(new Date());
 
   useEffect(() => {
-    (window as any).setAdminTab = (tab: AdminTab) => {
-      setPrevTab(activeTab);
-      setActiveTab(tab);
-    };
-  }, [activeTab]);
+    const t = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(t);
+  }, []);
 
-  const TAB_ORDER: AdminTab[] = ['dashboard','users','toilets','cs','store','system'];
-  const tabDir = TAB_ORDER.indexOf(activeTab) >= TAB_ORDER.indexOf(prevTab) ? 1 : -1;
-
-  const handleTabChange = (t: AdminTab) => {
-    setPrevTab(activeTab);
-    setActiveTab(t);
-  };
-
-  const slideVar = {
-    enter: (d: number) => ({ opacity:0, y: d > 0 ? 12 : -12 }),
-    center: { opacity:1, y:0 },
-    exit: (d: number) => ({ opacity:0, y: d > 0 ? -12 : 12 }),
-  };
-
-  const tabTitle: Record<AdminTab, string> = {
-    dashboard:'대시보드', users:'유저 관리', toilets:'화장실 관리',
-    cs:'문의/FAQ', store:'상점 관리', system:'시스템 설정',
-  };
+  const menuItems = [
+    { id: 'dashboard', label: '대시보드', icon: LayoutDashboard },
+    { id: 'users', label: '유저 관리', icon: Users, badge: 12 },
+    { id: 'toilets', label: '화장실 관리', icon: MapPin, badge: 4 },
+    { id: 'cs', label: '고객 지원', icon: MessageSquare, badge: 7 },
+    { id: 'store', label: '프리미엄 상점', icon: ShoppingBag },
+    { id: 'system', label: '시스템 설정', icon: Settings },
+  ];
 
   return (
-    <div className="flex" style={{
-      background:'#F8FAF9',
-      minHeight:'100vh',
-      color:'#1A2B27',
-      fontFamily: "'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif"
-    }}>
-
-      {/* Rail Navigation 사이드바 */}
-      <RailSidebar active={activeTab} onChange={handleTabChange} />
-
-      {/* 메인 컨텐츠 */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* 탑바 */}
-        <div className="flex items-center justify-between px-6 py-4"
-          style={{ background:'#fff', borderBottom:'1px solid rgba(26,43,39,0.07)', boxShadow:'0 1px 4px rgba(26,43,39,0.04)' }}>
-          <div>
-            <p className="font-black text-lg" style={{ color:'#1A2B27', letterSpacing:'-0.03em' }}>
-              {tabTitle[activeTab]}
-            </p>
-            <p className="text-xs mt-0.5" style={{ color:'rgba(26,43,39,0.4)' }}>
-              2026년 3월 19일 · <span style={{ fontFamily:'SchoolSafetyNotification, sans-serif', fontWeight:700 }}>Day.Poo</span> Admin Console
-            </p>
-          </div>
-          <div className="flex items-center gap-3">
-            {/* 실시간 배지 */}
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold"
-              style={{ background:'rgba(82,183,136,0.08)', border:'1px solid rgba(82,183,136,0.2)', color:'#2D6A4F' }}>
-              <motion.div animate={{ opacity:[1,0.3,1] }} transition={{ duration:1.5, repeat:Infinity }}
-                className="w-1.5 h-1.5 rounded-full" style={{ background:'#52b788' }} />
-              실시간 연결됨
-            </div>
-            {/* 알림 버튼 */}
-            <motion.button whileHover={{ scale:1.1 }} whileTap={{ scale:0.9 }}
-              className="relative w-9 h-9 rounded-xl flex items-center justify-center"
-              style={{ background:'rgba(26,43,39,0.05)', border:'1px solid rgba(26,43,39,0.08)', cursor:'pointer' }}>
-              <Bell size={16} style={{ color:'rgba(26,43,39,0.55)' }}/>
-              <div className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full"
-                style={{ background:'#E85D5D', border:'1.5px solid #fff' }} />
-            </motion.button>
-            {/* 새로고침 */}
-            <motion.button whileHover={{ scale:1.1 }} whileTap={{ scale:0.9, rotate:180 }}
-              className="w-9 h-9 rounded-xl flex items-center justify-center"
-              style={{ background:'rgba(26,43,39,0.05)', border:'1px solid rgba(26,43,39,0.08)', cursor:'pointer' }}>
-              <RefreshCw size={15} style={{ color:'rgba(26,43,39,0.55)' }}/>
-            </motion.button>
-          </div>
+    <div className="flex h-screen overflow-hidden font-['Pretendard']" style={{ background: COLORS.background }}>
+      
+      {/* 🔮 Sidebar Navigation */}
+      <motion.aside
+        animate={{ width: sidebarCollapsed ? 96 : 300 }}
+        className="h-full border-r bg-white/80 backdrop-blur-3xl z-30 transition-all flex flex-col py-8"
+        style={{ borderColor: COLORS.border }}
+      >
+        <div className={`mb-12 px-6 flex items-center justify-between ${sidebarCollapsed ? 'justify-center mx-auto' : ''}`}>
+          {!sidebarCollapsed && (
+             <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-2xl font-black" style={{ fontFamily: "'SchoolSafetyNotification'", color: COLORS.primary, letterSpacing: '-0.05em' }}>
+               Day<span style={{ color: COLORS.accent }}>.</span>Poo
+               <span className="ml-2 px-2 py-0.5 text-[9px] bg-[#E8A838]/20 text-[#E8A838] rounded-lg">ADMIN</span>
+             </motion.span>
+          )}
+          <button onClick={() => setSidebarCollapsed(!sidebarCollapsed)} className="p-2 rounded-xl hover:bg-black/5 transition-colors">
+            {sidebarCollapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
+          </button>
         </div>
 
-        {/* 탭 컨텐츠 */}
-        <div className="flex-1 overflow-auto p-6">
-          <AnimatePresence mode="wait" custom={tabDir}>
-            <motion.div key={activeTab} custom={tabDir} variants={slideVar}
-              initial="enter" animate="center" exit="exit"
-              transition={{ duration:0.28, ease:[0.16, 1, 0.3, 1] }}>
-              {activeTab === 'dashboard' && <DashboardTab />}
-              {activeTab === 'users'     && <UsersTab />}
-              {activeTab === 'toilets'   && <ToiletsTab />}
-              {activeTab === 'cs'        && <CsTab />}
-              {activeTab === 'store'     && <StoreTab />}
-              {activeTab === 'system'    && <SystemTab />}
-            </motion.div>
-          </AnimatePresence>
+        <nav className="flex-1 w-full space-y-2 px-4">
+          {menuItems.map((item) => (
+            <button
+              key={item.id}
+              onClick={() => setActiveTab(item.id as AdminTab)}
+              className="group relative w-full flex items-center gap-4 px-4 py-4 rounded-2xl transition-all overflow-hidden"
+              style={{ color: activeTab === item.id ? COLORS.primary : COLORS.textSecondary }}
+            >
+              {activeTab === item.id && (
+                <motion.div
+                  layoutId="activeTabBg"
+                  className="absolute inset-0 bg-[#1B4332]/5 border-r-[4px] border-[#1B4332]"
+                  transition={{ type: 'spring', stiffness: 350, damping: 30 }}
+                />
+              )}
+              <div className={`relative z-10 p-1.5 rounded-xl transition-all ${activeTab === item.id ? 'bg-[#1B4332] text-white shadow-lg shadow-green-900/20' : 'group-hover:bg-black/5'}`}>
+                <item.icon size={20} />
+              </div>
+              {!sidebarCollapsed && (
+                <span className="relative z-10 text-sm font-black tracking-tight flex-1 text-left">{item.label}</span>
+              )}
+              {item.badge && !sidebarCollapsed && (
+                <span className="relative z-10 text-[9px] font-black px-1.5 py-0.5 rounded-md bg-[#FF4B4B] text-white">{item.badge}</span>
+              )}
+            </button>
+          ))}
+        </nav>
+
+        <div className="w-full px-4 mt-auto">
+           <button className="w-full py-4 rounded-2xl flex items-center gap-4 px-4 transition-colors hover:bg-red-50 text-red-500 font-bold text-sm">
+             <div className="p-1.5 rounded-xl bg-red-100"><LogOut size={20} /></div>
+             {!sidebarCollapsed && <span>로그아웃</span>}
+           </button>
         </div>
-      </div>
+      </motion.aside>
+
+      {/* 🚀 Main Content Shell */}
+      <main className="flex-1 h-full overflow-y-auto overflow-x-hidden relative flex flex-col">
+          
+          {/* 🧩 Header / TopBar */}
+          <header className={`sticky top-0 z-20 px-8 py-5 flex items-center justify-between transition-all backdrop-blur-md border-b bg-white/40`} style={{ borderColor: COLORS.border }}>
+             <div className="flex items-center gap-4">
+               <div className="p-2.5 rounded-2xl bg-white shadow-sm border" style={{ borderColor: COLORS.border }}>
+                  <LayoutDashboard size={20} style={{ color: COLORS.primary }} />
+               </div>
+               <div className="flex flex-col">
+                 <h2 className="text-sm font-black text-black/90 uppercase tracking-widest">관리자 콘솔</h2>
+                 <div className="flex items-center gap-2 text-[11px] text-black/40 font-bold">
+                    <Calendar size={12} /> {currentTime.toLocaleDateString()}
+                    <Clock size={12} className="ml-2" /> {currentTime.toLocaleTimeString()}
+                 </div>
+               </div>
+             </div>
+
+             <div className="flex items-center gap-6">
+                <div className="hidden md:flex items-center bg-black/[0.03] border px-4 py-2.5 rounded-2xl gap-2 focus-within:bg-white focus-within:ring-2 ring-[#1B4332]/20 transition-all" style={{ borderColor: COLORS.border }}>
+                   <Search size={16} className="text-black/30" />
+                   <input type="text" placeholder="통합 검색 (유저/신고/상점)" className="bg-transparent border-none outline-none text-xs font-bold w-56" />
+                </div>
+                
+                <div className="flex items-center gap-3 pr-4 border-r" style={{ borderColor: COLORS.border }}>
+                   <button className="p-2.5 rounded-2xl hover:bg-black/5 transition-colors relative">
+                      <Bell size={20} className="text-black/50" />
+                      <span className="absolute top-2.5 right-2.5 w-2.5 h-2.5 bg-[#FF4B4B] rounded-full ring-2 ring-white"></span>
+                   </button>
+                </div>
+
+                <div className="flex items-center gap-3 group cursor-pointer pl-2">
+                   <div className="text-right hidden sm:block">
+                      <p className="text-sm font-black text-black/80 leading-none">시스템 마스터</p>
+                      <p className="text-[10px] font-bold text-black/30 mt-1 uppercase tracking-tighter">최고 관리자 계정</p>
+                   </div>
+                   <div className="w-12 h-12 bg-gray-100 rounded-2xl overflow-hidden shadow-md border-2 border-[#1B4332]/20 group-hover:scale-105 transition-transform flex items-center justify-center">
+                      <span className="text-xl">💩</span>
+                   </div>
+                </div>
+             </div>
+          </header>
+
+          {/* 🌈 View Container */}
+          <section className="flex-1 p-8">
+             <AnimatePresence mode="wait">
+                <motion.div
+                  key={activeTab}
+                  initial={{ opacity: 0, scale: 0.98, y: 10 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.98, y: -10 }}
+                  transition={{ duration: 0.3, ease: 'easeOut' }}
+                >
+                  {activeTab === 'dashboard' && <DashboardView />}
+                  {activeTab !== 'dashboard' && (
+                    <div className="flex flex-col items-center justify-center py-32 text-center opacity-50">
+                       <LayoutDashboard size={64} className="mb-4 text-black/30" />
+                       <h3 className="text-2xl font-black mb-2">{activeTab.toUpperCase()} 구역 접근 불가</h3>
+                       <p className="text-sm font-bold text-black/60">현재 프리미엄 인터페이스로 업그레이드 중입니다.<br/>잠시 후 다시 시도해주세요.</p>
+                       <button onClick={() => setActiveTab('dashboard')} className="mt-6 px-6 py-2 rounded-xl bg-black/10 hover:bg-black/20 font-bold text-sm transition-colors">
+                          대시보드로 돌아가기
+                       </button>
+                    </div>
+                  )}
+                </motion.div>
+             </AnimatePresence>
+          </section>
+
+      </main>
+
+      {/* 🎇 Background Decoration */}
+      <div className="fixed top-0 right-0 -z-10 w-[800px] h-[800px] bg-[#1B4332]/5 blur-[120px] rounded-full translate-x-1/2 -translate-y-1/2 pointer-events-none" />
+      <div className="fixed bottom-0 left-0 -z-10 w-[600px] h-[600px] bg-[#E8A838]/5 blur-[120px] rounded-full -translate-x-1/2 translate-y-1/2 pointer-events-none" />
     </div>
   );
 }

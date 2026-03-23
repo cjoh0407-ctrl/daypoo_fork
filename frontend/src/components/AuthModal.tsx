@@ -1,11 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   Eye, EyeOff, X, ArrowRight, ArrowLeft,
   Check, AlertCircle, CheckCircle2, ChevronDown
 } from 'lucide-react';
 import { api } from '../services/apiClient';
+import { useAuth } from '../context/AuthContext';
 
 // ── 타입 ──────────────────────────────────────────────────────────────
 type AuthMode = 'login' | 'signup';
@@ -244,6 +245,8 @@ function StepDots({ step, total }: { step: number; total: number }) {
 
 // ── 로그인 폼 ─────────────────────────────────────────────────────────
 function LoginForm({ onSwitch, onSuccess, onClose }: { onSwitch: () => void; onSuccess?: () => void; onClose?: () => void }) {
+  const { login: authLogin } = useAuth();
+  const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPw, setShowPw] = useState(false);
@@ -270,12 +273,24 @@ function LoginForm({ onSwitch, onSuccess, onClose }: { onSwitch: () => void; onS
     setLoading(true);
     try {
       const res = await api.post('/auth/login', {
-        username: email,
+        email: email,
         password: password,
       });
       if (res && typeof res === 'object' && res.accessToken) {
-        localStorage.setItem('accessToken', res.accessToken);
-        if (res.refreshToken) localStorage.setItem('refreshToken', res.refreshToken);
+        // 전역 인증 상태 업데이트
+        authLogin(res.accessToken, res.refreshToken || '');
+
+        // ROLE_ADMIN 여부 확인 (JWT 디코딩)
+        try {
+          const payloadBase64 = res.accessToken.split('.')[1];
+          const payload = JSON.parse(atob(payloadBase64));
+          if (payload.role === 'ROLE_ADMIN') {
+            navigate('/admin');
+          }
+        } catch (decodeErr) {
+          console.error('Role check failed', decodeErr);
+        }
+
         onSuccess?.();
       } else {
         throw new Error('인증 정보가 올바르지 않습니다.');
@@ -303,13 +318,19 @@ function LoginForm({ onSwitch, onSuccess, onClose }: { onSwitch: () => void; onS
       {/* 소셜 */}
       <div className="flex flex-col gap-2 mb-5">
         <motion.button whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.98 }}
-          onClick={() => window.location.href = '/oauth2/authorization/kakao'}
+          onClick={() => {
+            localStorage.setItem('returnUrl', window.location.pathname + window.location.search);
+            window.location.href = '/oauth2/authorization/kakao';
+          }}
           className="flex items-center justify-center gap-2.5 w-full py-3 rounded-xl text-sm font-bold shadow-sm"
           style={{ background: '#FEE500', color: '#1a1a1a', border: '1px solid rgba(254,229,0,0.2)' }}>
           <KakaoIcon />카카오로 로그인
         </motion.button>
         <motion.button whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.98 }}
-          onClick={() => window.location.href = '/oauth2/authorization/google'}
+          onClick={() => {
+            localStorage.setItem('returnUrl', window.location.pathname + window.location.search);
+            window.location.href = '/oauth2/authorization/google';
+          }}
           className="flex items-center justify-center gap-2.5 w-full py-3 rounded-xl text-sm font-bold shadow-sm"
           style={{ background: '#fff', color: '#555', border: '1.5px solid rgba(26,43,39,0.08)' }}>
           <GoogleIcon />Google로 로그인
@@ -381,30 +402,33 @@ function LoginForm({ onSwitch, onSuccess, onClose }: { onSwitch: () => void; onS
 
 // ── 회원가입 폼 ───────────────────────────────────────────────────────
 function SignupForm({ onSwitch, onSuccess }: { onSwitch: () => void; onSuccess?: () => void }) {
+  const { login: authLogin } = useAuth();
   const [step, setStep] = useState(0);
-  const [dir, setDir] = useState(1);
-  const [loading, setLoading] = useState(false);
-
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [pwConfirm, setPwConfirm] = useState('');
+  const [nickname, setNickname] = useState('');
   const [showPw, setShowPw] = useState(false);
   const [showPwC, setShowPwC] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [loading, setLoading] = useState(false);
+  const [dir, setDir] = useState(1);
+  const [shake, setShake] = useState(false);
 
-  const [nickname, setNickname] = useState('');
+  // 생년월일 관련 상태
   const [birthYear, setBirthYear] = useState('');
   const [birthMonth, setBirthMonth] = useState('');
   const [birthDay, setBirthDay] = useState('');
 
+  // 약관 상태
   const [agreeAll, setAgreeAll] = useState(false);
   const [agreeService, setAgreeService] = useState(false);
   const [agreePrivacy, setAgreePrivacy] = useState(false);
   const [agreeMarketing, setAgreeMarketing] = useState(false);
 
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  const [shake, setShake] = useState(false);
+  const goPrev = () => { setDir(-1); setErrors({}); setStep((s) => s - 1); };
 
-  const handleAgreeAll = (v: boolean) => {
+  const onAgreeAllChange = (v: boolean) => {
     setAgreeAll(v); setAgreeService(v); setAgreePrivacy(v); setAgreeMarketing(v);
   };
   const syncAll = (s: boolean, p: boolean, m: boolean) => setAgreeAll(s && p && m);
@@ -447,7 +471,7 @@ function SignupForm({ onSwitch, onSuccess }: { onSwitch: () => void; onSuccess?:
     if (step === 0) {
       setLoading(true);
       try {
-        await api.get(`/auth/check-username?username=${email}`);
+        await api.get(`/auth/check-email?email=${email}`);
       } catch (err: any) {
         setErrors({ email: err.message || '이미 사용 중인 이메일입니다.' });
         setShake(true);
@@ -474,17 +498,15 @@ function SignupForm({ onSwitch, onSuccess }: { onSwitch: () => void; onSuccess?:
     setLoading(true);
     try {
       await api.post('/auth/signup', {
-        username: email,
-        email: email,      // 이메일 필드 추가됨
+        email: email,
         password: password,
         nickname: nickname,
-        // birthDate: `${birthYear}-${birthMonth.padStart(2, '0')}-${birthDay.padStart(2, '0')}`, // 백엔드 준비 후 주석 해제
       });
+
       // 가입 성공 후 자동 로그인 시도
-      const res = await api.post('/auth/login', { username: email, password });
+      const res = await api.post('/auth/login', { email, password });
       if (res && typeof res === 'object' && res.accessToken) {
-        localStorage.setItem('accessToken', res.accessToken);
-        if (res.refreshToken) localStorage.setItem('refreshToken', res.refreshToken);
+        authLogin(res.accessToken, res.refreshToken || '');
         onSuccess?.();
       } else {
         throw new Error('로그인 정보를 가져올 수 없습니다.');
@@ -497,8 +519,6 @@ function SignupForm({ onSwitch, onSuccess }: { onSwitch: () => void; onSuccess?:
       setLoading(false);
     }
   };
-
-  const goPrev = () => { setDir(-1); setErrors({}); setStep((s) => s - 1); };
 
   const slideVar = {
     enter: (d: number) => ({ opacity: 0, x: d > 0 ? 28 : -28 }),
@@ -526,13 +546,19 @@ function SignupForm({ onSwitch, onSuccess }: { onSwitch: () => void; onSuccess?:
       {step === 0 && (
         <div className="flex flex-col gap-2 mb-4">
           <motion.button whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.98 }}
-            onClick={() => window.location.href = '/oauth2/authorization/kakao'}
+            onClick={() => {
+              localStorage.setItem('returnUrl', window.location.pathname + window.location.search);
+              window.location.href = '/oauth2/authorization/kakao';
+            }}
             className="flex items-center justify-center gap-2.5 w-full py-3 rounded-xl text-sm font-bold shadow-sm"
             style={{ background: '#FEE500', color: '#1a1a1a', border: '1px solid rgba(254,229,0,0.2)' }}>
             <KakaoIcon />카카오로 시작하기
           </motion.button>
           <motion.button whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.98 }}
-            onClick={() => window.location.href = '/oauth2/authorization/google'}
+            onClick={() => {
+              localStorage.setItem('returnUrl', window.location.pathname + window.location.search);
+              window.location.href = '/oauth2/authorization/google';
+            }}
             className="flex items-center justify-center gap-2.5 w-full py-3 rounded-xl text-sm font-bold shadow-sm"
             style={{ background: '#fff', color: '#555', border: '1.5px solid rgba(26,43,39,0.08)' }}>
             <GoogleIcon />Google로 시작하기
@@ -658,7 +684,7 @@ function SignupForm({ onSwitch, onSuccess }: { onSwitch: () => void; onSuccess?:
               <motion.div className="flex flex-col gap-3" animate={shake && errors.terms ? { x: [-10, 10, -10, 10, 0] } : {}} transition={{ duration: 0.3 }}>
                 <div className="p-3.5 rounded-xl transition-colors hover:bg-amber-50"
                   style={{ background: 'rgba(232,168,56,0.05)', border: '1.5px solid rgba(232,168,56,0.15)' }}>
-                  <TermsCheck checked={agreeAll} onChange={handleAgreeAll}>
+                  <TermsCheck checked={agreeAll} onChange={onAgreeAllChange}>
                     <span className="font-extrabold text-[#1A2B27] text-sm">전체 동의하기</span>
                     <span className="block text-xs mt-0.5" style={{ color: 'rgba(26,43,39,0.4)' }}>
                       선택 항목 포함 모든 약관에 동의합니다

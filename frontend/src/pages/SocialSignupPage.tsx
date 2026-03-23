@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { User, CheckCircle2, AlertCircle, ArrowRight, Sparkles } from 'lucide-react';
@@ -8,6 +8,7 @@ export function SocialSignupPage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const registrationToken = searchParams.get('registration_token');
+  const navigatedRef = useRef(false);
 
   const [nickname, setNickname] = useState('');
   const [status, setStatus] = useState<'idle' | 'checking' | 'available' | 'unavailable' | 'error'>('idle');
@@ -16,8 +17,13 @@ export function SocialSignupPage() {
 
   // 토큰이 없으면 메인으로 리다이렉트
   useEffect(() => {
+    if (navigatedRef.current) return;
+    
     if (!registrationToken) {
-      navigate('/main');
+      navigatedRef.current = true;
+      const returnUrl = localStorage.getItem('returnUrl') || '/main';
+      localStorage.removeItem('returnUrl');
+      navigate(returnUrl, { replace: true });
     }
   }, [registrationToken, navigate]);
 
@@ -57,9 +63,13 @@ export function SocialSignupPage() {
       
       // 성공 시 토큰 저장 및 메인 이동
       if (response.accessToken) {
+        navigatedRef.current = true;
         localStorage.setItem('accessToken', response.accessToken);
         localStorage.setItem('refreshToken', response.refreshToken);
-        navigate('/main', { replace: true });
+        
+        const returnUrl = localStorage.getItem('returnUrl') || '/main';
+        localStorage.removeItem('returnUrl');
+        navigate(returnUrl, { replace: true });
       }
     } catch (err: any) {
       setStatus('error');

@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import type React from 'react';
 import { motion, AnimatePresence, useInView, useMotionValue, useSpring, useTransform } from 'framer-motion';
 import { Navbar } from '../components/Navbar';
@@ -329,8 +330,11 @@ function ModernHistory() {
 }
 
 // ── 메인 페이지 ───────────────────────────────────────────────────────
-export function SupportPage({ openAuth }: { openAuth: (mode: 'login' | 'signup') => void }) {
-  const [activeTab, setActiveTab] = useState<SupportTab>('faq');
+export function SupportPage({ openAuth }: { openAuth: (mode: 'login' | 'signup', callback?: () => void) => void }) {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialTab = (searchParams.get('tab') as SupportTab) || 'faq';
+  
+  const [activeTab, setActiveTab] = useState<SupportTab>(initialTab);
   const [activeCategory, setActiveCategory] = useState<FaqCategory>('전체');
   const [searchQuery, setSearchQuery] = useState('');
   const [openFaqId, setOpenFaqId] = useState<string | null>(null);
@@ -348,9 +352,16 @@ export function SupportPage({ openAuth }: { openAuth: (mode: 'login' | 'signup')
   const handleTabChange = (k: SupportTab) => {
     if (k !== 'faq') {
       const token = localStorage.getItem('accessToken');
-      if (!token) { openAuth?.('login'); return; }
+      if (!token) { 
+        openAuth?.('login', () => {
+          setActiveTab(k);
+          setSearchParams({ tab: k });
+        }); 
+        return; 
+      }
     }
     setActiveTab(k);
+    setSearchParams({ tab: k });
   };
 
   return (
