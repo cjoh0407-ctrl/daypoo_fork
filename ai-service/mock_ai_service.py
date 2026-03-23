@@ -1,13 +1,10 @@
-from fastapi import FastAPI, Body
+from fastapi import FastAPI, UploadFile, File
 from pydantic import BaseModel
 from typing import List
 import uvicorn
 import random
 
 app = FastAPI(title="Mock DayPoo AI Service")
-
-class PoopAnalysisRequest(BaseModel):
-    image_url: str
 
 class PoopAnalysisResult(BaseModel):
     bristol_scale: int
@@ -18,7 +15,7 @@ class PoopAnalysisResult(BaseModel):
     warning_tags: List[str]
 
 @app.post("/api/v1/analysis/analyze", response_model=PoopAnalysisResult)
-async def analyze_poop(request: PoopAnalysisRequest):
+async def analyze_poop(image_file: UploadFile = File(...)):
     # Mock analysis result
     colors = ["Brown", "Golden", "Dark Brown", "Yellowish"]
     comments = [
@@ -35,6 +32,27 @@ async def analyze_poop(request: PoopAnalysisRequest):
         health_score=random.randint(70, 100),
         ai_comment=random.choice(comments),
         warning_tags=[]
+    )
+
+class HealthReportResponse(BaseModel):
+    reportType: str
+    healthScore: int
+    summary: str
+    solution: str
+    insights: List[str]
+    analyzedAt: str
+
+@app.post("/api/v1/report/generate", response_model=HealthReportResponse)
+async def generate_report(request: dict):
+    print(f"Received health report request: {request}")
+    # Mock report generation
+    return HealthReportResponse(
+        reportType=request.get("reportType", "WEEKLY"),
+        healthScore=85,
+        summary="전반적으로 양호한 상태입니다.",
+        solution="식이섬유 섭취를 조금 더 늘려보세요.",
+        insights=["브리스톨 4단계가 유지되고 있습니다.", "색상이 아주 좋습니다."],
+        analyzedAt="2026-03-23T17:00:00"
     )
 
 @app.get("/health")
