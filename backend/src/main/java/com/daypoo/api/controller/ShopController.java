@@ -1,8 +1,8 @@
 package com.daypoo.api.controller;
 
 import com.daypoo.api.dto.*;
-import com.daypoo.api.entity.ItemType;
 import com.daypoo.api.entity.User;
+import com.daypoo.api.entity.enums.ItemType;
 import com.daypoo.api.global.exception.BusinessException;
 import com.daypoo.api.global.exception.ErrorCode;
 import com.daypoo.api.repository.UserRepository;
@@ -56,8 +56,7 @@ public class ShopController {
 
   /** 전체 칭호 목록 및 유저 보유 여부 조회 */
   @GetMapping("/titles")
-  public ResponseEntity<List<TitleResponse>> getAllTitles(
-      @AuthenticationPrincipal String email) {
+  public ResponseEntity<List<TitleResponse>> getAllTitles(@AuthenticationPrincipal String email) {
     User user = getUserByEmail(email);
     return ResponseEntity.ok(shopService.getAllTitles(user));
   }

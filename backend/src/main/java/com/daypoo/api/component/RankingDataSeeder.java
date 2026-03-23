@@ -1,6 +1,7 @@
 package com.daypoo.api.component;
 
 import com.daypoo.api.entity.User;
+import com.daypoo.api.entity.enums.Role;
 import com.daypoo.api.repository.UserRepository;
 import com.daypoo.api.service.RankingService;
 import lombok.RequiredArgsConstructor;
@@ -51,7 +52,7 @@ public class RankingDataSeeder implements CommandLineRunner {
                   .email(mock[0])
                   .password(encodedPassword)
                   .nickname(mock[1])
-                  .role(User.Role.ROLE_USER)
+                  .role(Role.ROLE_USER)
                   .build();
 
           // 포인트 부여

@@ -1,7 +1,7 @@
 package com.daypoo.api.repository;
 
 import com.daypoo.api.entity.Item;
-import com.daypoo.api.entity.ItemType;
+import com.daypoo.api.entity.enums.ItemType;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 

@@ -1,4 +1,4 @@
-package com.daypoo.api.entity;
+package com.daypoo.api.entity.enums;
 
 public enum ItemType {
   AVATAR_SKIN, // 아바타 스킨

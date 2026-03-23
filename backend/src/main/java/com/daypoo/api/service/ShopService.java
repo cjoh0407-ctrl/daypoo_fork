@@ -4,6 +4,7 @@ import com.daypoo.api.dto.InventoryResponse;
 import com.daypoo.api.dto.ItemResponse;
 import com.daypoo.api.dto.TitleResponse;
 import com.daypoo.api.entity.*;
+import com.daypoo.api.entity.enums.ItemType;
 import com.daypoo.api.global.exception.BusinessException;
 import com.daypoo.api.global.exception.ErrorCode;
 import com.daypoo.api.repository.*;

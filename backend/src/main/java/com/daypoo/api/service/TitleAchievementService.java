@@ -1,9 +1,9 @@
 package com.daypoo.api.service;
 
-import com.daypoo.api.entity.NotificationType;
 import com.daypoo.api.entity.Title;
 import com.daypoo.api.entity.User;
 import com.daypoo.api.entity.UserTitle;
+import com.daypoo.api.entity.enums.NotificationType;
 import com.daypoo.api.repository.PooRecordRepository;
 import com.daypoo.api.repository.TitleRepository;
 import com.daypoo.api.repository.UserTitleRepository;

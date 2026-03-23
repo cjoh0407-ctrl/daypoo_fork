@@ -1,4 +1,4 @@
-package com.daypoo.api.entity;
+package com.daypoo.api.entity.enums;
 
 public enum InquiryStatus {
   PENDING("답변 대기"),

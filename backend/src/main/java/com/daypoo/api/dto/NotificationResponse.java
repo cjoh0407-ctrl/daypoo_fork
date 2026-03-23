@@ -1,6 +1,6 @@
 package com.daypoo.api.dto;
 
-import com.daypoo.api.entity.NotificationType;
+import com.daypoo.api.entity.enums.NotificationType;
 import java.time.LocalDateTime;
 import lombok.Builder;
 

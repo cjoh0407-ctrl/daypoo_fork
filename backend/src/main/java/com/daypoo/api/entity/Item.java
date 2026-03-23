@@ -1,5 +1,6 @@
 package com.daypoo.api.entity;
 
+import com.daypoo.api.entity.enums.ItemType;
 import com.daypoo.api.global.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;

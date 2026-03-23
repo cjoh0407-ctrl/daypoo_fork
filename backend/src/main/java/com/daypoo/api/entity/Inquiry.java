@@ -1,5 +1,7 @@
 package com.daypoo.api.entity;
 
+import com.daypoo.api.entity.enums.InquiryStatus;
+import com.daypoo.api.entity.enums.InquiryType;
 import com.daypoo.api.global.BaseTimeEntity;
 import jakarta.persistence.*;
 import jakarta.persistence.Lob;

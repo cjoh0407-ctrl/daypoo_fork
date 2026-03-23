@@ -19,8 +19,7 @@ public class RankingController {
 
   /** 전체 랭킹 조회 */
   @GetMapping("/global")
-  public ResponseEntity<RankingResponse> getGlobalRanking(
-      @AuthenticationPrincipal String email) {
+  public ResponseEntity<RankingResponse> getGlobalRanking(@AuthenticationPrincipal String email) {
     User user =
         (email != null && !"anonymousUser".equals(email))
             ? userRepository.findByEmail(email).orElse(null)
@@ -41,8 +40,7 @@ public class RankingController {
 
   /** 건강왕 랭킹 조회 */
   @GetMapping("/health")
-  public ResponseEntity<RankingResponse> getHealthRanking(
-      @AuthenticationPrincipal String email) {
+  public ResponseEntity<RankingResponse> getHealthRanking(@AuthenticationPrincipal String email) {
     User user =
         (email != null && !"anonymousUser".equals(email))
             ? userRepository.findByEmail(email).orElse(null)

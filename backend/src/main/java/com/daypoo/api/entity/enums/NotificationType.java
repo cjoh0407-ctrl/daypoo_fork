@@ -1,4 +1,4 @@
-package com.daypoo.api.entity;
+package com.daypoo.api.entity.enums;
 
 public enum NotificationType {
   HEALTH, // 건강/리포트 관련

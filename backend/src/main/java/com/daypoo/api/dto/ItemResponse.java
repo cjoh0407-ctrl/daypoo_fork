@@ -1,6 +1,6 @@
 package com.daypoo.api.dto;
 
-import com.daypoo.api.entity.ItemType;
+import com.daypoo.api.entity.enums.ItemType;
 import lombok.Builder;
 
 @Builder

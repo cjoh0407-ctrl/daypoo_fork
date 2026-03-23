@@ -65,7 +65,6 @@ public class PaymentService {
 
       // 결제 내역 저장
 
-
       paymentRepository.save(
           Payment.builder()
               .email(email)

@@ -1,4 +1,4 @@
-package com.daypoo.api.entity;
+package com.daypoo.api.entity.enums;
 
 public enum ReportType {
   DAILY(0), // 무료

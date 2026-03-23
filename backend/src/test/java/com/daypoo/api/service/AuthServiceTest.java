@@ -11,6 +11,7 @@ import com.daypoo.api.dto.LoginRequest;
 import com.daypoo.api.dto.SignUpRequest;
 import com.daypoo.api.dto.TokenResponse;
 import com.daypoo.api.entity.User;
+import com.daypoo.api.entity.enums.Role;
 import com.daypoo.api.global.exception.BusinessException;
 import com.daypoo.api.global.exception.ErrorCode;
 import com.daypoo.api.repository.UserRepository;
@@ -50,7 +51,7 @@ class AuthServiceTest {
             .email("test@example.com")
             .password("encodedPassword")
             .nickname("PoopKing")
-            .role(User.Role.ROLE_USER)
+            .role(Role.ROLE_USER)
             .build();
   }
 

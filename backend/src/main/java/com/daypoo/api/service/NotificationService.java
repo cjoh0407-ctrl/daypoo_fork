@@ -2,8 +2,8 @@ package com.daypoo.api.service;
 
 import com.daypoo.api.dto.NotificationResponse;
 import com.daypoo.api.entity.Notification;
-import com.daypoo.api.entity.NotificationType;
 import com.daypoo.api.entity.User;
+import com.daypoo.api.entity.enums.NotificationType;
 import com.daypoo.api.repository.NotificationRepository;
 import java.io.IOException;
 import java.util.List;

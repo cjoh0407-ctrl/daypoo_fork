@@ -1,4 +1,4 @@
-package com.daypoo.api.entity;
+package com.daypoo.api.entity.enums;
 
 public enum InquiryType {
   TOILET_ERROR("화장실 정보 오류"),

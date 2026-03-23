@@ -1,5 +1,6 @@
 package com.daypoo.api.entity;
 
+import com.daypoo.api.entity.enums.Role;
 import com.daypoo.api.global.BaseTimeEntity;
 import jakarta.persistence.*;
 import java.util.ArrayList;
@@ -71,11 +72,6 @@ public class User extends BaseTimeEntity {
     this.level = 1;
     this.exp = 0L;
     this.points = 0L;
-  }
-
-  public enum Role {
-    ROLE_USER,
-    ROLE_ADMIN
   }
 
   public void addExpAndPoints(long addedExp, long addedPoints) {

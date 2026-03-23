@@ -1,8 +1,8 @@
 package com.daypoo.api.controller;
 
 import com.daypoo.api.dto.HealthReportResponse;
-import com.daypoo.api.entity.ReportType;
 import com.daypoo.api.entity.User;
+import com.daypoo.api.entity.enums.ReportType;
 import com.daypoo.api.global.exception.BusinessException;
 import com.daypoo.api.global.exception.ErrorCode;
 import com.daypoo.api.repository.UserRepository;

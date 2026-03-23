@@ -35,7 +35,7 @@ class RankingServiceTest {
 
   @BeforeEach
   void setUp() {
-    testUser = User.builder().username("testUser").nickname("Tester").build();
+    testUser = User.builder().email("test@test.com").nickname("Tester").build();
     ReflectionTestUtils.setField(testUser, "id", 1L);
     ReflectionTestUtils.setField(testUser, "points", 100L);
 
@@ -56,10 +56,10 @@ class RankingServiceTest {
   @DisplayName("성공: 지역 랭킹 업데이트 (가점)")
   void updateRegionRank_success() {
     // when
-    rankingService.updateRegionRank(testUser, "역삼동");
+    rankingService.updateRegionRank(testUser, "역삼동", 5.0);
 
     // then
-    verify(zSetOperations).incrementScore(contains("역삼동"), eq("1"), eq(5.0));
+    verify(zSetOperations).add(contains("역삼동"), eq("1"), eq(5.0));
   }
 
   @Test

@@ -1,6 +1,8 @@
 package com.daypoo.api.global.config;
 
 import com.daypoo.api.entity.*;
+import com.daypoo.api.entity.enums.InquiryType;
+import com.daypoo.api.entity.enums.Role;
 import com.daypoo.api.global.GeometryUtil;
 import com.daypoo.api.repository.InquiryRepository;
 import com.daypoo.api.repository.ToiletRepository;
@@ -25,17 +27,17 @@ public class DataInitializer implements CommandLineRunner {
   @Override
   public void run(String... args) throws Exception {
     log.info("🏁 DataInitializer started...");
-    
+
     // 1. Admin & Users
     if (userRepository.count() == 0) {
       log.info("Creating default users (admin@admin.com, user1@daypoo.com, user2@daypoo.com)...");
-      
+
       userRepository.save(
           User.builder()
               .password(passwordEncoder.encode("admin1234"))
               .nickname("슈퍼관리자")
               .email("admin@admin.com")
-              .role(User.Role.ROLE_ADMIN)
+              .role(Role.ROLE_ADMIN)
               .build());
 
       userRepository.save(
@@ -43,7 +45,7 @@ public class DataInitializer implements CommandLineRunner {
               .password(passwordEncoder.encode("1234"))
               .nickname("급똥전문가")
               .email("user1@daypoo.com")
-              .role(User.Role.ROLE_USER)
+              .role(Role.ROLE_USER)
               .build());
 
       userRepository.save(
@@ -51,9 +53,9 @@ public class DataInitializer implements CommandLineRunner {
               .password(passwordEncoder.encode("1234"))
               .nickname("장건강지킴이")
               .email("user2@daypoo.com")
-              .role(User.Role.ROLE_USER)
+              .role(Role.ROLE_USER)
               .build());
-              
+
       log.info("Default users created.");
     }
 

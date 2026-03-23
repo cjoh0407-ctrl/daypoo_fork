@@ -2,10 +2,10 @@ package com.daypoo.api.service;
 
 import com.daypoo.api.dto.AiReportRequest;
 import com.daypoo.api.dto.HealthReportResponse;
-import com.daypoo.api.entity.NotificationType;
 import com.daypoo.api.entity.PooRecord;
-import com.daypoo.api.entity.ReportType;
 import com.daypoo.api.entity.User;
+import com.daypoo.api.entity.enums.NotificationType;
+import com.daypoo.api.entity.enums.ReportType;
 import com.daypoo.api.repository.PooRecordRepository;
 import com.daypoo.api.repository.UserRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
