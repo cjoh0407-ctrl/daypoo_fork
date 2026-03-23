@@ -11,7 +11,7 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -25,16 +25,16 @@ public class SupportController {
   /** 1:1 문의 등록 */
   @PostMapping("/inquiries")
   public ResponseEntity<Void> createInquiry(
-      @AuthenticationPrincipal UserDetails userDetails, @RequestBody InquiryRequest request) {
-    User user = getUserByUsername(userDetails.getUsername());
+      @AuthenticationPrincipal String username, @RequestBody InquiryRequest request) {
+    User user = getUserByUsername(username);
     supportService.createInquiry(user, request);
     return ResponseEntity.ok().build();
   }
 
   /** 내 문의 내역 조회 */
   @GetMapping("/inquiries")
-  public ResponseEntity<List<?>> getMyInquiries(@AuthenticationPrincipal UserDetails userDetails) {
-    User user = getUserByUsername(userDetails.getUsername());
+  public ResponseEntity<List<?>> getMyInquiries(@AuthenticationPrincipal String username) {
+    User user = getUserByUsername(username);
     return ResponseEntity.ok(supportService.getMyInquiries(user));
   }
 

@@ -1,6 +1,7 @@
 package com.daypoo.api.service;
 
 import com.daypoo.api.entity.Payment;
+import com.daypoo.api.entity.User;
 import com.daypoo.api.global.exception.BusinessException;
 import com.daypoo.api.global.exception.ErrorCode;
 import com.daypoo.api.repository.PaymentRepository;
@@ -56,16 +57,23 @@ public class PaymentService {
         throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR);
       }
 
+      // 결제 유저 조회
+      User user =
+          userRepository
+              .findByUsername(username)
+              .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
       // 결제 내역 저장
       paymentRepository.save(
           Payment.builder()
               .username(username)
+              .user(user)
               .orderId(orderId)
               .amount(amount)
               .paymentKey(paymentKey)
               .build());
 
-      addPointsToUser(username, amount);
+      addPointsToUser(user, amount);
       log.info("✅ Payment confirmed, recorded, and points awarded for user: {}", username);
 
     } catch (HttpClientErrorException e) {
@@ -120,19 +128,9 @@ public class PaymentService {
     }
   }
 
-  private void addPointsToUser(String username, Long amount) {
-    if (username == null || "anonymousUser".equals(username)) return;
-
-    userRepository
-        .findByUsername(username)
-        .ifPresentOrElse(
-            user -> {
-              user.addExpAndPoints(0, amount);
-              userRepository.save(user);
-            },
-            () -> {
-              log.warn("User not found for point award: username={}", username);
-              throw new BusinessException(ErrorCode.USER_NOT_FOUND);
-            });
+  private void addPointsToUser(User user, Long amount) {
+    if (user == null) return;
+    user.addExpAndPoints(0, amount);
+    userRepository.save(user);
   }
 }

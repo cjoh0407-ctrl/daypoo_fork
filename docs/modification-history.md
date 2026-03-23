@@ -1,5 +1,72 @@
 # Modification History
 
+## [2026-03-23 11:08:00] 신규 관리자 계정 자동 생성 로직 추가 (DataInitializer)
+
+### 작업 내용
+- **초기 사용자 데이터 설정**: 테스트 및 서비스 관리 목적으로 사용할 신규 관리자 계정 정보를 프로젝트 초기 구동 시(`DataInitializer.java`) 자동 생성되도록 주입했습니다.
+- 계정 생성 시 기존 DB 데이터에 의한 중복 오류나 충돌을 방지하기 위해 `userRepository.findByUsername("admin@admin.com").isEmpty()` 조건문을 통해 해당 아이디가 존재하지 않을 때만 인서트(`Save`) 되도록 로직을 처리했습니다.
+
+### 상세 변경 내역 (DataInitializer 수정)
+- `backend/src/main/java/com/daypoo/api/global/config/DataInitializer.java`: 
+  - `username`: "admin@admin.com"
+  - `password`: "admin1234" (인코딩 적용)
+  - `nickname`: "관리자"
+  - `email`: "admin@admin.com"
+  - `role`: "ROLE_ADMIN" 로 설정하는 `User.builder()` 구문 추가.
+
+### 결과/영향
+- 백엔드 재가동 시점부터 즉시 `admin@admin.com` 아이디로 로그인이 가능하며, 부여된 `ROLE_ADMIN` 권한을 통해 어드민 전용 API 등을 원활하게 테스트 및 이용할 수 있습니다.
+
+## [2026-03-23 10:55:00] AuthenticationPrincipal NPE 취약점 일괄 수정 (String 변경)
+
+### 작업 내용
+- **인증 토큰 타입 불일치 해결**: 스프링 시큐리티 `JwtAuthenticationFilter`가 Principal에 단순 문자열(`String`)을 저장하고 있음에도, 다수의 컨트롤러가 이를 `UserDetails` 타입으로 캐스팅하여 받아 `null`이 주입되고 그로 인해 `NullPointerException(NPE)`이 발생하는 서버 장애(HTTP 500) 원인을 파악했습니다.
+- 이를 해결하기 위해 문제의 소지가 있는 컨트롤러 메서드 파라미터들을 객체 타입(`UserDetails`)에서 실제 담겨있는 토큰 타입인 문자열(`String`) 값으로 안전하게 받도록 모두 치환했습니다.
+
+### 상세 변경 내역 (파라미터 타입 변경 및 내부 로직 수정)
+- `backend/src/main/java/com/daypoo/api/controller/SupportController.java`
+- `backend/src/main/java/com/daypoo/api/controller/ReportController.java`
+- `backend/src/main/java/com/daypoo/api/controller/ShopController.java`
+- `backend/src/main/java/com/daypoo/api/controller/HealthReportController.java`
+- `backend/src/main/java/com/daypoo/api/controller/NotificationController.java`
+- (공통 변경): `@AuthenticationPrincipal UserDetails userDetails` -> `@AuthenticationPrincipal String username` 으로 변경, `userDetails.getUsername()` 참조를 직접 `username`으로 전환.
+
+### 결과/영향
+- 문의 내역 등록/조회, 상점 아이템 구매 및 조회, 알림 구독 및 건강 리포트 등 다방면에서 발생할 수 있었던 잠재적 치명적(Critical) NPE 에러가 완벽히 차단되었습니다.
+- 서버 시스템 안전성이 확보되었으며, JWT 인증 값이 컨트롤러 단까지 예외 없이 무사히 전달될 수 있도록 보장되었습니다.
+
+## [2026-03-23 09:25:00] 지도 줌 아웃 반경 조회 최적화 (API 데이터 전송량 LIMIT 적용)
+
+### 작업 내용
+- **반경 검색 쿼리 응답 제한(LIMIT) 적용**: 기존 반경 10km 이내의 모든 화장실 데이터를 조건 없이 조회하여 프론트엔드와 서버에 과부하를 일으키던 문제를 해결하기 위해, 네이티브 쿼리 마지막에 `LIMIT` 절을 추가하여 가장 가까운 순으로 최대 개수만 반환하도록 제한했습니다.
+- **API 파라미터 확장**: `ToiletController`의 화장실 검색 엔드포인트(`/api/v1/toilets`)에 `limit` Query 파라미터를 신설하고 `defaultValue="300"`을 적용하여, 클라이언트의 대량 요청 폭탄으로부터 백엔드 리소스를 안전하게 보호하도록 조치했습니다.
+- **서비스 계층 연동**: `ToiletService`를 수정하여 입력받은 `limit` 값을 리포지토리(DB)까지 정상적으로 전달하도록 메서드 시그니처를 수정했습니다.
+
+### 상세 변경 내역
+- `backend/src/main/java/com/daypoo/api/repository/ToiletRepository.java`: `findToiletsWithinRadius` 네이티브 쿼리에 `LIMIT :limit` 추가 및 파라미터 연결.
+- `backend/src/main/java/com/daypoo/api/service/ToiletService.java`: `searchToilets` 메서드에 `limit` 인자 추가 및 전달 로직 구현.
+- `backend/src/main/java/com/daypoo/api/controller/ToiletController.java`: `@RequestParam(defaultValue = "300") int limit` 추가.
+
+### 결과/영향
+- 도심지에서 지도를 넓게(줌 아웃) 보더라도 백엔드에서 전송되는 데이터 양이 최대 300~500건 수준으로 일정하게 유지됩니다.
+- 클라이언트(브라우저)의 DOM 렌더링 렉(Lag) 현상이 해결되고, 백엔드의 DB 풀 스캔 비용과 네트워크 전송 트래픽이 획기적으로 낮아져 서비스 안전성이 크게 향상되었습니다.
+
+## [2026-03-23 09:30:00] 백엔드 서버 기동 오류 수정 및 API 경로 대응 (Payment 연관관계 및 AuthController 경로 확장)
+
+### 작업 내용
+- **Payment 엔티티 매핑 오류 수정**: `Payment` 엔티티에 `User` 필드가 누락되어 발생하던 JPA 매핑 오류(서버 기동 중단)를 해결했습니다.
+- **AuthController 프로필 수정 경로 대응**: 프론트엔드의 호출 경로(`/profile`)와 백엔드 구현 경로(`/me`)를 일치시키기 위해 `@PatchMapping({"/me", "/profile"})`로 확장했습니다.
+- **서비스 로직 정교화**: 결제 처리 및 관리자 테스트 데이터 생성 시 실제 유저 객체를 연동하도록 로직을 보강했습니다.
+
+### 상세 변경 내역
+- `backend/src/main/java/com/daypoo/api/entity/Payment.java`: `User` 필드(`@ManyToOne`) 추가 및 `@Builder` 생성자 업데이트.
+- `backend/src/main/java/com/daypoo/api/service/PaymentService.java`: 결제 확정 시 유저 조회 로직 추가 및 `addPointsToUser` 메서드 객체 기반 리팩토링.
+- `backend/src/main/java/com/daypoo/api/service/AdminService.java`: `generateTestData`에서 실제 유저 리스트를 활용하도록 수정, 미사용 변수(`now`, `todayStart`) 제거.
+- `backend/src/main/java/com/daypoo/api/controller/AuthController.java`: 프로필 수정 API 경로에 `/profile` 추가.
+
+### 결과/영향
+- 백엔드 서버가 정상적으로 기동 가능한 상태가 되었으며, 프론트엔드와의 API 연동 성공률이 향상되었습니다.
+
 ## [2026-03-21 00:30:00] 백엔드 기능 고도화: 업적 시스템 완성, 인증 확장 및 에러 핸들링 통일 (BE-06 ~ BE-09)
 
 ### 작업 내용

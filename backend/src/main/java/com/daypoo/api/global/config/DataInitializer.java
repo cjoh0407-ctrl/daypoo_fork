@@ -52,7 +52,19 @@ public class DataInitializer implements CommandLineRunner {
               .build());
     }
 
-    // 2. Toilets
+    // 2. 관리자 계정 추가 (admin@admin.com / admin1234)
+    if (userRepository.findByUsername("admin@admin.com").isEmpty()) {
+      userRepository.save(
+          User.builder()
+              .username("admin@admin.com")
+              .password(passwordEncoder.encode("admin1234"))
+              .nickname("관리자")
+              .email("admin@admin.com")
+              .role(User.Role.ROLE_ADMIN)
+              .build());
+    }
+
+    // 3. Toilets
     if (toiletRepository.count() == 0) {
       toiletRepository.save(
           Toilet.builder()

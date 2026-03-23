@@ -16,12 +16,14 @@ public interface ToiletRepository extends JpaRepository<Toilet, Long> {
               + "ST_DistanceSphere(t.location, ST_SetSRID(ST_MakePoint(:longitude, :latitude), 4326)) as distance "
               + "FROM toilets t "
               + "WHERE ST_DistanceSphere(t.location, ST_SetSRID(ST_MakePoint(:longitude, :latitude), 4326)) <= :radius "
-              + "ORDER BY distance ASC",
+              + "ORDER BY distance ASC "
+              + "LIMIT :limit",
       nativeQuery = true)
   List<ToiletProjection> findToiletsWithinRadius(
       @Param("latitude") double latitude,
       @Param("longitude") double longitude,
-      @Param("radius") double radius);
+      @Param("radius") double radius,
+      @Param("limit") int limit);
 
   @Query(
       value =

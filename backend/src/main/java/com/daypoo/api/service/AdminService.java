@@ -3,6 +3,7 @@ package com.daypoo.api.service;
 import com.daypoo.api.dto.AdminStatsResponse;
 import com.daypoo.api.entity.InquiryStatus;
 import com.daypoo.api.entity.Payment;
+import com.daypoo.api.entity.User;
 import com.daypoo.api.repository.InquiryRepository;
 import com.daypoo.api.repository.PaymentRepository;
 import com.daypoo.api.repository.ToiletRepository;
@@ -30,9 +31,6 @@ public class AdminService {
 
   @Transactional(readOnly = true)
   public AdminStatsResponse getAdminStats() {
-    LocalDateTime now = LocalDateTime.now();
-    LocalDateTime todayStart = LocalDate.now().atStartOfDay();
-
     long totalUsers = userRepository.count();
     long totalToilets = toiletRepository.count();
     long pendingInquiries = inquiryRepository.countByStatus(InquiryStatus.PENDING);
@@ -86,7 +84,14 @@ public class AdminService {
     // 1. 기존 데이터 삭제 (선택 사항, 여기서는 누적)
     // paymentRepository.deleteAll();
 
-    // 2. 과거 14일치 결제 데이터 생성
+    // 2. 가용 유저 확보
+    List<User> users = userRepository.findAll();
+    if (users.isEmpty()) {
+      log.warn("No users found. Skipping test data generation.");
+      return;
+    }
+
+    // 3. 과거 14일치 결제 데이터 생성
     for (int i = 13; i >= 0; i--) {
       LocalDate date = LocalDate.now().minusDays(i);
       int dailyCount = (int) (Math.random() * 10) + 5; // 하루 5~15건 결제
@@ -94,10 +99,12 @@ public class AdminService {
       for (int j = 0; j < dailyCount; j++) {
         LocalDateTime createdAt =
             date.atTime((int) (Math.random() * 23), (int) (Math.random() * 59));
+        User randomUser = users.get((int) (Math.random() * users.size()));
 
         paymentRepository.save(
             Payment.builder()
-                .username("user" + (int) (Math.random() * 100))
+                .username(randomUser.getUsername())
+                .user(randomUser)
                 .orderId(UUID.randomUUID().toString().substring(0, 8))
                 .amount((long) ((Math.random() * 5 + 1) * 10000)) // 1만~5만원
                 .paymentKey("toss_" + UUID.randomUUID().toString().substring(0, 12))
@@ -105,6 +112,6 @@ public class AdminService {
                 .build());
       }
     }
-    log.info("Successfully generated test data.");
+    log.info("Successfully generated test data associated with existing users.");
   }
 }

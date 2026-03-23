@@ -36,7 +36,7 @@ public class AuthController {
 
   @Operation(summary = "프로필 수정", description = "로그인한 사용자의 닉네임을 수정합니다.")
   @ApiResponse(responseCode = "200", description = "프로필 수정 성공")
-  @PatchMapping("/me")
+  @PatchMapping({"/me", "/profile"})
   public ResponseEntity<String> updateProfile(
       Authentication authentication, @Valid @RequestBody ProfileUpdateRequest request) {
     authService.updateProfile(authentication.getName(), request);

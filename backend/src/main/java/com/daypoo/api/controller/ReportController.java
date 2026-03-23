@@ -10,7 +10,7 @@ import com.daypoo.api.service.ReportService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -24,8 +24,8 @@ public class ReportController {
   /** AI 건강 리포트 조회/생성 */
   @GetMapping("/{type}")
   public ResponseEntity<HealthReportResponse> getReport(
-      @AuthenticationPrincipal UserDetails userDetails, @PathVariable ReportType type) {
-    User user = getUserByUsername(userDetails.getUsername());
+      @AuthenticationPrincipal String username, @PathVariable ReportType type) {
+    User user = getUserByUsername(username);
     return ResponseEntity.ok(reportService.generateReport(user, type));
   }
 

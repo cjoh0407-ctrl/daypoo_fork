@@ -21,6 +21,10 @@ public class Payment extends BaseTimeEntity {
   @Column(nullable = false)
   private String username;
 
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "user_id", nullable = false)
+  private User user;
+
   @Column(nullable = false)
   private String orderId;
 
@@ -32,8 +36,14 @@ public class Payment extends BaseTimeEntity {
 
   @Builder
   public Payment(
-      String username, String orderId, Long amount, String paymentKey, LocalDateTime createdAt) {
+      String username,
+      User user,
+      String orderId,
+      Long amount,
+      String paymentKey,
+      LocalDateTime createdAt) {
     this.username = username;
+    this.user = user;
     this.orderId = orderId;
     this.amount = amount;
     this.paymentKey = paymentKey;

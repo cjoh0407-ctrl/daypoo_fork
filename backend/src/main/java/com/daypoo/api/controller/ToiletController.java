@@ -20,8 +20,10 @@ public class ToiletController {
   public ResponseEntity<List<ToiletResponse>> searchToilets(
       @RequestParam double latitude,
       @RequestParam double longitude,
-      @RequestParam(defaultValue = "1000") double radius) { // default 1km
-    List<ToiletResponse> responses = toiletService.searchToilets(latitude, longitude, radius);
+      @RequestParam(defaultValue = "1000") double radius,
+      @RequestParam(defaultValue = "300") int limit) {
+    List<ToiletResponse> responses =
+        toiletService.searchToilets(latitude, longitude, radius, limit);
     return ResponseEntity.ok(responses);
   }
 }
