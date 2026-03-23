@@ -24,16 +24,16 @@ public class SupportController {
   /** 1:1 문의 등록 */
   @PostMapping("/inquiries")
   public ResponseEntity<Void> createInquiry(
-      @AuthenticationPrincipal String username, @RequestBody InquiryRequest request) {
-    User user = getUserByUsername(username);
+      @AuthenticationPrincipal String email, @RequestBody InquiryRequest request) {
+    User user = getUserByEmail(email);
     supportService.createInquiry(user, request);
     return ResponseEntity.ok().build();
   }
 
   /** 내 문의 내역 조회 */
   @GetMapping("/inquiries")
-  public ResponseEntity<List<?>> getMyInquiries(@AuthenticationPrincipal String username) {
-    User user = getUserByUsername(username);
+  public ResponseEntity<List<?>> getMyInquiries(@AuthenticationPrincipal String email) {
+    User user = getUserByEmail(email);
     return ResponseEntity.ok(supportService.getMyInquiries(user));
   }
 
@@ -44,9 +44,9 @@ public class SupportController {
     return ResponseEntity.ok(supportService.getFaqs(category));
   }
 
-  private User getUserByUsername(String username) {
+  private User getUserByEmail(String email) {
     return userRepository
-        .findByUsername(username)
+        .findByEmail(email)
         .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
   }
 }

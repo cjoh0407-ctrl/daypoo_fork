@@ -4,7 +4,6 @@ CREATE EXTENSION IF NOT EXISTS postgis;
 -- Users table
 CREATE TABLE IF NOT EXISTS users (
     id BIGSERIAL PRIMARY KEY,
-    username VARCHAR(100) UNIQUE NOT NULL,
     password VARCHAR(255) NOT NULL,
     email VARCHAR(100) UNIQUE NOT NULL,
     nickname VARCHAR(50) UNIQUE NOT NULL,
@@ -95,7 +94,7 @@ CREATE TABLE IF NOT EXISTS poo_records (
 -- Payments (Toss Payments history)
 CREATE TABLE IF NOT EXISTS payments (
     id BIGSERIAL PRIMARY KEY,
-    username VARCHAR(100) NOT NULL,
+    email VARCHAR(100) NOT NULL,
     user_id BIGINT NOT NULL,
     order_id VARCHAR(100) NOT NULL,
     amount BIGINT NOT NULL,
