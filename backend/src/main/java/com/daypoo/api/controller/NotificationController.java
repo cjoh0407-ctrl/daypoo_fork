@@ -50,6 +50,25 @@ public class NotificationController {
     return ResponseEntity.ok().build();
   }
 
+  /** 모든 알림 일괄 읽음 처리 */
+  @PostMapping("/mark-all-read")
+  @Operation(summary = "모든 알림 일괄 읽음 처리", description = "사용자의 모든 미읽음 알림을 읽음 상태로 변경합니다.")
+  public ResponseEntity<Void> markAllAsRead(@AuthenticationPrincipal String email) {
+    User user = getUserByEmail(email);
+    notificationService.markAllAsRead(user);
+    return ResponseEntity.ok().build();
+  }
+
+  /** 알림 삭제 */
+  @DeleteMapping("/{notificationId}")
+  @Operation(summary = "알림 삭제", description = "특정 알림을 삭제합니다.")
+  public ResponseEntity<Void> deleteNotification(
+      @PathVariable Long notificationId, @AuthenticationPrincipal String email) {
+    User user = getUserByEmail(email);
+    notificationService.deleteNotification(notificationId, user);
+    return ResponseEntity.ok().build();
+  }
+
   private User getUserByEmail(String email) {
     return userRepository
         .findByEmail(email)

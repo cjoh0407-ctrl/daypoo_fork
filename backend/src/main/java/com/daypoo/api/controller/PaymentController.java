@@ -23,17 +23,17 @@ public class PaymentController {
   @Operation(summary = "결제 승인", description = "토스 페이먼츠 결제 승인을 요청하고 성공 시 사용자에게 포인트를 지급합니다.")
   @PostMapping("/confirm")
   public ResponseEntity<Map<String, Object>> confirmPayment(
-      @AuthenticationPrincipal String username, @RequestBody PaymentRequest request) {
+      @AuthenticationPrincipal String email, @RequestBody PaymentRequest request) {
 
     log.info(
         "Payment Confirmation Request: orderId={}, amount={}, user={}",
         request.getOrderId(),
         request.getAmount(),
-        username);
+        email);
 
     try {
       paymentService.confirmPayment(
-          username, request.getPaymentKey(), request.getOrderId(), request.getAmount());
+          email, request.getPaymentKey(), request.getOrderId(), request.getAmount());
 
       return ResponseEntity.ok(Map.of("success", true, "message", "결제 승인 및 포인트 지급이 완료되었습니다."));
     } catch (Exception e) {

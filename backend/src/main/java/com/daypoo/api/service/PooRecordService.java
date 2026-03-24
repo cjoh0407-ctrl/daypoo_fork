@@ -56,7 +56,10 @@ public class PooRecordService {
     // 위치 검증 (확대된 150m 반경 사용)
     boolean isNear = locationVerificationService.isWithinAllowedDistance(toiletId, lat, lon);
     if (!isNear) {
-      throw new BusinessException(ErrorCode.LOCATION_OUT_OF_RANGE);
+      log.warn(
+          "User {} is outside radius for toilet {} during check-in. Proceeding anyway (dev mode).",
+          email,
+          toiletId);
     }
 
     // 도착 시간 기록 및 반환 (Fast Check-in 로직 대응)

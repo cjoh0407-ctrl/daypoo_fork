@@ -109,4 +109,27 @@ public class NotificationService {
             .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 알림입니다."));
     notification.markAsRead();
   }
+
+  /** 모든 알림 일괄 읽음 처리 */
+  @Transactional
+  public void markAllAsRead(User user) {
+    List<Notification> notifications = notificationRepository.findAllByUserAndIsReadFalse(user);
+    notifications.forEach(Notification::markAsRead);
+  }
+
+  /** 알림 삭제 (본인 확인) */
+  @Transactional
+  public void deleteNotification(Long notificationId, User user) {
+    Notification notification =
+        notificationRepository
+            .findById(notificationId)
+            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 알림입니다."));
+
+    // 본인의 알림인지 확인
+    if (!notification.getUser().getId().equals(user.getId())) {
+      throw new IllegalArgumentException("본인의 알림만 삭제할 수 있습니다.");
+    }
+
+    notificationRepository.delete(notification);
+  }
 }

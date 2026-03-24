@@ -23,7 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @Tag(name = "Poo Records", description = "배변 기록 및 인증 API")
 @RestController
-@RequestMapping("/api/v1/records")
+@RequestMapping({"/api/v1/records", "/api/v1/api/v1/records"})
 @RequiredArgsConstructor
 public class PooRecordController {
 
