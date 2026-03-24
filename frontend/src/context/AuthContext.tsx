@@ -14,7 +14,8 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   login: (accessToken: string, refreshToken: string) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
+  deleteMe: (password: string) => Promise<void>;
   refreshUser: () => Promise<void>;
   isAuthenticated: boolean;
 }
@@ -37,7 +38,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const userData = await api.get('/auth/me');
       setUser(userData);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to fetch user', err);
       // 토큰이 유효하지 않으면 로그아웃 처리
       localStorage.removeItem('accessToken');
@@ -62,17 +63,35 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await refreshUser();
   };
 
-  const logout = () => {
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('refreshToken');
-    setUser(null);
-  };
+  const logout = useCallback(async () => {
+    try {
+      // 서버 로그아웃 API 호출 (토큰 블랙리스트 처리 등)
+      await api.post('/auth/logout').catch(err => {
+        console.warn('Backend logout failed or not implemented:', err);
+      });
+    } finally {
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
+      setUser(null);
+    }
+  }, []);
+
+  const deleteMe = useCallback(async (password: string) => {
+    try {
+      await api.delete('/auth/me', { password });
+      await logout();
+    } catch (err: any) {
+      console.error('Failed to delete account', err);
+      throw err;
+    }
+  }, [logout]);
 
   const value = {
     user,
     loading,
     login,
     logout,
+    deleteMe,
     refreshUser,
     isAuthenticated: !!user,
   };
