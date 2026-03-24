@@ -31,8 +31,8 @@ interface AvatarItem {
   owned: boolean; price?: number;
 }
 
-// ── Mock 데이터 ───────────────────────────────────────────────────────
-const AVATAR_ITEMS: AvatarItem[] = [
+// ── FALLBACK 데이터 ───────────────────────────────────────────────────────
+const FALLBACK_AVATAR_ITEMS: AvatarItem[] = [
   // 헤드 (Head)
   { id:'i1', emoji:'👑', name:'황금 왕관',   type:'헤드',   owned:true },
   { id:'i2', emoji:'🎩', name:'마법사 모자', type:'헤드',   owned:true },
@@ -57,7 +57,7 @@ const AVATAR_ITEMS: AvatarItem[] = [
   { id:'i17', emoji:'🪐', name:'행성 마커',   type:'마커',   owned:false, price:3000 },
 ];
 
-const TITLES = [
+const FALLBACK_TITLES = [
   { id:'t1', label:'전설의 쾌변가', earned:true,  selected:true  },
   { id:'t2', label:'화장실 정복자', earned:true,  selected:false },
   { id:'t3', label:'쾌변 마스터',   earned:true,  selected:false },
@@ -541,13 +541,12 @@ function HeroBanner({
             </div>
           </motion.div>
 
-          {/* 우측 통계 */}
           <motion.div variants={stagger} initial="hidden" animate="show"
             className="hidden sm:flex flex-col gap-2 pb-1">
             {[
-              { label: '총 인증', value: 247, suffix: '회', color: '#E8A838' },
-              { label: '방문 화장실', value: 38, suffix: '곳', color: '#52b788' },
-              { label: '연속 기록', value: 12, suffix: '일', color: '#52b788' },
+              { label: '총 인증', value: (user as any)?.totalAuthCount || 0, suffix: '회', color: '#E8A838' },
+              { label: '방문 화장실', value: (user as any)?.totalVisitCount || 0, suffix: '곳', color: '#52b788' },
+              { label: '연속 기록', value: (user as any)?.consecutiveDays || 0, suffix: '일', color: '#52b788' },
             ].map((s, i) => (
               <motion.div key={s.label} variants={fadeUp(i * 0.06)} className="flex items-center gap-2">
                 <span className="text-xs" style={{ color: 'rgba(26,43,39,0.35)' }}>{s.label}</span>
@@ -602,7 +601,12 @@ function TabBar({ active, onChange }: { active: TabKey; onChange: (k: TabKey) =>
 }
 
 // ── 홈 탭 ─────────────────────────────────────────────────────────────
-function HomeTab({ equipped, setEquipped, user }: { equipped: AvatarItem | null; setEquipped: (i: AvatarItem) => void; user: UserProfile | null }) {
+function HomeTab({ equipped, setEquipped, user, avatarItems }: { 
+  equipped: AvatarItem | null; 
+  setEquipped: (i: AvatarItem) => void; 
+  user: UserProfile | null;
+  avatarItems: AvatarItem[];
+}) {
   const [shopTab, setShopTab] = useState<'inventory' | 'shop'>('inventory');
   const [preview, setPreview] = useState<AvatarItem | null>(null);
   const [saved, setSaved] = useState(false);
@@ -610,8 +614,8 @@ function HomeTab({ equipped, setEquipped, user }: { equipped: AvatarItem | null;
   const inView = useInView(ref, { once: true, margin: '-40px' });
 
   const items = shopTab === 'inventory'
-    ? AVATAR_ITEMS.filter((i) => i.owned)
-    : AVATAR_ITEMS.filter((i) => !i.owned);
+    ? avatarItems.filter((i) => i.owned)
+    : avatarItems.filter((i) => !i.owned);
 
   // DepthDeck 카드 데이터 변환
   const deckCards: DeckCard[] = items.map((item) => ({
@@ -862,8 +866,7 @@ function HomeTab({ equipped, setEquipped, user }: { equipped: AvatarItem | null;
 
 
 // ── 컬렉션 탭 ─────────────────────────────────────────────────────────
-function CollectionTab() {
-  const [titles, setTitles] = useState(TITLES);
+function CollectionTab({ titles, setTitles }: { titles: any[]; setTitles: React.Dispatch<React.SetStateAction<any[]>> }) {
   const ref = useRef(null);
   const inView = useInView(ref, { once: true, margin: '-40px' });
 
@@ -1316,10 +1319,15 @@ function ReportTab({ records = [] }: { records?: any[] }) {
 }
 
 // ── 설정 탭 ───────────────────────────────────────────────────────────
-function SettingsTab({ user, refreshUser, logout }: { user: UserProfile | null; refreshUser: () => void, logout: () => void }) {
+function SettingsTab({ user, refreshUser, logout, deleteMe }: { 
+  user: UserProfile | null; 
+  refreshUser: () => void; 
+  logout: () => Promise<void>;
+  deleteMe: (password: string) => Promise<void>;
+}) {
   const ref = useRef(null);
   const inView = useInView(ref, { once: true, margin: '-40px' });
-  const [modalType, setModalType] = useState<'nickname' | 'password' | null>(null);
+  const [modalType, setModalType] = useState<'nickname' | 'password' | 'withdraw' | null>(null);
   const [inputValue, setInputValue] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -1347,6 +1355,25 @@ function SettingsTab({ user, refreshUser, logout }: { user: UserProfile | null; 
       setModalType(null);
     } catch (err: any) {
       alert(err.message || '변경에 실패했습니다.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleWithdraw = async () => {
+    if (!inputValue.trim()) {
+      alert('비밀번호를 입력해주세요.');
+      return;
+    }
+    if (!confirm('정말로 탈퇴하시겠습니까? 관련 데이터가 모두 삭제되며 복구할 수 없습니다.')) return;
+    
+    setIsSubmitting(true);
+    try {
+      await deleteMe(inputValue);
+      alert('회원 탈퇴가 완료되었습니다. 그동안 이용해주셔서 감사합니다.');
+      setModalType(null);
+    } catch (err: any) {
+      alert(err.message || '회원 탈퇴 처리에 실패했습니다. 비밀번호를 확인해주세요.');
     } finally {
       setIsSubmitting(false);
     }
@@ -1406,14 +1433,23 @@ function SettingsTab({ user, refreshUser, logout }: { user: UserProfile | null; 
         </motion.div>
       ))}
 
-      <motion.div variants={fadeUp(0.3)} className="flex flex-col gap-4">
-        <motion.button 
-          whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}
-          onClick={logout}
-          className="w-full py-6 rounded-[32px] bg-red-50 border border-red-100/50 text-red-500 font-black text-lg flex items-center justify-center gap-3 shadow-xl shadow-red-100/20"
-        >
-          <LogOut size={20} /> 로그아웃 하기
-        </motion.button>
+      <motion.div variants={fadeUp(0.3)} className="flex flex-col gap-4 mb-20">
+        <div className="flex gap-4">
+          <motion.button 
+            whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}
+            onClick={logout}
+            className="flex-[2] py-6 rounded-[32px] bg-white border border-gray-100 text-gray-500 font-black text-lg flex items-center justify-center gap-3 shadow-xl shadow-gray-100/20 hover:bg-gray-50 transition-colors"
+          >
+            <LogOut size={20} /> 로그아웃 하기
+          </motion.button>
+          <motion.button 
+            whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}
+            onClick={() => { setInputValue(''); setModalType('withdraw'); }}
+            className="flex-1 py-6 rounded-[32px] bg-red-50 border border-red-100/50 text-red-400 font-bold text-base flex items-center justify-center gap-3 shadow-xl shadow-red-100/20 hover:bg-red-100/30 transition-colors"
+          >
+            <Trash2 size={18} /> 회원 탈퇴
+          </motion.button>
+        </div>
         <p className="text-center text-xs text-gray-300 font-black uppercase tracking-[0.3em] py-8">
           DayPoo App Version 2.5.0 (Standard)
         </p>
@@ -1427,14 +1463,16 @@ function SettingsTab({ user, refreshUser, logout }: { user: UserProfile | null; 
               onClick={() => setModalType(null)} className="absolute inset-0 bg-black/60 backdrop-blur-md" />
             <motion.div initial={{ scale: 0.95, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.95, opacity: 0, y: 10 }}
               className="relative w-full max-w-sm bg-white rounded-[40px] p-10 shadow-3xl border border-white">
-              <div className="w-16 h-16 bg-emerald-50 rounded-2xl flex items-center justify-center mb-6 text-emerald-600">
-                {modalType === 'nickname' ? <Activity size={28} /> : <Lock size={28} />}
+              <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-6 ${modalType === 'withdraw' ? 'bg-red-50 text-red-500' : 'bg-emerald-50 text-emerald-600'}`}>
+                {modalType === 'nickname' ? <Activity size={28} /> : modalType === 'password' ? <Lock size={28} /> : <Trash2 size={28} />}
               </div>
               <h3 className="text-2xl font-black text-[#1A2B27] mb-2">
-                {modalType === 'nickname' ? '새로운 닉네임' : '비밀번호 재설정'}
+                {modalType === 'nickname' ? '새로운 닉네임' : modalType === 'password' ? '비밀번호 재설정' : '계정 삭제'}
               </h3>
-              <p className="text-xs font-medium text-gray-400 mb-8">
-                {modalType === 'nickname' ? '부르고 싶은 멋진 닉네임을 입력해주세요.' : '보안을 위해 강력한 비밀번호를 설정하세요.'}
+              <p className="text-xs font-medium text-gray-400 mb-8 leading-relaxed">
+                {modalType === 'nickname' ? '부르고 싶은 멋진 닉네임을 입력해주세요.' : 
+                 modalType === 'password' ? '보안을 위해 강력한 비밀번호를 설정하세요.' : 
+                 '탈퇴를 진행하시려면 본인 확인을 위해 현재 비밀번호를 입력해주세요.'}
               </p>
               
               <input 
@@ -1471,11 +1509,13 @@ function SettingsTab({ user, refreshUser, logout }: { user: UserProfile | null; 
 // ── MyPage ────────────────────────────────────────────────────────────
 export function MyPage({ openAuth }: { openAuth: (mode: 'login' | 'signup') => void }) {
   const navigate = useNavigate();
-  const { user, loading, refreshUser, isAuthenticated, logout } = useAuth();
+  const { user, loading, refreshUser, isAuthenticated, logout, deleteMe } = useAuth();
   const [records, setRecords] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState<TabKey>('home');
   const [prevTab, setPrevTab] = useState<TabKey>('home');
-  const [equipped, setEquipped] = useState<AvatarItem>(AVATAR_ITEMS[0]);
+  const [avatarItems, setAvatarItems] = useState<AvatarItem[]>(FALLBACK_AVATAR_ITEMS);
+  const [titles, setTitles] = useState<any[]>(FALLBACK_TITLES);
+  const [equipped, setEquipped] = useState<AvatarItem>(FALLBACK_AVATAR_ITEMS[0]);
 
   const fetchRecords = useCallback(async () => {
     try {
@@ -1486,15 +1526,34 @@ export function MyPage({ openAuth }: { openAuth: (mode: 'login' | 'signup') => v
     }
   }, []);
 
+  const fetchShopData = useCallback(async () => {
+    try {
+      const [items, titlesData] = await Promise.all([
+        api.get<AvatarItem[]>('/shop/items'),
+        api.get<any[]>('/shop/titles').catch(() => FALLBACK_TITLES)
+      ]);
+      
+      if (Array.isArray(items) && items.length > 0) setAvatarItems(items);
+      if (Array.isArray(titlesData) && titlesData.length > 0) setTitles(titlesData);
+      
+      // 장착된 아이템 초기화
+      const equip = items?.find(i => i.owned) || FALLBACK_AVATAR_ITEMS[0];
+      setEquipped(equip);
+    } catch (err) {
+      console.warn('Failed to fetch shop data, using fallback:', err);
+    }
+  }, []);
+
   useEffect(() => {
     if (!loading) {
       if (!isAuthenticated) {
         openAuth('login');
       } else {
         fetchRecords();
+        fetchShopData();
       }
     }
-  }, [loading, isAuthenticated, navigate, openAuth, fetchRecords]);
+  }, [loading, isAuthenticated, navigate, openAuth, fetchRecords, fetchShopData]);
 
   const tabOrder: TabKey[] = ['home', 'collection', 'report', 'settings'];
   const tabDir = tabOrder.indexOf(activeTab) >= tabOrder.indexOf(prevTab) ? 1 : -1;
@@ -1521,10 +1580,10 @@ export function MyPage({ openAuth }: { openAuth: (mode: 'login' | 'signup') => v
           <motion.div key={activeTab} custom={tabDir} variants={slideVar}
             initial="enter" animate="center" exit="exit"
             transition={{ duration: 0.32, ease: [0.16, 1, 0.3, 1] }}>
-            {activeTab === 'home'       && <HomeTab equipped={equipped} setEquipped={setEquipped} user={user} />}
-            {activeTab === 'collection' && <CollectionTab />}
+            {activeTab === 'home'       && <HomeTab equipped={equipped} setEquipped={setEquipped} user={user} avatarItems={avatarItems} />}
+            {activeTab === 'collection' && <CollectionTab titles={titles} setTitles={setTitles} />}
             {activeTab === 'report'     && <ReportTab records={records} />}
-            {activeTab === 'settings'   && <SettingsTab user={user} refreshUser={refreshUser} logout={logout} />}
+            {activeTab === 'settings'   && <SettingsTab user={user} refreshUser={refreshUser} logout={logout} deleteMe={deleteMe} />}
           </motion.div>
         </AnimatePresence>
       </div>

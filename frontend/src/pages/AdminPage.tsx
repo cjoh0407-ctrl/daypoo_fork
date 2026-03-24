@@ -11,7 +11,8 @@ import {
   Star,
   Maximize2,
   X,
-  Home
+  Home,
+  Trash2
 } from 'lucide-react';
 import {
   AreaChart, Area, PieChart, Pie, Cell,
@@ -121,8 +122,24 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 
 // ── Screen: Dashboard (Overview) ──────────────────────────────────────
 const DashboardView = ({ setActiveTab }: { setActiveTab: (tab: AdminTab) => void }) => {
+  const [stats, setStats] = useState<AdminStatsResponse | null>(null);
+  const [loading, setLoading] = useState(true);
   const [liveUsers, setLiveUsers] = useState(342);
   
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const data = await api.get<AdminStatsResponse>('/admin/stats');
+        setStats(data);
+      } catch (err) {
+        console.error('Admin stats fetch error', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchStats();
+  }, []);
+
   useEffect(() => {
     const interval = setInterval(() => {
       setLiveUsers(prev => Math.max(300, prev + Math.floor(Math.random() * 7 - 3)));
@@ -130,21 +147,26 @@ const DashboardView = ({ setActiveTab }: { setActiveTab: (tab: AdminTab) => void
     return () => clearInterval(interval);
   }, []);
 
-  const trendData = [
-    { name: '03.17', users: 1200, sales: 450 },
-    { name: '03.18', users: 1500, sales: 620 },
-    { name: '03.19', users: 1800, sales: 840 },
-    { name: '03.20', users: 2400, sales: 1100 },
-    { name: '03.21', users: 2100, sales: 950 },
-    { name: '03.22', users: 2900, sales: 1350 },
-    { name: '03.23', users: 3400, sales: 1620 },
-  ];
+  const trendData = stats?.weeklyTrend.map((d) => ({
+    name: d.date,
+    users: d.users,
+    sales: d.sales
+  })) || [];
 
   const pieData = [
     { name: '프리미엄 (PRO)', value: 400, color: COLORS.primary },
     { name: '베이직', value: 300, color: '#52b788' },
     { name: '무료', value: 300, color: COLORS.accent },
   ];
+
+  const totalUsersCount = stats?.totalUsers || 0;
+
+  if (loading) return (
+    <div className="flex flex-col items-center justify-center py-40 gap-4">
+      <RefreshCw size={40} className="animate-spin text-[#1B4332] opacity-20" />
+      <p className="text-sm font-black text-black/20 uppercase tracking-[0.3em]">Analyzing Real-time Data...</p>
+    </div>
+  );
 
   return (
     <div className="space-y-6">
@@ -153,13 +175,13 @@ const DashboardView = ({ setActiveTab }: { setActiveTab: (tab: AdminTab) => void
           <StatWidget title="현재 접속자" value={liveUsers} trend="+12.5%" isUp color={COLORS.primary} icon={Activity} />
         </div>
         <div className="cursor-pointer" onClick={() => setActiveTab('users')}>
-          <StatWidget title="누적 가입자" value="82.4K" trend="+4.3%" isUp color={COLORS.accent} icon={Users} />
+          <StatWidget title="누적 가입자" value={(stats?.totalUsers || 0).toLocaleString()} trend="+4.3%" isUp color={COLORS.accent} icon={Users} />
         </div>
-        <div className="cursor-pointer" onClick={() => setActiveTab('store')}>
-          <StatWidget title="최근 수익" value="₩2.4M" trend="+18.2%" isUp color={COLORS.secondary} icon={DollarSign} />
+        <div className="cursor-pointer" onClick={() => setActiveTab('toilets')}>
+          <StatWidget title="누적 화장실" value={(stats?.totalToilets || 0).toLocaleString()} trend="+5.2%" isUp color={COLORS.secondary} icon={MapPin} />
         </div>
-        <div className="cursor-pointer" onClick={() => setActiveTab('system')}>
-          <StatWidget title="시스템 경고" value="3건" trend="-2%" isUp={false} color={COLORS.error} icon={AlertTriangle} />
+        <div className="cursor-pointer" onClick={() => setActiveTab('cs')}>
+          <StatWidget title="미답변 문의" value={`${stats?.pendingInquiries || 0}건`} trend="-2%" isUp={false} color={COLORS.error} icon={AlertTriangle} />
         </div>
       </div>
 
@@ -211,7 +233,7 @@ const DashboardView = ({ setActiveTab }: { setActiveTab: (tab: AdminTab) => void
               </ResponsiveContainer>
               <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                  <span className="text-[10px] font-black uppercase text-black/40">총 유저</span>
-                 <span className="text-2xl font-black text-black">1.0K</span>
+                 <span className="text-2xl font-black text-black">{(totalUsersCount / 1000).toFixed(1)}K</span>
               </div>
            </div>
            <div className="mt-6 space-y-3">
@@ -221,7 +243,7 @@ const DashboardView = ({ setActiveTab }: { setActiveTab: (tab: AdminTab) => void
                     <div className="w-2.5 h-2.5 rounded-full" style={{ background: item.color }} />
                     <span className="text-xs font-bold text-black/70">{item.name}</span>
                   </div>
-                  <span className="text-sm font-black text-black">{((item.value / 1000) * 100).toFixed(0)}%</span>
+                  <span className="text-sm font-black text-black">{totalUsersCount > 0 ? ((item.value / totalUsersCount) * 100).toFixed(0) : 0}%</span>
                 </div>
               ))}
            </div>
