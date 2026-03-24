@@ -20,10 +20,11 @@ spring:
 
   flyway:
     enabled: true
+    baseline-on-migrate: true
 
   jpa:
     hibernate:
-      ddl-auto: validate
+      ddl-auto: update
     show-sql: false
     properties:
       hibernate:
