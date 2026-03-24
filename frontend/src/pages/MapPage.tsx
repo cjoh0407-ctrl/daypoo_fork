@@ -94,7 +94,17 @@ export function MapPage({ openAuth }: { openAuth: (mode: 'login' | 'signup') => 
     level: mapLevel
   });
 
-  const { position: pos } = useGeoTracking(toilets);
+  const [checkInTime, setCheckInTime] = useState<number | null>(null);
+
+  // 자동 체크인 핸들러
+  const handleAutoCheckIn = useCallback((remainedSeconds: number) => {
+    // 서버 기준 남은 시간을 바탕으로 클라이언트 시작 시간을 역산하여 저장 (60초 기준)
+    const startTime = Date.now() - (60 - remainedSeconds) * 1000;
+    setCheckInTime(startTime);
+    console.log(`[MapPage] 자동 체크인 감지: 남은 시간 ${remainedSeconds}초, 보정된 시작 시간 설정`);
+  }, []);
+
+  const { position: pos } = useGeoTracking(toilets, handleAutoCheckIn);
 
   // ── 로그인 후 화장실 정보 복원 ──────────────────────────────────
   useEffect(() => {
@@ -127,7 +137,7 @@ export function MapPage({ openAuth }: { openAuth: (mode: 'login' | 'signup') => 
     });
   }, [toggleFavorite]);
 
-  const [checkInTime, setCheckInTime] = useState<number | null>(null);
+
 
   // ── 방문 인증 (로그인 확인 + 체크인) ────────────────────────────
   const handleVisitRequest = useCallback(async () => {

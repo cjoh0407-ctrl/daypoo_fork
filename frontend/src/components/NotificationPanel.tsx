@@ -1,147 +1,99 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { Bell, X, Check, Trash2, Info, Trophy, MessageSquare } from 'lucide-react';
-import { useState, useEffect } from 'react';
-import { api } from '../services/apiClient';
+import { Bell, X, Check, Trash2, Info, Trophy, MessageSquare, Zap, Sparkles } from 'lucide-react';
 import { useNotification } from '../context/NotificationContext';
 
-interface Notification {
-  id: number;
-  type: 'INFO' | 'ACHIEVEMENT' | 'INQUIRY_REPLY' | 'SYSTEM';
-  title: string;
-  content: string;
-  isRead: boolean;
-  createdAt: string;
-}
-
 export function NotificationPanel({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [loading, setLoading] = useState(false);
-  const { showToast } = useNotification();
+  const { 
+    notifications, 
+    fetchNotifications, 
+    markAllAsRead, 
+    deleteNotification,
+    showToast,
+    setNotifications 
+  } = useNotification();
 
-  useEffect(() => {
-    if (isOpen) {
-      fetchNotifications();
-    }
-  }, [isOpen]);
-
-  const fetchNotifications = async () => {
-    setLoading(true);
-    try {
-      // 실제 API 엔드포인트에 맞춰 수정 필요
-      const data = await api.get('/notifications');
-      setNotifications(data);
-    } catch (err) {
-      console.error('Failed to fetch notifications', err);
-      // Fallback mock data for demo
-      setNotifications([
-        { id: 1, type: 'ACHIEVEMENT', title: '새로운 칭호 획득!', content: '전설의 쾌변가 칭호를 획득하셨습니다.', isRead: false, createdAt: new Date().toISOString() },
-        { id: 2, type: 'INFO', title: '포인트 충전 완료', content: '5000포인트가 충전되었습니다.', isRead: true, createdAt: new Date().toISOString() },
-      ]);
-    } finally {
-      setLoading(false);
-    }
+  const handleMarkAllRead = () => {
+    markAllAsRead();
   };
 
-  const markAsRead = async (id: number) => {
-    try {
-      await api.patch(`/notifications/${id}/read`, {});
-      setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n));
-    } catch (err) {
-      console.error('Failed to mark as read', err);
-    }
-  };
-
-  const deleteNotif = async (id: number) => {
-    try {
-      await api.delete(`/notifications/${id}`);
-      setNotifications(prev => prev.filter(n => n.id !== id));
-    } catch (err) {
-      console.error('Failed to delete notification', err);
-    }
-  };
-
-  const getIcon = (type: string) => {
-    switch (type) {
-      case 'ACHIEVEMENT': return <Trophy className="text-amber-500" size={16} />;
-      case 'INQUIRY_REPLY': return <MessageSquare className="text-blue-500" size={16} />;
-      case 'INFO': return <Info className="text-emerald-500" size={16} />;
-      default: return <Bell className="text-gray-400" size={16} />;
-    }
+  const deleteNotif = (id: number) => {
+    deleteNotification(id);
   };
 
   return (
     <AnimatePresence>
       {isOpen && (
         <>
-          <motion.div 
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 z-[1000] bg-black/40 backdrop-blur-sm"
+            className="fixed inset-0 z-[2000] bg-black/20 backdrop-blur-[2px]"
           />
           <motion.div
-            initial={{ opacity: 0, x: 100, scale: 0.95 }}
-            animate={{ opacity: 1, x: 0, scale: 1 }}
-            exit={{ opacity: 0, x: 50, scale: 0.95 }}
-            className="fixed right-6 top-24 z-[1001] w-full max-w-sm bg-white rounded-[32px] shadow-2xl overflow-hidden border border-gray-100"
+            initial={{ x: '100%' }}
+            animate={{ x: 0 }}
+            exit={{ x: '100%' }}
+            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+            className="fixed top-0 right-0 z-[2001] w-full max-w-[400px] h-full bg-white shadow-[-10px_0_30px_rgba(0,0,0,0.1)] flex flex-col"
           >
-            <div className="p-6 border-b border-gray-50 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Bell size={18} className="text-[#1A2B27]" />
-                <h3 className="text-lg font-black text-[#1A2B27] tracking-tight">알림 센터</h3>
+            <div className="flex items-center justify-between px-6 py-6 border-b border-gray-100">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-[#f4faf6] flex items-center justify-center text-[#1B4332]">
+                  <Bell size={20} />
+                </div>
+                <div>
+                  <h2 className="font-black text-lg text-[#1a2b22]">알림 센터</h2>
+                  <p className="text-[11px] font-bold text-[#7a9e8a] uppercase tracking-wider">Recent Updates</p>
+                </div>
               </div>
               <button 
                 onClick={onClose}
-                className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+                className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center text-gray-400 hover:bg-gray-100 transition-colors"
               >
-                <X size={18} className="text-gray-400" />
+                <X size={20} />
               </button>
             </div>
 
-            <div className="max-height-[400px] overflow-y-auto p-4 custom-scrollbar">
-              {loading ? (
-                <div className="py-20 text-center">
-                  <motion.div 
-                    animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-                    className="inline-block"
-                  >
-                    💩
-                  </motion.div>
-                </div>
-              ) : notifications.length > 0 ? (
+            <div className="flex-1 overflow-y-auto px-4 py-4 custom-scrollbar">
+              {notifications.length > 0 ? (
                 <div className="space-y-3">
                   {notifications.map((n) => (
-                    <motion.div 
+                    <motion.div
                       key={n.id}
-                      layout
-                      className={`group relative p-4 rounded-2xl border transition-all ${
-                        n.isRead ? 'bg-gray-50/50 border-transparent opacity-60' : 'bg-white border-emerald-100/50 shadow-sm'
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className={`relative group p-4 rounded-2xl border-2 transition-all ${
+                        n.isRead ? 'bg-white border-gray-50' : 'bg-[#f4faf6]/50 border-[#1B4332]/10'
                       }`}
                     >
                       <div className="flex gap-4">
-                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
-                          n.isRead ? 'bg-gray-200/50' : 'bg-emerald-50'
+                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+                          n.type === 'ACHIEVEMENT' ? 'bg-amber-50 text-amber-500' :
+                          n.type === 'INQUIRY_REPLY' ? 'bg-blue-50 text-blue-500' :
+                          'bg-emerald-50 text-emerald-500'
                         }`}>
-                          {getIcon(n.type)}
+                          {n.type === 'ACHIEVEMENT' ? <Trophy size={20} /> :
+                           n.type === 'INQUIRY_REPLY' ? <MessageSquare size={20} /> :
+                           <Info size={20} />}
                         </div>
-                        <div className="flex-1">
-                          <h4 className="text-sm font-bold text-[#1A2B27] mb-1">{n.title}</h4>
-                          <p className="text-xs text-gray-500 leading-relaxed">{n.content}</p>
-                          <span className="text-[10px] text-gray-300 mt-2 block">
-                            {new Date(n.createdAt).toLocaleDateString()}
-                          </span>
-                        </div>
-                        <div className="flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                          {!n.isRead && (
-                            <button 
-                              onClick={() => markAsRead(n.id)}
-                              className="p-1.5 rounded-lg bg-emerald-500 text-white hover:bg-emerald-600 transition-colors"
-                            >
-                              <Check size={12} />
-                            </button>
-                          )}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between gap-2 mb-1">
+                            <h3 className={`text-sm font-black truncate ${n.isRead ? 'text-gray-500' : 'text-[#1a2b22]'}`}>
+                              {n.title}
+                            </h3>
+                            <span className="text-[10px] text-gray-400 shrink-0 font-medium">
+                              {new Date(n.createdAt).toLocaleDateString()}
+                            </span>
+                          </div>
+                          <p className={`text-xs leading-relaxed ${n.isRead ? 'text-gray-400' : 'text-gray-600'}`}>
+                            {n.content}
+                          </p>
+                          
                           <button 
                             onClick={() => deleteNotif(n.id)}
-                            className="p-1.5 rounded-lg bg-gray-100 text-gray-400 hover:bg-red-50 hover:text-red-500 transition-colors"
+                            className="absolute top-4 right-4 p-1.5 rounded-lg bg-gray-100 text-gray-400 opacity-0 group-hover:opacity-100 hover:bg-red-50 hover:text-red-500 transition-all"
                           >
                             <Trash2 size={12} />
                           </button>
@@ -151,78 +103,84 @@ export function NotificationPanel({ isOpen, onClose }: { isOpen: boolean; onClos
                   ))}
                 </div>
               ) : (
-                <div className="py-20 text-center text-gray-300 text-sm">
-                  아직 도착한 알림이 없어요.
+                <div className="py-20 flex flex-col items-center justify-center text-center space-y-4">
+                  <div className="w-20 h-20 rounded-full bg-gray-50 flex items-center justify-center text-gray-200">
+                    <Sparkles size={40} />
+                  </div>
+                  <div>
+                    <p className="font-black text-[#1a2b22]">오늘 변은 어떠셨나요?</p>
+                    <p className="text-sm text-[#7a9e8a] mt-1">도착한 새로운 알림이 없습니다.</p>
+                  </div>
                 </div>
               )}
             </div>
             
-              <div className="p-4 bg-gray-50 flex flex-col gap-3">
-                <button 
-                  className="text-xs font-bold text-[#1B4332]/40 hover:text-[#1B4332] transition-colors text-center"
-                  onClick={() => setNotifications(prev => prev.map(n => ({ ...n, isRead: true })))}
-                >
-                  모두 읽음으로 표시
-                </button>
-                
-                {/* 알림 테스트 도구 (팀원 간 git merge 후 테스트 용도) */}
-                <div className="mt-2 pt-3 border-t border-gray-100">
-                  <p className="text-[10px] font-black text-gray-300 uppercase tracking-widest mb-2 px-1">Debug: Notification Test</p>
-                  <div className="grid grid-cols-3 gap-2">
-                    <button 
-                      onClick={() => {
-                        showToast('레벨업!', '축하합니다! 새로운 등급을 획득하셨습니다.', 'achievement');
-                        setNotifications(prev => [{
-                          id: Date.now(),
-                          type: 'ACHIEVEMENT',
-                          title: '레벨업!',
-                          content: '축하합니다! 새로운 등급을 획득하셨습니다.',
-                          isRead: false,
-                          createdAt: new Date().toISOString()
-                        }, ...prev]);
-                      }}
-                      className="flex flex-col items-center gap-1.5 p-2 rounded-xl bg-white border border-gray-100 hover:border-amber-200 transition-all group"
-                    >
-                      <Trophy size={14} className="text-amber-400 group-hover:scale-110 transition-transform" />
-                      <span className="text-[10px] font-bold text-gray-500">성취</span>
-                    </button>
-                    <button 
-                      onClick={() => {
-                        showToast('문의 답변', '문의하신 내용에 대해 답변이 도착했습니다.', 'message');
-                        setNotifications(prev => [{
-                          id: Date.now(),
-                          type: 'INQUIRY_REPLY',
-                          title: '문의 답변',
-                          content: '문의하신 내용에 대해 답변이 도착했습니다.',
-                          isRead: false,
-                          createdAt: new Date().toISOString()
-                        }, ...prev]);
-                      }}
-                      className="flex flex-col items-center gap-1.5 p-2 rounded-xl bg-white border border-gray-100 hover:border-blue-200 transition-all group"
-                    >
-                      <MessageSquare size={14} className="text-blue-400 group-hover:scale-110 transition-transform" />
-                      <span className="text-[10px] font-bold text-gray-500">메시지</span>
-                    </button>
-                    <button 
-                      onClick={() => {
-                        showToast('근처 화장실', '현재 위치 150m 이내에 화장실이 있습니다.', 'info');
-                        setNotifications(prev => [{
-                          id: Date.now(),
-                          type: 'INFO',
-                          title: '근처 화장실',
-                          content: '현재 위치 150m 이내에 화장실이 있습니다.',
-                          isRead: false,
-                          createdAt: new Date().toISOString()
-                        }, ...prev]);
-                      }}
-                      className="flex flex-col items-center gap-1.5 p-2 rounded-xl bg-white border border-gray-100 hover:border-emerald-200 transition-all group"
-                    >
-                      <Bell size={14} className="text-emerald-500 group-hover:scale-110 transition-transform" />
-                      <span className="text-[10px] font-bold text-gray-500">시스템</span>
-                    </button>
-                  </div>
+            <div className="p-4 bg-gray-50 flex flex-col gap-3">
+              <button 
+                className="text-xs font-bold text-[#1B4332]/40 hover:text-[#1B4332] transition-colors text-center"
+                onClick={handleMarkAllRead}
+              >
+                모두 읽음으로 표시
+              </button>
+              
+              {/* 알림 테스트 도구 */}
+              <div className="mt-2 pt-3 border-t border-gray-100">
+                <p className="text-[10px] font-black text-gray-300 uppercase tracking-widest mb-2 px-1">Debug: Notification Test</p>
+                <div className="grid grid-cols-3 gap-2">
+                  <button 
+                    onClick={() => {
+                      showToast('레벨업!', '축하합니다! 새로운 등급을 획득하셨습니다.', 'achievement');
+                      setNotifications(prev => [{
+                        id: Date.now(),
+                        type: 'ACHIEVEMENT',
+                        title: '레벨업!',
+                        content: '축하합니다! 새로운 등급을 획득하셨습니다.',
+                        isRead: false,
+                        createdAt: new Date().toISOString()
+                      }, ...prev]);
+                    }}
+                    className="flex flex-col items-center gap-1.5 p-2 rounded-xl bg-white border border-gray-100 hover:border-amber-200 transition-all group"
+                  >
+                    <Trophy size={14} className="text-amber-400 group-hover:scale-110 transition-transform" />
+                    <span className="text-[10px] font-bold text-gray-500">성취</span>
+                  </button>
+                  <button 
+                    onClick={() => {
+                      showToast('문의 답변', '문의하신 내용에 대해 답변이 도착했습니다.', 'message');
+                      setNotifications(prev => [{
+                        id: Date.now(),
+                        type: 'INQUIRY_REPLY',
+                        title: '문의 답변',
+                        content: '문의하신 내용에 대해 답변이 도착했습니다.',
+                        isRead: false,
+                        createdAt: new Date().toISOString()
+                      }, ...prev]);
+                    }}
+                    className="flex flex-col items-center gap-1.5 p-2 rounded-xl bg-white border border-gray-100 hover:border-blue-200 transition-all group"
+                  >
+                    <MessageSquare size={14} className="text-blue-400 group-hover:scale-110 transition-transform" />
+                    <span className="text-[10px] font-bold text-gray-500">메시지</span>
+                  </button>
+                  <button 
+                    onClick={() => {
+                      showToast('근처 화장실', '현재 위치 150m 이내에 화장실이 있습니다.', 'info');
+                      setNotifications(prev => [{
+                        id: Date.now(),
+                        type: 'INFO',
+                        title: '근처 화장실',
+                        content: '현재 위치 150m 이내에 화장실이 있습니다.',
+                        isRead: false,
+                        createdAt: new Date().toISOString()
+                      }, ...prev]);
+                    }}
+                    className="flex flex-col items-center gap-1.5 p-2 rounded-xl bg-white border border-gray-100 hover:border-emerald-200 transition-all group"
+                  >
+                    <Bell size={14} className="text-emerald-500 group-hover:scale-110 transition-transform" />
+                    <span className="text-[10px] font-bold text-gray-500">시스템</span>
+                  </button>
                 </div>
               </div>
+            </div>
           </motion.div>
         </>
       )}

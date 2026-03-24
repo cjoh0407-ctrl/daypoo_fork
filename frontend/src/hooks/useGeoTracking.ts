@@ -11,7 +11,11 @@ interface GeoPosition {
 /**
  * 전역 위치 트래킹 및 자동 체크인(Fast Check-in) 훅
  */
-export function useGeoTracking(toilets: ToiletData[], isEnabled: boolean = true) {
+export function useGeoTracking(
+  toilets: ToiletData[], 
+  onAutoCheckIn?: (remainedSeconds: number) => void,
+  isEnabled: boolean = true
+) {
   const [position, setPosition] = useState<GeoPosition | null>(null);
   const [granted, setGranted] = useState(false);
   const lastCheckInRef = useRef<Map<string, number>>(new Map());
@@ -48,7 +52,14 @@ export function useGeoTracking(toilets: ToiletData[], isEnabled: boolean = true)
                 toiletId: Number(toilet.id),
                 latitude: newPos.lat,
                 longitude: newPos.lng
-              }).catch(err => {
+              })
+              .then((res: any) => {
+                // 서버에서 준 남은 시간 정보를 콜백으로 전달
+                if (onAutoCheckIn && res && typeof res.remainedSeconds === 'number') {
+                  onAutoCheckIn(res.remainedSeconds);
+                }
+              })
+              .catch(err => {
                 console.warn('[Fast Check-in] 체크인 API 호출 실패:', err.message);
               });
             }

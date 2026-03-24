@@ -4,7 +4,7 @@ import { useNotification } from '../context/NotificationContext';
 
 export const NotificationSubscriber: React.FC = () => {
   const { user, refreshUser } = useAuth();
-  const { showToast } = useNotification();
+  const { showToast, fetchNotifications } = useNotification();
 
   useEffect(() => {
     const token = localStorage.getItem('accessToken');
@@ -25,6 +25,7 @@ export const NotificationSubscriber: React.FC = () => {
             data.type?.toLowerCase() || 'info', 
             data.icon
           );
+          fetchNotifications(); // 알림 발생 시 서버로부터 최신 알림 목록 가져와서 동기화
           refreshUser(); // 알림 발생 시 유저 정보(포인트 등) 갱신
         }
       } catch (err) {
@@ -40,7 +41,7 @@ export const NotificationSubscriber: React.FC = () => {
     return () => {
       eventSource.close();
     };
-  }, [user, refreshUser, showToast]);
+  }, [user, refreshUser, showToast, fetchNotifications]);
 
   return null; // UI를 렌더링하지 않음
 };

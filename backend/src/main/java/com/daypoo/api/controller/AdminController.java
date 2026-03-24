@@ -18,6 +18,16 @@ import org.springframework.web.bind.annotation.RestController;
 public class AdminController {
 
   private final AdminService adminService;
+  private final com.daypoo.api.service.PublicDataSyncService syncService;
+
+  @Operation(
+      summary = "공공데이터 화장실 정보 동기화",
+      description = "외부 API로부터 전국 공공 화장실 데이터를 수집하여 DB 및 Redis에 저장합니다. (가상 스레드 활용)")
+  @PostMapping("/sync-toilets")
+  public ResponseEntity<String> syncToilets(int startPage, int endPage) {
+    int count = syncService.syncAllToilets(startPage, endPage);
+    return ResponseEntity.ok(String.format("동기화가 완료되었습니다. 신규 등록: %d건", count));
+  }
 
   @Operation(
       summary = "관리자 대시보드 통계 조회",

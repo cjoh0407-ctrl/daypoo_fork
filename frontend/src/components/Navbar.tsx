@@ -1,9 +1,10 @@
 import { motion, useScroll, useTransform, useMotionValueEvent } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
 import { Bell, User, LogOut } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { AnimatedUnderlink } from './AnimatedUnderlink';
 import { useAuth } from '../context/AuthContext';
+import { useNotification } from '../context/NotificationContext';
 import { NotificationPanel } from './NotificationPanel';
 
 export function Navbar({ openAuth }: { openAuth: (mode: 'login' | 'signup') => void }) {
@@ -11,6 +12,7 @@ export function Navbar({ openAuth }: { openAuth: (mode: 'login' | 'signup') => v
   const scale = useTransform(scrollY, [0, 100], [1, 0.97]);
   const [hidden, setHidden] = useState(false);
   const { user, logout, isAuthenticated } = useAuth();
+  const { unreadCount, fetchNotifications } = useNotification();
   const [notifOpen, setNotifOpen] = useState(false);
   const navigate = useNavigate();
 
@@ -23,7 +25,12 @@ export function Navbar({ openAuth }: { openAuth: (mode: 'login' | 'signup') => v
     }
   });
 
-  const [hasNotif] = useState(true); // 알림 뱃지 (실제론 API 연동)
+  // 초기 알림 데이터 로드
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchNotifications();
+    }
+  }, [isAuthenticated, fetchNotifications]);
 
   const handleLogout = () => {
     logout();
@@ -165,7 +172,7 @@ export function Navbar({ openAuth }: { openAuth: (mode: 'login' | 'signup') => v
                 title="알림"
               >
                 <Bell size={18} />
-                {hasNotif && (
+                {unreadCount > 0 && (
                   <motion.span
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}

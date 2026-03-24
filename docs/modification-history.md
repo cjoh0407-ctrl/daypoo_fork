@@ -1,6 +1,18 @@
 # 수정 이력 (Modification History)
 
+## 2026-03-24 09:10:00
+
+- **작업 내용:** 스마트 방문 인증(Fast Check-in) 프론트엔드/백엔드 고도화 및 화장실 데이터 동기화 기능 추가
+- **상세 변경 내역:**
+  - `AdminController.java`: 화장실 수동 동기화를 위한 `syncToilets` API 개발.
+  - `MapPage.tsx` & `useGeoTracking.ts`: 백그라운드 위치 추적 기반의 'Smart Fast Check-in' 기능 연동. 자동 도착 감지 및 입구 연동 로직 강화.
+  - `VisitModal.tsx`: 방문 완료 시의 UI 연동 및 데이터 처리 로직 수정.
+  - `NotificationSubscriber.tsx` & `NotificationContext.tsx`: 전역 알림 구독 시스템의 안정화 및 실시간 업데이트 연동.
+  - `docs/PLAN_FAST_CHECKIN.md` 등: 개발 가이드 및 아키텍처 문서 최신화.
+- **결과/영향:** 사용자가 화장실에 도착했을 때 별도의 조작 없이도 체류 시간이 자동으로 계산되는 패스트 체크인 시스템의 통합을 완료하고, 관리자가 화장실 데이터를 수동으로 갱신할 수 있는 기반을 마련함.
+
 ## 2026-03-24 18:40:00
+
 - **작업 내용:** 비로그인 시 알림 아이콘 숨김 처리 및 프론트엔드 알림 테스트 도구 구현
 - **상세 변경 내역:**
   - `Navbar.tsx`: `isAuthenticated` 상태를 체크하여 로그인한 사용자에게만 알림(종 모양) 아이콘이 보이도록 수정.

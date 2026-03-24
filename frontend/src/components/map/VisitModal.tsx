@@ -32,7 +32,11 @@ export function VisitModal({ toilet, onClose, onComplete, checkInTime }: VisitMo
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
 
   // 타이머 관련 상태
-  const [remainingSeconds, setRemainingSeconds] = useState(60);
+  const [remainingSeconds, setRemainingSeconds] = useState(() => {
+    if (!checkInTime) return 60;
+    const elapsed = Math.floor((Date.now() - checkInTime) / 1000);
+    return Math.max(0, 60 - elapsed);
+  });
   const [canComplete, setCanComplete] = useState(false);
 
   useEffect(() => {
