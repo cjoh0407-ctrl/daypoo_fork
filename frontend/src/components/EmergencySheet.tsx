@@ -1,7 +1,8 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { Navigation, X, Clock, Accessibility, AlertTriangle } from 'lucide-react';
+import { X, AlertTriangle } from 'lucide-react';
 import { useRef, useEffect, useState, useMemo } from 'react';
 import { useToilets } from '../hooks/useToilets';
+import { EmergencySheetPreview } from './EmergencySheetPreview';
 
 interface EmergencySheetProps {
   isOpen: boolean;
@@ -185,10 +186,10 @@ export function EmergencySheet({ isOpen, onClose }: EmergencySheetProps) {
               borderTop: '1px solid rgba(255,255,255,0.08)'
             }}
           >
-            <div className="max-w-lg mx-auto p-6 md:p-8 pb-12">
+            <div className="max-w-lg mx-auto p-6 md:p-8 pb-12 text-white">
               <div className="w-12 h-1.5 bg-white/20 rounded-full mx-auto mb-8" />
 
-              <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center justify-between mb-10">
                 <div className="flex items-center gap-4">
                   <motion.div
                     animate={{ scale: [1, 1.2, 1], rotate: [0, 5, -5, 0] }}
@@ -207,14 +208,14 @@ export function EmergencySheet({ isOpen, onClose }: EmergencySheetProps) {
                 </div>
                 <button
                   onClick={onClose}
-                  className="w-10 h-10 flex items-center justify-center rounded-full text-white/30 hover:text-white hover:bg-white/10 transition-all"
+                  className="w-10 h-10 flex items-center justify-center rounded-full text-white/30 hover:text-white hover:bg-white/10 transition-all font-black"
                 >
                   <X size={24} />
                 </button>
               </div>
 
               {/* ── 실시간 미니맵 ── */}
-              <div className="mb-6 relative">
+              <div className="mb-10 relative">
                 <MiniMap userPos={userPos} toilets={processedToilets} />
                 {loading && (
                   <div className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-2xl backdrop-blur-[1px]">
@@ -223,64 +224,13 @@ export function EmergencySheet({ isOpen, onClose }: EmergencySheetProps) {
                 )}
               </div>
 
-              {/* ── 최적 경로 리스트 ── */}
-              <div className="space-y-3.5">
-                {processedToilets.length > 0 ? (
-                  processedToilets.map((item, i) => {
-                    const RANK_COLORS = ['#E85D5D', '#E8A838', '#2D6A4F', '#40916C', '#52B788'];
-                    return (
-                      <motion.div
-                        key={item.id}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.1 * i }}
-                        className="p-4.5 rounded-[24px] flex items-center justify-between gap-4 transition-all hover:bg-white/[0.08]"
-                        style={{ backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.05)' }}
-                      >
-                        <div
-                          className="w-10 h-10 rounded-full flex items-center justify-center text-base font-black text-white shrink-0 shadow-lg"
-                          style={{ backgroundColor: RANK_COLORS[i] || '#2D6A4F' }}
-                        >
-                          {item.rank}
-                        </div>
+              {/* ── 최적 경로 추천 부문 (1안: Horizontal 카드 레이아웃) ── */}
+              <EmergencySheetPreview 
+                processedToilets={processedToilets as any} 
+                openNav={openNav} 
+              />
 
-                        <div className="flex-1 min-w-0">
-                          <p className="font-bold text-white text-base truncate mb-1">{item.name}</p>
-                          <div className="flex items-center gap-2.5 flex-wrap">
-                            <span className="text-white/50 text-xs font-medium">{item.distanceStr} · 도보 {item.timeStr}</span>
-                            {item.isOpen24h && (
-                              <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#2D6A4F]/30 text-[#86EFAC]">
-                                <Clock size={9} /> 24H
-                              </span>
-                            )}
-                          </div>
-                        </div>
-
-                        <motion.button
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                          onClick={() => openNav(item)}
-                          className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-black shrink-0 transition-all shadow-md"
-                          style={{
-                            backgroundColor: i === 0 ? '#E85D5D' : 'rgba(255,255,255,0.08)',
-                            color: 'white',
-                            border: i === 0 ? 'none' : '1px solid rgba(255,255,255,0.1)',
-                          }}
-                        >
-                          <Navigation size={14} />
-                          출발
-                        </motion.button>
-                      </motion.div>
-                    );
-                  })
-                ) : !loading && (
-                  <div className="py-12 text-center text-white/40">
-                    <p className="text-sm font-medium">주변 1km 이내에 개방된 화장실이 없습니다.</p>
-                  </div>
-                )}
-              </div>
-
-              <p className="mt-8 text-center text-white/20 text-[10px] tracking-tight">
+              <p className="mt-10 text-center text-white/20 text-[10px] tracking-tight font-medium">
                 현재 위치 기반 실시간 데이터 분석 · 도보 이동 시간 기준 정렬
               </p>
             </div>

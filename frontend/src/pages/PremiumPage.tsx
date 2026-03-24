@@ -65,7 +65,7 @@ const PLANS = [
 ];
 
 // ── 컴포넌트 ──────────────────────────────────────────────────────────
-export function PremiumPage() {
+export function PremiumPage({ openAuth }: { openAuth: (mode: 'login' | 'signup') => void }) {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [selectedPlan, setSelectedPlan] = useState<string>('PRO');
@@ -75,22 +75,53 @@ export function PremiumPage() {
     const plan = PLANS.find(p => p.id === selectedPlan);
     if (!plan || plan.id === 'BASIC') return;
 
+    if (!user) {
+      alert('멤버십 가입을 위해 먼저 로그인을 해주세요.');
+      return;
+    }
+
     setLoading(true);
     try {
-      const tossPayments = await loadTossPayments(import.meta.env.VITE_TOSS_CLIENT_KEY);
+      const clientKey = import.meta.env.VITE_TOSS_CLIENT_KEY;
+      if (!clientKey) {
+        throw new Error('결제 설정(Client Key)을 찾을 수 없습니다.');
+      }
+
+      const tossPayments = await loadTossPayments(clientKey);
       
-      const amount = parseInt(plan.price.replace(/[^0-9]/g, ''));
+      const amountValue = parseInt(plan.price.replace(/[^0-9]/g, ''));
       
+      const emailPrefix = user.email ? user.email.split('@')[0] : 'ANON';
+      const orderId = `POOPMAP_${Date.now()}_${emailPrefix}`;
+
       await tossPayments.requestPayment('카드', {
-        amount: amount,
-        orderId: `POOPMAP_${Date.now()}_${user?.email?.split('@')[0]}`,
+        amount: amountValue,
+        orderId: orderId,
         orderName: `DayPoo ${plan.name} 멤버십`,
         successUrl: window.location.origin + '/payment/success',
         failUrl: window.location.origin + '/premium',
       });
-    } catch (err) {
-      console.error('Payment request failed', err);
-      alert('결제 요청 중 오류가 발생했습니다.');
+    } catch (err: any) {
+      console.error('[Payment Error] Detailed:', err);
+      
+      // 토스 페이먼츠 취소 대응 (MyPage 일관성 유지)
+      const isCancellation = 
+        err?.code?.includes('CANCELED') || 
+        err?.errorCode?.includes('CANCELED') ||
+        err?.message?.includes('취소') || 
+        err?.message?.toLowerCase().includes('cancel') ||
+        String(err).includes('CANCELED');
+
+      if (isCancellation) {
+        if (confirm('결제를 취소하시겠습니까?')) {
+          // 취소 승인 시 조용히 종료
+          return;
+        }
+        // 취소 거부 시(계속 결제 원할 시) 다시 시도하도록 유도 (필요시)
+        return;
+      }
+
+      alert(`결제 요청에 실패했습니다: ${err.message || '알 수 없는 오류'}`);
     } finally {
       setLoading(false);
     }
@@ -98,7 +129,7 @@ export function PremiumPage() {
 
   return (
     <div className="min-h-screen bg-[#f8faf9]">
-      <Navbar openAuth={() => {}} />
+      <Navbar openAuth={openAuth} />
 
       <div className="max-w-5xl mx-auto px-6 pt-32 pb-20">
         {/* 헤더 */}
@@ -196,7 +227,7 @@ export function PremiumPage() {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.7 }}
-          className="max-w-3xl mx-auto p-10 rounded-[48px] bg-[#1B4332] text-white shadow-3xl overflow-hidden relative"
+          className="max-w-5xl mx-auto p-12 md:p-14 rounded-[56px] bg-[#1B4332] text-white shadow-3xl overflow-hidden relative"
         >
           {/* 장식용 배경 */}
           <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-700/30 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />

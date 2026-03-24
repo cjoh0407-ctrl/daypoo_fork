@@ -25,19 +25,19 @@ const BAR_DATA = [
 
 const LOCKED_INSIGHTS = [
   {
-    icon: <Utensils size={24} className="text-[#1B4332]" />,
+    icon: <Utensils size={20} className="text-[#1B4332]" />,
     label: '식습관 분석',
-    preview: '매운 음식 섭취와 장 자극 패턴이 관찰되고 있어요',
+    preview: '매운 음식 섭취와 장 자극 패턴 관찰',
   },
   {
-    icon: <Droplets size={24} className="text-[#1B4332]" />,
+    icon: <Droplets size={20} className="text-[#1B4332]" />,
     label: '수분 섭취 연관성',
-    preview: '수분이 부족한 날 브리스톨 지수가 낮아지는 경향이...',
+    preview: '수분 부족 시 브리스톨 지수 변화 경향',
   },
   {
-    icon: <Moon size={24} className="text-[#1B4332]" />,
+    icon: <Moon size={20} className="text-[#1B4332]" />,
     label: '수면 & 장 리듬',
-    preview: '수면 패턴과 배변 타이밍 사이에 유의미한 상관관계가...',
+    preview: '수면 패턴과 배변 타이밍 상관관계 분석',
   },
 ];
 
@@ -73,34 +73,34 @@ export function ReportCard({ openAuth }: { openAuth: (mode: 'login' | 'signup') 
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <motion.div
           style={{ y: y1 }}
-          className="absolute top-1/4 -right-48 w-[500px] h-[500px] rounded-full opacity-15"
+          className="absolute top-1/4 -right-48 w-[500px] h-[500px] rounded-full opacity-15 will-change-transform"
           animate={{
-            scale: [1, 1.2, 1],
-            rotate: [0, 90, 0],
-          }}
-          transition={{
-            duration: 20,
-            repeat: Infinity,
-            ease: "linear"
-          }}
-        >
-          <div className="w-full h-full rounded-full bg-gradient-to-br from-[#2d6a4f] via-[#52b788] to-[#95d5b2] blur-3xl" />
-        </motion.div>
-
-        <motion.div
-          style={{ y: y2 }}
-          className="absolute bottom-1/4 -left-48 w-[500px] h-[500px] rounded-full opacity-12"
-          animate={{
-            scale: [1.2, 1, 1.2],
-            rotate: [0, -90, 0],
+            scale: [1, 1.1, 1],
+            rotate: [0, 45, 0],
           }}
           transition={{
             duration: 25,
             repeat: Infinity,
-            ease: "linear"
+            ease: "easeInOut"
           }}
         >
-          <div className="w-full h-full rounded-full bg-gradient-to-br from-[#1b4332] via-[#2d6a4f] to-[#40916c] blur-3xl" />
+          <div className="w-full h-full rounded-full bg-gradient-to-br from-[#2d6a4f] via-[#52b788] to-[#95d5b2] blur-[80px]" />
+        </motion.div>
+
+        <motion.div
+          style={{ y: y2 }}
+          className="absolute bottom-1/4 -left-48 w-[500px] h-[500px] rounded-full opacity-12 will-change-transform"
+          animate={{
+            scale: [1.1, 1, 1.1],
+            rotate: [0, -45, 0],
+          }}
+          transition={{
+            duration: 30,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
+        >
+          <div className="w-full h-full rounded-full bg-gradient-to-br from-[#1b4332] via-[#2d6a4f] to-[#40916c] blur-[80px]" />
         </motion.div>
       </div>
 
@@ -153,12 +153,12 @@ export function ReportCard({ openAuth }: { openAuth: (mode: 'login' | 'signup') 
 
           {/* 글래스 카드 */}
           <div
-            className="relative p-8 md:p-10 rounded-[40px] overflow-hidden"
+            className="relative p-8 md:p-10 rounded-[40px] overflow-hidden will-change-transform"
             style={{
-              background: 'rgba(248, 250, 249, 0.75)',
-              backdropFilter: 'blur(24px) saturate(180%)',
-              border: '1px solid rgba(45, 106, 79, 0.15)',
-              boxShadow: '0 8px 32px 0 rgba(27, 67, 50, 0.12), 0 2px 8px rgba(45, 106, 79, 0.08), inset 0 1px 0 0 rgba(255,255,255,0.6)',
+              background: 'rgba(248, 250, 249, 0.7)',
+              backdropFilter: 'blur(16px) saturate(160%)',
+              border: '1px solid rgba(45, 106, 79, 0.12)',
+              boxShadow: '0 8px 32px 0 rgba(27, 67, 50, 0.1), 0 2px 8px rgba(45, 106, 79, 0.05), inset 0 1px 0 0 rgba(255,255,255,0.5)',
             }}
           >
             {/* 네온 보더 */}
@@ -196,17 +196,17 @@ export function ReportCard({ openAuth }: { openAuth: (mode: 'login' | 'signup') 
                 </motion.span>
               </div>
 
-              <div className="grid grid-cols-5 gap-8 items-center">
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-10 items-center">
                 {/* Pie Chart */}
-                <div className="col-span-2 flex flex-col items-center justify-center">
-                  <div className="w-full max-w-[220px] aspect-square relative mx-auto">
+                <div className="col-span-12 md:col-span-5 flex flex-col items-center justify-center">
+                  <div className="w-full max-w-[320px] aspect-square relative mx-auto">
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
                         <Pie
                           data={PIE_DATA}
                           cx="50%" cy="50%"
-                          innerRadius={55} outerRadius={75}
-                          paddingAngle={6}
+                          innerRadius={85} outerRadius={115}
+                          paddingAngle={10}
                           dataKey="value"
                           startAngle={90} endAngle={450}
                         >
@@ -215,23 +215,25 @@ export function ReportCard({ openAuth }: { openAuth: (mode: 'login' | 'signup') 
                         </Pie>
                       </PieChart>
                     </ResponsiveContainer>
-                    <div className="absolute inset-0 flex flex-col items-center justify-center">
-                      <motion.span
-                        initial={{ scale: 0 }}
-                        whileInView={{ scale: 1 }}
-                        transition={{ type: "spring", delay: 0.5 }}
-                        className="text-5xl font-black"
-                        style={{ color: 'var(--text-main)' }}
-                      >
-                        85
-                      </motion.span>
-                      <span className="text-sm font-medium mt-1" style={{ color: 'var(--text-sec)' }}>쾌변 점수</span>
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                      <div className="text-center flex flex-col items-center justify-center mt-2">
+                        <motion.span
+                          initial={{ scale: 0 }}
+                          whileInView={{ scale: 1 }}
+                          transition={{ type: "spring", delay: 0.5, stiffness: 100 }}
+                          className="text-7xl font-black leading-none"
+                          style={{ color: 'var(--text-main)', letterSpacing: '-0.05em' }}
+                        >
+                          85
+                        </motion.span>
+                        <span className="text-sm font-bold mt-1 opacity-70" style={{ color: 'var(--text-sec)' }}>쾌변 점수</span>
+                      </div>
                     </div>
                   </div>
                 </div>
 
                 {/* Bar Chart */}
-                <div className="col-span-3 w-full">
+                <div className="col-span-12 md:col-span-7 w-full">
                   <div className="w-full h-[200px] px-2">
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={BAR_DATA} margin={{ top: 10, right: 10, bottom: 0, left: 10 }} barGap={4}>
@@ -294,21 +296,21 @@ export function ReportCard({ openAuth }: { openAuth: (mode: 'login' | 'signup') 
         </motion.div>
 
         {/* ── 인사이트 카드들 (레이어드) ─────────────────── */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 items-stretch">
           {LOCKED_INSIGHTS.map((item, i) => (
             <motion.div
               key={i}
-              initial={{ opacity: 0, y: 40 }}
+              initial={{ opacity: 0, y: 10 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.2 }}
-              transition={{ delay: 0.6 + i * 0.15, duration: 1.2 }}
+              viewport={{ once: true, amount: 0.05 }}
+              transition={{ delay: 0.3, duration: 0.5, ease: "easeOut" }}
               whileHover={{ y: -8, scale: 1.02 }}
-              className="relative p-6 rounded-3xl overflow-hidden group"
+              className="relative p-6 rounded-[28px] overflow-hidden group will-change-transform h-full flex flex-col justify-start min-h-[130px]"
               style={{
-                background: 'rgba(248, 250, 249, 0.65)',
-                backdropFilter: 'blur(20px)',
-                border: '1px solid rgba(45, 106, 79, 0.12)',
-                boxShadow: '0 4px 24px 0 rgba(27, 67, 50, 0.08), 0 2px 8px rgba(45, 106, 79, 0.05), inset 0 1px 0 0 rgba(255,255,255,0.5)',
+                background: 'rgba(255, 255, 255, 0.75)',
+                backdropFilter: 'blur(16px)',
+                border: '1px solid rgba(45, 106, 79, 0.1)',
+                boxShadow: '0 8px 30px -10px rgba(27, 67, 50, 0.08)',
               }}
             >
               {/* 호버 글로우 */}
@@ -321,15 +323,14 @@ export function ReportCard({ openAuth }: { openAuth: (mode: 'login' | 'signup') 
 
               {/* 잠금 오버레이 */}
               <div
-                className="absolute inset-0 flex items-center justify-center z-10 rounded-3xl"
+                className="absolute inset-0 flex items-center justify-center z-10 rounded-[32px]"
                 style={{
-                  backdropFilter: 'blur(10px)',
-                  backgroundColor: 'rgba(248,250,249,0.6)'
+                  backgroundColor: 'rgba(248,250,249,0.88)'
                 }}
               >
                 <div className="flex flex-col items-center gap-1">
-                  <Lock size={20} style={{ color: 'var(--green-mid)' }} />
-                  <span className="text-xs font-bold" style={{ color: 'var(--green-mid)' }}>가입 후 확인</span>
+                  <Lock size={16} style={{ color: 'var(--green-mid)' }} />
+                  <span className="text-[10px] font-black uppercase tracking-tighter" style={{ color: 'var(--green-mid)' }}>Check after JOIN</span>
                 </div>
               </div>
 

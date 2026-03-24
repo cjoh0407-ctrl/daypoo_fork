@@ -1,10 +1,13 @@
-import { useState, useRef, useCallback, useEffect } from 'react';
+import { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence, useInView } from 'framer-motion';
 import { Navbar } from '../components/Navbar';
 import { Footer } from '../components/Footer';
 import { WaveDivider } from '../components/WaveDivider';
 import { Crown, TrendingUp, TrendingDown, Minus, ShoppingBag, X, MapPin, Star, Trophy, Activity } from 'lucide-react';
 import { useRankings } from '../hooks/useRankings';
+
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 // ── 타입 ──────────────────────────────────────────────────────────────
 type TabKey = 'total' | 'local' | 'health';
@@ -62,126 +65,144 @@ function ChangeIcon({ change }: { change: number }) {
 }
 
 // ── 아이템 팝업 ───────────────────────────────────────────────────────
-function ItemPopup({ user, onClose }: { user: RankUser; onClose: () => void }) {
+function ItemPopup({ user, onClose, openAuth }: { user: RankUser; onClose: () => void; openAuth: (mode: 'login' | 'signup') => void }) {
+  const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
+
+  const goToShop = () => {
+    if (!isAuthenticated) {
+      openAuth('login');
+      return;
+    }
+    // 마이페이지의 컬렉션->상점 탭으로 이동하기 위해 쿼리 스트링 전달
+    navigate('/mypage?tab=collection&sub=shop');
+  };
+
   return (
-    <AnimatePresence>
+    <>
+      {/* 백드롭 */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         onClick={onClose}
-        className="fixed inset-0 z-[200]"
-        style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(6px)' }}
+        className="fixed inset-0 z-[300] bg-[#0A1A14]/60 backdrop-blur-md"
       />
-      <motion.div
-        initial={{ opacity: 0, scale: 0.94, y: 20 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.94, y: 10 }}
-        transition={{ type: 'spring', stiffness: 300, damping: 28 }}
-        className="fixed z-[201]"
-        style={{
-          top: '50%', left: '50%',
-          transform: 'translate(-50%, -50%)',
-          width: 'min(360px, calc(100vw - 32px))',
-          background: '#FFFFFF',
-          borderRadius: '28px',
-          border: '1px solid rgba(27,67,50,0.08)',
-          overflow: 'hidden',
-          boxShadow: '0 24px 80px rgba(27,67,50,0.15)',
-        }}
-      >
-        {/* 상단 컬러 바 */}
-        <div style={{ height: '3px', background: `linear-gradient(90deg, ${user.titleColor}, transparent)` }} />
+      
+      {/* 본문 모달 */}
+      <div className="fixed inset-0 flex items-center justify-center z-[301] pointer-events-none p-4">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9, y: 30 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.9, y: 15 }}
+          transition={{ type: 'spring', damping: 25, stiffness: 350 }}
+          className="w-full max-w-[380px] bg-white rounded-[44px] overflow-hidden shadow-[0_32px_80px_rgba(0,0,0,0.25)] border border-white relative pointer-events-auto"
+        >
+          {/* 상단 화려한 색상 장식 */}
+          <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-b from-[#1B4332]/5 to-transparent pointer-events-none" />
+          <div className="absolute top-8 right-10 w-24 h-24 bg-emerald-100/30 blur-3xl rounded-full" />
+          
+          <div className="p-8 pt-10 relative">
+            {/* 닫기 버튼 */}
+            <button
+              onClick={onClose}
+              className="absolute top-6 right-6 w-10 h-10 rounded-full flex items-center justify-center transition-all bg-gray-50 text-gray-400 hover:text-gray-900 hover:bg-gray-100"
+            >
+              <X size={20} />
+            </button>
 
-        <div className="p-6">
-          {/* 헤더 */}
-          <div className="flex items-start justify-between mb-5">
-            <div className="flex items-center gap-3">
+            {/* 유저 프로필 섹션 */}
+            <div className="flex flex-col items-center mb-8">
               <div
-                className="w-14 h-14 rounded-full flex items-center justify-center text-3xl"
-                style={{ background: '#f8fcf9', border: `2px solid ${user.titleColor}` }}
+                className="w-24 h-24 rounded-full flex items-center justify-center text-5xl mb-4 shadow-xl relative"
+                style={{ background: '#fff', border: `3.5px solid ${user.titleColor}20` }}
               >
-                {user.emoji}
+                <ConicGlow color={user.titleColor} thickness={4} borderRadius="50%" />
+                <div className="absolute inset-[4px] rounded-full bg-white flex items-center justify-center z-10">
+                  {user.emoji}
+                </div>
+                {user.rank <= 3 && (
+                  <div className="absolute -top-6 -right-2 text-amber-500 transform rotate-12 drop-shadow-lg">
+                    <Crown size={28} />
+                  </div>
+                )}
               </div>
-              <div>
-                <span
-                  className="text-[10px] font-bold px-2 py-0.5 rounded-full block mb-1"
+              
+              <div className="text-center">
+                <motion.span
+                  initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }}
+                  className="inline-block px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-2"
                   style={{ background: user.titleBg, color: user.titleColor }}
                 >
                   {user.title}
-                </span>
-                <p className="font-black text-[#1A2B27] text-base leading-tight">{user.nick}</p>
-                <p className="text-xs mt-0.5" style={{ color: 'rgba(0,0,0,0.4)' }}>
-                  {user.score.toLocaleString()}{user.scoreLabel}
-                </p>
+                </motion.span>
+                <h3 className="text-2xl font-black text-[#1A2B27] leading-tight mb-1">{user.nick}</h3>
+                <div className="flex items-center justify-center gap-1.5 text-emerald-600">
+                  <span className="text-sm font-black whitespace-nowrap">{user.score.toLocaleString()}{user.scoreLabel}</span>
+                  <div className="w-1 h-1 rounded-full bg-gray-200" />
+                  <span className="text-[10px] text-gray-400 font-bold">전체 {user.rank}위</span>
+                </div>
               </div>
             </div>
-            <button
-              onClick={onClose}
-              className="w-8 h-8 rounded-full flex items-center justify-center transition-colors hover:bg-black/5"
-              style={{ color: 'rgba(0,0,0,0.3)' }}
+
+            {/* 아이템 리스트 */}
+            <div className="bg-gray-50/50 rounded-[32px] p-6 border border-gray-100/50 mb-8">
+              <div className="flex items-center justify-between mb-4 px-1">
+                <span className="text-xs font-black text-gray-400 uppercase tracking-widest flex items-center gap-1.5">
+                  <Star size={12} className="text-amber-400 fill-amber-400" /> 착용 중인 아이템
+                </span>
+                <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
+                  {user.items.length}개
+                </span>
+              </div>
+
+              {user.items.length === 0 ? (
+                <div className="py-8 flex flex-col items-center gap-2 opacity-40">
+                  <ShoppingBag size={24} strokeWidth={1} />
+                  <p className="text-sm font-medium">착용 중인 아이템이 없습니다</p>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-3 max-h-[180px] overflow-y-auto pr-1 custom-scrollbar">
+                  {user.items.map((item, i) => (
+                    <motion.div
+                      key={i}
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: i * 0.1 }}
+                      className="flex items-center gap-4 p-4 bg-white rounded-2xl border border-gray-100 shadow-sm"
+                    >
+                      <span className="text-3xl flex-shrink-0">{item.icon}</span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-black text-[#1A2B27] truncate">{item.name}</p>
+                        <p className="text-[10px] font-bold text-gray-400">{item.type}</p>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* 하단 유도 버튼 */}
+            <motion.button
+              whileHover={{ scale: 1.02, y: -2 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={goToShop}
+              className="w-full py-5 rounded-[24px] font-black text-[#1A2B27] text-base flex items-center justify-center gap-3 shadow-2xl transition-all"
+              style={{
+                background: 'linear-gradient(135deg, #FFD045 0%, #E8A838 100%)',
+                boxShadow: '0 12px 32px rgba(232,168,56,0.3)',
+              }}
             >
-              <X size={16} />
-            </button>
+              <ShoppingBag size={20} />
+              상점 가서 이 아이템 보기
+            </motion.button>
+            <p className="text-center text-[10px] text-gray-300 font-bold mt-4 tracking-tight">
+              나만의 스타일로 랭킹 페이지를 꾸며보세요!
+            </p>
           </div>
-
-          {/* 착용 아이템 */}
-          <p
-            className="text-[10px] font-bold uppercase tracking-widest mb-3"
-            style={{ color: 'rgba(0,0,0,0.3)' }}
-          >
-            착용 아이템
-          </p>
-
-          {user.items.length === 0 ? (
-            <div
-              className="py-6 rounded-2xl text-center"
-              style={{ background: '#f8faf9' }}
-            >
-              <p className="text-sm" style={{ color: 'rgba(0,0,0,0.3)' }}>착용 중인 아이템이 없어요</p>
-            </div>
-          ) : (
-            <div className="flex flex-col gap-2 mb-5">
-              {user.items.map((item, i) => (
-                <motion.div
-                  key={i}
-                  initial={{ opacity: 0, x: -12 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: i * 0.08 }}
-                  className="flex items-center gap-3 p-3 rounded-2xl"
-                  style={{ background: '#f8fcf9', border: '1px solid rgba(27,67,50,0.05)' }}
-                >
-                  <span className="text-2xl flex-shrink-0">{item.icon}</span>
-                  <div className="flex-1">
-                    <p className="text-sm font-bold text-[#1A2B27]">{item.name}</p>
-                    <p className="text-xs" style={{ color: 'rgba(0,0,0,0.4)' }}>{item.type}</p>
-                  </div>
-                  <span
-                    className="text-[10px] font-bold px-2 py-0.5 rounded-full"
-                    style={{ background: 'rgba(232,168,56,0.12)', color: '#E8A838' }}
-                  >
-                    장착 중
-                  </span>
-                </motion.div>
-              ))}
-            </div>
-          )}
-
-          {/* 상점 버튼 */}
-          <button
-            className="w-full py-3.5 rounded-2xl font-black text-sm flex items-center justify-center gap-2 transition-all hover:scale-[1.02] active:scale-[0.98]"
-            style={{
-              background: 'linear-gradient(135deg, #E8A838 0%, #d4922a 100%)',
-              color: '#1B4332',
-              boxShadow: '0 4px 20px rgba(232,168,56,0.3)',
-            }}
-          >
-            <ShoppingBag size={16} />
-            상점 가서 이 아이템 보기 →
-          </button>
-        </div>
-      </motion.div>
-    </AnimatePresence>
+        </motion.div>
+      </div>
+    </>
   );
 }
 
@@ -362,41 +383,56 @@ function RankItem({
 
 // ── 내 순위 고정 바 ───────────────────────────────────────────────────
 function MyRankBar({ data }: { data: any }) {
+  const navigate = useNavigate();
   return (
-    <motion.div
+    <motion.div 
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.5, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-      className="rounded-[32px] px-10 py-8 flex items-center gap-6"
-      style={{
-        background: 'linear-gradient(135deg, #1B4332 0%, #2D6A4F 100%)',
-        border: '2px solid #E8A838',
-        boxShadow: '0 20px 50px rgba(27,67,50,0.3)',
-        zIndex: 10,
+      className="max-w-5xl mx-auto rounded-[32px] p-8 flex flex-col md:flex-row items-center gap-8 relative overflow-hidden group border border-white/20 shadow-2xl hover:shadow-emerald-900/10 transition-all duration-700 mt-12 mb-12"
+      style={{ 
+        background: 'linear-gradient(135deg, #1B4332 0%, #081C15 100%)',
+        backdropFilter: 'blur(20px)',
+        zIndex: 10
       }}
     >
-      <div
-        className="w-14 h-14 rounded-full flex items-center justify-center text-3xl flex-shrink-0"
-        style={{ background: 'rgba(255,255,255,0.1)', border: '2px solid #E8A838' }}
-      >
-        {data.emoji}
-      </div>
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-3">
-          <p className="font-black text-white text-xl">나의 순위: {data.rank}위 ({data.nick})</p>
-          <div className="scale-125 origin-left">
-            <ChangeIcon change={data.change} />
+      <div className="absolute top-0 right-0 w-64 h-64 bg-[#E8A838]/5 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/2 group-hover:bg-[#E8A838]/10 transition-colors" />
+      
+      <div className="flex-1 flex items-center gap-10 z-10 w-full">
+        <div className="text-center min-w-[100px]">
+          <span className="block text-emerald-300/50 text-xs font-bold uppercase tracking-widest mb-2">나의 현재 순위</span>
+          <div className="relative">
+            <span className="text-6xl font-black text-[#E8A838] leading-none tracking-tighter">
+              {data.rank === '-' ? '-' : data.rank}
+            </span>
+            {data.rank !== '-' && <span className="text-xl font-bold text-[#E8A838] ml-0.5">위</span>}
           </div>
         </div>
-        <p className="text-base mt-2 font-medium" style={{ color: 'rgba(255,255,255,0.7)' }}>
-          TOP {data.top}%까지 <span className="text-[#E8A838] font-bold">인증 {data.needed}번</span> 더 필요해요!
-        </p>
+        
+        <div className="h-14 w-px bg-white/10 hidden md:block" />
+
+        <div className="flex-1">
+          <div className="flex items-center gap-4 mb-2.5">
+            <span className="text-2xl font-black text-white">{data.nick}</span>
+            <div className="px-3 py-1 rounded-lg bg-emerald-500/10 text-emerald-300 text-[11px] font-bold border border-emerald-500/20">
+              Lv.{data.lv}
+            </div>
+          </div>
+          <div className="flex items-center gap-6">
+            <div className="flex items-center gap-2.5">
+              <div className="w-2.5 h-2.5 rounded-full bg-[#E8A838] shadow-[0_0_10px_rgba(232,168,56,0.5)]" />
+              <span className="text-white/40 text-sm font-medium">활동 점수</span>
+              <span className="text-white font-black text-2xl tracking-tight">{data.score.toLocaleString()}</span>
+            </div>
+          </div>
+        </div>
       </div>
+
       <button
-        className="px-8 py-3.5 rounded-2xl font-black text-base flex-shrink-0 transition-all hover:scale-105 active:scale-95 shadow-lg"
-        style={{ background: '#E8A838', color: '#1B4332' }}
+        onClick={() => navigate('/map')}
+        className="w-full md:w-auto px-12 py-4.5 rounded-2xl font-black text-lg flex-shrink-0 transition-all hover:scale-105 active:scale-95 shadow-[0_15px_35px_-10px_rgba(232,168,56,0.4)] bg-[#E8A838] text-[#1B4332] z-10 relative overflow-hidden group/btn"
       >
-        도전 →
+        <span className="relative z-10">지금 바로 도전하기 →</span>
+        <div className="absolute inset-0 bg-white/20 translate-y-full group-hover/btn:translate-y-0 transition-transform duration-300" />
       </button>
     </motion.div>
   );
@@ -404,6 +440,7 @@ function MyRankBar({ data }: { data: any }) {
 
 // ── 메인 페이지 ───────────────────────────────────────────────────────
 export function RankingPage({ openAuth }: { openAuth: (mode: 'login' | 'signup') => void }) {
+  const { user } = useAuth();
   const [tab, setTab] = useState<TabKey>('total');
   const [selectedUser, setSelectedUser] = useState<RankUser | null>(null);
   const [regionName, setRegionName] = useState<string | undefined>(undefined);
@@ -451,23 +488,38 @@ export function RankingPage({ openAuth }: { openAuth: (mode: 'login' | 'signup')
         }))
     : [];
 
-  const myRankData = (isDataValid && (data as any).myRank) ? (() => {
-    const myRank = Number((data as any).myRank.rank || 0);
-    const myScore = Number((data as any).myRank.score || 0);
+  const myRankData = useMemo(() => {
+    if (!isDataValid) return null;
+    const rawMyRank = (data as any).myRank;
+    
+    // 만약 백엔드에서 내 순위가 안 오더라도 (아직 랭킹에 안 들었더라도),
+    // 현재 로그인된 유저가 있다면 기본 정보로 표시
+    if (!rawMyRank) {
+      if (!user) return null;
+      return {
+        rank: '-',
+        score: 0,
+        nick: user.nickname || '나',
+        lv: user.level || 1,
+        needed: 1,
+        top: 100
+      };
+    }
+
+    const myRank = Number(rawMyRank.rank || 0);
+    const myScore = Number(rawMyRank.score || 0);
     const totalRankers = users.length;
     const topPercent = totalRankers > 0 ? Math.ceil((myRank / totalRankers) * 100) : 0;
-    const nextRanker = users.find(u => u.rank === myRank - 1);
-    const needed = nextRanker ? nextRanker.score - myScore : 0;
+    
     return {
       rank: myRank,
-      nick: (data as any).myRank.nickname || '나',
-      emoji: <Activity size={18} />,
+      nick: rawMyRank.nickname || '나',
+      lv: rawMyRank.level || 1,
       score: myScore,
-      change: 0,
       top: topPercent,
-      needed: Math.max(needed, 0),
+      needed: 5, // 가상값
     };
-  })() : null;
+  }, [isDataValid, data, user, users.length]);
 
   const currentTab = TAB_CONFIG.find(t => t.key === tab)!;
 
@@ -587,7 +639,9 @@ export function RankingPage({ openAuth }: { openAuth: (mode: 'login' | 'signup')
                 },
                 { 
                   label: '상위권 도전', 
-                  value: myRankData && myRankData.rank > 10 ? (myRankData.rank - 10).toString() : '0', 
+                  value: (myRankData && typeof myRankData.rank === 'number' && myRankData.rank > 10) 
+                    ? (myRankData.rank - 10).toString() 
+                    : '0', 
                   unit: '계단' 
                 },
               ].map((s, i) => (
@@ -679,7 +733,7 @@ export function RankingPage({ openAuth }: { openAuth: (mode: 'login' | 'signup')
 
       {/* 아이템 팝업 */}
       {selectedUser && (
-        <ItemPopup user={selectedUser} onClose={() => setSelectedUser(null)} />
+        <ItemPopup user={selectedUser} onClose={() => setSelectedUser(null)} openAuth={openAuth} />
       )}
       <Footer />
     </div>

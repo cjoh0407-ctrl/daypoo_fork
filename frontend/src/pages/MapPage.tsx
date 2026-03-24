@@ -10,6 +10,7 @@ import { VisitModal } from '../components/map/VisitModal';
 import { api } from '../services/apiClient';
 import { MapView, MapViewHandle } from '../components/map/MapView';
 import { ToiletSearchBar } from '../components/map/ToiletSearchBar';
+import { calculateDistance } from '../utils/distance';
 
 type FilterMode = 'all' | 'favorite' | 'visited';
 
@@ -92,7 +93,7 @@ export function MapPage({ openAuth }: { openAuth: (mode: 'login' | 'signup') => 
   const handleVisitComplete = useCallback(async (recordData: any) => {
     if (!pos) return;
     try {
-      const payload = {
+      const payload: any = {
         toiletId: Number(recordData.toiletId),
         bristolScale: recordData.bristolType,
         color: recordData.color,
@@ -101,6 +102,11 @@ export function MapPage({ openAuth }: { openAuth: (mode: 'login' | 'signup') => 
         latitude: pos.lat,
         longitude: pos.lng
       };
+
+      // AI 촬영 인증: imageBase64가 있으면 포함
+      if (recordData.imageBase64) {
+        payload.imageBase64 = recordData.imageBase64;
+      }
 
       await api.post('/records', payload);
       markVisited(String(recordData.toiletId));
@@ -167,14 +173,16 @@ export function MapPage({ openAuth }: { openAuth: (mode: 'login' | 'signup') => 
         </div>
 
         <AnimatePresence>
-          {selectedToilet && (
+          {selectedToilet && pos && (
             <div className="absolute inset-0 z-[1001] pointer-events-none">
               <div className="absolute pointer-events-auto" style={{ left: '50%', top: '75%', transform: 'translate(-50%, -50%)' }}>
-                <ToiletPopup 
-                  toilet={selectedToilet} 
-                  onClose={() => handleSelectToilet(null)} 
-                  onFavoriteToggle={handleFavoriteToggle} 
-                  onVisitRequest={handleVisitRequest} 
+                <ToiletPopup
+                  toilet={selectedToilet}
+                  onClose={() => handleSelectToilet(null)}
+                  onFavoriteToggle={handleFavoriteToggle}
+                  onVisitRequest={handleVisitRequest}
+                  userPosition={pos}
+                  distanceInMeters={calculateDistance(pos.lat, pos.lng, selectedToilet.lat, selectedToilet.lng)}
                 />
               </div>
             </div>

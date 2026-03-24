@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence, useInView } from 'framer-motion';
 import { Navbar } from '../components/Navbar';
 import {
@@ -601,13 +601,14 @@ function TabBar({ active, onChange }: { active: TabKey; onChange: (k: TabKey) =>
 }
 
 // ── 홈 탭 ─────────────────────────────────────────────────────────────
-function HomeTab({ equipped, setEquipped, user, avatarItems }: { 
+function HomeTab({ equipped, setEquipped, user, avatarItems, initialShopTab = 'inventory' }: { 
   equipped: AvatarItem | null; 
   setEquipped: (i: AvatarItem) => void; 
   user: UserProfile | null;
   avatarItems: AvatarItem[];
+  initialShopTab?: 'inventory' | 'shop';
 }) {
-  const [shopTab, setShopTab] = useState<'inventory' | 'shop'>('inventory');
+  const [shopTab, setShopTab] = useState<'inventory' | 'shop'>(initialShopTab);
   const [preview, setPreview] = useState<AvatarItem | null>(null);
   const [saved, setSaved] = useState(false);
   const ref = useRef(null);
@@ -1330,6 +1331,19 @@ function SettingsTab({ user, refreshUser, logout, deleteMe }: {
   const [modalType, setModalType] = useState<'nickname' | 'password' | 'withdraw' | null>(null);
   const [inputValue, setInputValue] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    if (!confirm('로그아웃 하시겠습니까?')) return;
+    try {
+      await logout();
+      navigate('/');
+    } catch (err: any) {
+      console.error('Logout failed:', err);
+      // 에러가 나더라도 클라이언트 상태는 이미 로그아웃 처리되었을 것이므로 메인으로 이동
+      navigate('/');
+    }
+  };
 
   const handleNicknameChange = async () => {
     if (!inputValue.trim()) return;
@@ -1366,14 +1380,23 @@ function SettingsTab({ user, refreshUser, logout, deleteMe }: {
       return;
     }
     if (!confirm('정말로 탈퇴하시겠습니까? 관련 데이터가 모두 삭제되며 복구할 수 없습니다.')) return;
-    
+
     setIsSubmitting(true);
     try {
       await deleteMe(inputValue);
       alert('회원 탈퇴가 완료되었습니다. 그동안 이용해주셔서 감사합니다.');
       setModalType(null);
     } catch (err: any) {
-      alert(err.message || '회원 탈퇴 처리에 실패했습니다. 비밀번호를 확인해주세요.');
+      console.error('회원 탈퇴 에러:', err);
+
+      // 에러 메시지 구분
+      if (err.message?.includes('서버 내부 오류')) {
+        alert('회원 탈퇴 처리 중 서버 오류가 발생했습니다.\n\n현재 회원 탈퇴 기능에 일시적인 문제가 있습니다.\n백엔드 팀에 문의해주세요.');
+      } else if (err.message?.includes('비밀번호')) {
+        alert('비밀번호가 일치하지 않습니다. 다시 확인해주세요.');
+      } else {
+        alert(err.message || '회원 탈퇴 처리에 실패했습니다.');
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -1391,7 +1414,19 @@ function SettingsTab({ user, refreshUser, logout, deleteMe }: {
     {
       title: '멤버십 및 계정',
       items: [
-        { label: '멤버십 등급', value: user?.role === 'PRO' ? 'PRO 프리미엄 멤버십' : 'FREE 일반 회원', icon: <Trophy size={18} />, action: '관리', onClick: () => {} },
+        { 
+          label: '멤버십 등급', 
+          value: user?.role === 'PRO' ? 'PRO 프리미엄 멤버십' : 'FREE 일반 회원', 
+          icon: <Trophy size={18} />, 
+          action: '관리', 
+          onClick: () => {
+            if (user?.role !== 'PRO' && user?.role !== 'PREMIUM') {
+              navigate('/premium');
+            } else {
+              alert('현재 멤버십을 이용 중입니다. 관리 기능은 준비 중입니다.');
+            }
+          } 
+        },
         { label: '계정 생성일', value: user?.createdAt ? (user.createdAt as string).split('T')[0] : '-', icon: <Calendar size={18} />, action: null },
       ]
     }
@@ -1437,7 +1472,7 @@ function SettingsTab({ user, refreshUser, logout, deleteMe }: {
         <div className="flex gap-4">
           <motion.button 
             whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}
-            onClick={logout}
+            onClick={handleLogout}
             className="flex-[2] py-6 rounded-[32px] bg-white border border-gray-100 text-gray-500 font-black text-lg flex items-center justify-center gap-3 shadow-xl shadow-gray-100/20 hover:bg-gray-50 transition-colors"
           >
             <LogOut size={20} /> 로그아웃 하기
@@ -1491,7 +1526,11 @@ function SettingsTab({ user, refreshUser, logout, deleteMe }: {
                   취소
                 </button>
                 <button 
-                  onClick={modalType === 'nickname' ? handleNicknameChange : handlePasswordChange}
+                  onClick={
+                    modalType === 'nickname' ? handleNicknameChange : 
+                    modalType === 'password' ? handlePasswordChange : 
+                    handleWithdraw
+                  }
                   disabled={isSubmitting}
                   className="flex-1 py-4 bg-[#1B4332] text-white font-black rounded-[20px] shadow-xl shadow-emerald-900/20 disabled:opacity-50"
                 >
@@ -1509,6 +1548,7 @@ function SettingsTab({ user, refreshUser, logout, deleteMe }: {
 // ── MyPage ────────────────────────────────────────────────────────────
 export function MyPage({ openAuth }: { openAuth: (mode: 'login' | 'signup') => void }) {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, loading, refreshUser, isAuthenticated, logout, deleteMe } = useAuth();
   const [records, setRecords] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState<TabKey>('home');
@@ -1543,6 +1583,15 @@ export function MyPage({ openAuth }: { openAuth: (mode: 'login' | 'signup') => v
       console.warn('Failed to fetch shop data, using fallback:', err);
     }
   }, []);
+
+  useEffect(() => {
+    // URL 쿼리 파라미터 확인 (예: /mypage?tab=collection&sub=shop)
+    const params = new URLSearchParams(location.search);
+    const tabParam = params.get('tab') as TabKey;
+    if (tabParam && tabOrder.includes(tabParam)) {
+      setActiveTab(tabParam);
+    }
+  }, [location.search]);
 
   useEffect(() => {
     if (!loading) {
@@ -1580,7 +1629,15 @@ export function MyPage({ openAuth }: { openAuth: (mode: 'login' | 'signup') => v
           <motion.div key={activeTab} custom={tabDir} variants={slideVar}
             initial="enter" animate="center" exit="exit"
             transition={{ duration: 0.32, ease: [0.16, 1, 0.3, 1] }}>
-            {activeTab === 'home'       && <HomeTab equipped={equipped} setEquipped={setEquipped} user={user} avatarItems={avatarItems} />}
+            {activeTab === 'home'       && (
+              <HomeTab 
+                equipped={equipped} 
+                setEquipped={setEquipped} 
+                user={user} 
+                avatarItems={avatarItems} 
+                initialShopTab={new URLSearchParams(location.search).get('sub') === 'shop' ? 'shop' : 'inventory'}
+              />
+            )}
             {activeTab === 'collection' && <CollectionTab titles={titles} setTitles={setTitles} />}
             {activeTab === 'report'     && <ReportTab records={records} />}
             {activeTab === 'settings'   && <SettingsTab user={user} refreshUser={refreshUser} logout={logout} deleteMe={deleteMe} />}

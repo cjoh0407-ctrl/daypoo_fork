@@ -118,12 +118,30 @@ export function VisitModal({ toilet, onClose, onComplete, checkInTime }: VisitMo
   };
 
   const handleNext = () => {
-    if (step < 3) setStep(step + 1);
-    else {
-      if (!canComplete) {
-        alert(`⌛ 최소 ${remainingSeconds}초 더 체류가 필요합니다.`);
-        return;
-      }
+    // 체류 시간 검증 (항상 필요)
+    if (!canComplete) {
+      alert(`⌛ 최소 ${remainingSeconds}초 더 체류가 필요합니다.`);
+      return;
+    }
+
+    // Step 0에서 사진이 있으면 바로 완료 가능 (백엔드 변경사항: imageBase64 있으면 bristolScale, color 선택 불필요)
+    if (step === 0 && capturedImage) {
+      onComplete({
+        toiletId: toilet.id,
+        bristolType: bristolType,
+        color: color,
+        conditionTags: conditions,
+        foodTags: foods,
+        imageBase64: capturedImage,
+        createdAt: new Date().toISOString(),
+      });
+      return;
+    }
+
+    // 일반 흐름
+    if (step < 3) {
+      setStep(step + 1);
+    } else {
       onComplete({
         toiletId: toilet.id,
         bristolType: bristolType!,
@@ -268,13 +286,39 @@ export function VisitModal({ toilet, onClose, onComplete, checkInTime }: VisitMo
                       </div>
                     )}
                   </div>
-                  
-                  <button 
-                    onClick={() => setStep(1)}
-                    className="w-full py-4 text-[#7a9e8a] font-bold text-sm hover:underline"
-                  >
-                    촬영 없이 수동으로 입력할게요
-                  </button>
+
+                  {/* AI 촬영 완료 시 바로 완료 또는 수동 수정 선택 */}
+                  {capturedImage && !isAnalyzing ? (
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2 justify-center text-emerald-600 bg-emerald-50 px-4 py-3 rounded-2xl">
+                        <Sparkles size={16} />
+                        <span className="text-sm font-bold">AI 분석이 완료되었습니다!</span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <button
+                          onClick={() => setStep(1)}
+                          className="py-3 px-4 bg-white border-2 border-[#eef5f0] text-[#1B4332] font-bold text-sm rounded-2xl hover:bg-[#f4faf6] transition-all"
+                        >
+                          데이터 수정하기
+                        </button>
+                        <button
+                          onClick={handleNext}
+                          disabled={!canComplete}
+                          className="py-3 px-4 font-bold text-sm rounded-2xl text-white transition-all disabled:opacity-40 disabled:grayscale"
+                          style={{ background: 'linear-gradient(135deg, #1B4332 0%, #2D6A4F 100%)' }}
+                        >
+                          {canComplete ? '바로 인증 완료 ✨' : `${remainingSeconds}초 대기`}
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => setStep(1)}
+                      className="w-full py-4 text-[#7a9e8a] font-bold text-sm hover:underline"
+                    >
+                      촬영 없이 수동으로 입력할게요
+                    </button>
+                  )}
                 </div>
               )}
 
@@ -373,25 +417,32 @@ export function VisitModal({ toilet, onClose, onComplete, checkInTime }: VisitMo
           </AnimatePresence>
         </div>
 
-        {/* 푸터 버튼 */}
-        <div className="px-6 py-6 bg-[#fcfdfc] border-t border-[#eef5f0] flex gap-3">
-          {step > 0 && (
+        {/* 푸터 버튼 (Step 0에서 사진이 있을 때는 숨김) */}
+        {!(step === 0 && capturedImage && !isAnalyzing) && (
+          <div className="px-6 py-6 bg-[#fcfdfc] border-t border-[#eef5f0] flex gap-3">
+            {step > 0 && (
+              <button
+                onClick={() => setStep(step - 1)}
+                className="flex items-center justify-center w-14 h-14 rounded-2xl border-2 border-[#eef5f0] text-[#7a9e8a] hover:bg-[#f4faf6]"
+              >
+                <ChevronLeft size={24} />
+              </button>
+            )}
             <button
-              onClick={() => setStep(step - 1)}
-              className="flex items-center justify-center w-14 h-14 rounded-2xl border-2 border-[#eef5f0] text-[#7a9e8a] hover:bg-[#f4faf6]"
+              onClick={handleNext}
+              disabled={
+                step === 0 ? false : // Step 0은 항상 다음으로 이동 가능 (수동 입력)
+                step === 1 ? !bristolType :
+                step === 2 ? !color :
+                false
+              }
+              className="flex-1 py-4 rounded-2xl font-black text-lg text-white shadow-lg transition-all active:scale-95 disabled:opacity-30 disabled:grayscale"
+              style={{ background: 'linear-gradient(135deg, #1B4332 0%, #2D6A4F 100%)' }}
             >
-              <ChevronLeft size={24} />
+              {step === 3 ? '인증 완료하기 ✨' : '다음 단계로'}
             </button>
-          )}
-          <button
-            onClick={handleNext}
-            disabled={step === 1 ? !bristolType : step === 2 ? !color : false}
-            className="flex-1 py-4 rounded-2xl font-black text-lg text-white shadow-lg transition-all active:scale-95 disabled:opacity-30 disabled:grayscale"
-            style={{ background: 'linear-gradient(135deg, #1B4332 0%, #2D6A4F 100%)' }}
-          >
-            {step === 3 ? '인증 완료하기 ✨' : '다음 단계로'}
-          </button>
-        </div>
+          </div>
+        )}
       </motion.div>
 
       {/* ★ 닫기 확인 모달 (실수로 밖을 터치했을 때) */}

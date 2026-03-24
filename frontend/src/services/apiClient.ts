@@ -112,8 +112,8 @@ class ApiClient {
     return this.request<T>('PATCH', endpoint, body);
   }
 
-  public delete<T>(endpoint: string) {
-    return this.request<T>('DELETE', endpoint);
+  public delete<T>(endpoint: string, body?: any) {
+    return this.request<T>('DELETE', endpoint, body);
   }
 }
 

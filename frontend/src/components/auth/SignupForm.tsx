@@ -18,9 +18,17 @@ function BirthDropdowns({ year, month, day, onYearChange, onMonthChange, onDayCh
 
   const SelectWrapper = ({ value, onChange, options, placeholder, suffix }: any) => (
     <div className="relative group flex-1">
-      <select value={value} onChange={(e) => onChange(e.target.value)} className="w-full bg-[#f8faf9] outline-none text-sm font-medium px-4 py-3.5 rounded-xl appearance-none border border-transparent focus:border-[#E8A838]/60 focus:bg-white transition-all cursor-pointer">
-        <option value="" disabled>{placeholder}</option>
-        {options.map((opt: any) => <option key={opt} value={opt}>{opt}{suffix}</option>)}
+      <select 
+        value={value} 
+        onChange={(e) => onChange(e.target.value)} 
+        className="w-full bg-[#f8faf9] outline-none text-[#1A2B27] text-sm font-medium px-4 py-3.5 rounded-xl appearance-none border border-transparent focus:border-[#E8A838]/60 focus:bg-white transition-all cursor-pointer"
+      >
+        <option value="" disabled className="text-gray-400">{placeholder}</option>
+        {options.map((opt: any) => (
+          <option key={opt} value={opt} className="text-[#1A2B27]">
+            {opt}{suffix}
+          </option>
+        ))}
       </select>
       <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-rgba(26,43,39,0.3) transition-colors group-hover:text-[#E8A838]">
         <ChevronDown size={14} />

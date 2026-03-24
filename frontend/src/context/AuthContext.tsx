@@ -37,7 +37,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     try {
       const userData = await api.get('/auth/me');
-      setUser(userData);
+      setUser(userData as User);
     } catch (err: any) {
       console.error('Failed to fetch user', err);
       // 토큰이 유효하지 않으면 로그아웃 처리
@@ -78,7 +78,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const deleteMe = useCallback(async (password: string) => {
     try {
-      await api.delete('/auth/me', { password });
+      await api.delete(`/auth/me?password=${encodeURIComponent(password)}`);
       await logout();
     } catch (err: any) {
       console.error('Failed to delete account', err);
