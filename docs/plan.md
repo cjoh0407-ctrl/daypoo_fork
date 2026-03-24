@@ -1,47 +1,43 @@
-# 서버 구동 실패 해결 및 구조 개선 플랜
+# DayPoo 대규모 트래픽 시뮬레이션 봇 시스템 구현 계획
 
-사용자가 제공한 미션 해결 플랜(`quizzical-sparking-pond.md`)을 바탕으로, 서버의 근본적인 구동 실패 원인을 해결하고 안정성을 높이기 위한 작업을 진행합니다.
+## 1. 개요
+현재의 개발 초기 단계에서 실제 서비스 운영 시 발생할 대규모 트래픽을 시뮬레이션하고 성능 병목을 확인하기 위해 가상 유저(Bot) 시스템을 구축합니다. 이 과정에서 성능 최적화를 위한 인덱스 추가와 N+1 문제 해결도 함께 진행합니다.
 
-## 📋 핵심 목표
-1. **Flyway 마이그레이션 정상화**: PostgreSQL 호환 문법 적용 및 체크섬 복구.
-2. **스키마 관리 체계 확립**: `ddl-auto: update` 제거 및 Flyway를 통한 단일 스키마 관리.
-3. **서버 시작 프로세스 방어화**: 외부 서비스 의존성 및 무거운 작업을 비동기/예외 처리하여 서버 구동 안정성 확보.
+## 2. 세부 구현 단계
 
-## 🛠 상세 구현 단계
+### Phase 1: 기반 인프라 및 환경 설정
+- **Flyway 마이그레이션 (`V5__simulation_indices.sql`)**: 시뮬레이션 및 데이터 집계를 위한 성능 최적화 인덱스 생성.
+- **`application.yml` 수정**: `simulation` 프로파일 설정 추가 및 `reWriteBatchedInserts=true` 확인.
+- **`ApiApplication.java` 수정**: `@EnableScheduling` 어노테이션 추가.
+- **설정 클래스 구현**: `SimulationConfig.java`, `SimulationProperties.java` 작성.
 
-### 1단계: Flyway 체크섬 복구 설정 (Flyway Repair)
-- `backend/src/main/java/com/daypoo/api/global/config/FlywayRepairConfig.java` 신설
-- `flyway.repair()`를 통해 기존 체크섬 오류 및 실패 기록을 자동으로 복구하도록 설정.
+### Phase 2: 데이터 시딩(Seeding) 시스템 구축
+- **`SeedDataGenerator.java`**: 한국어 기반의 랜덤 유저/기록 데이터 생성 유틸리티.
+- **`BulkInsertHelper.java`**: `JdbcTemplate`을 활용한 고속 배치 INSERT 로직 구현.
+- **`BulkDataSeeder.java`**: 서버 기동 시 비동기로 벌크 데이터를 적재하는 오케스트레이터.
 
-### 2단계: Flyway V3 마이그레이션(MySQL -> PostgreSQL) 확정
-- `backend/src/main/resources/db/migration/V3__add_toilet_reviews.sql` 수정
-- (이미 수정되어 있다면 상태 확인 및 확정)
+### Phase 3: 시뮬레이션 봇 및 시나리오 구현
+- **`BotUserPool.java`**: 봇 활동에 필요한 ID 풀(유저, 화장실, 아이템 등) 캐싱.
+- **시나리오 인터페이스 및 클래스**:
+    - `BotScenario.java` (인터페이스)
+    - `MorningRoutineScenario.java`
+    - `ExplorerScenario.java`
+    - `ShopperScenario.java`
+    - `SupportScenario.java`
+    - `SocialScenario.java`
+- **`BotOrchestrator.java`**: 스케줄러를 통한 시나리오별 봇 활동 디스패치.
 
-### 3단계: 누락된 컬럼 관리를 위한 V4 마이그레이션 추가
-- `backend/src/main/resources/db/migration/V4__add_missing_columns.sql` 신설
-- `mng_no` 컬럼 정식 추가 및 `location NOT NULL` 제약 조건 해제.
+### Phase 4: 기존 기능 최적화 및 모니터링
+- **`RankingService.java`**: N+1 쿼리 최적화 및 로컬 캐시 적용.
+- **`SimulationMetrics.java`**: 성공/실패 횟수 등 활동 지표 추적.
+- **테스트**: `simulation` 프로파일 활성화 시 정상 동작 여부 및 멱등성 검증.
 
-### 4단계: Hibernate ddl-auto 설정 변경
-- `backend/src/main/resources/application.yml` 수정
-- `ddl-auto: update` → `validate`로 변경하여 스키마 정합성 엄격 관리.
-
-### 5단계: 서버 시작 시 무거운 작업(SelfCheck) 리팩토링
-- `backend/src/main/java/com/daypoo/api/ApiApplication.java` 수정
-- 이메일 발송, 공공데이터 동기화 작업을 비동기 처리 및 예외 핸들링 추가.
-
-### 6단계: 초기화 로직(DataInitializer/RankingDataSeeder) 예외 처리
-- `DataInitializer.java`, `RankingDataSeeder.java` 수정
-- 전체 로직을 try-catch로 감싸서 실패가 전파되지 않도록 수정.
-
-### 7단계: 엔티티 수정 사항 확정
-- `backend/src/main/java/com/daypoo/api/entity/Toilet.java`
-- `precision`, `scale` 설정 삭제 상태 확인 및 확정.
-
-## 🧪 검증 계획
-- [x] **Docker 환경 초기화**: DB 초기화 후 서버 구동 시 마이그레이션 정상 실행 확인. (빌드 성공 확인)
-- [x] **기존 DB 환경**: Flyway Repair 기능이 기존의 체크섬 오류를 해결하는지 확인. (FlywayRepairConfig 추가)
-- [x] **외부 서비스 장애 대응**: 외부 API 장애 시에도 서버가 정상 구동되는지 확인. (비동기 및 try-catch 적용)
-- [x] **스키마 검증**: `ddl-auto: validate` 모드에서 실행 시 JPA 엔티티와 DB 불일치 오류가 없는지 확인. (V4 추가 및 빌드 성공)
+## 3. 완료 조건
+- `simulation` 프로파일로 구동 시 10,000명의 봇 유저와 관련 데이터가 정상적으로 시딩됨.
+- 정의된 스케줄에 따라 봇들이 API 서비스를 호출하며 로그를 생성함.
+- `EXPLAIN ANALYZE` 등을 통해 추가된 인덱스가 정상적으로 작동함을 확인.
+- 프로덕션(Main/Dev) 프로파일에서는 봇 시스템이 전혀 가동되지 않음.
+- `docs/backend-modification-history.md`에 모든 변경 사항이 기록됨.
 
 ---
-위 계획에 따라 작업을 시작하며, 모든 변경 사항은 `docs/backend-modification-history.md`에 기록됩니다.
+[✅ 규칙을 잘 수행했습니다.]

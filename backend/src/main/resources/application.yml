@@ -114,3 +114,23 @@ springdoc:
     path: /docs
   api-docs:
     enabled: true # 스웨거 UI 구동을 위해 활성화 필요
+
+---
+# Simulation Profile
+spring:
+  config:
+    activate:
+      on-profile: simulation
+
+simulation:
+  enabled: true
+  batch-size: 1000
+  user-count: 10000
+  record-count: 50000
+  review-count: 20000
+  bot:
+    morning-routine: 50
+    explorer: 20
+    shopper: 10
+    support: 5
+    social: 33

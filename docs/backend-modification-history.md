@@ -1,5 +1,17 @@
 # Backend Modification History
 
+## [2026-03-24 18:30:00] 대규모 트래픽 시뮬레이션 봇 시스템 및 성능 최적화 구현
+- **작업 내용:** 1만 명 규모의 봇 유저 시뮬레이션 시스템 구축 및 서버 성능 최적화 인덱스/쿼리 개선
+- **상세 변경 내역:**
+  - **시뮬레이션 인프라**: `simulation` 프로파일 기반의 `@Profile` 격리 환경 구축, `SimulationConfig`, `SimulationProperties` 구현
+  - **벌크 시딩(Seeding)**: `JdbcTemplate` 배치 INSERT를 활용한 `BulkDataSeeder`, `BulkInsertHelper` 구현 (유저 1만, 기록 5만, 리뷰 2만 건 비동기 적재)
+  - **봇 시나리오**: `MorningRoutine`, `Explorer`, `Shopper`, `Support`, `Social` 등 5종의 봇 행동 패턴 구현 및 가상 스레드(`ExecutorService`) 기반 스케줄링 적용
+  - **성능 최적화**: 
+    - **DB**: `V5__simulation_indices.sql` 추가 (위치 검색, 유저별 최신 기록, 리뷰 통계용 인덱스 6종 생성)
+    - **N+1 문제 해결**: `RankingService`의 유저/칭호 개별 조회를 `findAllById` 배치 조회로 개선하여 랭킹 조회 성능 대폭 향상
+  - **기반 설정**: `ApiApplication`에 `@EnableScheduling` 추가 및 `application.yml` 시뮬레이션 설정 블록 추가
+- **결과/영향:** 실제 서비스 운영 시의 대규모 부하를 로컬/테스트 환경에서 재현 가능하게 되었으며, 서비스 핵심인 랭킹 및 검색 성능이 대폭 개선됨
+
 ## [2026-03-24 17:35:00] 서버 반복 구동 실패 근본 해결 및 백엔드 서비스 시작 구조 개선
 - **작업 내용:** Flyway 체크섬 오류 및 외부 서비스 의존성으로 인한 서버 구동 실패 문제 해결
 - **상세 변경 내역:**
