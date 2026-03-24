@@ -105,12 +105,15 @@ public class PooRecordService {
     // 4. AI 분석 (이미지가 있을 경우)
     Integer finalBristolScale = request.bristolScale();
     String finalColor = request.color();
+    List<String> aiWarningTags = Collections.emptyList();
 
     if (request.imageBase64() != null && !request.imageBase64().isEmpty()) {
       AiAnalysisResponse aiResult = aiClient.analyzePoopImage(request.imageBase64());
       finalBristolScale = aiResult.bristolScale();
       finalColor = aiResult.color();
-      log.info("AI Analysis result applied: Bristol {}, Color {}", finalBristolScale, finalColor);
+      aiWarningTags = aiResult.warningTags() != null ? aiResult.warningTags() : Collections.emptyList();
+      log.info("AI Analysis result applied: Bristol {}, Color {}, Warnings: {}", 
+          finalBristolScale, finalColor, aiWarningTags);
     }
 
     // 5. 정확한 행정동 명칭 추출 (Reverse Geocoding)
@@ -130,6 +133,7 @@ public class PooRecordService {
             .color(finalColor)
             .conditionTags(String.join(",", safeConditionTags))
             .dietTags(String.join(",", safeDietTags))
+            .warningTags(String.join(",", aiWarningTags))
             .regionName(regionName)
             .build();
 
@@ -154,6 +158,19 @@ public class PooRecordService {
 
     // 8. Response 조합
     return recordMapper.toResponse(savedRecord);
+  }
+
+  /**
+   * AI 이미지 분석만 수행 (기록 저장 안 함)
+   * 프론트엔드 분석 미리보기 UX 지원용
+   */
+  @Transactional(readOnly = true)
+  public AiAnalysisResponse analyzeImageOnly(String imageBase64) {
+    if (imageBase64 == null || imageBase64.isEmpty()) {
+      throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
+    }
+    log.info("Performing AI analysis only (no record creation)");
+    return aiClient.analyzePoopImage(imageBase64);
   }
 
   @Transactional(readOnly = true)
