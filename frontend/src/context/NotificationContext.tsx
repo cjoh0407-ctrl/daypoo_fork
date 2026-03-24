@@ -50,16 +50,16 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     }, 5000);
   }, []);
 
-  const fetchNotifications = async () => {
+  const fetchNotifications = useCallback(async () => {
     try {
       const data = await api.get('/notifications');
       setNotifications(data || []);
     } catch (err) {
       console.error('알림 목록 가져오기 실패:', err);
     }
-  };
+  }, []);
 
-  const markAllAsRead = async () => {
+  const markAllAsRead = useCallback(async () => {
     try {
       await api.post('/notifications/mark-all-read', {});
       setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
@@ -68,9 +68,9 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       // 낙관적 업데이트 실패 시 원래대로 돌릴 수 있지만 간단히 로컬만 변경으로도 대응
       setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
     }
-  };
+  }, []);
 
-  const deleteNotification = async (id: number) => {
+  const deleteNotification = useCallback(async (id: number) => {
     try {
       await api.delete(`/notifications/${id}`);
       setNotifications(prev => prev.filter(n => n.id !== id));
@@ -78,7 +78,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       console.error('알림 삭제 실패:', err);
       setNotifications(prev => prev.filter(n => n.id !== id));
     }
-  };
+  }, []);
 
   return (
     <NotificationContext.Provider value={{ 

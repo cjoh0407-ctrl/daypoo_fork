@@ -6,6 +6,7 @@ import {
   BRISTOL_TYPES, POOP_COLORS, CONDITION_TAGS, FOOD_TAGS,
 } from '../../types/toilet';
 import { api } from '../../services/apiClient';
+import { AiAnalysisResponse } from '../../types/api';
 
 interface VisitModalProps {
   toilet: ToiletData;
@@ -56,9 +57,12 @@ export function VisitModal({ toilet, onClose, onComplete, checkInTime }: VisitMo
 
   const startCamera = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false });
-      streamRef.current = stream;   // 스트림 임시 저장
-      setIsCameraActive(true);      // 먼저 video 엘리먼트를 DOM에 마운트
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: { facingMode: 'environment' }, 
+        audio: false 
+      });
+      streamRef.current = stream;
+      setIsCameraActive(true); // video 요소를 DOM에 마운트하여 useEffect에서 연결되도록 함
     } catch (err) {
       console.error('카메라 시작 실패:', err);
       alert('카메라 권한이 필요합니다.');
@@ -67,7 +71,10 @@ export function VisitModal({ toilet, onClose, onComplete, checkInTime }: VisitMo
 
   const stopCamera = useCallback(() => {
     if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current.getTracks().forEach(track => {
+        track.stop();
+        streamRef.current?.removeTrack(track);
+      });
       streamRef.current = null;
     }
     if (videoRef.current) {
@@ -94,10 +101,10 @@ export function VisitModal({ toilet, onClose, onComplete, checkInTime }: VisitMo
       // 백엔드 AI 분석 API 호출 (기존 POST /records와 통합된 구조일 경우)
       // 또는 분석 전용 API가 있다면 그것을 호출. 가이드에는 POST /records 시 imageBase64 담으면 결과 온다고 함.
       // 여기서는 '분석 전용' 호출 후 수동 저장을 위해 response를 받는다고 가정.
-      const res = await api.post('/records/analyze', { imageBase64: base64 });
+      const res = await api.post<AiAnalysisResponse>('/records/analyze', { imageBase64: base64 });
       
       if (res.bristolScale) setBristolType(res.bristolScale);
-      if (res.color) setColor(res.color);
+      if (res.color) setColor(res.color as PoopColor);
       
       alert('AI 분석이 완료되었습니다! 분석 결과를 확인해주세요.');
       setStep(1); // 브리스톨 확인 단계로 이동

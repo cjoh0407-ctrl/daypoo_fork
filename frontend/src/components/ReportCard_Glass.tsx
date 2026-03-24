@@ -138,21 +138,21 @@ export function ReportCard({ openAuth }: { openAuth: (mode: 'login' | 'signup') 
         <motion.div
           initial={{ opacity: 0, y: 40 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+          viewport={{ once: true, amount: 0.2 }}
+          transition={{ duration: 1.2, delay: 0.3, ease: "easeOut" }}
           className="relative mb-8"
         >
           {/* 글로우 효과 */}
           <div
-            className="absolute -inset-4 rounded-[48px] opacity-20 blur-3xl"
+            className="absolute -inset-4 rounded-[48px] opacity-15 blur-3xl"
             style={{
-              background: 'radial-gradient(circle at top right, var(--green-mid) 0%, var(--amber) 50%, transparent 100%)',
+              background: 'radial-gradient(circle at top right, rgba(45,106,79,0.4) 0%, rgba(232,168,56,0.2) 50%, transparent 100%)',
             }}
           />
 
           {/* 글래스 카드 */}
           <div
-            className="relative p-10 rounded-[40px] overflow-hidden"
+            className="relative p-8 md:p-10 rounded-[40px] overflow-hidden"
             style={{
               background: 'rgba(248, 250, 249, 0.75)',
               backdropFilter: 'blur(24px) saturate(180%)',
@@ -195,16 +195,16 @@ export function ReportCard({ openAuth }: { openAuth: (mode: 'login' | 'signup') 
                 </motion.span>
               </div>
 
-              <div className="grid grid-cols-2 gap-10">
+              <div className="grid grid-cols-5 gap-8 items-center">
                 {/* Pie Chart */}
-                <div className="flex flex-col items-center justify-center">
-                  <div className="w-full h-[200px] relative">
+                <div className="col-span-2 flex flex-col items-center justify-center">
+                  <div className="w-full max-w-[220px] aspect-square relative mx-auto">
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
                         <Pie
                           data={PIE_DATA}
                           cx="50%" cy="50%"
-                          innerRadius={60} outerRadius={80}
+                          innerRadius={55} outerRadius={75}
                           paddingAngle={6}
                           dataKey="value"
                           startAngle={90} endAngle={450}
@@ -230,10 +230,10 @@ export function ReportCard({ openAuth }: { openAuth: (mode: 'login' | 'signup') 
                 </div>
 
                 {/* Bar Chart */}
-                <div className="w-full">
-                  <div className="w-full h-[200px]">
+                <div className="col-span-3 w-full">
+                  <div className="w-full h-[200px] px-2">
                     <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={BAR_DATA} margin={{ top: 4, right: 4, bottom: 0, left: -20 }}>
+                      <BarChart data={BAR_DATA} margin={{ top: 10, right: 10, bottom: 0, left: 10 }} barGap={4}>
                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(0,0,0,0.06)" />
                         <XAxis
                           dataKey="day"
@@ -252,7 +252,7 @@ export function ReportCard({ openAuth }: { openAuth: (mode: 'login' | 'signup') 
                           }}
                           formatter={(v) => [`${v}형`, '브리스톨']}
                         />
-                        <Bar dataKey="score" fill="var(--green-mid)" radius={[8, 8, 0, 0]} />
+                        <Bar dataKey="score" fill="var(--green-mid)" radius={[6, 6, 0, 0]} />
                       </BarChart>
                     </ResponsiveContainer>
                   </div>
@@ -299,8 +299,8 @@ export function ReportCard({ openAuth }: { openAuth: (mode: 'login' | 'signup') 
               key={i}
               initial={{ opacity: 0, y: 40 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.2 + i * 0.1, duration: 0.8 }}
+              viewport={{ once: true, amount: 0.2 }}
+              transition={{ delay: 0.6 + i * 0.15, duration: 1.2 }}
               whileHover={{ y: -8, scale: 1.02 }}
               className="relative p-6 rounded-3xl overflow-hidden group"
               style={{
@@ -347,7 +347,8 @@ export function ReportCard({ openAuth }: { openAuth: (mode: 'login' | 'signup') 
         <motion.button
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
+          viewport={{ once: true, amount: 0.8 }}
+          transition={{ delay: 1.0, duration: 0.8 }}
           whileHover={{ scale: 1.03, y: -4 }}
           whileTap={{ scale: 0.98 }}
           onClick={handleReportAction}
