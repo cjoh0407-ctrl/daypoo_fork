@@ -18,9 +18,11 @@ public interface PooRecordMapper {
   @Mapping(target = "toiletName", source = "toilet.name")
   @Mapping(target = "conditionTags", source = "conditionTags", qualifiedByName = "stringToList")
   @Mapping(target = "dietTags", source = "dietTags", qualifiedByName = "stringToList")
+  @Mapping(target = "warningTags", source = "warningTags", qualifiedByName = "stringToList")
   @Mapping(target = "earnedExp", ignore = true)
   @Mapping(target = "earnedPoints", ignore = true)
   PooRecordResponse toResponse(PooRecord pooRecord);
+
 
   @Named("stringToList")
   default List<String> stringToList(String tags) {

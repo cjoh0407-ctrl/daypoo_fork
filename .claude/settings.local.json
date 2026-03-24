@@ -5,7 +5,10 @@
       "Bash(npm run build:*)",
       "Bash(npx tsc:*)",
       "Bash(wc -l /Users/changjun/Desktop/project/daypoo/backend/src/main/java/com/daypoo/api/controller/*.java)",
-      "Bash(grep -r N+1 /Users/changjun/Desktop/project/daypoo/backend/src/main/java/com/daypoo/api --include=*.java)"
+      "Bash(grep -r N+1 /Users/changjun/Desktop/project/daypoo/backend/src/main/java/com/daypoo/api --include=*.java)",
+      "Bash(grep -r \"openai\\\\|ChatGPT\\\\|GPT\\\\|completion\" /Users/changjun/Desktop/project/daypoo --include=*.py --include=*.java --include=*.properties --include=*.yml --include=*.yaml)",
+      "Bash(grep -r \"TODO\\\\|FIXME\\\\|XXX\\\\|HACK\" /Users/changjun/Desktop/project/daypoo/backend/src --include=*.java)",
+      "Bash(grep -E \"\\\\.\\(java|properties|yml\\)$\")"
     ]
   }
 }

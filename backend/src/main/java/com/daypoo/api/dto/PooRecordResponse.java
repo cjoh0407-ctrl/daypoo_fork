@@ -14,6 +14,7 @@ public record PooRecordResponse(
     String color,
     List<String> conditionTags,
     List<String> dietTags,
+    List<String> warningTags,
     Integer earnedExp,
     Integer earnedPoints,
     LocalDateTime createdAt) {}

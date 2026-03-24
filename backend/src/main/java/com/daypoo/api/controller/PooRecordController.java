@@ -1,6 +1,9 @@
 package com.daypoo.api.controller;
 
+import com.daypoo.api.dto.AiAnalysisResponse;
+import com.daypoo.api.dto.PooAnalysisRequest;
 import com.daypoo.api.dto.PooCheckInRequest;
+
 import com.daypoo.api.dto.PooCheckInResponse;
 import com.daypoo.api.dto.PooRecordCreateRequest;
 import com.daypoo.api.dto.PooRecordResponse;
@@ -58,6 +61,17 @@ public class PooRecordController {
     PooRecordResponse response = recordService.createRecord(email, request);
     return ResponseEntity.ok(response);
   }
+
+  @Operation(
+      summary = "AI 배변 이미지 분석 (미리보기용)",
+      description = "배변 이미지를 AI 서비스에 전송하여 분석 결과를 반환합니다. 이 요청은 기록을 생성하지 않습니다.")
+  @ApiResponse(responseCode = "200", description = "분석 완료")
+  @PostMapping("/analyze")
+  public ResponseEntity<AiAnalysisResponse> analyzeImage(
+      @Valid @RequestBody PooAnalysisRequest request) {
+    return ResponseEntity.ok(recordService.analyzeImageOnly(request.imageBase64()));
+  }
+
 
   @Operation(
       summary = "내 배변 기록 목록 조회",

@@ -1,5 +1,28 @@
 # 변경 이력 (Modification History)
 
+## 2026-03-24 15:45:00
+
+- **작업 내용:** 백엔드 기능 보완 및 AI/관리자 연동 API 고도화 (Phase 1~3 완료)
+- **상세 변경 내역:**
+  - **AI 분석 전용 엔드포인트 신설 (Phase 1):** `POST /api/v1/records/analyze` 엔드포인트를 추가하여 기록 저장 없이 이미지 분석 결과만 미리보기 할 수 있도록 구현. (`PooAnalysisRequest` DTO 추가 및 `PooRecordService.analyzeImageOnly` 신설)
+  - **AI 분석 데이터 유실 방지 및 확장 (Phase 2):** 
+    - `AiAnalysisResponse`, `PooRecordResponse` DTO에 `warning_tags`(혈변, 탈수 경고 등) 필드 추가.
+    - `PooRecord` 엔티티 및 DB 스키마에 `warning_tags` 컬럼을 추가하여 AI 분석의 핵심 건강 정보를 영구 저장 및 프론트엔드 전달 체계 구축.
+    - `PooRecordMapper`를 통한 역직렬화(String -> List) 로직 연동.
+  - **관리자 시스템 로그 API 구현 (Phase 3):** `GET /api/v1/admin/logs` 엔드포인트를 신설하여 관리자 대시보드에서 시스템 이벤트를 모니터링할 수 있는 기반 마련. (현재 Mock 데이터 반환 및 `SystemLogResponse` DTO 추가)
+- **결과/영향:** 프론트엔드의 AI 카메라 분석 미리보기 UX를 지원하고, 유실되던 건강 경고 데이터를 사용자에게 정확히 전달하며, 관리자 도구의 가시성을 확보함.
+
+
+## 2026-03-24 15:15:00
+
+- **작업 내용:** 원격 저장소 최신 변경 사항 반영 및 프로젝트 구조 최적화
+- **상세 변경 내역:**
+  - **Git Pull:** 원격 `main` 브랜치의 최신 커밋을 로컬로 가져와 동기화 완료 (24개 파일 변경).
+  - **프로젝트 구조 정리:** 루트의 문서 및 스크립트 파일들을 `docs/` 하위 디렉토리(`docs/sql`, `docs/scripts`, `docs/tmp` 등)로 이동 및 정리하여 루트 디렉토리 정제.
+  - **프론트엔드 타입 추가:** `frontend/src/types/admin.ts` 파일 신규 생성 및 관리자 관련 타입 정의 반영.
+  - **불필요 파일 제거:** `DB_SYNC_GUIDE.md`, `gittest.txt`, `plan.md`, `ai_service_output.txt` 등 오래된 가이드 및 임시 결과 파일 삭제.
+- **결과/영향:** 팀원과의 코드 베이스 동기화 및 프로젝트 디렉토리 구조의 체계적 정리를 통해 유지보수성과 가독성을 최적화함.
+
 ## 2026-03-24 15:00:00
 
 - **작업 내용:** 관리자/랭킹/푸터 UI 및 UX 고도화

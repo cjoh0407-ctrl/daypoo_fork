@@ -43,4 +43,11 @@ public class AdminController {
     adminService.generateTestData();
     return ResponseEntity.ok("테스트 데이터가 생성되었습니다.");
   }
+
+  @Operation(summary = "시스템 로그 조회", description = "시스템의 주요 이벤트 로그를 최신순으로 조회합니다.")
+  @GetMapping("/logs")
+  public ResponseEntity<java.util.List<com.daypoo.api.dto.SystemLogResponse>> getSystemLogs() {
+    return ResponseEntity.ok(adminService.getSystemLogs());
+  }
 }
+

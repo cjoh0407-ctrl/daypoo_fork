@@ -137,7 +137,15 @@ class PooRecordServiceTest {
     given(locationVerificationService.checkAndSetCooldown(eq(1L), eq(100L))).willReturn(true);
     given(geocodingService.reverseGeocode(anyDouble(), anyDouble())).willReturn("역삼1동");
 
-    AiAnalysisResponse aiResponse = new AiAnalysisResponse(5, "Golden", "Perfect", 95, "Good job!");
+    AiAnalysisResponse aiResponse =
+        AiAnalysisResponse.builder()
+            .bristolScale(5)
+            .color("Golden")
+            .conditionTag("Perfect")
+            .healthScore(95)
+            .aiComment("Good job!")
+            .warningTags(Collections.emptyList())
+            .build();
     given(aiClient.analyzePoopImage(anyString())).willReturn(aiResponse);
 
     PooRecord savedRecord =

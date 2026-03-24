@@ -40,6 +40,9 @@ public class PooRecord extends BaseTimeEntity {
   @Column(name = "region_name")
   private String regionName;
 
+  @Column(name = "warning_tags")
+  private String warningTags;
+
   @Builder
   public PooRecord(
       User user,
@@ -48,7 +51,8 @@ public class PooRecord extends BaseTimeEntity {
       String color,
       String conditionTags,
       String dietTags,
-      String regionName) {
+      String regionName,
+      String warningTags) {
     this.user = user;
     this.toilet = toilet;
     this.bristolScale = bristolScale;
@@ -56,5 +60,6 @@ public class PooRecord extends BaseTimeEntity {
     this.conditionTags = conditionTags;
     this.dietTags = dietTags;
     this.regionName = regionName;
+    this.warningTags = warningTags;
   }
 }
