@@ -1,5 +1,16 @@
 # Backend Modification History
 
+## [2026-03-24 17:35:00] 서버 반복 구동 실패 근본 해결 및 백엔드 서비스 시작 구조 개선
+- **작업 내용:** Flyway 체크섬 오류 및 외부 서비스 의존성으로 인한 서버 구동 실패 문제 해결
+- **상세 변경 내역:**
+  - **Flyway**: `FlywayRepairConfig` 추가로 체크섬 불일치 자동 복구(`repair`) 기능 활성화
+  - **Migration**: V3 마이그레이션 PostgreSQL 호환성 확정 및 V4(누락 컬럼 `mng_no` 추가, `location` 제약 완화) 신설
+  - **JPA**: `application.yml` 내 `ddl-auto: update`를 `validate`로 변경하여 Flyway 기반 단일 스키마 관리 체계 확립
+  - **Startup**: `ApiApplication`의 `runSelfCheck`(메일/동기화)를 비동기(`CompletableFuture`) 및 방어적으로 리팩토링하여 서버 블로킹 방지
+  - **Resiliency**: `DataInitializer` 및 `RankingDataSeeder`에 try-catch 예외 핸들링을 추가하여 초기 데이터 오류가 서버 전체를 죽이지 않도록 개선
+- **결과/영향:** 서버 구동 시 불확실성이 제거되고, 외부 서비스(SMTP, 공공데이터 API 등) 장애 상황에서도 안정적인 서비스 시작이 가능해짐
+
+
 ## [2026-03-24 16:55:00] 화장실 리뷰 및 평가 시스템 구축 (v1.0)
 - **작업 내용:** 사용자가 화장실에 대해 별점과 이모지 태그, 코멘트를 남길 수 있는 리뷰 시스템의 백엔드 전 계층 구현
 - **상세 변경 내역:**

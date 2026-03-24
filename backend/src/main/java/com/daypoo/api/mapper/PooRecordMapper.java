@@ -23,7 +23,6 @@ public interface PooRecordMapper {
   @Mapping(target = "earnedPoints", ignore = true)
   PooRecordResponse toResponse(PooRecord pooRecord);
 
-
   @Named("stringToList")
   default List<String> stringToList(String tags) {
     if (tags == null || tags.isBlank()) {

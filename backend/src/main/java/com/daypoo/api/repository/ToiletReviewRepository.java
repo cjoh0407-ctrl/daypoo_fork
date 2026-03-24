@@ -11,16 +11,16 @@ import org.springframework.data.repository.query.Param;
 
 public interface ToiletReviewRepository extends JpaRepository<ToiletReview, Long> {
 
-    List<ToiletReview> findTop5ByToiletIdOrderByCreatedAtDesc(Long toiletId);
+  List<ToiletReview> findTop5ByToiletIdOrderByCreatedAtDesc(Long toiletId);
 
-    Page<ToiletReview> findByToiletIdOrderByCreatedAtDesc(Long toiletId, Pageable pageable);
+  Page<ToiletReview> findByToiletIdOrderByCreatedAtDesc(Long toiletId, Pageable pageable);
 
-    Page<ToiletReview> findByToiletIdOrderByCreatedAtAsc(Long toiletId, Pageable pageable);
+  Page<ToiletReview> findByToiletIdOrderByCreatedAtAsc(Long toiletId, Pageable pageable);
 
-    long countByToiletId(Long toiletId);
+  long countByToiletId(Long toiletId);
 
-    @Query("SELECT AVG(r.rating) FROM ToiletReview r WHERE r.toilet.id = :toiletId")
-    Double calculateAvgRatingByToiletId(@Param("toiletId") Long toiletId);
+  @Query("SELECT AVG(r.rating) FROM ToiletReview r WHERE r.toilet.id = :toiletId")
+  Double calculateAvgRatingByToiletId(@Param("toiletId") Long toiletId);
 
-    void deleteAllByUser(User user);
+  void deleteAllByUser(User user);
 }

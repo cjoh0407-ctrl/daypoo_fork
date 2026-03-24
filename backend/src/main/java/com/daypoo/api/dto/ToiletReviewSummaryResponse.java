@@ -8,5 +8,4 @@ public record ToiletReviewSummaryResponse(
     String aiSummary,
     Double avgRating,
     Integer reviewCount,
-    List<ToiletReviewResponse> recentReviews) {
-}
+    List<ToiletReviewResponse> recentReviews) {}

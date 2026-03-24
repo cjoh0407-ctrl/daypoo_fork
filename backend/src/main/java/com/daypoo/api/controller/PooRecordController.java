@@ -3,7 +3,6 @@ package com.daypoo.api.controller;
 import com.daypoo.api.dto.AiAnalysisResponse;
 import com.daypoo.api.dto.PooAnalysisRequest;
 import com.daypoo.api.dto.PooCheckInRequest;
-
 import com.daypoo.api.dto.PooCheckInResponse;
 import com.daypoo.api.dto.PooRecordCreateRequest;
 import com.daypoo.api.dto.PooRecordResponse;
@@ -71,7 +70,6 @@ public class PooRecordController {
       @Valid @RequestBody PooAnalysisRequest request) {
     return ResponseEntity.ok(recordService.analyzeImageOnly(request.imageBase64()));
   }
-
 
   @Operation(
       summary = "내 배변 기록 목록 조회",

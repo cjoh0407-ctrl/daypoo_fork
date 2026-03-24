@@ -3,7 +3,6 @@ package com.daypoo.api.service;
 import com.daypoo.api.dto.AdminStatsResponse;
 import com.daypoo.api.dto.SystemLogResponse;
 import com.daypoo.api.entity.Payment;
-
 import com.daypoo.api.entity.enums.InquiryStatus;
 import com.daypoo.api.repository.InquiryRepository;
 import com.daypoo.api.repository.PaymentRepository;
@@ -83,20 +82,39 @@ public class AdminService {
     List<SystemLogResponse> logs = new ArrayList<>();
     LocalDateTime now = LocalDateTime.now();
 
-    logs.add(new SystemLogResponse(1L, "INFO", "Auth", "New user registered: user123", now.minusMinutes(5)));
-    logs.add(new SystemLogResponse(2L, "WARN", "API", "Rate limit exceeded for IP: 192.168.1.1", now.minusMinutes(12)));
-    logs.add(new SystemLogResponse(3L, "INFO", "AI", "Poop analysis completed for record #502", now.minusMinutes(25)));
-    logs.add(new SystemLogResponse(4L, "ERROR", "Payment", "Toss payment failed for order #ORD-772", now.minusHours(1)));
-    logs.add(new SystemLogResponse(5L, "INFO", "System", "Scheduled toilet data sync started", now.minusHours(2)));
-    logs.add(new SystemLogResponse(6L, "INFO", "Auth", "Social login successful: Kakao user", now.minusHours(3)));
-    logs.add(new SystemLogResponse(7L, "WARN", "DB", "Slow query detected in Ranking calculation", now.minusHours(4)));
-    logs.add(new SystemLogResponse(8L, "INFO", "Support", "New inquiry received: App crashing on Map", now.minusHours(5)));
-    logs.add(new SystemLogResponse(9L, "ERROR", "AI", "AI model endpoint timeout (408)", now.minusHours(6)));
-    logs.add(new SystemLogResponse(10L, "INFO", "System", "Backend server restarted (v1.0.4)", now.minusDays(1)));
+    logs.add(
+        new SystemLogResponse(
+            1L, "INFO", "Auth", "New user registered: user123", now.minusMinutes(5)));
+    logs.add(
+        new SystemLogResponse(
+            2L, "WARN", "API", "Rate limit exceeded for IP: 192.168.1.1", now.minusMinutes(12)));
+    logs.add(
+        new SystemLogResponse(
+            3L, "INFO", "AI", "Poop analysis completed for record #502", now.minusMinutes(25)));
+    logs.add(
+        new SystemLogResponse(
+            4L, "ERROR", "Payment", "Toss payment failed for order #ORD-772", now.minusHours(1)));
+    logs.add(
+        new SystemLogResponse(
+            5L, "INFO", "System", "Scheduled toilet data sync started", now.minusHours(2)));
+    logs.add(
+        new SystemLogResponse(
+            6L, "INFO", "Auth", "Social login successful: Kakao user", now.minusHours(3)));
+    logs.add(
+        new SystemLogResponse(
+            7L, "WARN", "DB", "Slow query detected in Ranking calculation", now.minusHours(4)));
+    logs.add(
+        new SystemLogResponse(
+            8L, "INFO", "Support", "New inquiry received: App crashing on Map", now.minusHours(5)));
+    logs.add(
+        new SystemLogResponse(
+            9L, "ERROR", "AI", "AI model endpoint timeout (408)", now.minusHours(6)));
+    logs.add(
+        new SystemLogResponse(
+            10L, "INFO", "System", "Backend server restarted (v1.0.4)", now.minusDays(1)));
 
     return logs;
   }
-
 
   @Transactional
   public void generateTestData() {

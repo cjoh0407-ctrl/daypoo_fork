@@ -31,25 +31,32 @@ public class ToiletReviewService {
   private final AiClient aiClient;
 
   @Transactional
-  public ToiletReviewResponse createReview(String email, Long toiletId, ToiletReviewCreateRequest request) {
-    User user = userRepository.findByEmail(email)
-        .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
-    Toilet toilet = toiletRepository.findById(toiletId)
-        .orElseThrow(() -> new BusinessException(ErrorCode.TOILET_NOT_FOUND));
+  public ToiletReviewResponse createReview(
+      String email, Long toiletId, ToiletReviewCreateRequest request) {
+    User user =
+        userRepository
+            .findByEmail(email)
+            .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+    Toilet toilet =
+        toiletRepository
+            .findById(toiletId)
+            .orElseThrow(() -> new BusinessException(ErrorCode.TOILET_NOT_FOUND));
 
     if (user == null || toilet == null) {
-        throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR);
+      throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR);
     }
 
-    String emojiTags = request.getEmojiTags() != null ? String.join(",", request.getEmojiTags()) : "";
+    String emojiTags =
+        request.getEmojiTags() != null ? String.join(",", request.getEmojiTags()) : "";
 
-    ToiletReview review = ToiletReview.builder()
-        .user(user)
-        .toilet(toilet)
-        .rating(request.getRating())
-        .emojiTags(emojiTags)
-        .comment(request.getComment())
-        .build();
+    ToiletReview review =
+        ToiletReview.builder()
+            .user(user)
+            .toilet(toilet)
+            .rating(request.getRating())
+            .emojiTags(emojiTags)
+            .comment(request.getComment())
+            .build();
 
     ToiletReview savedReview = toiletReviewRepository.save(review);
 
@@ -66,40 +73,45 @@ public class ToiletReviewService {
 
   @Transactional(readOnly = true)
   public List<ToiletReviewResponse> getRecentReviews(Long toiletId) {
-    return toiletReviewRepository.findTop5ByToiletIdOrderByCreatedAtDesc(toiletId)
-        .stream()
+    return toiletReviewRepository.findTop5ByToiletIdOrderByCreatedAtDesc(toiletId).stream()
         .map(ToiletReviewResponse::from)
         .collect(Collectors.toList());
   }
 
   @Transactional(readOnly = true)
-  public ToiletReviewPageResponse getReviewsWithPaging(Long toiletId, int page, int size, String sort) {
-    Sort sortOrder = sort.equalsIgnoreCase("oldest") ? 
-        Sort.by("createdAt").ascending() : Sort.by("createdAt").descending();
+  public ToiletReviewPageResponse getReviewsWithPaging(
+      Long toiletId, int page, int size, String sort) {
+    Sort sortOrder =
+        sort.equalsIgnoreCase("oldest")
+            ? Sort.by("createdAt").ascending()
+            : Sort.by("createdAt").descending();
     Pageable pageable = PageRequest.of(page, size, sortOrder);
-    
-    Page<ToiletReview> reviewPage = toiletReviewRepository.findByToiletIdOrderByCreatedAtDesc(toiletId, pageable);
+
+    Page<ToiletReview> reviewPage =
+        toiletReviewRepository.findByToiletIdOrderByCreatedAtDesc(toiletId, pageable);
     if (sort.equalsIgnoreCase("oldest")) {
-        reviewPage = toiletReviewRepository.findByToiletIdOrderByCreatedAtAsc(toiletId, pageable);
+      reviewPage = toiletReviewRepository.findByToiletIdOrderByCreatedAtAsc(toiletId, pageable);
     }
 
-    List<ToiletReviewResponse> contents = reviewPage.getContent().stream()
-        .map(ToiletReviewResponse::from)
-        .collect(Collectors.toList());
+    List<ToiletReviewResponse> contents =
+        reviewPage.getContent().stream()
+            .map(ToiletReviewResponse::from)
+            .collect(Collectors.toList());
 
     return ToiletReviewPageResponse.of(
         contents,
         reviewPage.getTotalElements(),
         reviewPage.getTotalPages(),
         reviewPage.getNumber(),
-        reviewPage.hasNext()
-    );
+        reviewPage.hasNext());
   }
 
   @Transactional(readOnly = true)
   public ToiletReviewSummaryResponse getReviewSummary(Long toiletId) {
-    Toilet toilet = toiletRepository.findById(toiletId)
-        .orElseThrow(() -> new BusinessException(ErrorCode.TOILET_NOT_FOUND));
+    Toilet toilet =
+        toiletRepository
+            .findById(toiletId)
+            .orElseThrow(() -> new BusinessException(ErrorCode.TOILET_NOT_FOUND));
 
     List<ToiletReviewResponse> recentReviews = getRecentReviews(toiletId);
 
@@ -121,16 +133,13 @@ public class ToiletReviewService {
   @Transactional
   public void generateAiSummary(Toilet toilet) {
     try {
-      List<String> lastReviews = toiletReviewRepository.findTop5ByToiletIdOrderByCreatedAtDesc(toilet.getId())
-          .stream()
-          .map(ToiletReview::getComment)
-          .collect(Collectors.toList());
+      List<String> lastReviews =
+          toiletReviewRepository.findTop5ByToiletIdOrderByCreatedAtDesc(toilet.getId()).stream()
+              .map(ToiletReview::getComment)
+              .collect(Collectors.toList());
 
-      AiReviewSummaryRequest request = new AiReviewSummaryRequest(
-          toilet.getId(),
-          toilet.getName(),
-          lastReviews
-      );
+      AiReviewSummaryRequest request =
+          new AiReviewSummaryRequest(toilet.getId(), toilet.getName(), lastReviews);
 
       AiReviewSummaryResponse response = aiClient.summarizeReviews(request);
       if (response != null && response.summary() != null) {

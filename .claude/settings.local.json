@@ -9,7 +9,11 @@
       "Bash(grep -r \"openai\\\\|ChatGPT\\\\|GPT\\\\|completion\" /Users/changjun/Desktop/project/daypoo --include=*.py --include=*.java --include=*.properties --include=*.yml --include=*.yaml)",
       "Bash(grep -r \"TODO\\\\|FIXME\\\\|XXX\\\\|HACK\" /Users/changjun/Desktop/project/daypoo/backend/src --include=*.java)",
       "Bash(grep -E \"\\\\.\\(java|properties|yml\\)$\")",
-      "Bash(xargs ls:*)"
+      "Bash(xargs ls:*)",
+      "Bash(grep -E \"\\\\.\\(java\\)$\")",
+      "Bash(grep -v \"^$\")",
+      "Bash(grep -r \"class.*Service\\\\|@Service\\\\|@Component\" /Users/changjun/Desktop/project/daypoo/backend/src/main/java/com/daypoo/api/service/*.java)",
+      "Bash(ls /Users/changjun/Desktop/project/daypoo/backend/build.gradle*)"
     ]
   }
 }

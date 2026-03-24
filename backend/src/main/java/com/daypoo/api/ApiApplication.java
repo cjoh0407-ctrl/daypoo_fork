@@ -31,27 +31,43 @@ public class ApiApplication {
       log.info("🔍 [Env-Check] MAIL_PASSWORD: {}", mask(mailPass));
 
       if ("NOT_FOUND".equals(mailUser) || mailUser.isEmpty()) {
-        log.error("❌ Critical: .env variables are NOT loaded into Spring Context!");
+        log.warn("⚠️ Warning: .env variables [MAIL_USERNAME] are NOT loaded. Skipping mail test.");
+        return;
       }
 
-      log.info("🔍 [Self-Check] Starting ULTRA-FAST SYNC & Mail test...");
-      // ... 이하 동일
+      // 서버 시작을 블로킹하지 않도록 비동기로 실행
+      java.util.concurrent.CompletableFuture.runAsync(
+          () -> {
+            try {
+              log.info("🔍 [Self-Check] Starting Background Tasks (Mail & Sync)...");
 
-      // 1. 메일 테스트 (자기 자신에게 발송)
-      emailService.sendEmail(
-          mailUser,
-          "[대똥여지도] 자가 진단 메일",
-          "백엔드 서버가 시작되었습니다. 가상 스레드와 메일 발송 기능이 정상적으로 로드되었습니다.\n\n발송 시각: "
-              + java.time.LocalDateTime.now());
+              // 1. 메일 테스트
+              try {
+                emailService.sendEmail(
+                    mailUser,
+                    "[대똥여지도] 자가 진단 메일",
+                    "백엔드 서버가 시작되었습니다. 가상 스레드와 메일 발송 기능이 정상적으로 로드되었습니다.\n\n발송 시각: "
+                        + java.time.LocalDateTime.now());
+                log.info("✅ Self-check mail sent successfully.");
+              } catch (Exception e) {
+                log.warn(
+                    "⚠️ Self-check mail failed: {}. Server will continue to run.", e.getMessage());
+              }
 
-      // 2. 동기화 테스트 (30페이지만 샘플로 수행 - 약 3000개)
-      try {
-        log.info("🚀 Starting BULK sync for 30 pages...");
-        syncService.syncAllToilets(1, 30);
-        log.info("✅ BULK SYNC COMPLETED!");
-      } catch (Exception e) {
-        log.error("Sync test failed: {}", e.getMessage());
-      }
+              // 2. 동기화 테스트 (30페이지만 샘플로 수행)
+              try {
+                log.info("🚀 Starting background BULK sync for 30 pages...");
+                syncService.syncAllToilets(1, 30);
+                log.info("✅ BULK SYNC COMPLETED!");
+              } catch (Exception e) {
+                log.error(
+                    "❌ Background sync failed: {}. This does not affect server availability.",
+                    e.getMessage());
+              }
+            } catch (Exception e) {
+              log.error("❌ Unexpected error in background self-check: {}", e.getMessage());
+            }
+          });
     };
   }
 

@@ -39,7 +39,9 @@ public class ToiletReviewController {
     return ResponseEntity.ok(reviewService.getRecentReviews(toiletId));
   }
 
-  @Operation(summary = "전체 리뷰 페이징 조회", description = "특정 화장실의 전체 리뷰를 페이징하여 조회합니다. (latest/oldest 정렬 지원)")
+  @Operation(
+      summary = "전체 리뷰 페이징 조회",
+      description = "특정 화장실의 전체 리뷰를 페이징하여 조회합니다. (latest/oldest 정렬 지원)")
   @ApiResponse(responseCode = "200", description = "조회 성공")
   @GetMapping("/{toiletId}/reviews")
   public ResponseEntity<ToiletReviewPageResponse> getReviewsWithPaging(

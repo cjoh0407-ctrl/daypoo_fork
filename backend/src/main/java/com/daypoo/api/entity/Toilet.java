@@ -39,7 +39,7 @@ public class Toilet extends BaseTimeEntity {
   @Column(name = "is_unisex", nullable = false)
   private boolean isUnisex;
 
-  @Column(name = "avg_rating", precision = 3, scale = 2)
+  @Column(name = "avg_rating")
   private Double avgRating = 0.0;
 
   @Column(name = "review_count")

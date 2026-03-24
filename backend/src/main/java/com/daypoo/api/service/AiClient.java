@@ -107,11 +107,14 @@ public class AiClient {
     HttpEntity<AiReviewSummaryRequest> entity = new HttpEntity<>(request, createHeaders());
 
     try {
-      log.info("Requesting AI review summary for toilet {} ({})", request.toiletId(), request.toiletName());
+      log.info(
+          "Requesting AI review summary for toilet {} ({})",
+          request.toiletId(),
+          request.toiletName());
       return restTemplate.postForObject(url, entity, AiReviewSummaryResponse.class);
     } catch (Exception e) {
       log.error("Failed to call AI Review Summary Service: {}", e.getMessage());
-      // AI 호출 실패 시 비즈니스 로직에 큰 지장을 주지 않고 null이나 기본 메시지 처리할 수 있도록 
+      // AI 호출 실패 시 비즈니스 로직에 큰 지장을 주지 않고 null이나 기본 메시지 처리할 수 있도록
       // 예외는 던지되, 호출부에서 적절히 처리하도록 권장
       throw new BusinessException(ErrorCode.AI_SERVICE_ERROR);
     }

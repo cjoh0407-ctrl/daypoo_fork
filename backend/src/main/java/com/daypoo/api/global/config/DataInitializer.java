@@ -27,14 +27,18 @@ public class DataInitializer implements CommandLineRunner {
   private final GeometryUtil geometryUtil;
 
   @Override
-  public void run(String... args) throws Exception {
-    log.info("🏁 DataInitializer started...");
+  public void run(String... args) {
+    try {
+      log.info("🏁 DataInitializer started...");
 
-    initializeUsers();
-    initializeToiletsAndReviews();
-    initializeInquiries();
+      initializeUsers();
+      initializeToiletsAndReviews();
+      initializeInquiries();
 
-    log.info("✅ DataInitializer completed.");
+      log.info("✅ DataInitializer completed.");
+    } catch (Exception e) {
+      log.error("❌ DataInitializer failed: {}. Server will continue to start.", e.getMessage(), e);
+    }
   }
 
   private void initializeUsers() {
@@ -82,37 +86,40 @@ public class DataInitializer implements CommandLineRunner {
 
   private void initializeToiletsAndReviews() {
     if (toiletRepository.count() == 0) {
-      Toilet t1 = toiletRepository.save(
-          Toilet.builder()
-              .name("강남역 2호선 공중화장실")
-              .mngNo("GN-001")
-              .location(geometryUtil.createPoint(127.0276, 37.4979))
-              .address("서울특별시 강남구 강남대로 396")
-              .is24h(true)
-              .isUnisex(false)
-              .openHours("00:00-24:00")
-              .build());
+      Toilet t1 =
+          toiletRepository.save(
+              Toilet.builder()
+                  .name("강남역 2호선 공중화장실")
+                  .mngNo("GN-001")
+                  .location(geometryUtil.createPoint(127.0276, 37.4979))
+                  .address("서울특별시 강남구 강남대로 396")
+                  .is24h(true)
+                  .isUnisex(false)
+                  .openHours("00:00-24:00")
+                  .build());
 
-      Toilet t2 = toiletRepository.save(
-          Toilet.builder()
-              .name("마포역 5호선 화장실")
-              .mngNo("MP-005")
-              .location(geometryUtil.createPoint(126.9460, 37.5393))
-              .address("서울특별시 마포구 마포대로 33")
-              .is24h(false)
-              .isUnisex(true)
-              .openHours("05:30-24:00")
-              .build());
+      Toilet t2 =
+          toiletRepository.save(
+              Toilet.builder()
+                  .name("마포역 5호선 화장실")
+                  .mngNo("MP-005")
+                  .location(geometryUtil.createPoint(126.9460, 37.5393))
+                  .address("서울특별시 마포구 마포대로 33")
+                  .is24h(false)
+                  .isUnisex(true)
+                  .openHours("05:30-24:00")
+                  .build());
 
-      Toilet t3 = toiletRepository.save(
-          Toilet.builder()
-              .name("대치동 선릉공원 화장실")
-              .mngNo("DC-012")
-              .location(geometryUtil.createPoint(127.0490, 37.5050))
-              .address("서울특별시 강남구 삼성동 141")
-              .is24h(true)
-              .isUnisex(false)
-              .build());
+      Toilet t3 =
+          toiletRepository.save(
+              Toilet.builder()
+                  .name("대치동 선릉공원 화장실")
+                  .mngNo("DC-012")
+                  .location(geometryUtil.createPoint(127.0490, 37.5050))
+                  .address("서울특별시 강남구 삼성동 141")
+                  .is24h(true)
+                  .isUnisex(false)
+                  .build());
 
       // 리뷰 데이터 추가
       User u1 = userRepository.findByEmail("user1@daypoo.com").orElse(null);
@@ -129,14 +136,15 @@ public class DataInitializer implements CommandLineRunner {
   }
 
   private void addReview(User user, Toilet toilet, int rating, String tags, String comment) {
-    toiletReviewRepository.save(ToiletReview.builder()
-        .user(user)
-        .toilet(toilet)
-        .rating(rating)
-        .emojiTags(tags)
-        .comment(comment)
-        .build());
-    
+    toiletReviewRepository.save(
+        ToiletReview.builder()
+            .user(user)
+            .toilet(toilet)
+            .rating(rating)
+            .emojiTags(tags)
+            .comment(comment)
+            .build());
+
     // 통계 업데이트
     Double avg = toiletReviewRepository.calculateAvgRatingByToiletId(toilet.getId());
     long count = toiletReviewRepository.countByToiletId(toilet.getId());

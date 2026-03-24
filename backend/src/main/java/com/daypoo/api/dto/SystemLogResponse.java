@@ -9,5 +9,4 @@ public record SystemLogResponse(
     String level, // INFO, WARN, ERROR
     String source, // Auth, Payment, AI, System
     String message,
-    LocalDateTime timestamp
-) {}
+    LocalDateTime timestamp) {}
