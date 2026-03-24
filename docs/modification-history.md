@@ -1,5 +1,13 @@
 # 수정 이력 (Modification History)
 
+## 2026-03-24 09:12:00
+- **작업 내용:** 인증 시스템 개편 잔여 리팩토링 및 API 문서(OpenAPI) 동기화 완료
+- **상세 변경 내역:**
+  - `PaymentController.java`: `@AuthenticationPrincipal` 변수명을 `username`에서 `email`로 변경하여 모든 컨트롤러의 용어를 통일함.
+  - `openapi.yaml`: `SignUpRequest`, `LoginRequest` 스키마 내의 `username` 필드를 `email`로 수정하여 실제 백엔드 DTO(Record) 스펙과 일치시킴.
+  - `plan.md`: 인증 시스템 개편(아이디->이메일 전환) 관련 모든 항목을 검토 후 완료([x]) 처리함.
+- **결과/영향:** 시스템 내 모든 식별자 용어가 `email`로 통일되어 코드 가독성이 향상되었으며, API 문서와 실제 구현체 간의 불일치가 해소됨.
+
 ## 2026-03-24 18:40:00
 - **작업 내용:** 비로그인 시 알림 아이콘 숨김 처리 및 프론트엔드 알림 테스트 도구 구현
 - **상세 변경 내역:**

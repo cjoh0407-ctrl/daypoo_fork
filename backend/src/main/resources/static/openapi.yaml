@@ -483,7 +483,7 @@ components:
     SignUpRequest:
       type: object
       properties:
-        username:
+        email:
           type: string
         password:
           type: string
@@ -492,7 +492,7 @@ components:
     LoginRequest:
       type: object
       properties:
-        username:
+        email:
           type: string
         password:
           type: string
