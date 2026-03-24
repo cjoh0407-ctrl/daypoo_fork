@@ -102,7 +102,8 @@ function MiniMap({ userPos, toilets }: { userPos: { lat: number; lng: number } |
         height: '180px',
         borderRadius: '16px',
         overflow: 'hidden',
-        border: '1px solid rgba(255,255,255,0.12)',
+        border: '2px solid rgba(82,183,136,0.3)',
+        boxShadow: '0 8px 24px rgba(0,0,0,0.4), 0 0 0 1px rgba(82,183,136,0.1)'
       }}
     />
   );
@@ -177,62 +178,69 @@ export function EmergencySheet({ isOpen, onClose }: EmergencySheetProps) {
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
             transition={{ type: 'spring', damping: 30, stiffness: 250 }}
-            className="fixed bottom-0 left-0 right-0 z-[1001] rounded-t-[40px]"
-            style={{ 
-              backgroundColor: '#121F1C', 
-              maxHeight: '92vh', 
+            className="fixed bottom-0 left-0 right-0 z-[1001] rounded-t-[32px]"
+            style={{
+              background: 'linear-gradient(180deg, #1B4332 0%, #0D2820 100%)',
+              maxHeight: '92vh',
               overflowY: 'auto',
-              boxShadow: '0 -10px 40px rgba(0,0,0,0.5)',
-              borderTop: '1px solid rgba(255,255,255,0.08)'
+              boxShadow: '0 -20px 60px rgba(0,0,0,0.4), 0 -4px 20px rgba(82,183,136,0.15)',
+              borderTop: '2px solid rgba(82,183,136,0.3)'
             }}
           >
-            <div className="max-w-lg mx-auto p-6 md:p-8 pb-12 text-white">
-              <div className="w-12 h-1.5 bg-white/20 rounded-full mx-auto mb-8" />
+            <div className="w-full px-5 md:px-6 py-6 md:py-8 pb-12 text-white">
+              <div className="w-12 h-1.5 bg-gradient-to-r from-transparent via-emerald-400/40 to-transparent rounded-full mx-auto mb-6" />
 
-              <div className="flex items-center justify-between mb-10">
-                <div className="flex items-center gap-4">
-                  <motion.div
-                    animate={{ scale: [1, 1.2, 1], rotate: [0, 5, -5, 0] }}
-                    transition={{ duration: 1.2, repeat: Infinity }}
-                    className="w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg"
-                    style={{ backgroundColor: 'rgba(232,93,93,0.3)', border: '1px solid rgba(232,93,93,0.4)' }}
+              <div className="max-w-sm mx-auto space-y-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <motion.div
+                      animate={{ scale: [1, 1.2, 1], rotate: [0, 5, -5, 0] }}
+                      transition={{ duration: 1.2, repeat: Infinity }}
+                      className="w-10 h-10 rounded-xl flex items-center justify-center shadow-lg"
+                      style={{
+                        backgroundColor: 'rgba(232,93,93,0.3)',
+                        border: '1px solid rgba(232,93,93,0.4)'
+                      }}
+                    >
+                      <AlertTriangle size={20} style={{ color: '#FF6B6B' }} />
+                    </motion.div>
+                    <div>
+                      <h2 className="text-lg font-black text-white leading-tight tracking-tight">
+                        지금 가장 가까운 곳
+                      </h2>
+                      <p className="text-emerald-300/60 text-[10px] mt-0.5 font-medium">실시간 개방 정보</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={onClose}
+                    className="w-9 h-9 flex items-center justify-center rounded-full text-white/30 hover:text-white hover:bg-white/10 transition-all"
                   >
-                    <AlertTriangle size={24} style={{ color: '#FF6B6B' }} />
-                  </motion.div>
-                  <div>
-                    <h2 className="text-2xl font-black text-white leading-tight tracking-tight">
-                      지금 가장 가까운 곳
-                    </h2>
-                    <p className="text-white/40 text-xs mt-1 font-medium">실시간 개방 정보 분석 결과</p>
-                  </div>
+                    <X size={20} />
+                  </button>
                 </div>
-                <button
-                  onClick={onClose}
-                  className="w-10 h-10 flex items-center justify-center rounded-full text-white/30 hover:text-white hover:bg-white/10 transition-all font-black"
-                >
-                  <X size={24} />
-                </button>
+
+                {/* ── 실시간 미니맵 ── */}
+                <div className="relative">
+                  <MiniMap userPos={userPos} toilets={processedToilets} />
+                  {loading && (
+                    <div className="absolute inset-0 flex items-center justify-center rounded-2xl backdrop-blur-sm" style={{ background: 'rgba(27,67,50,0.7)' }}>
+                      <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }} className="text-3xl">🚨</motion.div>
+                    </div>
+                  )}
+                </div>
               </div>
 
-              {/* ── 실시간 미니맵 ── */}
-              <div className="mb-10 relative">
-                <MiniMap userPos={userPos} toilets={processedToilets} />
-                {loading && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-2xl backdrop-blur-[1px]">
-                    <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }} className="text-2xl">🚨</motion.div>
-                  </div>
-                )}
+              <div className="max-w-sm mx-auto">
+                {/* ── 최적 경로 추천 부문 ── */}
+                <EmergencySheetPreview
+                  processedToilets={processedToilets as any}
+                  openNav={openNav}
+                />
+
+                <p className="mt-6 text-center text-emerald-400/30 text-[10px] tracking-widest font-medium">
+                  현재 위치 기반 실시간 데이터 분석 · 도보 이동 시간 기준 정렬
+                </p>
               </div>
-
-              {/* ── 최적 경로 추천 부문 (1안: Horizontal 카드 레이아웃) ── */}
-              <EmergencySheetPreview 
-                processedToilets={processedToilets as any} 
-                openNav={openNav} 
-              />
-
-              <p className="mt-10 text-center text-white/20 text-[10px] tracking-tight font-medium">
-                현재 위치 기반 실시간 데이터 분석 · 도보 이동 시간 기준 정렬
-              </p>
             </div>
           </motion.div>
         </>

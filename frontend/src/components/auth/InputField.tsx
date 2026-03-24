@@ -44,7 +44,7 @@ export function InputField({
           placeholder={placeholder}
           autoComplete={autoComplete}
           maxLength={maxLength}
-          className="w-full bg-transparent outline-none text-sm font-medium px-4 py-3"
+          className="w-full bg-transparent outline-none text-sm font-medium px-4 py-3 placeholder:text-[#5C6B68]/40"
           style={{ color: '#1A2B27', caretColor: '#E8A838' }}
         />
         {rightEl && <div className="pr-3.5 flex-shrink-0">{rightEl}</div>}

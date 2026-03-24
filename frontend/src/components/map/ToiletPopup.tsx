@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Navigation, Star, Clock, Users, MessageCircle, Loader2 } from 'lucide-react';
 import { ToiletData, EMOJI_TAG_MAP } from '../../types/toilet';
@@ -18,6 +19,8 @@ interface ToiletPopupProps {
   onVisitRequest: () => void;
   userPosition: GeoPosition;
   distanceInMeters: number;
+  openAuth: (mode: 'login' | 'signup') => void;
+  onReviewUpdate: () => void;
 }
 
 // 별점 렌더
@@ -40,7 +43,16 @@ function StarRating({ rating }: { rating: number }) {
 }
 
 
-export function ToiletPopup({ toilet, onClose, onFavoriteToggle, onVisitRequest, userPosition, distanceInMeters }: ToiletPopupProps) {
+export function ToiletPopup({ 
+  toilet, 
+  onClose, 
+  onFavoriteToggle, 
+  onVisitRequest, 
+  userPosition, 
+  distanceInMeters,
+  openAuth,
+  onReviewUpdate
+}: ToiletPopupProps) {
   const [reviewSummary, setReviewSummary] = useState<ToiletReviewSummaryResponse | null>(null);
   const [loadingReviews, setLoadingReviews] = useState(true);
   const [showReviewModal, setShowReviewModal] = useState(false);
@@ -63,7 +75,24 @@ export function ToiletPopup({ toilet, onClose, onFavoriteToggle, onVisitRequest,
   }, [toilet.id]);
 
   const handleReviewSuccess = () => {
-    fetchReviews(); // 리뷰 작성 성공 시 새로고침
+    fetchReviews(); // 내부 요약 정보 새로고침
+    onReviewUpdate(); // 부모(MapPage) 데이터 새로고침
+  };
+
+  const handleOpenReviewModal = () => {
+    const isLogged = !!localStorage.getItem('accessToken');
+    if (!isLogged) {
+      openAuth('login');
+      return;
+    }
+    
+    // 방문 인증 여부 체크
+    if (!toilet.isVisited) {
+      alert('방문 인증 후에만 리뷰를 남길 수 있습니다! \n 💩 인증 범위를 확인해주세요.');
+      return;
+    }
+    
+    setShowReviewModal(true);
   };
 
   const openKakaoMap = () => {
@@ -99,16 +128,13 @@ export function ToiletPopup({ toilet, onClose, onFavoriteToggle, onVisitRequest,
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: 8, scale: 0.97 }}
           transition={{ type: 'spring', stiffness: 300, damping: 28 }}
-          className="absolute z-50 w-96"
+          className="relative z-50 w-96"
           style={{
-            bottom: '110%',
-            left: '50%',
-            transform: 'translateX(-50%)',
             background: '#fff',
             borderRadius: '20px',
-            boxShadow: '0 8px 40px rgba(27,67,50,0.18), 0 2px 8px rgba(0,0,0,0.08)',
+            boxShadow: '0 12px 60px rgba(27,67,50,0.25), 0 4px 12px rgba(0,0,0,0.1)',
             border: '1px solid #d4e8db',
-            maxHeight: '80vh',
+            maxHeight: '85vh',
             overflowY: 'auto',
           }}
         >
@@ -129,22 +155,32 @@ export function ToiletPopup({ toilet, onClose, onFavoriteToggle, onVisitRequest,
               )}
             </div>
             <div className="flex items-center gap-2 flex-shrink-0">
-              <button
+              <motion.button
                 onClick={() => onFavoriteToggle(toilet.id)}
-                className="w-10 h-10 rounded-full flex items-center justify-center transition-all hover:scale-110 active:scale-95"
+                whileHover={{ scale: 1.15, rotate: toilet.isFavorite ? -5 : 5, boxShadow: '0 4px 12px rgba(232, 168, 56, 0.25)' }}
+                whileTap={{ scale: 0.85 }}
+                className="w-11 h-11 rounded-full flex items-center justify-center transition-colors"
                 style={{
                   background: toilet.isFavorite ? '#fdf3de' : '#f4faf6',
-                  border: toilet.isFavorite ? '2px solid #E8A838' : '2px solid #d4e8db'
+                  border: toilet.isFavorite ? '2px solid #E8A838' : '2px solid #d4e8db',
+                  color: toilet.isFavorite ? '#E8A838' : '#95a99e',
                 }}
               >
-                <span className="text-2xl" style={{
-                  color: toilet.isFavorite ? '#E8A838' : '#95a99e',
+                <span className="text-2xl pt-0.5" style={{
                   filter: toilet.isFavorite ? 'none' : 'grayscale(0.3)'
                 }}>
                   {toilet.isFavorite ? '⭐' : '⭐'}
                 </span>
-              </button>
-              <button onClick={onClose} className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: '#f4faf6', color: '#7a9e8a' }}><X size={18} /></button>
+              </motion.button>
+              <motion.button 
+                onClick={onClose} 
+                whileHover={{ scale: 1.1, rotate: 90 }}
+                whileTap={{ scale: 0.9 }}
+                className="w-11 h-11 rounded-full flex items-center justify-center transition-colors" 
+                style={{ background: '#f4faf6', color: '#7a9e8a' }}
+              >
+                <X size={20} />
+              </motion.button>
             </div>
           </div>
 
@@ -173,13 +209,15 @@ export function ToiletPopup({ toilet, onClose, onFavoriteToggle, onVisitRequest,
             <div className="flex items-center justify-between mb-3">
               <p className="text-sm font-bold" style={{ color: '#1a2b22' }}>최근 후기</p>
               {reviewSummary && reviewSummary.reviewCount > 0 && (
-                <button
+                <motion.button
                   onClick={() => setShowReviewListModal(true)}
-                  className="text-xs font-bold px-3 py-1.5 rounded-full transition-all hover:scale-105"
+                  whileHover={{ scale: 1.05, backgroundColor: '#dcfce7' }}
+                  whileTap={{ scale: 0.95 }}
+                  className="text-xs font-bold px-3.5 py-1.5 rounded-full"
                   style={{ background: '#e8f3ec', color: '#2D6A4F' }}
                 >
                   전체 {reviewSummary.reviewCount}개 보기
-                </button>
+                </motion.button>
               )}
             </div>
 
@@ -242,33 +280,51 @@ export function ToiletPopup({ toilet, onClose, onFavoriteToggle, onVisitRequest,
                 </div>
 
                 {/* 리뷰 작성 버튼 */}
-                <button
-                  onClick={() => setShowReviewModal(true)}
-                  className="w-full mt-3 py-2.5 rounded-xl flex items-center justify-center gap-2 text-sm font-bold transition-all hover:scale-[1.02]"
+                <motion.button
+                  onClick={handleOpenReviewModal}
+                  whileHover={{ scale: 1.02, backgroundColor: '#dcfce7', boxShadow: '0 4px 12px rgba(27,67,50,0.08)' }}
+                  whileTap={{ scale: 0.98 }}
+                  className="w-full mt-3 py-3 rounded-xl flex items-center justify-center gap-2 text-sm font-bold shadow-sm"
                   style={{ background: '#f4faf6', color: '#2D6A4F' }}
                 >
                   <MessageCircle size={16} />
                   후기 남기기
-                </button>
+                </motion.button>
               </>
             ) : (
               <div className="py-6 text-center">
                 <p className="text-sm mb-3" style={{ color: '#7a9e8a' }}>아직 후기가 없어요</p>
-                <button
-                  onClick={() => setShowReviewModal(true)}
-                  className="px-4 py-2.5 rounded-xl text-sm font-bold transition-all hover:scale-[1.02]"
+                <motion.button
+                  onClick={handleOpenReviewModal}
+                  whileHover={{ scale: 1.05, boxShadow: '0 8px 16px rgba(27,67,50,0.2)' }}
+                  whileTap={{ scale: 0.95 }}
+                  className="px-5 py-3 rounded-xl text-sm font-bold shadow-md"
                   style={{ background: '#1B4332', color: '#fff' }}
                 >
                   첫 후기 남기기 ✨
-                </button>
+                </motion.button>
               </div>
             )}
           </div>
 
           {/* ── 길찾기 버튼 ── */}
           <div className="px-5 py-4 flex gap-3" style={{ borderBottom: '1px solid #eef5f0' }}>
-            <button onClick={openKakaoMap} className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold bg-[#FEE500] text-[#1a1a1a] hover:scale-[1.02] transition-all"><Navigation size={16} /> 카카오</button>
-            <button onClick={openNaverMap} className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold bg-[#03C75A] text-white hover:scale-[1.02] transition-all"><Navigation size={16} /> 네이버</button>
+            <motion.button 
+              onClick={openKakaoMap} 
+              whileHover={{ scale: 1.05, rotate: -1 }} 
+              whileTap={{ scale: 0.95 }}
+              className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-xl text-sm font-bold bg-[#FEE500] text-[#1a1a1a] shadow-sm"
+            >
+              <Navigation size={16} /> 카카오
+            </motion.button>
+            <motion.button 
+              onClick={openNaverMap} 
+              whileHover={{ scale: 1.05, rotate: 1 }} 
+              whileTap={{ scale: 0.95 }}
+              className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-xl text-sm font-bold bg-[#03C75A] text-white shadow-sm"
+            >
+              <Navigation size={16} /> 네이버
+            </motion.button>
           </div>
 
           {/* ── 방문 인증 ── */}
@@ -278,38 +334,55 @@ export function ToiletPopup({ toilet, onClose, onFavoriteToggle, onVisitRequest,
                 🎯 화장실 근처(150m 이내)로<br />이동하면 인증할 수 있어요!
               </p>
             )}
-            <button
+            <motion.button
               onClick={onVisitRequest}
               disabled={!isWithinRange}
-              className="w-full py-4 rounded-2xl font-black text-base transition-all disabled:opacity-40 disabled:grayscale disabled:cursor-not-allowed"
+              whileHover={isWithinRange ? { 
+                scale: 1.02, 
+                boxShadow: '0 12px 24px rgba(27,67,50,0.3)',
+                filter: 'brightness(1.05)'
+              } : {}}
+              whileTap={isWithinRange ? { scale: 0.98 } : {}}
+              className="w-full py-4 rounded-2xl font-black text-base shadow-lg disabled:opacity-40 disabled:grayscale disabled:cursor-not-allowed transition-opacity overflow-hidden relative"
               style={{
                 background: toilet.isVisited
                   ? 'linear-gradient(135deg, #2D6A4F 0%, #52b788 100%)'
                   : 'linear-gradient(135deg, #1B4332 0%, #2D6A4F 100%)',
                 color: '#fff',
-                boxShadow: isWithinRange ? '0 4px 16px rgba(27,67,50,0.3)' : 'none',
-                transform: isWithinRange ? 'scale(1)' : 'scale(0.98)',
               }}
             >
-              {toilet.isVisited ? '💩 다시 방문 인증하기' : '💩 방문 인증하기'}
-            </button>
+              <span className="relative z-10">
+                {toilet.isVisited ? '💩 다시 방문 인증하기' : '💩 방문 인증하기'}
+              </span>
+              {isWithinRange && (
+                <motion.div 
+                  initial={{ left: '-100%' }}
+                  animate={{ left: '100%' }}
+                  transition={{ repeat: Infinity, duration: 2, ease: 'linear' }}
+                  className="absolute top-0 w-1/2 h-full skew-x-[-25deg] bg-white/10"
+                  style={{ pointerEvents: 'none' }}
+                />
+              )}
+            </motion.button>
           </div>
         </motion.div>
       </AnimatePresence>
 
-      {showReviewModal && (
+      {showReviewModal && createPortal(
         <ReviewModal
           toilet={toilet}
           onClose={() => setShowReviewModal(false)}
           onSuccess={handleReviewSuccess}
-        />
+        />,
+        document.body
       )}
 
-      {showReviewListModal && (
+      {showReviewListModal && createPortal(
         <ReviewListModal
           toilet={toilet}
           onClose={() => setShowReviewListModal(false)}
-        />
+        />,
+        document.body
       )}
     </>
   );

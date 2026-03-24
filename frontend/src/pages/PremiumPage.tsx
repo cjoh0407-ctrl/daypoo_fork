@@ -212,9 +212,9 @@ export function PremiumPage({ openAuth }: { openAuth: (mode: 'login' | 'signup')
               </div>
 
               <div className={`w-full py-4 rounded-2xl flex items-center justify-center gap-2 font-black transition-all ${
-                selectedPlan === plan.id 
-                ? 'bg-[#1B4332] text-white shadow-xl shadow-emerald-900/10' 
-                : 'bg-gray-50 text-gray-400'
+                selectedPlan === plan.id
+                ? 'bg-[#1B4332] text-white shadow-xl shadow-emerald-900/10'
+                : 'bg-gray-50 text-gray-600'
               }`}>
                 {plan.id === 'BASIC' ? '현재 등급' : '선택하기'}
               </div>

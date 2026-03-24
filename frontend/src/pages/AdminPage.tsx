@@ -1219,12 +1219,12 @@ const AddItemView = ({ setActiveTab }: { setActiveTab: (tab: AdminTab) => void }
             <div className="space-y-4">
               <div>
                 <label className="text-[10px] font-black uppercase text-black/40 mb-2 block">아이템 명칭</label>
-                <input className="w-full bg-black/[0.02] border border-black/5 px-5 py-4 rounded-2xl text-sm font-bold focus:ring-4 ring-[#1B4332]/10 outline-none transition-all text-black" placeholder="예: 황금 변기 칭호" />
+                <input className="w-full bg-black/[0.02] border border-black/5 px-5 py-4 rounded-2xl text-sm font-bold focus:ring-4 ring-[#1B4332]/10 outline-none transition-all text-black placeholder:text-black/40" placeholder="예: 황금 변기 칭호" />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-[10px] font-black uppercase text-black/40 mb-2 block">가격 (POOP POINT)</label>
-                  <input className="w-full bg-black/[0.02] border border-black/5 px-5 py-4 rounded-2xl text-sm font-bold text-black" placeholder="5,000" />
+                  <input className="w-full bg-black/[0.02] border border-black/5 px-5 py-4 rounded-2xl text-sm font-bold text-black placeholder:text-black/40" placeholder="5,000" />
                 </div>
                 <div>
                   <label className="text-[10px] font-black uppercase text-black/40 mb-2 block">카테고리</label>
@@ -1237,7 +1237,7 @@ const AddItemView = ({ setActiveTab }: { setActiveTab: (tab: AdminTab) => void }
               </div>
               <div>
                 <label className="text-[10px] font-black uppercase text-black/40 mb-2 block">아이템 설명</label>
-                <textarea className="w-full bg-black/[0.02] border border-black/5 px-5 py-4 rounded-2xl text-sm font-bold h-32 resize-none text-black" placeholder="아이템에 대한 상세 설명을 입력하세요..." />
+                <textarea className="w-full bg-black/[0.02] border border-black/5 px-5 py-4 rounded-2xl text-sm font-bold h-32 resize-none text-black placeholder:text-black/40" placeholder="아이템에 대한 상세 설명을 입력하세요..." />
               </div>
               <div className="pt-4 flex gap-4">
                 <button className="flex-1 py-4 bg-[#1B4332] text-white rounded-2xl font-black shadow-xl shadow-green-900/20">등록 완료</button>

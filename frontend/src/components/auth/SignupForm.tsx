@@ -30,7 +30,7 @@ function BirthDropdowns({ year, month, day, onYearChange, onMonthChange, onDayCh
           </option>
         ))}
       </select>
-      <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-rgba(26,43,39,0.3) transition-colors group-hover:text-[#E8A838]">
+      <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none transition-colors group-hover:text-[#E8A838]" style={{ color: 'rgba(26,43,39,0.3)' }}>
         <ChevronDown size={14} />
       </div>
     </div>

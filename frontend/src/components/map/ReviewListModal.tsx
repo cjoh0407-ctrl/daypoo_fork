@@ -125,12 +125,12 @@ export function ReviewListModal({ toilet, onClose }: ReviewListModalProps) {
                       <Star
                         key={i}
                         size={18}
-                        fill={i <= Math.round(summaryData.avgRating) ? '#E8A838' : 'none'}
-                        stroke={i <= Math.round(summaryData.avgRating) ? '#E8A838' : '#d4e8db'}
+                        fill={i <= Math.round(summaryData?.avgRating ?? 0) ? '#E8A838' : 'none'}
+                        stroke={i <= Math.round(summaryData?.avgRating ?? 0) ? '#E8A838' : '#d4e8db'}
                       />
                     ))}
                     <span className="ml-1.5 text-base font-bold" style={{ color: '#1B4332' }}>
-                      {summaryData.avgRating.toFixed(1)}
+                      {(summaryData?.avgRating ?? 0).toFixed(1)}
                     </span>
                   </div>
                   <span className="text-sm" style={{ color: '#7a9e8a' }}>
@@ -140,9 +140,9 @@ export function ReviewListModal({ toilet, onClose }: ReviewListModalProps) {
               )}
 
               {/* 리뷰 목록 */}
-              {reviewData && reviewData.content.length > 0 ? (
+              {reviewData && reviewData.contents && reviewData.contents.length > 0 ? (
                 <div className="space-y-4">
-                  {reviewData.content.map((review) => (
+                  {reviewData.contents.map((review) => (
                     <div
                       key={review.id}
                       className="pb-4 border-b last:border-0"
@@ -204,7 +204,7 @@ export function ReviewListModal({ toilet, onClose }: ReviewListModalProps) {
         </div>
 
         {/* 페이지네이션 */}
-        {reviewData && reviewData.totalPages > 1 && (
+        {reviewData && typeof reviewData.totalPages === 'number' && reviewData.totalPages > 1 && (
           <div className="px-6 py-4 bg-[#fcfdfc] border-t border-[#eef5f0] flex items-center justify-between">
             <button
               onClick={handlePrevPage}

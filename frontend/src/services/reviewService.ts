@@ -25,13 +25,11 @@ export interface ToiletReviewSummaryResponse {
 }
 
 export interface ToiletReviewPageResponse {
-  content: ToiletReviewResponse[];
+  contents: ToiletReviewResponse[];
   totalElements: number;
   totalPages: number;
-  size: number;
-  number: number; // current page
-  first: boolean;
-  last: boolean;
+  currentPage: number;
+  hasNext: boolean;
 }
 
 // ── API 함수 ──────────────────────────────────────────────────────

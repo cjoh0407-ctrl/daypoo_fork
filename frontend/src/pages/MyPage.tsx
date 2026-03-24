@@ -1510,12 +1510,12 @@ function SettingsTab({ user, refreshUser, logout, deleteMe }: {
                  '탈퇴를 진행하시려면 본인 확인을 위해 현재 비밀번호를 입력해주세요.'}
               </p>
               
-              <input 
+              <input
                 type={modalType === 'nickname' ? 'text' : 'password'}
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 placeholder={modalType === 'nickname' ? '닉네임 입력' : '비밀번호 입력'}
-                className="w-full p-5 bg-gray-50 border border-gray-100 rounded-[20px] mb-8 outline-none focus:border-emerald-500/30 font-black text-lg text-[#1A2B27] placeholder:text-gray-300"
+                className="w-full p-5 bg-gray-50 border border-gray-100 rounded-[20px] mb-8 outline-none focus:border-emerald-500/30 font-black text-lg text-[#1A2B27] placeholder:text-gray-400"
               />
               
               <div className="flex gap-3">

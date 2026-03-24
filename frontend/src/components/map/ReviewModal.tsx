@@ -148,7 +148,7 @@ export function ReviewModal({ toilet, onClose, onSuccess }: ReviewModalProps) {
               onChange={(e) => setComment(e.target.value)}
               placeholder="다른 분들에게 도움이 되는 솔직한 후기를 남겨주세요 😊"
               maxLength={500}
-              className="w-full h-32 px-4 py-3 rounded-2xl border-2 border-[#eef5f0] resize-none focus:outline-none focus:border-[#1B4332] transition-colors text-sm"
+              className="w-full h-32 px-4 py-3 rounded-2xl border-2 border-[#eef5f0] resize-none focus:outline-none focus:border-[#1B4332] transition-colors text-sm placeholder:text-[#7a9e8a]"
               style={{ color: '#1a2b22' }}
             />
             <div className="flex justify-end mt-1">

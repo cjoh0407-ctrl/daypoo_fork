@@ -27,7 +27,7 @@ export function MapPage({ openAuth }: { openAuth: (mode: 'login' | 'signup') => 
   const [checkInTime, setCheckInTime] = useState<number | null>(null);
 
   // 데이터 훅
-  const { toilets, toggleFavorite, markVisited } = useToilets({ 
+  const { toilets, toggleFavorite, markVisited, refetch } = useToilets({ 
     lat: 37.5172, 
     lng: 127.0473, 
     bounds,
@@ -175,7 +175,7 @@ export function MapPage({ openAuth }: { openAuth: (mode: 'login' | 'signup') => 
         <AnimatePresence>
           {selectedToilet && pos && (
             <div className="absolute inset-0 z-[1001] pointer-events-none">
-              <div className="absolute pointer-events-auto" style={{ left: '50%', top: '75%', transform: 'translate(-50%, -50%)' }}>
+              <div className="absolute pointer-events-auto" style={{ left: '50%', top: '50%', transform: 'translate(-50%, -50%)' }}>
                 <ToiletPopup
                   toilet={selectedToilet}
                   onClose={() => handleSelectToilet(null)}
@@ -183,6 +183,8 @@ export function MapPage({ openAuth }: { openAuth: (mode: 'login' | 'signup') => 
                   onVisitRequest={handleVisitRequest}
                   userPosition={pos}
                   distanceInMeters={calculateDistance(pos.lat, pos.lng, selectedToilet.lat, selectedToilet.lng)}
+                  openAuth={openAuth}
+                  onReviewUpdate={refetch}
                 />
               </div>
             </div>

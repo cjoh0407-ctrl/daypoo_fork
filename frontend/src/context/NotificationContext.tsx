@@ -1,7 +1,8 @@
-import React, { createContext, useContext, useState, useCallback, useMemo, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useCallback, useMemo, useEffect, ReactNode } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { NotificationToast, ToastType } from '../components/NotificationToast';
 import { api } from '../services/apiClient';
+import { useAuth } from './AuthContext';
 
 interface Toast {
   id: string;
@@ -35,9 +36,17 @@ const NotificationContext = createContext<NotificationContextType | undefined>(u
 export function NotificationProvider({ children }: { children: ReactNode }) {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [toasts, setToasts] = useState<Toast[]>([]);
+  const auth = useAuth();
 
-  const unreadCount = useMemo(() => 
-    notifications.filter(n => !n.isRead).length
+  // 로그아웃 시 알림 상태 초기화
+  useEffect(() => {
+    if (!auth.user) {
+      setNotifications([]);
+    }
+  }, [auth.user]);
+
+  const unreadCount = useMemo(() =>
+    Array.isArray(notifications) ? notifications.filter(n => !n.isRead).length : 0
   , [notifications]);
 
   const showToast = useCallback((title: string, message: string, type: ToastType = 'info', icon?: string) => {
@@ -53,7 +62,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   const fetchNotifications = useCallback(async () => {
     try {
       const data = await api.get('/notifications');
-      setNotifications(data || []);
+      setNotifications(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error('알림 목록 가져오기 실패:', err);
     }
@@ -62,21 +71,21 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   const markAllAsRead = useCallback(async () => {
     try {
       await api.post('/notifications/mark-all-read', {});
-      setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+      setNotifications(prev => Array.isArray(prev) ? prev.map(n => ({ ...n, isRead: true })) : []);
     } catch (err) {
       console.error('알림 읽음 처리 실패:', err);
       // 낙관적 업데이트 실패 시 원래대로 돌릴 수 있지만 간단히 로컬만 변경으로도 대응
-      setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+      setNotifications(prev => Array.isArray(prev) ? prev.map(n => ({ ...n, isRead: true })) : []);
     }
   }, []);
 
   const deleteNotification = useCallback(async (id: number) => {
     try {
       await api.delete(`/notifications/${id}`);
-      setNotifications(prev => prev.filter(n => n.id !== id));
+      setNotifications(prev => Array.isArray(prev) ? prev.filter(n => n.id !== id) : []);
     } catch (err) {
       console.error('알림 삭제 실패:', err);
-      setNotifications(prev => prev.filter(n => n.id !== id));
+      setNotifications(prev => Array.isArray(prev) ? prev.filter(n => n.id !== id) : []);
     }
   }, []);
 

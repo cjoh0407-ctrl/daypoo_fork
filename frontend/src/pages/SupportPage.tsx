@@ -233,23 +233,23 @@ function ModernInquiryForm({ onSuccess }: { onSuccess: () => void }) {
 
           <div className="space-y-4">
              <label className="text-[12px] font-black black text-[#5C6B68]/50 uppercase tracking-[0.15em] ml-1">제목</label>
-             <input 
+             <input
                type="text"
                value={formData.title}
                onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
                placeholder="문의 제목을 입력해주세요"
-               className="w-full bg-[#f8faf9] border border-black/[0.04] rounded-2xl p-5 text-[16px] font-bold text-[#1A2B27] outline-none focus:border-[#52B788]/50 focus:bg-white transition-all shadow-sm"
+               className="w-full bg-[#f8faf9] border border-black/[0.04] rounded-2xl p-5 text-[16px] font-bold text-[#1A2B27] outline-none focus:border-[#52B788]/50 focus:bg-white transition-all shadow-sm placeholder:text-[#5C6B68]/40"
              />
           </div>
 
           <div className="space-y-4">
              <label className="text-[12px] font-black black text-[#5C6B68]/50 uppercase tracking-[0.15em] ml-1">상세 내용</label>
-             <textarea 
+             <textarea
                value={formData.content}
                onChange={(e) => setFormData(prev => ({ ...prev, content: e.target.value }))}
                placeholder="구체적인 상황을 알려주시면 빠르게 답변해 드릴게요 (최소 10자)"
                rows={8}
-               className="w-full bg-[#f8faf9] border border-black/[0.04] rounded-2xl p-6 text-[16px] font-bold text-[#1A2B27] outline-none focus:border-[#52B788]/50 focus:bg-white transition-all shadow-sm resize-none"
+               className="w-full bg-[#f8faf9] border border-black/[0.04] rounded-2xl p-6 text-[16px] font-bold text-[#1A2B27] outline-none focus:border-[#52B788]/50 focus:bg-white transition-all shadow-sm resize-none placeholder:text-[#5C6B68]/40"
              />
              <div className="flex justify-between items-center px-1 text-[12px]">
                <span className={formData.content.length < 10 ? "text-red-400" : "text-[#52B788] font-bold"}>{formData.content.length}자 입력함</span>

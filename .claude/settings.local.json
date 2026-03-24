@@ -13,7 +13,9 @@
       "Bash(grep -E \"\\\\.\\(java\\)$\")",
       "Bash(grep -v \"^$\")",
       "Bash(grep -r \"class.*Service\\\\|@Service\\\\|@Component\" /Users/changjun/Desktop/project/daypoo/backend/src/main/java/com/daypoo/api/service/*.java)",
-      "Bash(ls /Users/changjun/Desktop/project/daypoo/backend/build.gradle*)"
+      "Bash(ls /Users/changjun/Desktop/project/daypoo/backend/build.gradle*)",
+      "Bash(git diff:*)",
+      "WebFetch(domain:framer.com)"
     ]
   }
 }

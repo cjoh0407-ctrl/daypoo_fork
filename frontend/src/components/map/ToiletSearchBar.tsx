@@ -14,12 +14,12 @@ export function ToiletSearchBar({ searchQuery, onSearchChange, filter, onFilterC
     <div className="absolute top-[120px] left-1/2 -translate-x-1/2 z-20 w-full px-4" style={{ maxWidth: '600px' }}>
       <div className="flex items-center gap-2 px-4 py-2.5 rounded-2xl" style={{ border: '1.5px solid transparent', background: '#fff', boxShadow: '0 4px 24px rgba(27,67,50,0.15)' }}>
         <SearchIcon size={16} style={{ color: '#7a9e8a' }} />
-        <input 
-          value={searchQuery} 
-          onChange={(e) => onSearchChange(e.target.value)} 
-          placeholder="화장실 검색" 
-          className="flex-1 outline-none text-sm" 
-          style={{ background: 'transparent' }} 
+        <input
+          value={searchQuery}
+          onChange={(e) => onSearchChange(e.target.value)}
+          placeholder="화장실 검색"
+          className="flex-1 outline-none text-sm placeholder:text-[#7a9e8a]/60"
+          style={{ background: 'transparent', color: '#1A2B27' }}
         />
       </div>
       <div className="flex gap-2 mt-2 justify-center">
