@@ -3,10 +3,12 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { CheckCircle2, Loader2, Sparkles, Home } from 'lucide-react';
 import { api } from '../services/apiClient';
+import { useAuth } from '../context/AuthContext';
 
 export function PaymentSuccessPage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { refreshUser } = useAuth();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const calledRef = useRef(false); // 중복 호출 방지
@@ -14,6 +16,17 @@ export function PaymentSuccessPage() {
   const paymentKey = searchParams.get('paymentKey');
   const orderId = searchParams.get('orderId');
   const amount = searchParams.get('amount');
+
+  // 결제 유형 판단 (orderId 기반)
+  const getPaymentType = () => {
+    if (!orderId) return 'POINT';
+    const upperOrderId = orderId.toUpperCase();
+    if (upperOrderId.includes('PREMIUM')) return 'PREMIUM';
+    if (upperOrderId.includes('PRO')) return 'PRO';
+    return 'POINT';
+  };
+
+  const paymentType = getPaymentType();
 
   useEffect(() => {
     // React Strict Mode 중복 실행 방지
@@ -34,6 +47,9 @@ export function PaymentSuccessPage() {
           amount: Number(amount),
         });
 
+        // 사용자 정보 새로고침 (isPro, subscription 업데이트)
+        await refreshUser();
+
         setLoading(false);
       } catch (err: any) {
         console.error('Payment verification failed:', err);
@@ -41,22 +57,24 @@ export function PaymentSuccessPage() {
         const errorMsg = err.message || '';
 
         // "이미 처리중인 요청" = 이전 요청이 이미 성공적으로 처리 중 → 성공 처리
-        if (errorMsg.includes('ALREADY_PROCESSING_REQUEST') || 
+        if (errorMsg.includes('ALREADY_PROCESSING_REQUEST') ||
             errorMsg.includes('이미 처리중')) {
           console.warn('중복 요청 감지 — 이미 처리 중이므로 성공 처리합니다.');
+          await refreshUser();
           setLoading(false);
           return;
         }
 
         // 토스 테스트 모드 에러도 성공 처리
-        const isTestModeError = 
-          errorMsg.includes('401') || 
+        const isTestModeError =
+          errorMsg.includes('401') ||
           errorMsg.includes('Unauthorized') ||
           errorMsg.includes('INVALID_API_KEY') ||
           errorMsg.includes('NOT_FOUND_PAYMENT');
-        
+
         if (isTestModeError && paymentKey) {
           console.warn('테스트 모드 결제 — confirm 실패했지만 결제 자체는 완료됨.');
+          await refreshUser();
           setLoading(false);
           return;
         }
@@ -117,11 +135,33 @@ export function PaymentSuccessPage() {
 
             <h2 className="text-3xl font-black text-[#1B4332] mb-3">결제 성공!</h2>
             <p className="text-gray-500 font-medium mb-10">
-              포인트 충전이 정상적으로 완료되었습니다.<br />
-              <span className="text-[#52b788] font-bold">{Number(amount).toLocaleString()}P</span>가 지급되었습니다.
+              {paymentType === 'PRO' ? (
+                <>
+                  <span className="text-[#E8A838] font-black">PRO 멤버십</span> 구독이 완료되었습니다!<br />
+                  7일/30일 리포트를 이용하실 수 있습니다.
+                </>
+              ) : paymentType === 'PREMIUM' ? (
+                <>
+                  <span className="text-[#1B4332] font-black">PREMIUM 멤버십</span> 구독이 완료되었습니다!<br />
+                  모든 프리미엄 기능을 이용하실 수 있습니다.
+                </>
+              ) : (
+                <>
+                  포인트 충전이 정상적으로 완료되었습니다.<br />
+                  <span className="text-[#52b788] font-bold">{Number(amount).toLocaleString()}P</span>가 지급되었습니다.
+                </>
+              )}
             </p>
 
             <div className="bg-gray-50 rounded-3xl p-6 mb-8 text-left space-y-3">
+              {(paymentType === 'PRO' || paymentType === 'PREMIUM') && (
+                <div className="flex justify-between text-sm font-medium">
+                  <span className="text-gray-400">구독 플랜</span>
+                  <span className={`font-black ${paymentType === 'PRO' ? 'text-[#E8A838]' : 'text-[#1B4332]'}`}>
+                    {paymentType} 멤버십
+                  </span>
+                </div>
+              )}
               <div className="flex justify-between text-sm font-medium">
                 <span className="text-gray-400">주문 번호</span>
                 <span className="text-[#1A2B27]">{orderId?.slice(0, 15)}...</span>

@@ -90,9 +90,9 @@ export function PremiumPage({ openAuth }: { openAuth: (mode: 'login' | 'signup')
       const tossPayments = await loadTossPayments(clientKey);
       
       const amountValue = parseInt(plan.price.replace(/[^0-9]/g, ''));
-      
+
       const emailPrefix = user.email ? user.email.split('@')[0] : 'ANON';
-      const orderId = `POOPMAP_${Date.now()}_${emailPrefix}`;
+      const orderId = `POOPMAP_${Date.now()}_${plan.id}_${emailPrefix}`;
 
       await tossPayments.requestPayment('카드', {
         amount: amountValue,

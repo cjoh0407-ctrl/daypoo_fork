@@ -1,17 +1,9 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { api } from '../services/apiClient';
-
-interface User {
-  email: string;
-  nickname: string;
-  role: string;
-  points: number;
-  level: number;
-  exp: number;
-}
+import { UserResponse } from '../types/api';
 
 interface AuthContextType {
-  user: User | null;
+  user: UserResponse | null;
   loading: boolean;
   login: (accessToken: string, refreshToken: string) => Promise<void>;
   logout: () => Promise<void>;
@@ -23,7 +15,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<UserResponse | null>(null);
   const [loading, setLoading] = useState(true);
 
   const refreshUser = useCallback(async () => {
@@ -47,7 +39,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         nickname: userData.nickname,
         role: userData.role
       });
-      setUser(userData as User);
+      setUser(userData as UserResponse);
     } catch (err: any) {
       console.error('[AuthContext] ❌ Failed to fetch user:', {
         message: err.message,

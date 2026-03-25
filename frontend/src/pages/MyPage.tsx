@@ -1099,8 +1099,8 @@ function ReportTab({ records = [] }: { records?: any[] }) {
   const { user } = useAuth();
   const [reportOpen, setReportOpen] = useState(false);
   
-  // 권한 확인 (ROLE_PRO, ROLE_PREMIUM, ROLE_ADMIN은 모든 리포트 가능)
-  const isPro = user?.role && ['ROLE_PRO', 'ROLE_PREMIUM', 'ROLE_ADMIN'].includes(user.role);
+  // 권한 확인 (PRO 또는 PREMIUM 멤버십 확인)
+  const isPro = user?.isPro || false;
 
   const displayData = records.length > 0 
     ? records.slice(-7).map((r, i) => ({

@@ -40,7 +40,7 @@ public record UserResponse(
         .level(user.getLevel())
         .exp(user.getExp())
         .points(user.getPoints())
-        .birthDate(user.getBirthDate() != null ? user.getBirthDate().toString() : null)
+        .birthDate(null)
         .createdAt(user.getCreatedAt() != null ? user.getCreatedAt().toString() : null)
         .equippedTitleId(user.getEquippedTitleId())
         .equippedTitleName(equippedTitleName)

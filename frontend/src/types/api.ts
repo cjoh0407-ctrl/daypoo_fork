@@ -1,3 +1,5 @@
+import { SubscriptionResponse } from './subscription';
+
 /**
  * API 공통 응답 구조
  */
@@ -22,12 +24,19 @@ export interface AuthResponse {
  * 사용자 정보 응답
  */
 export interface UserResponse {
+  id: number;
   email: string;
   nickname: string;
   role: string;
-  points: number;
   level: number;
   exp: number;
+  points: number;
+  equippedTitleId?: number | null;
+  equippedTitleName?: string | null;
+  isPro?: boolean;
+  subscription?: SubscriptionResponse | null;
+  birthDate?: string | null;
+  createdAt?: string;
 }
 
 /**
