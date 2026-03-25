@@ -1,5 +1,6 @@
 package com.daypoo.api.simulation.seeder;
 
+import com.daypoo.api.simulation.bot.BotUserPool;
 import com.daypoo.api.simulation.config.SimulationProperties;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
@@ -11,12 +12,14 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.annotation.Order;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 @Slf4j
 @Component
+@Order(10)
 @Profile("simulation")
 @RequiredArgsConstructor
 public class BulkDataSeeder implements CommandLineRunner {
@@ -25,6 +28,7 @@ public class BulkDataSeeder implements CommandLineRunner {
   private final BulkInsertHelper insertHelper;
   private final JdbcTemplate jdbcTemplate;
   private final PasswordEncoder passwordEncoder;
+  private final BotUserPool botUserPool;
   private final Random random = new Random();
 
   @Override
@@ -69,6 +73,9 @@ public class BulkDataSeeder implements CommandLineRunner {
 
       log.info("Phase 3: Updating Toilet Statistics");
       insertHelper.updateToiletStats();
+
+      log.info("Phase 4: Refreshing BotUserPool...");
+      botUserPool.refresh();
 
       log.info("✅ Bulk Data Seeding Completed!");
     } catch (Exception e) {
