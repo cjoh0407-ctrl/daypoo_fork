@@ -35,15 +35,8 @@ public class AuthService {
   private final JwtProvider jwtProvider;
   private final EmailService emailService;
   private final StringRedisTemplate redisTemplate;
-  private final NotificationRepository notificationRepository;
-  private final InventoryRepository inventoryRepository;
-  private final UserTitleRepository userTitleRepository;
-  private final PooRecordRepository pooRecordRepository;
-  private final PaymentRepository paymentRepository;
-  private final InquiryRepository inquiryRepository;
-  private final ToiletReviewRepository toiletReviewRepository;
   private final TitleRepository titleRepository;
-  private final FavoriteRepository favoriteRepository;
+  private final UserDeletionService userDeletionService;
 
   @Transactional
   public TokenResponse socialSignUp(SocialSignUpRequest request) {
@@ -303,17 +296,8 @@ public class AuthService {
       throw new BusinessException(ErrorCode.INVALID_PASSWORD);
     }
 
-    // 연관 데이터 명시적 삭제 (FK 제약 조건 오류 방지)
-    notificationRepository.deleteAllByUser(user);
-    inventoryRepository.deleteAllByUser(user);
-    userTitleRepository.deleteAllByUser(user);
-    pooRecordRepository.deleteAllByUser(user);
-    paymentRepository.deleteAllByUser(user);
-    inquiryRepository.deleteAllByUser(user);
-    toiletReviewRepository.deleteAllByUser(user);
-    favoriteRepository.deleteAllByUser(user);
-
-    userRepository.delete(user);
+    // 연관 데이터 통합 삭제 서비스 호출
+    userDeletionService.deleteUserAndRelatedData(user);
     log.info("User {} successfully withdrawn", email);
   }
 }

@@ -44,4 +44,7 @@ public interface SubscriptionRepository extends JpaRepository<Subscription, Long
 
   /** 특정 상태의 전체 구독 수 (통계용) */
   long countByStatus(SubscriptionStatus status);
+
+  /** 특정 유저의 모든 구독 삭제 (회원 탈퇴용) */
+  void deleteAllByUser(User user);
 }

@@ -31,6 +31,7 @@ public class AdminManagementService {
   private final InventoryRepository inventoryRepository;
   private final PaymentRepository paymentRepository;
   private final PooRecordRepository pooRecordRepository;
+  private final UserDeletionService userDeletionService;
 
   // --- 유저 관리 ---
 
@@ -119,8 +120,8 @@ public class AdminManagementService {
       throw new BusinessException(ErrorCode.ADMIN_CANNOT_DELETE_SELF);
     }
 
-    // 물리적 삭제 (CASCADE 설정에 따라 관련 데이터도 함께 삭제됨)
-    userRepository.delete(user);
+    // 물리적 삭제 (FK 의존성 순서에 맞춰 연관 데이터와 함께 삭제)
+    userDeletionService.deleteUserAndRelatedData(user);
     log.info("Admin deleted user: userId={}, email={}", userId, user.getEmail());
   }
 
