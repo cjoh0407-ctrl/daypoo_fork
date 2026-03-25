@@ -10,10 +10,7 @@ import lombok.NoArgsConstructor;
 @Entity
 @Table(
     name = "favorites",
-    uniqueConstraints = {
-        @UniqueConstraint(columnNames = {"user_id", "toilet_id"})
-    }
-)
+    uniqueConstraints = {@UniqueConstraint(columnNames = {"user_id", "toilet_id"})})
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Favorite extends BaseTimeEntity {

@@ -329,10 +329,10 @@ const DashboardView = ({ stats, loading, setActiveTab }: { stats: AdminStatsResp
              <div className="relative z-10">
                 <div className="flex items-center justify-between mb-4">
                    <div className="p-2 rounded-xl bg-[#1B4332]/10 text-[#1B4332]"><Shield size={20} /></div>
-                   <span className="text-[10px] font-black text-black/30 uppercase tracking-widest">Engine Healthy</span>
+                   <span className="text-[10px] font-black text-black uppercase tracking-widest">Engine Healthy</span>
                 </div>
                 <h4 className="text-lg font-black mb-1 text-black">시스템 최적화</h4>
-                <p className="text-xs font-bold text-black/50 mb-6">리소스 사용량 82% 임계치 접근</p>
+                <p className="text-xs font-bold text-black mb-6">리소스 사용량 82% 임계치 접근</p>
                 <button 
                   onClick={() => setActiveTab('system')}
                   className="w-full py-3 bg-[#1B4332] text-white rounded-xl text-[11px] font-black transition-all hover:bg-[#E8A838] shadow-lg shadow-green-900/20"
@@ -477,41 +477,29 @@ const UsersView = () => {
       alert('역할이 변경되었습니다.');
       setShowUserModal(false);
       fetchUsers(); // 목록 새로고침
-    } catch (error) {
+    } catch (error: any) {
       console.error('역할 변경 실패:', error);
       alert('역할 변경에 실패했습니다.');
     }
   };
 
   const handleDeleteUser = async (userId: number, userEmail: string) => {
-    const confirmed = confirm(
-      `정말로 이 사용자를 삭제하시겠습니까?\n\n` +
+    const confirmed = window.confirm(
+      `정말로 이 사용자를 탈퇴시키겠습니까?\n\n` +
       `이메일: ${userEmail}\n\n` +
-      `⚠️ 경고: 이 작업은 되돌릴 수 없으며, 사용자의 모든 데이터가 영구적으로 삭제됩니다.`
+      `⚠️ 경고: 모든 데이터가 영구적으로 삭제되며 복구할 수 없습니다.`
     );
 
     if (!confirmed) return;
 
     try {
       await api.delete(`/admin/users/${userId}`);
-      alert('사용자가 성공적으로 삭제되었습니다.');
+      alert('사용자가 성공적으로 탈퇴되었습니다.');
       setShowUserModal(false);
       fetchUsers(); // 목록 새로고침
     } catch (error: any) {
-      console.error('사용자 삭제 실패 상세:', error);
-      
-      // 🚀 구체적인 에러 메시지 처리
-      let errorMsg = '사용자 삭제에 실패했습니다.';
-      
-      if (error.status === 500) {
-        errorMsg = '서버 내부 오류가 발생했습니다.\n\n해당 사용자의 활동 내역(리뷰, 방문 기록 등)이 DB 제약 조건으로 인해 삭제되지 않을 수 있습니다. 관리자에게 문의하세요.';
-      } else if (error.response?.data?.message) {
-        errorMsg = error.response.data.message;
-      } else if (error.message) {
-        errorMsg = error.message;
-      }
-      
-      alert(`삭제 실패: ${errorMsg}`);
+      console.error('사용자 삭제 실패:', error);
+      alert('탈퇴 처리 중 오류가 발생했습니다. (권한 또는 데이터 제약 조건 확인 필요)');
     }
   };
 
@@ -520,7 +508,7 @@ const UsersView = () => {
       year: 'numeric',
       month: '2-digit',
       day: '2-digit'
-    }).replace(/\. /g, '.').replace('.', '');
+    }).replace(/\. /g, '.');
   };
 
   const getRoleBadge = (role: Role) => {
@@ -715,33 +703,35 @@ const UsersView = () => {
 
                   {/* Role Change */}
                   <div className="bg-black/[0.02] rounded-2xl p-6">
-                    <p className="text-xs font-black uppercase tracking-widest text-black/40 mb-4">역할 변경</p>
-                    <div className="flex items-center gap-4">
-                      <div className="flex-1">
-                        <p className="text-sm font-bold text-black/60 mb-2">현재 역할</p>
-                        <span className={`inline-block text-xs font-black px-3 py-1.5 rounded-lg ${
-                          userDetail.role === 'ROLE_ADMIN'
-                            ? 'bg-red-100 text-red-600'
-                            : 'bg-black/5 text-black/40'
-                        }`}>
-                          {userDetail.role === 'ROLE_ADMIN' ? 'ADMIN' : 'USER'}
-                        </span>
-                      </div>
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => handleUpdateUserRole(userDetail.id, 'ROLE_USER')}
-                          disabled={userDetail.role === 'ROLE_USER'}
-                          className="px-4 py-2 rounded-xl bg-black/5 text-black/60 text-xs font-black hover:bg-black/10 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                        >
-                          USER로 변경
-                        </button>
-                        <button
-                          onClick={() => handleUpdateUserRole(userDetail.id, 'ROLE_ADMIN')}
-                          disabled={userDetail.role === 'ROLE_ADMIN'}
-                          className="px-4 py-2 rounded-xl bg-red-100 text-red-600 text-xs font-black hover:bg-red-200 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                        >
-                          ADMIN으로 변경
-                        </button>
+                    <p className="text-xs font-black uppercase tracking-widest text-black/40 mb-4">계정 설정 및 관리</p>
+                    <div className="flex flex-col gap-6">
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          <p className="text-sm font-bold text-black/60 mb-2">현재 역할</p>
+                          <span className={`inline-block text-xs font-black px-3 py-1.5 rounded-lg ${
+                            userDetail.role === 'ROLE_ADMIN'
+                              ? 'bg-red-100 text-red-600'
+                              : 'bg-black/5 text-black/40'
+                          }`}>
+                            {userDetail.role === 'ROLE_ADMIN' ? 'ADMIN' : 'USER'}
+                          </span>
+                        </div>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => handleUpdateUserRole(userDetail.id, 'ROLE_USER')}
+                            disabled={userDetail.role === 'ROLE_USER'}
+                            className="px-4 py-2 rounded-xl bg-black/5 text-black/60 text-xs font-black hover:bg-black/10 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                          >
+                            USER로 변경
+                          </button>
+                          <button
+                            onClick={() => handleUpdateUserRole(userDetail.id, 'ROLE_ADMIN')}
+                            disabled={userDetail.role === 'ROLE_ADMIN'}
+                            className="px-4 py-2 rounded-xl bg-red-100 text-red-600 text-xs font-black hover:bg-red-200 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                          >
+                            ADMIN으로 변경
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -1531,23 +1521,140 @@ const StoreView = ({ setActiveTab }: { setActiveTab: (tab: AdminTab) => void }) 
     }
   };
 
+  const [syncingStore, setSyncingStore] = useState(false);
+  const [generatingItems, setGeneratingItems] = useState(false);
+
+  const handleSyncDefaultItems = async () => {
+    if (syncingStore) return;
+    const confirmed = confirm('마이페이지의 기본 아바타와 칭호 데이터를 상점에 동기화하시겠습니까?\n기존에 동일한 이름의 아이템이 있으면 중복 생성될 수 있습니다.');
+    if (!confirmed) return;
+
+    setSyncingStore(true);
+    try {
+      // 1. 아바타 아이템 (헤드, 이펙트, 마커)
+      const avatars = [
+        { name:'황금 왕관', type:'AVATAR', price:0, description:'[헤드] 👑 기품 있는 국왕의 상징' },
+        { name:'마법사 모자', type:'AVATAR', price:0, description:'[헤드] 🎩 신비로운 마력을 지닌 모자' },
+        { name:'핑크 리본', type:'AVATAR', price:300, description:'[헤드] 🎀 러블리한 감성의 핑크 리본' },
+        { name:'힙합 스냅백', type:'AVATAR', price:450, description:'[헤드] 🧢 스트릿 감성이 넘치는 스냅백' },
+        { name:'황금 오라', type:'EFFECT', price:0, description:'[이펙트] ✨ 몸 주변에서 빛나는 황금빛 기운' },
+        { name:'별빛 오라', type:'EFFECT', price:500, description:'[이펙트] 🌟 밤하늘의 별을 담은 오라' },
+        { name:'다이아 마커', type:'EFFECT', price:1200, description:'[마커] 💎 지도 위에서 빛나는 다이아몬드' },
+        { name:'무지개 마커', type:'EFFECT', price:2500, description:'[마커] 🌈 화려한 무지개 색상의 이동 경로' },
+      ];
+
+      // 2. 칭호 아이템
+      const titles = [
+        { name:'전설의 쾌변가', type:'TITLE', price:0, description:'전설적인 기록을 남긴 자' },
+        { name:'화장실 정복자', type:'TITLE', price:0, description:'모든 화장실을 섭렵한 정복자' },
+        { name:'쾌변 마스터', type:'TITLE', price:0, description:'장 건강의 끝판왕' },
+        { name:'섬유질왕', type:'TITLE', price:0, description:'야채를 사랑하는 건강 전도사' },
+      ];
+
+      const allItems = [...avatars, ...titles];
+      
+      for (const item of allItems) {
+        await api.post('/admin/shop/items', {
+          ...item,
+          imageUrl: null
+        });
+      }
+
+      alert('기본 아이템 동기화가 완료되었습니다.');
+      fetchItems();
+    } catch (error) {
+      console.error('동기화 실패:', error);
+      alert('동기화 중 오류가 발생했습니다.');
+    } finally {
+      setSyncingStore(false);
+    }
+  };
+
+  const handleGenerateTestData = async () => {
+    if (generatingItems) return;
+    const confirmed = confirm('20개의 프리미엄 상점 테스트 데이터를 생성하시겠습니까?\n이 작업은 다소 시간이 걸릴 수 있습니다.');
+    if (!confirmed) return;
+
+    setGeneratingItems(true);
+    try {
+      const avatarEmojis = ['👑', '🎩', '🎀', '🧢', '🎓', '🪖', '🪓', '🦊', '🐱', '🐶', '🦄', '🌈', '🔥', '❄️', '💎', '🌟', '🍀', '🍎', '🍔', '🚀'];
+      const effectEmojis = ['✨', '🌟', '💫', '🔥', '❄️', '🌊', '💨', '⚡', '🌈', '🌀', '🌌', '🦋', '🐝', '🍁', '🌸'];
+      const titleEmojis = ['🏆', '🥇', '🏅', '🎖', '👑', '⭐️', '✨', '💩', '🔥', '💎'];
+
+      const testItems = [];
+      
+      // 1. 아바타 8개
+      for (let i = 0; i < 8; i++) {
+        const emoji = avatarEmojis[i % avatarEmojis.length];
+        testItems.push({
+          name: `${emoji} 테스트 아바타 ${i + 1}`,
+          type: 'AVATAR',
+          price: Math.floor(Math.random() * 20) * 100 + 500,
+          description: `[헤드] 멋진 ${emoji} 스타일의 아바타 아이템입니다.`,
+          imageUrl: emoji
+        });
+      }
+
+      // 2. 이펙트 6개
+      for (let i = 0; i < 6; i++) {
+        const emoji = effectEmojis[i % effectEmojis.length];
+        testItems.push({
+          name: `${emoji} 테스트 이펙트 ${i + 1}`,
+          type: 'EFFECT',
+          price: Math.floor(Math.random() * 30) * 100 + 1000,
+          description: `[이펙트] 화려한 ${emoji} 효과를 경험해보세요.`,
+          imageUrl: emoji
+        });
+      }
+
+      // 3. 칭호 6개
+      for (let i = 0; i < 6; i++) {
+        const emoji = titleEmojis[i % titleEmojis.length];
+        testItems.push({
+          name: `${emoji} 테스트 칭호 ${i + 1}`,
+          type: 'TITLE',
+          price: Math.floor(Math.random() * 50) * 100,
+          description: `${emoji} 등급의 명예로운 칭호입니다.`,
+          imageUrl: emoji
+        });
+      }
+
+      for (const item of testItems) {
+        await api.post('/admin/shop/items', {
+          ...item
+        });
+      }
+
+      alert('20개의 다채로운 테스트 데이터 생성이 완료되었습니다!');
+      fetchItems();
+    } catch (error) {
+      console.error('테스트 데이터 생성 실패:', error);
+      alert('데이터 생성 중 오류가 발생했습니다.');
+    } finally {
+      setGeneratingItems(false);
+    }
+  };
+
   const getItemTypeColor = (type: ItemType) => {
     switch (type) {
       case 'TITLE': return '#E8A838';
       case 'AVATAR': return '#3B82F6';
       case 'EFFECT': return '#52b788';
-      case 'AVATAR_SKIN': return '#8B5CF6';
-      case 'MARKER_SKIN': return '#F59E0B';
       default: return '#1B4332';
     }
   };
 
   const getItemTypeLabel = (type: ItemType) => {
     switch (type) {
-      case 'AVATAR_SKIN': return '아바타 스킨';
-      case 'MARKER_SKIN': return '마커 스킨';
+      case 'AVATAR': return '아바타';
+      case 'TITLE': return '칭호';
+      case 'EFFECT': return '효과';
       default: return type;
     }
+  };
+
+  const isEmoji = (str: string) => {
+    return str && str.length <= 4 && /\p{Extended_Pictographic}/u.test(str);
   };
 
   return (
@@ -1559,7 +1666,7 @@ const StoreView = ({ setActiveTab }: { setActiveTab: (tab: AdminTab) => void }) 
                 <span className="font-black text-[#E8A838]">{totalElements}개</span>
              </GlassCard>
              <div className="flex gap-2">
-                {(['ALL', 'AVATAR_SKIN', 'MARKER_SKIN'] as const).map((type) => (
+                {(['ALL', 'AVATAR', 'TITLE', 'EFFECT'] as const).map((type) => (
                    <button
                       key={type}
                       onClick={() => setFilter(type)}
@@ -1572,6 +1679,28 @@ const StoreView = ({ setActiveTab }: { setActiveTab: (tab: AdminTab) => void }) 
                       {type === 'ALL' ? '전체' : getItemTypeLabel(type as ItemType)}
                    </button>
                 ))}
+             </div>
+             <div className="flex gap-2 ml-4">
+                <WaveButtonComponent
+                  onClick={handleSyncDefaultItems}
+                  disabled={syncingStore}
+                  variant="primary"
+                  size="sm"
+                  className="shadow-md"
+                  icon={syncingStore ? <RefreshCw size={14} className="animate-spin" /> : <RefreshCw size={14} />}
+                >
+                  {syncingStore ? '동기화 중...' : '마이페이지 동기화'}
+                </WaveButtonComponent>
+                <WaveButtonComponent
+                  onClick={handleGenerateTestData}
+                  disabled={generatingItems}
+                  variant="accent"
+                  size="sm"
+                  className="shadow-md"
+                  icon={generatingItems ? <RefreshCw size={14} className="animate-spin" /> : <Plus size={14} />}
+                >
+                  {generatingItems ? '생성 중...' : '테스트 아이템 20개 생성'}
+                </WaveButtonComponent>
              </div>
           </div>
           <button onClick={() => setActiveTab('add-item')} className="flex items-center gap-2 px-6 py-3 bg-[#1B4332] text-white rounded-2xl font-black text-xs shadow-xl shadow-green-900/20">
@@ -1596,13 +1725,13 @@ const StoreView = ({ setActiveTab }: { setActiveTab: (tab: AdminTab) => void }) 
                    return (
                       <GlassCard key={item.id} className="group cursor-pointer">
                          <div className="w-full aspect-square rounded-[24px] mb-4 bg-black/[0.02] flex items-center justify-center relative overflow-hidden">
-                            {item.imageUrl ? (
+                            {item.imageUrl && !isEmoji(item.imageUrl) ? (
                                <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover rounded-[24px]" />
                             ) : (
                                <>
                                   <div className="w-16 h-16 rounded-full blur-3xl opacity-20 absolute" style={{ background: color }} />
-                                  <div className="p-6 transition-transform group-hover:scale-110 duration-500">
-                                     <ShoppingBag size={48} style={{ color }} />
+                                  <div className="p-6 transition-transform group-hover:scale-110 duration-500 text-4xl">
+                                     {isEmoji(item.imageUrl) ? item.imageUrl : <ShoppingBag size={48} style={{ color }} />}
                                   </div>
                                </>
                             )}
@@ -1871,7 +2000,7 @@ const SystemView = () => {
 const AddItemView = ({ setActiveTab }: { setActiveTab: (tab: AdminTab) => void }) => {
   const [itemName, setItemName] = useState('');
   const [itemDescription, setItemDescription] = useState('');
-  const [itemType, setItemType] = useState<ItemType>('AVATAR_SKIN');
+  const [itemType, setItemType] = useState<ItemType>('AVATAR');
   const [itemPrice, setItemPrice] = useState<number>(0);
   const [itemImageUrl, setItemImageUrl] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -1904,7 +2033,7 @@ const AddItemView = ({ setActiveTab }: { setActiveTab: (tab: AdminTab) => void }
       // 폼 초기화
       setItemName('');
       setItemDescription('');
-      setItemType('AVATAR_SKIN');
+      setItemType('AVATAR');
       setItemPrice(0);
       setItemImageUrl('');
       // Store 탭으로 이동
@@ -1971,8 +2100,9 @@ const AddItemView = ({ setActiveTab }: { setActiveTab: (tab: AdminTab) => void }
                     onChange={(e) => setItemType(e.target.value as ItemType)}
                     className="w-full bg-black/[0.02] border border-black/5 px-5 py-4 rounded-2xl text-sm font-bold text-black"
                   >
-                    <option value="AVATAR_SKIN">아바타 스킨</option>
-                    <option value="MARKER_SKIN">마커 스킨</option>
+                    <option value="AVATAR">아바타</option>
+                    <option value="TITLE">칭호</option>
+                    <option value="EFFECT">효과</option>
                   </select>
                 </div>
               </div>

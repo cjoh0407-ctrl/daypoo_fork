@@ -50,11 +50,12 @@ public class AdminUserController {
     return ResponseEntity.ok().build();
   }
 
-  @Operation(summary = "유저 삭제 (물리적 삭제)", description = "특정 유저를 데이터베이스에서 영구적으로 삭제합니다. 본인 삭제는 불가능합니다.")
+  @Operation(
+      summary = "유저 삭제 (물리적 삭제)",
+      description = "특정 유저를 데이터베이스에서 영구적으로 삭제합니다. 본인 삭제는 불가능합니다.")
   @DeleteMapping("/{id}")
   public ResponseEntity<Void> deleteUser(
-      @PathVariable Long id,
-      @AuthenticationPrincipal String email) {
+      @PathVariable Long id, @AuthenticationPrincipal String email) {
     adminManagementService.deleteUser(id, email);
     return ResponseEntity.ok().build();
   }

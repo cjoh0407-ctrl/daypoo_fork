@@ -18,7 +18,9 @@ public class FavoriteController {
 
   private final FavoriteService favoriteService;
 
-  @Operation(summary = "즐겨찾기 토글 (추가/삭제)", description = "이미 즐겨찾기 된 경우 삭제하고, 아닌 경우 추가합니다. 결과값으로 추가여부(boolean)를 반환합니다.")
+  @Operation(
+      summary = "즐겨찾기 토글 (추가/삭제)",
+      description = "이미 즐겨찾기 된 경우 삭제하고, 아닌 경우 추가합니다. 결과값으로 추가여부(boolean)를 반환합니다.")
   @PostMapping("/{toiletId}")
   public ResponseEntity<Boolean> toggleFavorite(
       @AuthenticationPrincipal UserDetails userDetails, @PathVariable("toiletId") Long toiletId) {

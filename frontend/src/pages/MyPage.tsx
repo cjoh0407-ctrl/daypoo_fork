@@ -13,18 +13,10 @@ import { api } from '../services/apiClient';
 import { useAuth } from '../context/AuthContext';
 import { MyPageSkeleton } from '../components/LoadingSkeleton';
 import WaveButtonComponent from '../components/WaveButton';
+import { UserResponse } from '../types/api';
 
 // ── 타입 ──────────────────────────────────────────────────────────────
 type TabKey = 'home' | 'collection' | 'report' | 'settings';
-
-interface UserProfile {
-  email: string;
-  nickname: string;
-  points?: number;
-  birthDate?: string | null;
-  createdAt?: string;
-  role?: string;
-}
 
 interface AvatarItem {
   id: string; emoji: string; name: string;
@@ -407,50 +399,41 @@ function DepthDeckCarousel({
         })}
       </div>
 
-      {/* 네비게이션 화살표 + 도트 */}
-      <div className="flex items-center gap-4">
+      {/* 네비게이션 화살표 + 인디케이터 */}
+      <div className="flex items-center gap-6">
         <motion.button
           whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
           onClick={() => goTo(activeIndex - 1)}
           style={{
-            width: '36px', height: '36px', borderRadius: '50%',
+            width: '40px', height: '40px', borderRadius: '50%',
             background: '#fff', border: '1px solid rgba(26,43,39,0.1)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            cursor: 'pointer', boxShadow: '0 2px 8px rgba(26,43,39,0.06)',
+            cursor: 'pointer', boxShadow: '0 4px 12px rgba(26,43,39,0.08)',
           }}
         >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(26,43,39,0.5)" strokeWidth="2.5" strokeLinecap="round">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1B4332" strokeWidth="3" strokeLinecap="round">
             <polyline points="15 18 9 12 15 6" />
           </svg>
         </motion.button>
 
-        {/* 페이지네이션 도트 */}
-        <div className="flex items-center gap-1.5">
-          {cards.map((_, i) => (
-            <motion.button
-              key={i}
-              onClick={() => goTo(i)}
-              animate={{
-                width: i === activeIndex ? '20px' : '6px',
-                background: i === activeIndex ? '#1B4332' : 'rgba(26,43,39,0.15)',
-              }}
-              transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-              style={{ height: '6px', borderRadius: '3px', cursor: 'pointer', border: 'none', padding: 0 }}
-            />
-          ))}
+        {/* 숫자 인디케이터 (과도한 점 방지) */}
+        <div className="flex items-center gap-3 px-4 py-2 rounded-2xl bg-black/[0.03] border border-black/5">
+          <span className="text-sm font-black text-[#1B4332]">{activeIndex + 1}</span>
+          <div className="w-[1px] h-3 bg-black/10" />
+          <span className="text-xs font-bold text-black/30">{cards.length}</span>
         </div>
 
         <motion.button
           whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
           onClick={() => goTo(activeIndex + 1)}
           style={{
-            width: '36px', height: '36px', borderRadius: '50%',
+            width: '40px', height: '40px', borderRadius: '50%',
             background: '#fff', border: '1px solid rgba(26,43,39,0.1)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            cursor: 'pointer', boxShadow: '0 2px 8px rgba(26,43,39,0.06)',
+            cursor: 'pointer', boxShadow: '0 4px 12px rgba(26,43,39,0.08)',
           }}
         >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(26,43,39,0.5)" strokeWidth="2.5" strokeLinecap="round">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1B4332" strokeWidth="3" strokeLinecap="round">
             <polyline points="9 18 15 12 9 6" />
           </svg>
         </motion.button>
@@ -461,8 +444,8 @@ function DepthDeckCarousel({
 
 // ── 히어로 배너 ───────────────────────────────────────────────────────
 function HeroBanner({
-  equippedItem, onAvatarClick, user,
-}: { equippedItem: AvatarItem | null; onAvatarClick: () => void; user: UserProfile | null }) {
+  equippedItem, onAvatarClick, user, records = []
+}: { equippedItem: AvatarItem | null; onAvatarClick: () => void; user: UserResponse | null; records?: any[] }) {
   return (
     <div className="relative overflow-hidden" style={{ background: 'transparent' }}>
       <div className="absolute inset-0 pointer-events-none">
@@ -499,7 +482,7 @@ function HeroBanner({
                     background: 'linear-gradient(135deg, #E8A838 0%, #d4922a 100%)',
                     color: '#1B4332', border: '4px solid #ffffff',
                   }}>
-                  12
+                  {user?.level || 1}
                 </div>
                 <div className="absolute inset-0 -z-10 blur-3xl opacity-40 group-hover:opacity-60 transition-opacity"
                   style={{ background: 'radial-gradient(circle, #E8A838 0%, transparent 70%)' }} />
@@ -527,28 +510,70 @@ function HeroBanner({
               </motion.div>
 
               <motion.div variants={fadeUp(0.15)} className="flex items-center gap-3 mt-3">
-                <div className="relative overflow-hidden rounded-full"
-                  style={{ width: '160px', height: '6px', background: 'rgba(26,43,39,0.08)' }}>
-                  <motion.div
-                    initial={{ width: 0 }} animate={{ width: '68%' }}
-                    transition={{ duration: 1.2, delay: 0.4, ease: [0.16, 1, 0.3, 1] }}
-                    className="absolute inset-y-0 left-0 rounded-full"
-                    style={{ background: '#E8A838' }} />
-                </div>
-                <span className="text-xs font-bold" style={{ color: 'rgba(26,43,39,0.4)' }}>
-                  Lv.12 · 68%
-                </span>
+                {(() => {
+                  const level = user?.level || 1;
+                  const currentExp = user?.exp || 0;
+                  const expForNextLevel = level * 100; // 레벨당 100 경험치 필요
+                  const expPercent = Math.min((currentExp / expForNextLevel) * 100, 100);
+
+                  return (
+                    <>
+                      <div className="relative overflow-hidden rounded-full"
+                        style={{ width: '160px', height: '6px', background: 'rgba(26,43,39,0.08)' }}>
+                        <motion.div
+                          initial={{ width: 0 }} animate={{ width: `${expPercent}%` }}
+                          transition={{ duration: 1.2, delay: 0.4, ease: [0.16, 1, 0.3, 1] }}
+                          className="absolute inset-y-0 left-0 rounded-full"
+                          style={{ background: '#E8A838' }} />
+                      </div>
+                      <span className="text-xs font-bold" style={{ color: 'rgba(26,43,39,0.4)' }}>
+                        Lv.{level} · {Math.round(expPercent)}%
+                      </span>
+                    </>
+                  );
+                })()}
               </motion.div>
             </div>
           </motion.div>
 
           <motion.div variants={stagger} initial="hidden" animate="show"
             className="hidden sm:flex flex-col gap-2 pb-1">
-            {[
-              { label: '총 인증', value: (user as any)?.totalAuthCount || 0, suffix: '회', color: '#E8A838' },
-              { label: '방문 화장실', value: (user as any)?.totalVisitCount || 0, suffix: '곳', color: '#52b788' },
-              { label: '연속 기록', value: (user as any)?.consecutiveDays || 0, suffix: '일', color: '#52b788' },
-            ].map((s, i) => (
+            {(() => {
+              // 통계 계산
+              const totalAuthCount = user?.totalAuthCount || records.length;
+              const totalVisitCount = user?.totalVisitCount || new Set(records.map((r: any) => r.toiletId)).size;
+
+              // 연속 기록 계산
+              let consecutiveDays = user?.consecutiveDays || 0;
+              if (records.length > 0 && !user?.consecutiveDays) {
+                const sortedRecords = [...records].sort((a, b) =>
+                  new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+                );
+                let streak = 1;
+                let lastDate = new Date(sortedRecords[0].createdAt);
+                lastDate.setHours(0, 0, 0, 0);
+
+                for (let i = 1; i < sortedRecords.length; i++) {
+                  const currentDate = new Date(sortedRecords[i].createdAt);
+                  currentDate.setHours(0, 0, 0, 0);
+                  const diffDays = Math.floor((lastDate.getTime() - currentDate.getTime()) / (1000 * 60 * 60 * 24));
+
+                  if (diffDays === 1) {
+                    streak++;
+                    lastDate = currentDate;
+                  } else if (diffDays > 1) {
+                    break;
+                  }
+                }
+                consecutiveDays = streak;
+              }
+
+              return [
+                { label: '총 인증', value: totalAuthCount, suffix: '회', color: '#E8A838' },
+                { label: '방문 화장실', value: totalVisitCount, suffix: '곳', color: '#52b788' },
+                { label: '연속 기록', value: consecutiveDays, suffix: '일', color: '#52b788' },
+              ];
+            })().map((s, i) => (
               <motion.div key={s.label} variants={fadeUp(i * 0.06)} className="flex items-center gap-2">
                 <span className="text-xs" style={{ color: 'rgba(26,43,39,0.35)' }}>{s.label}</span>
                 <span className="font-black text-sm" style={{ color: s.color, letterSpacing: '-0.03em' }}>
@@ -602,13 +627,15 @@ function TabBar({ active, onChange }: { active: TabKey; onChange: (k: TabKey) =>
 }
 
 // ── 홈 탭 ─────────────────────────────────────────────────────────────
-function HomeTab({ equipped, setEquipped, user, avatarItems, initialShopTab = 'inventory', refreshUser }: {
+function HomeTab({ equipped, setEquipped, user, avatarItems, setAvatarItems, initialShopTab = 'inventory', refreshUser, records = [] }: {
   equipped: AvatarItem | null;
   setEquipped: (i: AvatarItem) => void;
-  user: UserProfile | null;
+  user: UserResponse | null;
   avatarItems: AvatarItem[];
+  setAvatarItems: React.Dispatch<React.SetStateAction<AvatarItem[]>>;
   initialShopTab?: 'inventory' | 'shop';
   refreshUser: () => Promise<void>;
+  records?: any[];
 }) {
   const [shopTab, setShopTab] = useState<'inventory' | 'shop'>(initialShopTab);
   const [preview, setPreview] = useState<AvatarItem | null>(null);
@@ -1137,12 +1164,12 @@ function ReportTab({ records = [] }: { records?: any[] }) {
   // 멤버십 이름 동적 표시
   const membershipName = user?.subscription?.plan || 'PRO';
 
-  const displayData = records.length > 0 
+  const displayData = records.length > 0
     ? records.slice(-7).map((r, i) => ({
         day: ['월','화','수','목','금','토','일'][new Date(r.createdAt).getDay()],
-        type: r.bristolType,
-        emoji: [<TrendingUp size={20} />, <Activity size={20} />, <CheckCircle2 size={20} />, <CheckCircle2 size={20} />, <Cloud size={20} />, <Waves size={20} />, <Droplets size={20} />][r.bristolType - 1] || <Activity size={20} />,
-        color: r.bristolType >= 3 && r.bristolType <= 5 ? '#52b788' : '#E8A838'
+        type: r.bristolScale ?? 4,
+        emoji: [<TrendingUp size={20} />, <Activity size={20} />, <CheckCircle2 size={20} />, <CheckCircle2 size={20} />, <Cloud size={20} />, <Waves size={20} />, <Droplets size={20} />][(r.bristolScale ?? 4) - 1] || <Activity size={20} />,
+        color: (r.bristolScale ?? 4) >= 3 && (r.bristolScale ?? 4) <= 5 ? '#52b788' : '#E8A838'
       }))
     : [
         { day: '월', type: 3, emoji: <Activity size={20} />, color: '#52b788' },
@@ -1504,7 +1531,7 @@ function ReportTab({ records = [] }: { records?: any[] }) {
 
 // ── 설정 탭 ───────────────────────────────────────────────────────────
 function SettingsTab({ user, refreshUser, logout, deleteMe }: { 
-  user: UserProfile | null; 
+  user: UserResponse | null; 
   refreshUser: () => void; 
   logout: () => Promise<void>;
   deleteMe: (password: string) => Promise<void>;
@@ -1865,14 +1892,16 @@ export function MyPage({ openAuth }: { openAuth: (mode: 'login' | 'signup') => v
   const [records, setRecords] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState<TabKey>('home');
   const [prevTab, setPrevTab] = useState<TabKey>('home');
-  const [avatarItems, setAvatarItems] = useState<AvatarItem[]>(FALLBACK_AVATAR_ITEMS);
-  const [titles, setTitles] = useState<any[]>(FALLBACK_TITLES);
-  const [equipped, setEquipped] = useState<AvatarItem>(FALLBACK_AVATAR_ITEMS[0]);
+  const [avatarItems, setAvatarItems] = useState<AvatarItem[]>([]);
+  const [titles, setTitles] = useState<any[]>([]);
+  const [equipped, setEquipped] = useState<AvatarItem | null>(null);
 
   const fetchRecords = useCallback(async () => {
     try {
-      const data = await api.get<any[]>('/records');
-      setRecords(data);
+      const data = await api.get<any>('/records');
+      // 페이지네이션 응답({ content: [...] })과 배열 응답 모두 처리
+      const records = Array.isArray(data) ? data : (data?.content ?? []);
+      setRecords(records);
     } catch (err) {
       console.error('Failed to fetch records', err);
     }
@@ -1880,19 +1909,47 @@ export function MyPage({ openAuth }: { openAuth: (mode: 'login' | 'signup') => v
 
   const fetchShopData = useCallback(async () => {
     try {
-      const [items, titlesData] = await Promise.all([
-        api.get<AvatarItem[]>('/shop/items'),
-        api.get<any[]>('/shop/titles').catch(() => FALLBACK_TITLES)
+      const [resItems, resTitles] = await Promise.allSettled([
+        api.get<any[]>('/shop/items'),
+        api.get<any[]>('/shop/titles')
       ]);
       
-      if (Array.isArray(items) && items.length > 0) setAvatarItems(items);
-      if (Array.isArray(titlesData) && titlesData.length > 0) setTitles(titlesData);
+      const itemsData = resItems.status === 'fulfilled' ? resItems.value : [];
+      const titlesData = resTitles.status === 'fulfilled' ? resTitles.value : [];
       
-      // 장착된 아이템 초기화
-      const equip = items?.find(i => i.owned) || FALLBACK_AVATAR_ITEMS[0];
-      setEquipped(equip);
+      // 🚀 서버 데이터 정밀 매핑 (관리자 페이지 연동)
+      // 데이터가 배열인지 한 번 더 검증 (방어적 코드)
+      const safeItems = Array.isArray(itemsData) ? itemsData : [];
+      const safeTitles = Array.isArray(titlesData) ? titlesData : [];
+
+      const mappedItems: AvatarItem[] = safeItems.map(item => {
+        const itemType = item.type || 'AVATAR';
+        return {
+          id: String(item.id || Math.random()),
+          emoji: item.imageUrl || (itemType === 'AVATAR' ? '🎭' : itemType === 'EFFECT' ? '✨' : '📍'),
+          name: item.name || '알 수 없는 아이템',
+          type: itemType === 'AVATAR' ? '헤드' : itemType === 'EFFECT' ? '이펙트' : '마커',
+          owned: item.owned === true || false,
+          price: item.price || 0
+        };
+      });
+
+      const mappedTitles = safeTitles.map(t => ({
+        id: String(t.id || Math.random()),
+        label: t.name || t.label || '비밀 칭호',
+        earned: t.owned === true || t.earned === true || false,
+        selected: t.equipped === true || t.selected === true || false
+      }));
+
+      console.log('Mapped Store & Collection Data:', { mappedItems, mappedTitles });
+
+      setAvatarItems(mappedItems);
+      setTitles(mappedTitles);
+      
+      const equip = mappedItems.find(i => i.owned);
+      if (equip) setEquipped(equip);
     } catch (err) {
-      console.warn('Failed to fetch shop data, using fallback:', err);
+      console.error('마이페이지 연동 실패 (Critical):', err);
     }
   }, []);
 
@@ -1931,10 +1988,26 @@ export function MyPage({ openAuth }: { openAuth: (mode: 'login' | 'signup') => v
     return <MyPageSkeleton />;
   }
 
+  if (!user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ background: '#f8faf9' }}>
+        <div className="text-center">
+          <p className="text-xl text-gray-600 mb-4">로그인이 필요합니다</p>
+          <button
+            onClick={() => navigate('/')}
+            className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700"
+          >
+            홈으로 이동
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen" style={{ background: '#f8faf9' }}>
       <Navbar openAuth={openAuth} />
-      <HeroBanner equippedItem={equipped} onAvatarClick={() => handleTabChange('home')} user={user} />
+      <HeroBanner equippedItem={equipped} onAvatarClick={() => handleTabChange('home')} user={user} records={records} />
       <TabBar active={activeTab} onChange={handleTabChange} />
       <div className="max-w-4xl mx-auto px-6 py-8 pb-20 overflow-hidden">
         <AnimatePresence mode="wait" custom={tabDir}>
@@ -1947,8 +2020,10 @@ export function MyPage({ openAuth }: { openAuth: (mode: 'login' | 'signup') => v
                 setEquipped={setEquipped}
                 user={user}
                 avatarItems={avatarItems}
+                setAvatarItems={setAvatarItems}
                 initialShopTab={new URLSearchParams(location.search).get('sub') === 'shop' ? 'shop' : 'inventory'}
                 refreshUser={refreshUser}
+                records={records}
               />
             )}
             {activeTab === 'collection' && <CollectionTab titles={titles} setTitles={setTitles} />}

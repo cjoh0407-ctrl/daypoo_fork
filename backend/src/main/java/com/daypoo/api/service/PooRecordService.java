@@ -48,8 +48,8 @@ public class PooRecordService {
   private final VisitLogRepository visitLogRepository;
   private final AiClient aiClient;
 
-  // 보상 설정
-  private static final int REWARD_EXP = 10;
+  // 보상 설정 (방문 1회당 경험치 5, 포인트 5)
+  private static final int REWARD_EXP = 5;
   private static final int REWARD_POINTS = 5;
 
   /** 화장실 도착 체크인 담당 */

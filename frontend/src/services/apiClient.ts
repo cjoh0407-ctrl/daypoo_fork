@@ -150,6 +150,15 @@ class ApiClient {
     maxRetries: number = 3,
     retryDelay: number = 1000
   ): Promise<T> {
+    // 재시도하지 않아야 하는 엔드포인트
+    const noRetryEndpoints = ['/auth/login', '/auth/signup', '/auth/refresh'];
+    const shouldSkipRetry = noRetryEndpoints.some(path => endpoint.includes(path));
+
+    if (shouldSkipRetry) {
+      // 로그인/회원가입 등은 재시도하지 않음
+      return this.request<T>(method, endpoint, body);
+    }
+
     let lastError: any;
 
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
@@ -165,6 +174,7 @@ class ApiClient {
           error.status === 404 || // Not Found
           error.status === 400 || // Bad Request
           error.status === 422 || // Validation Error
+          error.status === 429 || // Too Many Requests (Rate Limit)
           error.code === 'AUTHENTICATION_REQUIRED';
 
         if (shouldNotRetry || attempt === maxRetries) {

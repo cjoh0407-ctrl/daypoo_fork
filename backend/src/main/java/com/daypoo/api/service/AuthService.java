@@ -14,6 +14,7 @@ import com.daypoo.api.global.exception.ErrorCode;
 import com.daypoo.api.repository.*;
 import com.daypoo.api.security.JwtProvider;
 import io.jsonwebtoken.Claims;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
@@ -100,7 +101,50 @@ public class AuthService {
               .orElse(null);
     }
 
-    return UserResponse.from(user, titleName);
+    // Calculate statistics
+    Long totalAuthCount = pooRecordRepository.countByUser(user);
+
+    // Calculate unique visited toilets
+    List<com.daypoo.api.entity.PooRecord> records =
+        pooRecordRepository
+            .findByUserOrderByCreatedAtDesc(
+                user, org.springframework.data.domain.Pageable.unpaged())
+            .getContent();
+    Long totalVisitCount =
+        records.stream()
+            .map(com.daypoo.api.entity.PooRecord::getToilet)
+            .filter(java.util.Objects::nonNull)
+            .map(com.daypoo.api.entity.Toilet::getId)
+            .distinct()
+            .count();
+
+    // Calculate consecutive days
+    Integer consecutiveDays = 0;
+    if (!records.isEmpty()) {
+      int streak = 1;
+      java.time.LocalDate lastDate = records.get(0).getCreatedAt().toLocalDate();
+
+      for (int i = 1; i < records.size(); i++) {
+        java.time.LocalDate currentDate = records.get(i).getCreatedAt().toLocalDate();
+        long daysDiff = java.time.temporal.ChronoUnit.DAYS.between(currentDate, lastDate);
+
+        if (daysDiff == 1) {
+          streak++;
+          lastDate = currentDate;
+        } else if (daysDiff > 1) {
+          break;
+        }
+      }
+      consecutiveDays = streak;
+    }
+
+    return UserResponse.from(
+        user,
+        titleName,
+        user.getActiveSubscription(),
+        totalAuthCount,
+        totalVisitCount,
+        consecutiveDays);
   }
 
   @Transactional

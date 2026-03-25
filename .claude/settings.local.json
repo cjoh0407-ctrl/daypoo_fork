@@ -31,7 +31,13 @@
       "Bash(taskkill:*)",
       "Bash(find:*)",
       "Bash(grep:*)",
-      "Bash(git -C \"d:\\\\poop-map\" log --oneline -20)"
+      "Bash(git -C \"d:\\\\poop-map\" log --oneline -20)",
+      "Bash(./gradlew build:*)",
+      "Bash(./gradlew spotlessApply:*)",
+      "Bash(python -m json.tool:*)",
+      "Bash(./gradlew compileJava:*)",
+      "Bash(python -c:*)",
+      "Bash(TOKEN=\"eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJ0ZXN0QHRlc3QuY29tIiwicm9sZSI6IlJPTEVfUFJFTUlVTSIsImV4cCI6MTc3NDQ0MTQzN30.HYate1gWwlwaNfPMNnhpH4U6DIWnnph1VwcmWFf8QSDPFn9kge8DEle6YuhAg1X3R5JS2S83fAISuO9eG1vapw\")"
     ],
     "additionalDirectories": [
       "C:\\Users\\M\\.claude\\plans"
