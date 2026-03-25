@@ -157,6 +157,12 @@ export function ToiletPopup({
                   <CheckCircle2 size={18} className="opacity-30" style={{ color: '#7a9e8a' }} />
                 )}
                 {toilet.isOpen24h && <span className="text-xs font-bold px-2 py-1 rounded-full" style={{ background: '#e8f3ec', color: '#2D6A4F' }}>24H</span>}
+                {toilet.visitCount && toilet.visitCount > 0 && (
+                  <div className="flex items-center gap-1 bg-purple-50 text-purple-700 px-2 py-1 rounded-full text-xs font-bold">
+                    <MapPin size={12} />
+                    <span>{toilet.visitCount}회 방문</span>
+                  </div>
+                )}
               </div>
               <h3 className="font-black text-lg leading-tight" style={{ color: '#1a2b22' }}>{toilet.name}</h3>
               <p className="text-sm mt-1 leading-relaxed" style={{ color: '#7a9e8a' }}>{toilet.roadAddress}</p>

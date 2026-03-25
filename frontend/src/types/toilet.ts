@@ -25,6 +25,7 @@ export interface ToiletData {
   isFavorite: boolean;      // 즐겨찾기
   rating?: number;          // 평균 별점
   reviewCount?: number;
+  visitCount?: number;      // 내가 이 화장실을 인증한 횟수
 }
 
 // ── 리뷰 타입 ─────────────────────────────────────────────────────

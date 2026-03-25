@@ -12,7 +12,8 @@ import {
   Maximize2,
   X,
   Home,
-  Trash2
+  Trash2,
+  Database
 } from 'lucide-react';
 import {
   AreaChart, Area, PieChart, Pie, Cell,
@@ -708,14 +709,6 @@ const RecentToiletsPanel = () => {
             ))}
           </div>
         )}
-        <div className="mt-8 pt-6 border-t border-dashed">
-          <button
-            onClick={() => alert('전체 화장실 목록 기능은 준비 중입니다.')}
-            className="w-full py-4 rounded-2xl border-2 border-dashed border-black/10 text-[11px] font-black text-black/30 hover:bg-black/[0.02] hover:border-[#1B4332]/20 hover:text-[#1B4332]/60 transition-colors"
-          >
-            전체 화장실 목록 보기
-          </button>
-        </div>
       </GlassCard>
     </div>
   );
@@ -729,8 +722,9 @@ const ToiletsView = () => {
   const [selectedToilet, setSelectedToilet] = useState<ToiletData | null>(null);
   const [mapScale, setMapScale] = useState(3);
   const [mapCenter, setMapCenter] = useState({ lat: 37.5172, lng: 127.0473 }); // 강남구청 중심 소폭 조절
+  const [syncing, setSyncing] = useState(false);
 
-  const { toilets: apiToilets, loading } = useToilets({
+  const { toilets: apiToilets, loading, refetch } = useToilets({
     lat: mapCenter.lat,
     lng: mapCenter.lng,
     radius: 1000,
@@ -739,6 +733,33 @@ const ToiletsView = () => {
 
   // API 실패 시 fallback으로 MOCK_TOILETS 사용 (UI 깨짐 방지)
   const toilets = apiToilets.length > 0 ? apiToilets : MOCK_TOILETS;
+
+  const handleSyncToilets = async () => {
+    if (syncing) return;
+
+    const confirmed = confirm(
+      '공공데이터 API로부터 전국 화장실 데이터를 가져옵니다.\n' +
+      '범위: 1~500 페이지 (약 5,000개 이상)\n' +
+      '소요 시간: 1~3분\n\n' +
+      '진행하시겠습니까?'
+    );
+
+    if (!confirmed) return;
+
+    setSyncing(true);
+    try {
+      const response = await api.post('/admin/sync-toilets?startPage=1&endPage=500');
+      alert(`동기화 완료!\n${response || '데이터가 성공적으로 동기화되었습니다.'}`);
+      // 동기화 후 지도 새로고침
+      refetch();
+    } catch (error: any) {
+      console.error('화장실 데이터 동기화 실패:', error);
+      const errorMessage = error.message || '동기화 중 오류가 발생했습니다.';
+      alert(`동기화 실패: ${errorMessage}\n\n개발자 도구 콘솔을 확인해주세요.`);
+    } finally {
+      setSyncing(false);
+    }
+  };
 
   // 1. 지도 초기화
   useEffect(() => {
@@ -798,7 +819,42 @@ const ToiletsView = () => {
               <div className="relative h-[750px] rounded-[32px] overflow-hidden border-4 border-white shadow-2xl">
                 {/* Real Kakao Map Container */}
                 <div id="map" ref={mapContainerRef} className="w-full h-full" />
-                
+
+                {/* Top Action Buttons */}
+                <div className="absolute top-6 left-1/2 transform -translate-x-1/2 flex gap-3 z-10">
+                  <button
+                    onClick={handleSyncToilets}
+                    disabled={syncing}
+                    className="px-6 py-3 rounded-2xl border-2 text-xs font-black transition-all shadow-xl backdrop-blur-md disabled:opacity-50 disabled:cursor-not-allowed"
+                    style={{
+                      borderColor: syncing ? '#E8A838' : '#1B4332',
+                      backgroundColor: syncing ? '#FFF3E0' : '#1B4332',
+                      color: syncing ? '#E8A838' : 'white'
+                    }}
+                  >
+                    {syncing ? (
+                      <span className="flex items-center gap-2">
+                        <RefreshCw size={14} className="animate-spin" />
+                        동기화 중...
+                      </span>
+                    ) : (
+                      <span className="flex items-center gap-2">
+                        <Database size={14} />
+                        공공데이터 동기화
+                      </span>
+                    )}
+                  </button>
+                  <button
+                    onClick={() => alert('전체 화장실 목록 기능은 준비 중입니다.')}
+                    className="px-6 py-3 rounded-2xl border-2 bg-white/90 backdrop-blur-md border-black/10 text-xs font-black text-black/60 hover:bg-white hover:border-[#1B4332]/30 hover:text-[#1B4332] transition-all shadow-xl"
+                  >
+                    <span className="flex items-center gap-2">
+                      <MapPin size={14} />
+                      전체 목록
+                    </span>
+                  </button>
+                </div>
+
                 {/* Map Overlay Controls (Custom Style) */}
                 <div className="absolute top-6 left-6 flex flex-col gap-2 z-10">
                    <div className="bg-white/90 backdrop-blur-md p-2 rounded-2xl border shadow-xl flex flex-col gap-1">

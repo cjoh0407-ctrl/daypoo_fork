@@ -25,6 +25,7 @@ export function MapPage({ openAuth }: { openAuth: (mode: 'login' | 'signup') => 
   const [bounds, setBounds] = useState<any>(null);
   const [mapLevel, setMapLevel] = useState(4);
   const [checkInTime, setCheckInTime] = useState<number | null>(null);
+  const [visitCounts, setVisitCounts] = useState<Record<string, number>>({});
 
   // 데이터 훅
   const { toilets, toggleFavorite, markVisited, refetch } = useToilets({ 
@@ -41,13 +42,37 @@ export function MapPage({ openAuth }: { openAuth: (mode: 'login' | 'signup') => 
 
   const { position: pos } = useGeoTracking(toilets, handleAutoCheckIn);
 
+  // ── 방문 횟수 데이터 가져오기 ──────────────────────────────
+  useEffect(() => {
+    const fetchVisitCounts = async () => {
+      const token = localStorage.getItem('accessToken');
+      if (!token) {
+        setVisitCounts({});
+        return;
+      }
+      try {
+        const data = await api.get<Record<string, number>>('/records/my-visit-counts');
+        setVisitCounts(data || {});
+      } catch (e) {
+        console.warn('방문 횟수 조회 실패:', e);
+        setVisitCounts({});
+      }
+    };
+    fetchVisitCounts();
+  }, []);
+
   // ── 비즈니스 로직 ──────────────────────────────────────────
 
   const handleSelectToilet = useCallback((toilet: ToiletData | null) => {
-    setSelectedToilet(toilet);
-    if (toilet) sessionStorage.setItem('lastSelectedToilet', JSON.stringify(toilet));
-    else sessionStorage.removeItem('lastSelectedToilet');
-  }, []);
+    if (toilet) {
+      const fresh = toilets.find(t => t.id === toilet.id) ?? toilet;
+      setSelectedToilet(fresh);
+      sessionStorage.setItem('lastSelectedToilet', JSON.stringify(fresh));
+    } else {
+      setSelectedToilet(null);
+      sessionStorage.removeItem('lastSelectedToilet');
+    }
+  }, [toilets]);
 
   const handleFavoriteToggle = useCallback((id: string) => {
     toggleFavorite(id);
@@ -116,6 +141,10 @@ export function MapPage({ openAuth }: { openAuth: (mode: 'login' | 'signup') => 
 
       await api.post('/records', payload);
       markVisited(String(recordData.toiletId));
+      setVisitCounts(prev => ({
+        ...prev,
+        [String(recordData.toiletId)]: (prev[String(recordData.toiletId)] || 0) + 1
+      }));
       setTargetForVisit(null);
       alert('방문 인증이 완료되었습니다! 💩✨');
     } catch (e: any) {
@@ -124,14 +153,18 @@ export function MapPage({ openAuth }: { openAuth: (mode: 'login' | 'signup') => 
         case 'STAY_TIME_NOT_MET': alert('⏳ 아직 1분이 지나지 않았습니다. 잠시 후 다시 시도해주세요!'); break;
         case 'LOCATION_OUT_OF_RANGE':
         case 'OUT_OF_RANGE': alert('📍 화장실 근처(150m 이내)에서만 인증이 가능합니다.'); break;
-        case 'COOLDOWN_ACTIVE':
-        case 'DUPLICATE_RECORD': alert('⚠️ 같은 화장실은 3시간 이후에 다시 인증할 수 있습니다.'); break;
         default: alert(`인증 오류: ${e.message || '서버 오류'}`);
       }
     }
   }, [markVisited, pos]);
 
-  const filteredToilets = toilets.filter((t) => {
+  // visitCount 병합
+  const toiletsWithVisitCount = toilets.map(t => ({
+    ...t,
+    visitCount: visitCounts[t.id] || 0
+  }));
+
+  const filteredToilets = toiletsWithVisitCount.filter((t) => {
     const matchesFilter = filter === 'all' ? true : filter === 'favorite' ? t.isFavorite : filter === 'visited' ? t.isVisited : true;
     const matchesSearch = searchQuery.trim() === '' || t.name.includes(searchQuery) || (t.roadAddress && t.roadAddress.includes(searchQuery));
     return matchesFilter && matchesSearch;

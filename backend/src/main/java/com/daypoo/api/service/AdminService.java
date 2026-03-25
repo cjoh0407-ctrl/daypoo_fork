@@ -2,8 +2,10 @@ package com.daypoo.api.service;
 
 import com.daypoo.api.dto.AdminStatsResponse;
 import com.daypoo.api.dto.SystemLogResponse;
+import com.daypoo.api.entity.Inquiry;
 import com.daypoo.api.entity.Payment;
 import com.daypoo.api.entity.enums.InquiryStatus;
+import com.daypoo.api.entity.enums.InquiryType;
 import com.daypoo.api.repository.InquiryRepository;
 import com.daypoo.api.repository.PaymentRepository;
 import com.daypoo.api.repository.ToiletRepository;
