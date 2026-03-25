@@ -42,6 +42,7 @@ public class AuthService {
   private final InquiryRepository inquiryRepository;
   private final ToiletReviewRepository toiletReviewRepository;
   private final TitleRepository titleRepository;
+  private final FavoriteRepository favoriteRepository;
 
   @Transactional
   public TokenResponse socialSignUp(SocialSignUpRequest request) {
@@ -266,6 +267,7 @@ public class AuthService {
     paymentRepository.deleteAllByUser(user);
     inquiryRepository.deleteAllByUser(user);
     toiletReviewRepository.deleteAllByUser(user);
+    favoriteRepository.deleteAllByUser(user);
 
     userRepository.delete(user);
     log.info("User {} successfully withdrawn", email);
