@@ -1,49 +1,28 @@
-# 멤버십(구독) 시스템 도입 및 백엔드 리팩토링 계획
+# 백엔드 구독 관리 리팩토링 계획
 
-## 목적
-사용자의 요청에 따라 `PRO`, `PREMIUM` 멤버십(구독) 시스템을 도입합니다. 단순 포인트 충전을 넘어 정기 구독 형태의 회원 등급 관리를 위해 `Subscription` 테이블을 추가하고, 결제 완료 시 유저의 역할을 자동으로 업그레이드하는 로직을 구현합니다.
+## 1. 개요
+사용자가 PRO/PREMIUM 멤버십을 직접 관리(취소, 자동 갱신 설정)할 수 있도록 백엔드 API를 확장하고 관련 코드를 리팩토링합니다. `docs/Reference/구독해지플랜.md`를 바탕으로 진행합니다.
 
-## 수정 사항 상세
+## 2. 주요 변경 사항
 
-### 1. 권한(Role) 확장
-- **`Role.java`**: `ROLE_PRO`, `ROLE_PREMIUM`을 추가하여 스프링 시큐리티 및 프론트엔드에서 회원 등급에 따른 접근 제어를 가능하게 합니다.
+### 2.1 백엔드 (API 확장 및 리팩토링)
+- **Controller 수정**: `SubscriptionController.java`
+    - `POST /api/v1/subscriptions/cancel`: 구독 취소 엔드포인트 추가
+    - `PATCH /api/v1/subscriptions/auto-renewal`: 자동 갱신 토글 엔드포인트 추가
+    - 기존 `getMySubscription` 메서드에서 `IllegalArgumentException` 대신 `BusinessException(ErrorCode.SUBSCRIPTION_NOT_FOUND)`를 사용하도록 리팩토링 (일관성 유지)
 
-### 2. 구독(Subscription) 테이블 도입
-- **`Subscription` 엔티티**: 구독 정보(플랜 종류, 시작일, 만료일, 상태 등)를 추적하기 위해 생성합니다.
-- **필드 구성**: `id`, `user`, `planType` (ENUM: PRO, PREMIUM), `startDate`, `endDate`, `status` (ACTIVE, EXPIRED 등).
-- **이유**: 단순 `Role` 변경만으로는 구독 만료 처리가 어렵기 때문에 별도의 테이블을 통해 기간 정보를 관리합니다.
+### 2.2 프론트엔드
+- **주의**: 전역 규칙(`FRONTEND DIRECTORY RESTRICTION`)에 따라 `frontend/` 폴더 내의 파일은 직접 수정하지 않습니다.
+- 프론트엔드 작업은 백엔드 API 배포 후 별도로 진행되거나 사용자가 직접 수행해야 합니다.
 
-### 3. 결제 처리 로직 고도화 (`PaymentService`)
-- **`confirmPayment` 수정**: 결제 성공 시 `orderId` 또는 `amount`를 분석하여 멤버십 가입 여부를 판단합니다.
-- **로직 상세**:
-  - `PRO` 또는 `PREMIUM` 플랜 결제 시:
-    - 해당 유저의 `Subscription` 데이터를 생성하거나 기존 데이터의 `endDate`를 30일 연장합니다.
-    - 유저의 `Role`을 해당 등급으로 업데이트합니다.
-  - 일반 포인트 충전 시: 기존처럼 `addPointsToUser`를 수행합니다.
+## 3. 작업 단계
+1. **브랜치 생성**: `feature/subscription-cancellation` (✅ 완료)
+2. **코드 수정**: `SubscriptionController.java`에 신규 엔드포인트 추가 및 기존 로직 개선 (✅ 완료)
+3. **로깅**: `docs/backend-modification-history.md`에 변경 사항 기록 (✅ 완료)
+4. **검증**: 컴파일 성공 확인 (✅ 완료)
 
-## 작업 단계
+## 4. 기대 결과
+- 사용자가 고객센터 문의 없이 대시보드/설정 페이지에서 직접 구독을 취소하거나 자동 갱신을 끌 수 있는 인터페이스 제공 가능
+- 백엔드 예외 처리의 일관성 확보
 
-### Step 1: 엔티티 및 DB 스키마 추가
-- `V14__add_subscription_table.sql` 마이그레이션 파일 작성.
-- `Role.java` 수정: `ROLE_PRO`, `ROLE_PREMIUM` 추가.
-- `Subscription.java` 엔티티 클래스 생성.
-- `SubscriptionRepository.java` 인터페이스 생성.
-
-### Step 2: 비즈니스 로직 수정
-- `User.java`에 `Subscription` 연관 관계 추가 (필요시).
-- `PaymentService.java` 수정: 결제 완료 시 구독 정보를 처리하는 로직을 추가합니다.
-  - `4900`원 -> `ROLE_PRO` (30일 구독)
-  - `9900`원 -> `ROLE_PREMIUM` (30일 구독)
-  - 기타 금액 -> 포인트 충전
-
-### Step 3: API 응답 확장
-- `UserResponse.java`에 `role` 정보를 명시적으로 포함하여 프론트엔드에서 등급에 따른 UI 처리가 가능하도록 합니다.
-
-## 검증 항목
-- [ ] 4,900원 결제 완료 시 유저의 역할이 `ROLE_PRO`로 변경되는지 확인.
-- [ ] 9,900원 결제 완료 시 유저의 역할이 `ROLE_PREMIUM`로 변경되는지 확인.
-- [ ] `subscriptions` 테이블에 시작일과 만료일(30일 후)이 정확히 저장되는지 확인.
-- [ ] 기존 포인트 충전 기능이 정상적으로 동작하는지 확인.
-
----
-[✅ 규칙을 잘 수행했습니다.]
+이 계획에 대해 승인해 주시면 작업을 시작하겠습니다.

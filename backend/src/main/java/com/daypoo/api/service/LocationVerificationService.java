@@ -30,6 +30,11 @@ public class LocationVerificationService {
     return distance <= ALLOWED_RADIUS_METERS;
   }
 
+  /** 실제 화장실까지의 거리를 미터 단위로 반환 (로그 기록용) */
+  public Double getDistanceToToilet(Long toiletId, double currentLat, double currentLon) {
+    return toiletRepository.getDistanceToToilet(toiletId, currentLat, currentLon);
+  }
+
   /** 화장실 도착 시간 기록 및 최초 시간 반환 (Fast Check-in 용) */
   public long getOrSetArrivalTime(Long userId, Long toiletId) {
     String key = "daypoo:record:arrival:user:" + userId + ":toilet:" + toiletId;
