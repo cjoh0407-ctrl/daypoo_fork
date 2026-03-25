@@ -1,29 +1,27 @@
-# Git 작업 및 동기화 계획
+# Gradle 빌드 성능 최적화 계획
 
 ## 목적
-원격 저장소의 최신 코드를 반영(pull)하고, 현재 진행 중인 백엔드 시뮬레이션 관련 변경 사항 및 최적화 내역을 새로운 브랜치에 담아 원격 저장소에 푸시(push)합니다.
+사용자의 요청에 따라 `gradle.properties` 설정을 추가하여 빌드 성능을 최적화하고 메모리 부족 현상을 방지합니다.
+
+## 작업 세부 사항
+
+### 1. Gradle 설정 최적화 (`backend/gradle.properties`)
+- **병렬 빌드 활성화**: `org.gradle.parallel=true` 를 설정하여 멀티 코어 자원을 활용합니다.
+- **설정 캐시 활용**: `org.gradle.configuration-cache=true` 를 통해 전체 빌드 준비 시간을 단축합니다.
+- **JVM 메모리 확장**: `org.gradle.jvmargs=-Xmx2048m` 으로 원활한 빌드가 가능하도록 메모리를 넉넉히 할당합니다.
 
 ## 작업 단계
 
-### Step 1: 현재 변경 사항 관리
-- [x] 현재 `task/server-startup` 브랜치에 있는 미커밋 변경 사항들을 확인합니다.
-- [x] 변경 사항들을 임시 저장(stash)합니다.
+### Step 1: `gradle.properties` 파일 생성
+- `backend/gradle.properties` 위치에 필요한 설정을 반영하여 파일을 새로 생성합니다.
 
-### Step 2: 최신 코드 반영 (Pull)
-- [x] `main` 브랜치로 이동하여 원격 저장소의 최신 코드를 `git pull` 받습니다. (팀원 머지 사항 반영 완료)
-
-### Step 3: 새 브랜치 생성 및 작업 반영
-- [x] 최신 `main` 브랜치를 기준으로 새로운 작업 브랜치(`feature/simulation-updates`)를 생성합니다.
-- [x] 임시 저장했던 변경 사항을 새 브랜치에 적용(stash pop)하고 충돌을 해결합니다.
-
-### Step 4: 변경 사항 커밋 및 푸시 (Push)
-- [ ] 변경된 파일들을 스테이징하고 커밋 메시지를 작성합니다.
-- [ ] 새로운 브랜치를 원격 저장소에 푸시합니다.
+### Step 2: 변경 사항 반영 및 푸시 (Push)
+- `docs/backend-modification-history.md`에 작업 내역을 기록합니다.
+- 변경 내역을 스테이징, 커밋한 후 원격 저장소(`feature/simulation-updates`)에 푸시합니다.
 
 ## 검증 항목
-- [x] `git pull` 성공 여부
-- [x] 새 브랜치 생성 및 변경 사항 적용 여부
-- [ ] 원격 저장소 브랜치 푸시 성공 여부
+- [ ] `gradle.properties` 파일이 정확한 위치에 생성되었는지 확인.
+- [ ] 정상적으로 커밋 및 푸시가 완료되었는지 확인.
 
 ---
 [✅ 규칙을 잘 수행했습니다.]
