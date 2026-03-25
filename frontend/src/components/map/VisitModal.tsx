@@ -85,36 +85,18 @@ export function VisitModal({ toilet, onClose, onComplete, checkInTime }: VisitMo
 
   const captureAndAnalyze = async () => {
     if (!videoRef.current || !canvasRef.current) return;
-    
-    setIsAnalyzing(true);
+
     const canvas = canvasRef.current;
     const video = videoRef.current;
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
     canvas.getContext('2d')?.drawImage(video, 0, 0);
-    
+
     const base64 = canvas.toDataURL('image/jpeg', 0.8);
     setCapturedImage(base64);
     stopCamera();
 
-    try {
-      // 백엔드 AI 분석 API 호출 (기존 POST /records와 통합된 구조일 경우)
-      // 또는 분석 전용 API가 있다면 그것을 호출. 가이드에는 POST /records 시 imageBase64 담으면 결과 온다고 함.
-      // 여기서는 '분석 전용' 호출 후 수동 저장을 위해 response를 받는다고 가정.
-      const res = await api.post<AiAnalysisResponse>('/records/analyze', { imageBase64: base64 });
-      
-      if (res.bristolScale) setBristolType(res.bristolScale);
-      if (res.color) setColor(res.color as PoopColor);
-      
-      alert('AI 분석이 완료되었습니다! 분석 결과를 확인해주세요.');
-      setStep(1); // 브리스톨 확인 단계로 이동
-    } catch (err: any) {
-      console.error('AI 분석 실패:', err);
-      alert('AI 분석 중 오류가 발생했습니다. 직접 입력해주세요.');
-      setStep(1);
-    } finally {
-      setIsAnalyzing(false);
-    }
+    // AI 분석은 제출 시 백엔드에서 자동 수행됨 (Fast-Track 방식)
   };
 
   const handleNext = () => {
@@ -124,14 +106,14 @@ export function VisitModal({ toilet, onClose, onComplete, checkInTime }: VisitMo
       return;
     }
 
-    // Step 0에서 사진이 있으면 바로 완료 가능 (백엔드 변경사항: imageBase64 있으면 bristolScale, color 선택 불필요)
+    // Step 0에서 사진이 있으면 바로 완료 가능 (AI가 백그라운드에서 자동 분석)
     if (step === 0 && capturedImage) {
       onComplete({
         toiletId: toilet.id,
-        bristolType: bristolType,
-        color: color,
-        conditionTags: conditions,
-        foodTags: foods,
+        bristolType: null,  // AI가 자동 분석
+        color: null,        // AI가 자동 분석
+        conditionTags: [],  // Fast-Track: 생략
+        foodTags: [],       // Fast-Track: 생략
         imageBase64: capturedImage,
         createdAt: new Date().toISOString(),
       });
@@ -272,7 +254,7 @@ export function VisitModal({ toilet, onClose, onComplete, checkInTime }: VisitMo
                         <img src={capturedImage} alt="Capture" className="w-full h-full object-cover" />
                         <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center gap-4 backdrop-blur-[2px]">
                           <div className="flex items-center gap-2 text-white font-black text-xl">
-                            {isAnalyzing ? <><Loader2 className="animate-spin" /> AI 분석 중...</> : <><Check className="text-emerald-400" /> 분석 완료!</>}
+                            {isAnalyzing ? <><Loader2 className="animate-spin" /> 사진 처리 중...</> : <><Check className="text-emerald-400" /> 촬영 완료!</>}
                           </div>
                           {!isAnalyzing && (
                             <button 
@@ -292,7 +274,7 @@ export function VisitModal({ toilet, onClose, onComplete, checkInTime }: VisitMo
                     <div className="space-y-3">
                       <div className="flex items-center gap-2 justify-center text-emerald-600 bg-emerald-50 px-4 py-3 rounded-2xl">
                         <Sparkles size={16} />
-                        <span className="text-sm font-bold">AI 분석이 완료되었습니다!</span>
+                        <span className="text-sm font-bold">사진 촬영이 완료되었습니다!</span>
                       </div>
                       <div className="grid grid-cols-2 gap-3">
                         <button

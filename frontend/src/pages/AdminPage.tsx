@@ -122,25 +122,9 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 };
 
 // ── Screen: Dashboard (Overview) ──────────────────────────────────────
-const DashboardView = ({ setActiveTab }: { setActiveTab: (tab: AdminTab) => void }) => {
-  const [stats, setStats] = useState<AdminStatsResponse | null>(null);
-  const [loading, setLoading] = useState(true);
+const DashboardView = ({ stats, loading, setActiveTab }: { stats: AdminStatsResponse | null, loading: boolean, setActiveTab: (tab: AdminTab) => void }) => {
   const [liveUsers, setLiveUsers] = useState(342);
   
-  useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const data = await api.get<AdminStatsResponse>('/admin/stats');
-        setStats(data);
-      } catch (err) {
-        console.error('Admin stats fetch error', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchStats();
-  }, []);
-
   useEffect(() => {
     const interval = setInterval(() => {
       setLiveUsers(prev => Math.max(300, prev + Math.floor(Math.random() * 7 - 3)));
@@ -504,17 +488,17 @@ const UsersView = () => {
               <button
                 onClick={() => setPage(Math.max(0, page - 1))}
                 disabled={page === 0}
-                className="p-2 rounded-xl bg-white border hover:bg-black/5 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                className="p-2 rounded-xl bg-white border border-gray-300 text-[#1B4332] hover:bg-black/5 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
               >
                 <ChevronLeft size={18} />
               </button>
-              <span className="px-4 py-2 font-bold text-sm">
+              <span className="px-4 py-2 font-bold text-sm text-black">
                 {page + 1} / {totalPages}
               </span>
               <button
                 onClick={() => setPage(Math.min(totalPages - 1, page + 1))}
                 disabled={page >= totalPages - 1}
-                className="p-2 rounded-xl bg-white border hover:bg-black/5 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                className="p-2 rounded-xl bg-white border border-gray-300 text-[#1B4332] hover:bg-black/5 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
               >
                 <ChevronRight size={18} />
               </button>
@@ -920,19 +904,19 @@ const ToiletsView = () => {
 };
 
 // ── Screen: Customer Service ──────────────────────────────────────────
-const CsView = () => {
+const CsView = ({ stats }: { stats: AdminStatsResponse | null }) => {
   const [inquiries, setInquiries] = useState<AdminInquiryListResponse[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<InquiryStatus | 'ALL'>('PENDING');
+  const [filter, setFilter] = useState<InquiryStatus | 'ALL'>('ALL');
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
-  const [pendingCount, setPendingCount] = useState(0);
   const [showInquiryModal, setShowInquiryModal] = useState(false);
   const [selectedInquiry, setSelectedInquiry] = useState<AdminInquiryListResponse | null>(null);
   const [inquiryDetail, setInquiryDetail] = useState<AdminInquiryDetailResponse | null>(null);
   const [loadingDetail, setLoadingDetail] = useState(false);
   const [answerText, setAnswerText] = useState('');
   const [submittingAnswer, setSubmittingAnswer] = useState(false);
+  const [generatingData, setGeneratingData] = useState(false);
 
   const fetchInquiries = async () => {
     setLoading(true);
@@ -943,17 +927,46 @@ const CsView = () => {
       });
       if (filter !== 'ALL') params.append('status', filter);
 
+      console.log(`[AdminInquiry] Fetching inquiries with params: ${params.toString()}`);
       const response = await api.get<PageResponse<AdminInquiryListResponse>>(`/admin/inquiries?${params}`);
-      setInquiries(response.content);
-      setTotalPages(response.totalPages);
+      console.log('[AdminInquiry] Response received:', response);
 
-      // 미답변 개수 별도 조회
-      const pendingRes = await api.get<PageResponse<AdminInquiryListResponse>>(`/admin/inquiries?status=PENDING&page=0&size=1`);
-      setPendingCount(pendingRes.totalElements);
-    } catch (error) {
+      setInquiries(response.content || []);
+      setTotalPages(response.totalPages || 0);
+    } catch (error: any) {
       console.error('문의 목록 조회 실패:', error);
+      console.error('Error details:', {
+        message: error.message,
+        code: error.code,
+        status: error.status,
+        stack: error.stack
+      });
+
+      // 빈 데이터로 초기화하여 UI가 깨지지 않도록 함
+      setInquiries([]);
+      setTotalPages(0);
+
+      // 사용자에게 명확한 에러 메시지 표시
+      const errorMessage = error.message || '서버 데이터 처리 중 오류가 발생했습니다.';
+      alert(`문의 목록 조회 실패: ${errorMessage}\n\n개발자 도구 콘솔을 확인해주세요.`);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleGenerateTestData = async () => {
+    if (generatingData) return;
+    setGeneratingData(true);
+    try {
+      await api.post('/admin/inquiries/generate-test-data');
+      alert('30개의 테스트 문의 데이터가 생성되었습니다.');
+      fetchInquiries(); // 목록 새로고침
+    } catch (error: any) {
+      console.error('테스트 데이터 생성 실패:', error);
+      const errorMessage = error.message || '데이터 생성 중 오류가 발생했습니다.';
+      alert(`테스트 데이터 생성 실패: ${errorMessage}\n\n개발자 도구 콘솔을 확인해주세요.`);
+    } finally {
+      setGeneratingData(false);
     }
   };
 
@@ -1017,9 +1030,19 @@ const CsView = () => {
   return (
     <div className="space-y-6">
        <div className="flex items-center justify-between mb-4">
-          <div>
-             <h3 className="text-2xl font-black text-black">고객 지원 센터</h3>
-             <p className="text-sm text-black/60 font-bold">1:1 문의 관리 및 답변</p>
+          <div className="flex items-center gap-4">
+             <div>
+                <h3 className="text-2xl font-black text-black">고객 지원 센터</h3>
+                <p className="text-sm text-black/60 font-bold">1:1 문의 관리 및 답변</p>
+             </div>
+             <button
+                onClick={handleGenerateTestData}
+                disabled={generatingData}
+                className="flex items-center gap-2 px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-black text-xs shadow-lg transition-all disabled:opacity-50"
+             >
+                {generatingData ? <RefreshCw size={14} className="animate-spin" /> : <Plus size={14} />}
+                {generatingData ? '데이터 생성 중...' : '테스트 데이터 30개 생성'}
+             </button>
           </div>
           <div className="flex gap-2">
              <button
@@ -1040,7 +1063,7 @@ const CsView = () => {
                       : 'bg-white border border-gray-300 text-gray-700 hover:bg-red-50 hover:border-red-400'
                 }`}
              >
-                미답변 {pendingCount > 0 && `(${pendingCount})`}
+                미답변 {stats?.pendingInquiries && stats.pendingInquiries > 0 ? `(${stats.pendingInquiries})` : ''}
              </button>
              <button
                 onClick={() => setFilter('COMPLETED')}
@@ -1116,17 +1139,17 @@ const CsView = () => {
                    <button
                       onClick={() => setPage(Math.max(0, page - 1))}
                       disabled={page === 0}
-                      className="p-2 rounded-xl bg-white border hover:bg-black/5 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                      className="p-2 rounded-xl bg-white border border-gray-300 text-[#1B4332] hover:bg-black/5 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                    >
                       <ChevronLeft size={18} />
                    </button>
-                   <span className="px-4 py-2 font-bold text-sm">
+                   <span className="px-4 py-2 font-bold text-sm text-black">
                       {page + 1} / {totalPages}
                    </span>
                    <button
                       onClick={() => setPage(Math.min(totalPages - 1, page + 1))}
                       disabled={page >= totalPages - 1}
-                      className="p-2 rounded-xl bg-white border hover:bg-black/5 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                      className="p-2 rounded-xl bg-white border border-gray-300 text-[#1B4332] hover:bg-black/5 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                    >
                       <ChevronRight size={18} />
                    </button>
@@ -1323,7 +1346,7 @@ const StoreView = ({ setActiveTab }: { setActiveTab: (tab: AdminTab) => void }) 
                       className={`px-3 py-2 rounded-xl font-bold text-[10px] uppercase transition-all ${
                          filter === type
                             ? 'bg-[#1B4332] text-white shadow-lg'
-                            : 'bg-white border hover:bg-black/5'
+                            : 'bg-white border border-gray-300 text-black hover:bg-black/5'
                       }`}
                    >
                       {type === 'ALL' ? '전체' : getItemTypeLabel(type as ItemType)}
@@ -1400,17 +1423,17 @@ const StoreView = ({ setActiveTab }: { setActiveTab: (tab: AdminTab) => void }) 
                    <button
                       onClick={() => setPage(Math.max(0, page - 1))}
                       disabled={page === 0}
-                      className="p-2 rounded-xl bg-white border hover:bg-black/5 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                      className="p-2 rounded-xl bg-white border border-gray-300 text-[#1B4332] hover:bg-black/5 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                    >
                       <ChevronLeft size={18} />
                    </button>
-                   <span className="px-4 py-2 font-bold text-sm">
+                   <span className="px-4 py-2 font-bold text-sm text-black">
                       {page + 1} / {totalPages}
                    </span>
                    <button
                       onClick={() => setPage(Math.min(totalPages - 1, page + 1))}
                       disabled={page >= totalPages - 1}
-                      className="p-2 rounded-xl bg-white border hover:bg-black/5 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                      className="p-2 rounded-xl bg-white border border-gray-300 text-[#1B4332] hover:bg-black/5 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                    >
                       <ChevronRight size={18} />
                    </button>
@@ -1428,9 +1451,9 @@ const SystemView = () => {
     { subject: '사용자 인터페이스', value: 120, fullMark: 150 },
     { subject: '성능', value: 135, fullMark: 150 },
     { subject: '보안', value: 128, fullMark: 150 },
-    { subject: '기능', value: 110, fullMark: 150 },
+    { subject: '기능성', value: 110, fullMark: 150 },
     { subject: '사용 편의성', value: 125, fullMark: 150 },
-    { subject: '지원', value: 95, fullMark: 150 },
+    { subject: '고객 지원', value: 95, fullMark: 150 },
   ];
 
   const healthMetrics = [
@@ -1442,53 +1465,57 @@ const SystemView = () => {
 
   return (
     <div className="space-y-4">
-      <div className="mb-4">
+      <div className="mb-2">
         <h3 className="text-xl font-black text-black">시스템 성능 분석</h3>
-        <p className="text-xs text-black/70 font-bold mt-0.5">실시간 시스템 지표 모니터링</p>
+        <p className="text-xs text-black/70 font-bold mt-0.5">실시간 인프라 및 서비스 지표 모니터링</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
         {/* Radar Chart - Main Visual */}
         <div className="lg:col-span-3">
-          <GlassCard className="h-full">
-            <div className="flex items-center justify-between mb-4">
+          <GlassCard className="h-full flex flex-col">
+            <div className="flex items-center justify-between mb-2">
               <h4 className="text-base font-black text-black">시스템 성능 레이더</h4>
-              <div className="px-2.5 py-1 rounded-lg bg-green-100 text-green-700 text-xs font-black">
-                최적
+              <div className="px-2.5 py-1 rounded-lg bg-green-100 text-green-700 text-[10px] font-black uppercase tracking-wider">
+                Optimal Status
               </div>
             </div>
-            <div className="h-[340px] w-full flex items-center justify-center">
-              <ResponsiveContainer width="100%" height="100%">
-                <RadarChart data={systemMetrics}>
-                  <PolarGrid stroke="#1B4332" strokeOpacity={0.12} />
+            
+            <div className="flex-1 w-full min-h-[380px] flex items-center justify-center -mt-6">
+              <ResponsiveContainer width="100%" height={400}>
+                <RadarChart cx="50%" cy="50%" outerRadius="85%" data={systemMetrics}>
+                  <PolarGrid stroke="rgba(27,67,50,0.15)" />
                   <PolarAngleAxis
                     dataKey="subject"
-                    tick={{ fill: '#1A2B27', fontSize: 12, fontWeight: 'bold' }}
+                    tick={{ fill: 'rgba(26,43,39,0.85)', fontSize: 13, fontWeight: 900 }}
                   />
+                  {/* 가독성을 위해 PolarRadiusAxis의 숫자를 제거함 (tick={false}) */}
                   <PolarRadiusAxis
                     angle={90}
                     domain={[0, 150]}
-                    tick={{ fill: '#1A2B27', fontSize: 10 }}
+                    tick={false}
+                    axisLine={false}
                   />
                   <Radar
                     name="시스템 지표"
                     dataKey="value"
                     stroke="#1B4332"
                     fill="#1B4332"
-                    fillOpacity={0.6}
-                    strokeWidth={2}
+                    fillOpacity={0.45}
+                    strokeWidth={4}
+                    dot={{ r: 5, fill: '#E8A838', strokeWidth: 2, stroke: '#fff' }}
                   />
                   <Tooltip
                     content={({ active, payload }: any) => {
                       if (active && payload && payload.length) {
                         return (
-                          <div className="bg-white p-3 rounded-xl border shadow-xl">
-                            <p className="font-black text-sm text-[#1B4332]">
+                          <div className="bg-white/90 backdrop-blur-md p-4 rounded-2xl border shadow-2xl" style={{ borderColor: 'rgba(27,67,50,0.1)' }}>
+                            <p className="font-black text-[10px] uppercase tracking-widest text-[#1B4332]/40 mb-1">
                               {payload[0].payload.subject}
                             </p>
-                            <p className="text-2xl font-black text-[#E8A838] mt-1">
+                            <p className="text-2xl font-black text-[#1A2B27] tabular-nums">
                               {payload[0].value}
-                              <span className="text-xs text-black/60 ml-1">
+                              <span className="text-xs text-black/20 ml-1">
                                 / {payload[0].payload.fullMark}
                               </span>
                             </p>
@@ -1500,6 +1527,17 @@ const SystemView = () => {
                   />
                 </RadarChart>
               </ResponsiveContainer>
+            </div>
+            
+            <div className="mt-auto pt-4 flex justify-center gap-6 border-t border-black/[0.03]">
+               <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-[#1B4332]" />
+                  <span className="text-[10px] font-black text-black/40 uppercase tracking-tight">현재 지표</span>
+               </div>
+               <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-[#E8A838]" />
+                  <span className="text-[10px] font-black text-black/40 uppercase tracking-tight">중요 포인트</span>
+               </div>
             </div>
           </GlassCard>
         </div>
@@ -1803,14 +1841,37 @@ const LogsView = () => {
 // ── Main Page Layout: Admin Dashboard ─────────────────────────────────
 export function AdminPage() {
   const navigate = useNavigate();
-  const { user, loading, logout } = useAuth();
+  const { user, loading: authLoading, logout } = useAuth();
   const [activeTab, setActiveTab] = useState<AdminTab>('dashboard');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [globalSearch, setGlobalSearch] = useState('');
+  
+  // Dashboard 통계 데이터 상태 관리
+  const [stats, setStats] = useState<AdminStatsResponse | null>(null);
+  const [statsLoading, setStatsLoading] = useState(true);
+
+  // 알림 확인 여부 관리 (localStorage 연동)
+  const [visitedTabs, setVisitedTabs] = useState<AdminTab[]>(() => {
+    const saved = localStorage.getItem('daypoo_admin_visited_tabs');
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  // 탭 변경 시 방문 기록 추가 및 저장
+  const handleTabChange = (tabId: AdminTab) => {
+    setActiveTab(tabId);
+    setVisitedTabs(prev => {
+      if (!prev.includes(tabId)) {
+        const next = [...prev, tabId];
+        localStorage.setItem('daypoo_admin_visited_tabs', JSON.stringify(next));
+        return next;
+      }
+      return prev;
+    });
+  };
 
   // 권한 체크 로직 검증 및 로그
-  if (loading) return <div className="h-screen flex items-center justify-center bg-[#f8faf9] text-[#1B4332] font-black tracking-widest text-xl">LOADING ENGINE...</div>;
+  if (authLoading) return <div className="h-screen flex items-center justify-center bg-[#f8faf9] text-[#1B4332] font-black tracking-widest text-xl">LOADING ENGINE...</div>;
 
   const isAdmin = user && (user.role === 'ROLE_ADMIN' || user.role === 'ADMIN');
   
@@ -1819,16 +1880,49 @@ export function AdminPage() {
     return <Navigate to="/main" replace />;
   }
 
+  const fetchStats = async () => {
+    try {
+      const data = await api.get<AdminStatsResponse>('/admin/stats');
+      setStats(data);
+    } catch (err) {
+      console.error('Admin stats fetch error', err);
+    } finally {
+      setStatsLoading(false);
+    }
+  };
+
   useEffect(() => {
+    fetchStats();
     const t = setInterval(() => setCurrentTime(new Date()), 1000);
-    return () => clearInterval(t);
+    // 5분마다 통계 데이터 갱신
+    const statsTimer = setInterval(fetchStats, 300000);
+    
+    return () => {
+      clearInterval(t);
+      clearInterval(statsTimer);
+    };
   }, []);
 
   const menuItems = [
     { id: 'dashboard', label: '대시보드', icon: LayoutDashboard },
-    { id: 'users', label: '유저 관리', icon: Users, badge: 12 },
-    { id: 'toilets', label: '화장실 관리', icon: MapPin, badge: 4 },
-    { id: 'cs', label: '고객 지원', icon: MessageSquare, badge: 7 },
+    { 
+      id: 'users', 
+      label: '유저 관리', 
+      icon: Users, 
+      badge: !visitedTabs.includes('users') && stats?.todayNewUsers && stats.todayNewUsers > 0 ? stats.todayNewUsers : undefined 
+    },
+    { 
+      id: 'toilets', 
+      label: '화장실 관리', 
+      icon: MapPin, 
+      badge: undefined 
+    },
+    { 
+      id: 'cs', 
+      label: '고객 지원', 
+      icon: MessageSquare, 
+      badge: !visitedTabs.includes('cs') && stats?.pendingInquiries && stats.pendingInquiries > 0 ? stats.pendingInquiries : undefined 
+    },
     { id: 'store', label: '프리미엄 상점', icon: ShoppingBag },
     { id: 'system', label: '시스템 설정', icon: Settings },
   ];
@@ -1864,7 +1958,7 @@ export function AdminPage() {
           {menuItems.map((item) => (
             <button
               key={item.id}
-              onClick={() => setActiveTab(item.id as AdminTab)}
+              onClick={() => handleTabChange(item.id as AdminTab)}
               className="group relative w-full flex items-center gap-4 px-4 py-4 rounded-2xl transition-all overflow-hidden"
               style={{ color: activeTab === item.id ? COLORS.primary : COLORS.textSecondary }}
             >
@@ -1889,8 +1983,8 @@ export function AdminPage() {
         </nav>
 
         <div className="w-full px-4 mt-auto space-y-1">
-           <button 
-             onClick={() => navigate('/')}
+           <button
+             onClick={() => navigate('/main')}
              className="w-full py-4 rounded-2xl flex items-center gap-4 px-4 transition-colors hover:bg-emerald-50 text-emerald-600 font-bold text-sm"
            >
              <div className="p-1.5 rounded-xl bg-emerald-100"><Home size={20} /></div>
@@ -1972,10 +2066,10 @@ export function AdminPage() {
                   exit={{ opacity: 0, scale: 0.98, y: -10 }}
                   transition={{ duration: 0.3, ease: 'easeOut' }}
                 >
-                  {activeTab === 'dashboard' && <DashboardView setActiveTab={setActiveTab} />}
+                  {activeTab === 'dashboard' && <DashboardView stats={stats} loading={statsLoading} setActiveTab={setActiveTab} />}
                   {activeTab === 'users' && <UsersView />}
                   {activeTab === 'toilets' && <ToiletsView />}
-                  {activeTab === 'cs' && <CsView />}
+                  {activeTab === 'cs' && <CsView stats={stats} />}
                   {activeTab === 'store' && <StoreView setActiveTab={setActiveTab} />}
                   {activeTab === 'system' && <SystemView />}
                   {activeTab === 'add-item' && <AddItemView setActiveTab={setActiveTab} />}

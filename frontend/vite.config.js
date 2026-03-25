@@ -28,6 +28,12 @@ export default defineConfig({
         changeOrigin: true,
       },
     },
+    // SPA 히스토리 API 폴백: 모든 경로를 index.html로 처리
+    middlewareMode: false,
+  },
+  preview: {
+    // 프로덕션 빌드 미리보기에도 히스토리 폴백 적용
+    port: 3000,
   },
   build: {
     rollupOptions: {

@@ -37,21 +37,50 @@ const calculateWalkTime = (meters: number) => {
 function MiniMap({ userPos, toilets }: { userPos: { lat: number; lng: number } | null, toilets: any[] }) {
   const miniMapRef = useRef<HTMLDivElement>(null);
   const mapInstance = useRef<any>(null);
+  const [mapError, setMapError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!window.kakao || !miniMapRef.current || !userPos) return;
+    console.log('[MiniMap] useEffect triggered', {
+      hasKakao: !!window.kakao,
+      hasRef: !!miniMapRef.current,
+      hasUserPos: !!userPos,
+      toiletsCount: toilets.length
+    });
 
-    window.kakao.maps.load(() => {
-      if (miniMapRef.current) miniMapRef.current.innerHTML = '';
-      
-      const center = new window.kakao.maps.LatLng(userPos.lat, userPos.lng);
-      const map = new window.kakao.maps.Map(miniMapRef.current, {
-        center,
-        level: 3,
-        draggable: false,
-        scrollwheel: false,
-      });
-      mapInstance.current = map;
+    if (!window.kakao) {
+      const error = 'Kakao Maps API가 로드되지 않았습니다';
+      console.error('[MiniMap]', error);
+      setMapError(error);
+      return;
+    }
+
+    if (!miniMapRef.current) {
+      console.log('[MiniMap] Map ref not ready yet');
+      return;
+    }
+
+    if (!userPos) {
+      console.log('[MiniMap] User position not available yet');
+      return;
+    }
+
+    console.log('[MiniMap] Calling kakao.maps.load()');
+    try {
+      window.kakao.maps.load(() => {
+        console.log('[MiniMap] kakao.maps.load() callback executed');
+        if (miniMapRef.current) miniMapRef.current.innerHTML = '';
+
+        const center = new window.kakao.maps.LatLng(userPos.lat, userPos.lng);
+        console.log('[MiniMap] Creating map at:', userPos);
+        const map = new window.kakao.maps.Map(miniMapRef.current, {
+          center,
+          level: 3,
+          draggable: false,
+          scrollwheel: false,
+        });
+        mapInstance.current = map;
+        setMapError(null);
+        console.log('[MiniMap] Map created successfully');
 
       // 현재 위치 (파란 원)
       new window.kakao.maps.CustomOverlay({
@@ -65,9 +94,11 @@ function MiniMap({ userPos, toilets }: { userPos: { lat: number; lng: number } |
       }).setMap(map);
 
       // 화장실 마커들 (최대 3개)
+      console.log('[MiniMap] Adding toilet markers, count:', Math.min(toilets.length, 3));
       toilets.slice(0, 3).forEach((t, i) => {
         const RANK_COLORS = ['#E85D5D', '#E8A838', '#2D6A4F'];
         const pos = new window.kakao.maps.LatLng(t.lat, t.lng);
+        console.log(`[MiniMap] Adding marker ${i + 1} at:`, t.lat, t.lng);
         new window.kakao.maps.CustomOverlay({
           position: pos,
           content: `<div style="
@@ -91,7 +122,11 @@ function MiniMap({ userPos, toilets }: { userPos: { lat: number; lng: number } |
         toilets.slice(0, 3).forEach(t => bounds.extend(new window.kakao.maps.LatLng(t.lat, t.lng)));
         map.setBounds(bounds, 40); // 40px padding
       }
-    });
+      });
+    } catch (e) {
+      console.error('[MiniMap] Error:', e);
+      setMapError('지도를 불러오는 중 오류가 발생했습니다.');
+    }
   }, [userPos, toilets]);
 
   return (
@@ -114,20 +149,37 @@ export function EmergencySheet({ isOpen, onClose }: EmergencySheetProps) {
 
   // 현재 위치 가져오기
   useEffect(() => {
+    console.log('[EmergencySheet] isOpen changed:', isOpen);
     if (isOpen) {
+      console.log('[EmergencySheet] Getting user position...');
       navigator.geolocation.getCurrentPosition(
-        (pos) => setUserPos({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-        () => setUserPos({ lat: 37.5666, lng: 126.9784 }) // 서울 시청 기본값
+        (pos) => {
+          console.log('[EmergencySheet] User position obtained:', pos.coords.latitude, pos.coords.longitude);
+          setUserPos({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        },
+        (error) => {
+          console.log('[EmergencySheet] Geolocation error, using default:', error);
+          setUserPos({ lat: 37.5666, lng: 126.9784 }); // 서울 시청 기본값
+        }
       );
     }
   }, [isOpen]);
 
   // 실시간 데이터 가져오기 (반경 1km)
-  const { toilets, loading } = useToilets({
+  const { toilets, loading, error } = useToilets({
     lat: userPos?.lat || 37.5666,
     lng: userPos?.lng || 126.9784,
     radius: 1000,
   });
+
+  useEffect(() => {
+    console.log('[EmergencySheet] Toilets data updated:', {
+      count: toilets.length,
+      loading,
+      error,
+      userPos
+    });
+  }, [toilets, loading, error, userPos]);
 
   // 급똥 우선순위에 따른 정렬 및 가공
   const processedToilets = useMemo(() => {

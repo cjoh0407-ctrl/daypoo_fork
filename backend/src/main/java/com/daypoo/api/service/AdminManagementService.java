@@ -3,6 +3,7 @@ package com.daypoo.api.service;
 import com.daypoo.api.dto.*;
 import com.daypoo.api.entity.*;
 import com.daypoo.api.entity.enums.InquiryStatus;
+import com.daypoo.api.entity.enums.InquiryType;
 import com.daypoo.api.entity.enums.ItemType;
 import com.daypoo.api.entity.enums.Role;
 import com.daypoo.api.global.exception.BusinessException;
@@ -151,24 +152,38 @@ public class AdminManagementService {
 
   @Transactional(readOnly = true)
   public Page<AdminInquiryListResponse> getInquiries(InquiryStatus status, Pageable pageable) {
-    Page<Inquiry> inquiries;
-    if (status != null) {
-      inquiries = inquiryRepository.findAllByStatusOrderByCreatedAtDesc(status, pageable);
-    } else {
-      inquiries = inquiryRepository.findAllByOrderByCreatedAtDesc(pageable);
-    }
+    log.info("Fetching inquiries - Status: {}, Pageable: {}", status, pageable);
+    try {
+      Page<Inquiry> inquiries;
+      if (status != null) {
+        inquiries = inquiryRepository.findAllByStatus(status, pageable);
+      } else {
+        inquiries = inquiryRepository.findAll(pageable);
+      }
 
-    return inquiries.map(
-        i ->
-            AdminInquiryListResponse.builder()
-                .id(i.getId())
-                .userName(i.getUser().getNickname())
-                .userEmail(i.getUser().getEmail())
-                .type(i.getType().getLabel())
-                .title(i.getTitle())
-                .status(i.getStatus())
-                .createdAt(i.getCreatedAt())
-                .build());
+      log.info("Found {} inquiries in this page. Total elements: {}", inquiries.getContent().size(), inquiries.getTotalElements());
+
+      return inquiries.map(
+          i -> {
+            try {
+              return AdminInquiryListResponse.builder()
+                  .id(i.getId())
+                  .userName(i.getUser() != null ? i.getUser().getNickname() : "Unknown")
+                  .userEmail(i.getUser() != null ? i.getUser().getEmail() : "Unknown")
+                  .type(i.getType() != null ? i.getType().getLabel() : "Unknown")
+                  .title(i.getTitle())
+                  .status(i.getStatus())
+                  .createdAt(i.getCreatedAt())
+                  .build();
+            } catch (Exception e) {
+              log.error("Error mapping inquiry entity ID {}: {}", i.getId(), e.getMessage());
+              return null;
+            }
+          });
+    } catch (Exception e) {
+      log.error("Error in getInquiries: {}", e.getMessage(), e);
+      throw e;
+    }
   }
 
   @Transactional(readOnly = true)
@@ -282,5 +297,61 @@ public class AdminManagementService {
     }
 
     itemRepository.deleteById(itemId);
+  }
+
+  // --- 문의 테스트 데이터 생성 ---
+
+  @Transactional
+  public void generateInquiryTestData() {
+    log.info("Generating 30 inquiry test data...");
+
+    // 테스트용 사용자 가져오기 (없으면 첫 번째 사용자 사용)
+    User testUser = userRepository.findByEmail("user1@daypoo.com")
+        .or(() -> userRepository.findByEmail("user2@daypoo.com"))
+        .orElseGet(() -> userRepository.findAll().stream()
+            .filter(u -> u.getRole() == Role.ROLE_USER)
+            .findFirst()
+            .orElseThrow(() -> new RuntimeException("테스트 문의를 생성할 유저가 없습니다.")));
+
+    log.info("Using test user: {}", testUser.getEmail());
+
+    // 30개의 문의 생성
+    InquiryType[] types = InquiryType.values();
+    String[] titles = {
+        "앱 사용 중 오류가 발생합니다",
+        "결제가 완료되지 않아요",
+        "화장실 정보가 잘못되었어요",
+        "포인트가 적립되지 않았습니다",
+        "아이템 구매 후 인벤토리 확인이 안 돼요",
+        "AI 분석 결과가 이상합니다",
+        "지도에서 화장실이 표시되지 않아요",
+        "리뷰 작성 후 반영이 안 됩니다",
+        "랭킹 점수가 업데이트되지 않아요",
+        "알림이 오지 않습니다"
+    };
+
+    for (int i = 0; i < 30; i++) {
+      InquiryType type = types[i % types.length];
+      String title = titles[i % titles.length] + " #" + (i + 1);
+      String content = "문의 내용입니다. 테스트 데이터 " + (i + 1) + "번째 문의입니다.\n"
+          + "상세한 설명을 여기에 작성합니다. 문제가 발생한 상황과 재현 방법을 알려주세요.";
+
+      Inquiry inquiry = Inquiry.builder()
+          .user(testUser)
+          .type(type)
+          .title(title)
+          .content(content)
+          .build();
+
+      inquiryRepository.save(inquiry);
+
+      // 일부 문의는 답변 완료 상태로 설정
+      if (i % 3 == 0) {
+        inquiry.answer("테스트 답변입니다. 문의해 주셔서 감사합니다.\n"
+            + "해당 문제는 확인되었으며, 조치 완료되었습니다.");
+      }
+    }
+
+    log.info("Successfully generated 30 inquiry test data");
   }
 }

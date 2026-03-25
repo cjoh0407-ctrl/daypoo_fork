@@ -29,23 +29,38 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const refreshUser = useCallback(async () => {
     setLoading(true);
     const token = localStorage.getItem('accessToken');
+
+    console.log('[AuthContext] refreshUser called. Has token:', !!token);
+
     if (!token) {
+      console.log('[AuthContext] No token found. Setting user to null.');
       setUser(null);
       setLoading(false);
       return;
     }
 
     try {
+      console.log('[AuthContext] Fetching user info from /auth/me...');
       const userData = await api.get('/auth/me');
+      console.log('[AuthContext] ✅ User data received:', {
+        email: userData.email,
+        nickname: userData.nickname,
+        role: userData.role
+      });
       setUser(userData as User);
     } catch (err: any) {
-      console.error('Failed to fetch user', err);
+      console.error('[AuthContext] ❌ Failed to fetch user:', {
+        message: err.message,
+        response: err.response?.data,
+        status: err.response?.status
+      });
       // 토큰이 유효하지 않으면 로그아웃 처리
       localStorage.removeItem('accessToken');
       localStorage.removeItem('refreshToken');
       setUser(null);
     } finally {
       setLoading(false);
+      console.log('[AuthContext] Loading complete. User:', !!user);
     }
   }, []);
 

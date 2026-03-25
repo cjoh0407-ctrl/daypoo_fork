@@ -204,7 +204,9 @@ export function PremiumPage({ openAuth }: { openAuth: (mode: 'login' | 'signup')
                     }`}>
                       {feature.ok ? <Check size={12} strokeWidth={4} /> : <Zap size={10} />}
                     </div>
-                    <span className={`text-sm font-bold ${feature.ok ? 'text-[#1A2B27]' : 'text-gray-300'}`}>
+                    <span className={`text-sm font-bold ${
+                      feature.ok ? 'text-[#1A2B27]' : 'text-gray-300 line-through opacity-60'
+                    }`}>
                       {feature.text}
                     </span>
                   </div>

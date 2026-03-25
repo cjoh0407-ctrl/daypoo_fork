@@ -148,6 +148,41 @@ public class AdminService {
                 .build());
       }
     }
+    
+    generateInquiryTestData(user);
+    
     log.info("Successfully generated test data.");
+  }
+
+  private void generateInquiryTestData(com.daypoo.api.entity.User user) {
+    log.info("Generating 30 mock inquiries...");
+    String[] titles = {
+      "화장실 청소 상태가 안 좋아요",
+      "결제가 자꾸 실패합니다",
+      "비밀번호를 잊어버렸어요",
+      "앱이 너무 느려요",
+      "위치 정보가 정확하지 않습니다",
+      "새로운 기능을 제안합니다",
+      "포인트 적립이 안 됐어요",
+      "아이템 사용법을 모르겠어요"
+    };
+    
+    com.daypoo.api.entity.enums.InquiryType[] types = com.daypoo.api.entity.enums.InquiryType.values();
+    
+    LocalDateTime now = LocalDateTime.now();
+    for (int i = 1; i <= 30; i++) {
+      Inquiry inquiry = Inquiry.builder()
+              .user(user)
+              .type(types[i % types.length])
+              .title(titles[i % titles.length] + " (" + i + ")")
+              .content("이것은 테스트를 위한 " + i + "번째 문의 내용입니다. 상세한 처리를 부탁드립니다.")
+              .build();
+      
+      // 생성 시간을 1초씩 다르게 설정 (정렬 충돌 방지)
+      // BaseTimeEntity의 수동 설정을 위해 리플렉션이나 다른 방법을 쓰지 않고, 
+      // 단순히 save 후 flush를 보장하기 위해 saveAndFlush 사용
+      inquiryRepository.save(inquiry);
+    }
+    inquiryRepository.flush();
   }
 }

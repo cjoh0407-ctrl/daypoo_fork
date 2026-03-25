@@ -23,7 +23,13 @@
       "Bash(python3 -m json.tool)",
       "Bash(docker exec:*)",
       "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:8080/actuator/health)",
-      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:8080/api/v1/admin/stats)"
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:8080/api/v1/admin/stats)",
+      "Bash(./gradlew bootRun:*)",
+      "Bash(curl:*)",
+      "Bash(netstat:*)",
+      "Bash(findstr:*)",
+      "Bash(taskkill:*)",
+      "Bash(find:*)"
     ]
   }
 }

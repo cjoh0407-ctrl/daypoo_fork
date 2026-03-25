@@ -178,30 +178,41 @@ export const MapView = forwardRef<MapViewHandle, MapViewProps>(
 
     useEffect(() => {
       if (!mapRef.current || !clustererRef.current) return;
-      
+
       const level = mapRef.current.getLevel();
       const maxRenderCount = level >= 7 ? 500 : 1000;
       const toiletsToRender = toilets.slice(0, maxRenderCount);
       const currentToiletsIds = new Set(toiletsToRender.map(t => t.id));
-      
+
       const toRemove: any[] = [];
+      const toUpdate: ToiletData[] = [];
+
       markersRef.current.forEach((item, id) => {
         if (!currentToiletsIds.has(id)) {
           item.overlay.setMap(null);
           toRemove.push(item.marker);
           markersRef.current.delete(id);
+        } else {
+          // 기존 마커의 isVisited 상태가 변경되었는지 확인
+          const updatedToilet = toiletsToRender.find(t => t.id === id);
+          if (updatedToilet && updatedToilet.isVisited) {
+            // 방문 완료된 화장실은 마커를 재생성
+            item.overlay.setMap(null);
+            toRemove.push(item.marker);
+            markersRef.current.delete(id);
+            toUpdate.push(updatedToilet);
+          }
         }
       });
       if (toRemove.length > 0) clustererRef.current.removeMarkers(toRemove);
 
       const newMarkers: any[] = [];
-      toiletsToRender.forEach((toilet) => {
-        if (!markersRef.current.has(toilet.id)) {
-          const { marker, overlay } = createToiletMarker(window.kakao, toilet, onSelectToilet);
-          if (level < 5) overlay.setMap(mapRef.current);
-          markersRef.current.set(toilet.id, { marker, overlay });
-          newMarkers.push(marker);
-        }
+      // 새 마커와 업데이트된 마커 생성
+      [...toiletsToRender.filter(t => !markersRef.current.has(t.id)), ...toUpdate].forEach((toilet) => {
+        const { marker, overlay } = createToiletMarker(window.kakao, toilet, onSelectToilet);
+        if (level < 5) overlay.setMap(mapRef.current);
+        markersRef.current.set(toilet.id, { marker, overlay });
+        newMarkers.push(marker);
       });
 
       if (newMarkers.length > 0) {

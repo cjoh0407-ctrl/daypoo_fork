@@ -11,9 +11,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface InquiryRepository extends JpaRepository<Inquiry, Long> {
   List<Inquiry> findAllByUserOrderByCreatedAtDesc(User user);
 
-  Page<Inquiry> findAllByOrderByCreatedAtDesc(Pageable pageable);
-
-  Page<Inquiry> findAllByStatusOrderByCreatedAtDesc(InquiryStatus status, Pageable pageable);
+  Page<Inquiry> findAllByStatus(InquiryStatus status, Pageable pageable);
 
   long countByStatus(InquiryStatus status);
 

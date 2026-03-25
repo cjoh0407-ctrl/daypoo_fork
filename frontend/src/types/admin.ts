@@ -2,7 +2,7 @@
 
 export type Role = 'ROLE_USER' | 'ROLE_ADMIN';
 export type InquiryStatus = 'PENDING' | 'COMPLETED';
-export type ItemType = 'TITLE' | 'AVATAR' | 'EFFECT';
+export type ItemType = 'AVATAR_SKIN' | 'MARKER_SKIN';
 
 // ========== User Management ==========
 export interface AdminUserListResponse {
@@ -16,9 +16,19 @@ export interface AdminUserListResponse {
   createdAt: string;
 }
 
-export interface AdminUserDetailResponse extends AdminUserListResponse {
+export interface AdminUserDetailResponse {
+  id: number;
+  email: string;
+  nickname: string;
+  role: Role;
+  level: number;
+  exp: number;
+  points: number;
+  recordCount: number;
+  paymentCount: number;
   totalPaymentAmount: number;
-  lastLoginAt: string | null;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface PageResponse<T> {
@@ -66,7 +76,7 @@ export interface AdminInquiryListResponse {
 export interface AdminInquiryDetailResponse extends AdminInquiryListResponse {
   content: string;
   answer: string | null;
-  answeredAt: string | null;
+  updatedAt: string;
 }
 
 export interface AdminInquiryAnswerRequest {

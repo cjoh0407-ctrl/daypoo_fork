@@ -29,7 +29,7 @@ public class AdminInquiryController {
   @GetMapping
   public ResponseEntity<Page<AdminInquiryListResponse>> getInquiries(
       @RequestParam(required = false) InquiryStatus status,
-      @PageableDefault(size = 20) Pageable pageable) {
+      @PageableDefault(size = 20, sort = "createdAt", direction = org.springframework.data.domain.Sort.Direction.DESC) Pageable pageable) {
     return ResponseEntity.ok(adminManagementService.getInquiries(status, pageable));
   }
 
@@ -45,5 +45,12 @@ public class AdminInquiryController {
       @PathVariable Long id, @Valid @RequestBody AdminInquiryAnswerRequest request) {
     adminManagementService.answerInquiry(id, request);
     return ResponseEntity.ok().build();
+  }
+
+  @Operation(summary = "문의 테스트 데이터 생성", description = "고객지원 테스트를 위해 30개의 문의 데이터를 생성합니다.")
+  @PostMapping("/generate-test-data")
+  public ResponseEntity<String> generateInquiryTestData() {
+    adminManagementService.generateInquiryTestData();
+    return ResponseEntity.ok("30개의 문의 테스트 데이터가 생성되었습니다.");
   }
 }

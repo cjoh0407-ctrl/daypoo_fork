@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Navigation, Star, Clock, Users, MessageCircle, Loader2 } from 'lucide-react';
+import { X, Navigation, Star, Clock, Users, MessageCircle, Loader2, MapPin, Target, Sparkles, CheckCircle2, Smile, Wind, ScrollText, VolumeX } from 'lucide-react';
 import { ToiletData, EMOJI_TAG_MAP } from '../../types/toilet';
 import { getReviewSummary, ToiletReviewSummaryResponse } from '../../services/reviewService';
 import { ReviewModal } from './ReviewModal';
@@ -42,6 +42,15 @@ function StarRating({ rating }: { rating: number }) {
   );
 }
 
+
+// ── 태그 아이콘 매핑 ──
+const TAG_ICON_MAP: Record<string, React.ReactNode> = {
+  clean: <Smile size={12} />,
+  smell: <Wind size={12} />,
+  tissue: <ScrollText size={12} />,
+  crowded: <Users size={12} />,
+  quiet: <VolumeX size={12} />,
+};
 
 export function ToiletPopup({ 
   toilet, 
@@ -142,7 +151,11 @@ export function ToiletPopup({
           <div className="flex items-start justify-between p-5" style={{ borderBottom: '1px solid #eef5f0' }}>
             <div className="flex-1 pr-2">
               <div className="flex items-center gap-2 mb-2">
-                {toilet.isVisited ? <span className="text-lg">💩</span> : <span className="text-lg grayscale opacity-50">💩</span>}
+                {toilet.isVisited ? (
+                  <CheckCircle2 size={18} style={{ color: '#2D6A4F' }} />
+                ) : (
+                  <CheckCircle2 size={18} className="opacity-30" style={{ color: '#7a9e8a' }} />
+                )}
                 {toilet.isOpen24h && <span className="text-xs font-bold px-2 py-1 rounded-full" style={{ background: '#e8f3ec', color: '#2D6A4F' }}>24H</span>}
               </div>
               <h3 className="font-black text-lg leading-tight" style={{ color: '#1a2b22' }}>{toilet.name}</h3>
@@ -166,11 +179,12 @@ export function ToiletPopup({
                   color: toilet.isFavorite ? '#E8A838' : '#95a99e',
                 }}
               >
-                <span className="text-2xl pt-0.5" style={{
-                  filter: toilet.isFavorite ? 'none' : 'grayscale(0.3)'
-                }}>
-                  {toilet.isFavorite ? '⭐' : '⭐'}
-                </span>
+                <Star 
+                  size={22} 
+                  fill={toilet.isFavorite ? '#E8A838' : 'none'} 
+                  stroke={toilet.isFavorite ? '#E8A838' : 'currentColor'}
+                  style={{ transform: 'translateY(-0.5px)' }}
+                />
               </motion.button>
               <motion.button 
                 onClick={onClose} 
@@ -187,7 +201,7 @@ export function ToiletPopup({
           {/* ── 정보 ── */}
           <div className="px-5 py-4 flex flex-col gap-3" style={{ borderBottom: '1px solid #eef5f0' }}>
             <div className="flex items-center gap-2 text-sm" style={{ color: isWithinRange ? '#2D6A4F' : '#E85D5D' }}>
-              <span className="text-base">{isWithinRange ? '📍' : '🎯'}</span>
+              {isWithinRange ? <MapPin size={16} /> : <Target size={16} />}
               <span className="font-bold">
                 현위치에서 {distanceText} {isWithinRange ? '✓' : '(인증 범위: 150m 이내)'}
               </span>
@@ -231,7 +245,7 @@ export function ToiletPopup({
                 {reviewSummary.aiSummary && (
                   <div className="mb-3 p-3 rounded-xl" style={{ background: '#f4faf6' }}>
                     <div className="flex items-center gap-1.5 mb-1">
-                      <span className="text-xs">✨</span>
+                      <Sparkles size={14} style={{ color: '#2D6A4F' }} />
                       <span className="text-xs font-bold" style={{ color: '#2D6A4F' }}>AI 요약</span>
                     </div>
                     <p className="text-sm leading-relaxed" style={{ color: '#5a7a6a' }}>
@@ -265,9 +279,10 @@ export function ToiletPopup({
                         <div className="flex flex-wrap gap-1.5 mb-2">
                           {review.emojiTags.map((tag) => {
                             const emojiData = EMOJI_TAG_MAP[tag as keyof typeof EMOJI_TAG_MAP];
+                            const icon = TAG_ICON_MAP[tag];
                             return emojiData ? (
-                              <span key={tag} className="text-xs px-2 py-0.5 rounded-full" style={{ background: '#f4faf6', color: '#5a7a6a' }}>
-                                {emojiData.emoji} {emojiData.label}
+                              <span key={tag} className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full" style={{ background: '#f4faf6', color: '#5a7a6a' }}>
+                                {icon} {emojiData.label}
                               </span>
                             ) : null;
                           })}
@@ -292,16 +307,16 @@ export function ToiletPopup({
                 </motion.button>
               </>
             ) : (
-              <div className="py-6 text-center">
-                <p className="text-sm mb-3" style={{ color: '#7a9e8a' }}>아직 후기가 없어요</p>
+              <div className="py-8 text-center flex flex-col items-center justify-center">
+                <p className="text-sm mb-4" style={{ color: '#7a9e8a' }}>아직 후기가 없어요</p>
                 <motion.button
                   onClick={handleOpenReviewModal}
                   whileHover={{ scale: 1.05, boxShadow: '0 8px 16px rgba(27,67,50,0.2)' }}
                   whileTap={{ scale: 0.95 }}
-                  className="px-5 py-3 rounded-xl text-sm font-bold shadow-md"
+                  className="mx-auto px-6 py-3.5 rounded-xl text-sm font-bold shadow-md flex items-center justify-center gap-2 transition-all"
                   style={{ background: '#1B4332', color: '#fff' }}
                 >
-                  첫 후기 남기기 ✨
+                  첫 후기 남기기 <Sparkles size={16} />
                 </motion.button>
               </div>
             )}
@@ -330,8 +345,9 @@ export function ToiletPopup({
           {/* ── 방문 인증 ── */}
           <div className="p-5">
             {!isWithinRange && (
-              <p className="text-sm text-center mb-3 px-4 py-3 rounded-xl leading-relaxed" style={{ background: '#FFF3E0', color: '#E8A838' }}>
-                🎯 화장실 근처(150m 이내)로<br />이동하면 인증할 수 있어요!
+              <p className="text-sm text-center mb-3 px-4 py-3 rounded-xl leading-relaxed flex items-center justify-center gap-2" style={{ background: '#FFF3E0', color: '#E8A838' }}>
+                <Target size={18} />
+                <span>화장실 근처(150m 이내)로<br />이동하면 인증할 수 있어요!</span>
               </p>
             )}
             <motion.button
@@ -351,8 +367,9 @@ export function ToiletPopup({
                 color: '#fff',
               }}
             >
-              <span className="relative z-10">
-                {toilet.isVisited ? '💩 다시 방문 인증하기' : '💩 방문 인증하기'}
+              <span className="relative z-10 flex items-center justify-center gap-2">
+                <CheckCircle2 size={18} />
+                {toilet.isVisited ? '다시 방문 인증하기' : '방문 인증하기'}
               </span>
               {isWithinRange && (
                 <motion.div 

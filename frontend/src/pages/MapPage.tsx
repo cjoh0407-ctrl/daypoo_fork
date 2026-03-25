@@ -95,13 +95,19 @@ export function MapPage({ openAuth }: { openAuth: (mode: 'login' | 'signup') => 
     try {
       const payload: any = {
         toiletId: Number(recordData.toiletId),
-        bristolScale: recordData.bristolType,
-        color: recordData.color,
         conditionTags: recordData.conditionTags || [],
         dietTags: recordData.foodTags || [],
         latitude: pos.lat,
         longitude: pos.lng
       };
+
+      // Fast-Track 방식: bristolType, color가 null이 아닐 때만 포함
+      if (recordData.bristolType !== null) {
+        payload.bristolScale = recordData.bristolType;
+      }
+      if (recordData.color !== null) {
+        payload.color = recordData.color;
+      }
 
       // AI 촬영 인증: imageBase64가 있으면 포함
       if (recordData.imageBase64) {
