@@ -34,7 +34,7 @@ public class ShopperScenario implements BotScenario {
       userRepository.save(user);
     }
 
-    List<ItemResponse> items = shopService.getAllItems(null);
+    List<ItemResponse> items = shopService.getAllItems(user, null);
     if (items.isEmpty()) return;
 
     ItemResponse item = items.get(random.nextInt(items.size()));

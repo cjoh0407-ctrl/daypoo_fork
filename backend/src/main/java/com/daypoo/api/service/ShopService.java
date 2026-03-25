@@ -27,9 +27,16 @@ public class ShopService {
 
   /** 상점 아이템 목록 조회 */
   @Transactional(readOnly = true)
-  public List<ItemResponse> getAllItems(ItemType type) {
+  public List<ItemResponse> getAllItems(User user, ItemType type) {
     List<Item> items =
         (type == null) ? itemRepository.findAll() : itemRepository.findAllByType(type);
+
+    // 사용자가 소유한 아이템 ID 목록 조회
+    List<Long> ownedItemIds =
+        inventoryRepository.findAllByUser(user).stream()
+            .map(inv -> inv.getItem().getId())
+            .collect(Collectors.toList());
+
     return items.stream()
         .map(
             item ->
@@ -40,6 +47,7 @@ public class ShopService {
                     .type(item.getType())
                     .price(item.getPrice())
                     .imageUrl(item.getImageUrl())
+                    .owned(ownedItemIds.contains(item.getId()))
                     .build())
         .collect(Collectors.toList());
   }

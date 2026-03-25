@@ -85,6 +85,10 @@ public class ReportService {
           .periodStart(s.getPeriodStart())
           .periodEnd(s.getPeriodEnd())
           .analyzedAt(s.getCreatedAt().toString())
+          .mostFrequentBristol(null)
+          .mostFrequentCondition(null)
+          .mostFrequentDiet(null)
+          .healthyRatio(null)
           .build();
     }
 
@@ -122,6 +126,45 @@ public class ReportService {
     HealthReportResponse response = aiClient.analyzeHealthReport(requestDto);
 
     // AI 응답 확장 정보 채우기
+    // Stats 계산
+    Integer mostFrequentBristol =
+        computeMostFrequent(
+            records.stream()
+                .map(PooRecord::getBristolScale)
+                .filter(java.util.Objects::nonNull)
+                .collect(Collectors.toList()));
+
+    String mostFrequentCondition =
+        computeMostFrequentTag(
+            records.stream()
+                .flatMap(
+                    r ->
+                        r.getConditionTags() != null && !r.getConditionTags().isEmpty()
+                            ? java.util.Arrays.stream(r.getConditionTags().split(","))
+                            : java.util.stream.Stream.empty())
+                .collect(Collectors.toList()));
+
+    String mostFrequentDiet =
+        computeMostFrequentTag(
+            records.stream()
+                .flatMap(
+                    r ->
+                        r.getDietTags() != null && !r.getDietTags().isEmpty()
+                            ? java.util.Arrays.stream(r.getDietTags().split(","))
+                            : java.util.stream.Stream.empty())
+                .collect(Collectors.toList()));
+
+    long healthyCount =
+        records.stream()
+            .filter(
+                r ->
+                    r.getBristolScale() != null
+                        && r.getBristolScale() >= 3
+                        && r.getBristolScale() <= 4)
+            .count();
+
+    Integer healthyRatio = records.isEmpty() ? null : (int) (healthyCount * 100 / records.size());
+
     response =
         HealthReportResponse.builder()
             .reportType(response.reportType())
@@ -133,6 +176,10 @@ public class ReportService {
             .periodStart(startTime)
             .periodEnd(endTime)
             .analyzedAt(LocalDateTime.now().toString())
+            .mostFrequentBristol(mostFrequentBristol)
+            .mostFrequentCondition(mostFrequentCondition)
+            .mostFrequentDiet(mostFrequentDiet)
+            .healthyRatio(healthyRatio)
             .build();
 
     // 7. DB 영구 저장 (Snapshot)
@@ -209,5 +256,22 @@ public class ReportService {
       case WEEKLY -> LocalDateTime.now().minusWeeks(1);
       case MONTHLY -> LocalDateTime.now().minusMonths(1);
     };
+  }
+
+  private <T> T computeMostFrequent(List<T> items) {
+    if (items == null || items.isEmpty()) {
+      return null;
+    }
+    return items.stream()
+        .collect(Collectors.groupingBy(java.util.function.Function.identity(), Collectors.counting()))
+        .entrySet().stream()
+        .max(java.util.Map.Entry.comparingByValue())
+        .map(java.util.Map.Entry::getKey)
+        .orElse(null);
+  }
+
+  private String computeMostFrequentTag(List<String> tags) {
+    String result = computeMostFrequent(tags);
+    return result != null ? result : null;
   }
 }

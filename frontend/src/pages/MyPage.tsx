@@ -627,7 +627,7 @@ function TabBar({ active, onChange }: { active: TabKey; onChange: (k: TabKey) =>
 }
 
 // ── 홈 탭 ─────────────────────────────────────────────────────────────
-function HomeTab({ equipped, setEquipped, user, avatarItems, setAvatarItems, initialShopTab = 'inventory', refreshUser, records = [] }: {
+function HomeTab({ equipped, setEquipped, user, avatarItems, setAvatarItems, initialShopTab = 'inventory', refreshUser, fetchShopData, records = [] }: {
   equipped: AvatarItem | null;
   setEquipped: (i: AvatarItem) => void;
   user: UserResponse | null;
@@ -635,6 +635,7 @@ function HomeTab({ equipped, setEquipped, user, avatarItems, setAvatarItems, ini
   setAvatarItems: React.Dispatch<React.SetStateAction<AvatarItem[]>>;
   initialShopTab?: 'inventory' | 'shop';
   refreshUser: () => Promise<void>;
+  fetchShopData: () => Promise<void>;
   records?: any[];
 }) {
   const [shopTab, setShopTab] = useState<'inventory' | 'shop'>(initialShopTab);
@@ -737,12 +738,7 @@ function HomeTab({ equipped, setEquipped, user, avatarItems, setAvatarItems, ini
           await refreshUser();
 
           // 아이템 목록 새로고침 (owned 상태 업데이트)
-          // TODO: 아이템 목록을 API에서 가져오는 경우 여기서 새로고침
-
-          // 구매한 아이템을 owned로 변경
-          setAvatarItems(prev => prev.map(item =>
-            item.id === preview.id ? { ...item, owned: true } : item
-          ));
+          await fetchShopData();
 
           // 자동 장착
           setEquipped(preview);
@@ -1186,6 +1182,7 @@ function ReportTab({ records = [] }: { records?: any[] }) {
   const [isFetchLoading, setIsFetchLoading] = useState(false);
 
   const fetchReport = useCallback(async (type: string) => {
+    setReportData(null); // 탭 전환 시 즉시 초기화 (stale data 방지)
     setIsFetchLoading(true);
     try {
       const res = await api.get(`/reports/${type.toUpperCase()}`);
@@ -1363,12 +1360,36 @@ function ReportTab({ records = [] }: { records?: any[] }) {
                   </div>
                 </div>
 
+                {/* 분석 기간 표시 */}
+                {reportData?.periodStart && reportData?.periodEnd && (
+                  <p className="text-sm text-gray-400 text-center mb-6">
+                    분석 기간: {new Date(reportData.periodStart).toLocaleDateString('ko-KR')} ~ {new Date(reportData.periodEnd).toLocaleDateString('ko-KR')}
+                    &nbsp;({reportData.recordCount}건)
+                  </p>
+                )}
+
                 <div className="grid grid-cols-4 gap-4 mb-10">
                   {[
-                    { label: '최고 상태', val: '바나나', emoji: <CheckCircle2 size={24} className="text-emerald-500" /> },
-                    { label: '주의 요망', val: '매운맛', emoji: <AlertCircle size={24} className="text-red-500" /> },
-                    { label: '평균 척도', val: 'Step 4', emoji: <Activity size={24} className="text-blue-500" /> },
-                    { label: '분석 성취율', val: '92%', emoji: <Trophy size={24} className="text-amber-500" /> },
+                    {
+                      label: '최다 식단',
+                      val: reportData?.mostFrequentDiet ?? '-',
+                      emoji: <Droplets size={24} className="text-emerald-500" />
+                    },
+                    {
+                      label: '최다 컨디션',
+                      val: reportData?.mostFrequentCondition ?? '-',
+                      emoji: <AlertCircle size={24} className="text-red-500" />
+                    },
+                    {
+                      label: '최다 브리스톨',
+                      val: reportData?.mostFrequentBristol != null ? `Step ${reportData.mostFrequentBristol}` : '-',
+                      emoji: <Activity size={24} className="text-blue-500" />
+                    },
+                    {
+                      label: '건강 배변 비율',
+                      val: reportData?.healthyRatio != null ? `${reportData.healthyRatio}%` : '-',
+                      emoji: <Trophy size={24} className="text-amber-500" />
+                    },
                   ].map((stat, i) => (
                     <div key={i} className="flex flex-col items-center p-6 rounded-[32px] bg-gray-50 border border-gray-50 shadow-inner group hover:bg-white hover:shadow-xl transition-all">
                       <span className="text-[#1A2B27] mb-3 transform group-hover:scale-110 transition-transform">{stat.emoji}</span>
@@ -2023,6 +2044,7 @@ export function MyPage({ openAuth }: { openAuth: (mode: 'login' | 'signup') => v
                 setAvatarItems={setAvatarItems}
                 initialShopTab={new URLSearchParams(location.search).get('sub') === 'shop' ? 'shop' : 'inventory'}
                 refreshUser={refreshUser}
+                fetchShopData={fetchShopData}
                 records={records}
               />
             )}

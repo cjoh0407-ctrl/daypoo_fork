@@ -22,8 +22,9 @@ public class ShopController {
   /** 상점 아이템 목록 조회 */
   @GetMapping("/items")
   public ResponseEntity<List<ItemResponse>> getAllItems(
-      @RequestParam(required = false) ItemType type) {
-    return ResponseEntity.ok(shopService.getAllItems(type));
+      @AuthenticationPrincipal String email, @RequestParam(required = false) ItemType type) {
+    User user = userService.getByEmail(email);
+    return ResponseEntity.ok(shopService.getAllItems(user, type));
   }
 
   /** 아이템 구매 */

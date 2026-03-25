@@ -5,4 +5,10 @@ import lombok.Builder;
 
 @Builder
 public record ItemResponse(
-    Long id, String name, String description, ItemType type, long price, String imageUrl) {}
+    Long id,
+    String name,
+    String description,
+    ItemType type,
+    long price,
+    String imageUrl,
+    boolean owned) {}

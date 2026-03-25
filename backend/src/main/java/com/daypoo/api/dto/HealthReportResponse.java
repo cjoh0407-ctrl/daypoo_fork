@@ -14,4 +14,8 @@ public record HealthReportResponse(
     int recordCount,
     LocalDateTime periodStart,
     LocalDateTime periodEnd,
-    String analyzedAt) {}
+    String analyzedAt,
+    Integer mostFrequentBristol,
+    String mostFrequentCondition,
+    String mostFrequentDiet,
+    Integer healthyRatio) {}

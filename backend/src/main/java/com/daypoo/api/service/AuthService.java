@@ -37,6 +37,7 @@ public class AuthService {
   private final StringRedisTemplate redisTemplate;
   private final TitleRepository titleRepository;
   private final UserDeletionService userDeletionService;
+  private final PooRecordRepository pooRecordRepository;
 
   @Transactional
   public TokenResponse socialSignUp(SocialSignUpRequest request) {
