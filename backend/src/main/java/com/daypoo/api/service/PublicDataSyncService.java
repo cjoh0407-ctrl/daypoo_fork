@@ -59,19 +59,28 @@ public class PublicDataSyncService {
     this.webClient = WebClient.builder().baseUrl(apiUrl).build();
   }
 
+  /**
+   * 매일 새벽 3시에 공공데이터 전체 동기화를 실행합니다.
+   * 서버 시작 시에는 toilet 데이터가 없는 경우에만 소규모 동기화를 수행합니다.
+   */
+  @org.springframework.scheduling.annotation.Scheduled(cron = "0 0 3 * * *")
+  public void scheduledSync() {
+    log.info("🕒 [Scheduled] Starting daily public data sync...");
+    try {
+      int saved = syncAllToilets(1, 30);
+      log.info("✅ [Scheduled] Daily sync completed. New toilets: {}", saved);
+    } catch (Exception e) {
+      log.error("❌ [Scheduled] Daily sync failed: {}", e.getMessage());
+    }
+  }
+
   /** [초고속 모드] 가상 스레드와 병렬 파이프라이닝을 사용하여 데이터를 동기화합니다. */
   public int syncAllToilets(int startPage, int endPage) {
     AtomicInteger totalSavedCount = new AtomicInteger(0);
-    int targetMaxPage = endPage;
-
-    log.info("🚀 Pre-loading existing management numbers for duplicate check...");
-    Set<String> existingMngNos = ConcurrentHashMap.newKeySet();
-    existingMngNos.addAll(toiletRepository.findAllMngNos());
-    log.info("📊 Pre-loaded {} existing toilet management numbers.", existingMngNos.size());
 
     log.info(
-        "🚀 Starting ULTRA-FAST public data sync using Virtual Threads (Concurrent requests: {})...",
-        MAX_CONCURRENT_REQUESTS);
+        "🚀 Starting public data sync using Virtual Threads (pages: {}-{}, concurrent: {})...",
+        startPage, endPage, MAX_CONCURRENT_REQUESTS);
 
     TransactionTemplate transactionTemplate = new TransactionTemplate(transactionManager);
 
@@ -79,23 +88,20 @@ public class PublicDataSyncService {
       Semaphore semaphore = new Semaphore(MAX_CONCURRENT_REQUESTS);
       List<CompletableFuture<Void>> futures = new ArrayList<>();
 
-      for (int page = startPage; page <= targetMaxPage; page++) {
+      for (int page = startPage; page <= endPage; page++) {
         int currentPage = page;
         futures.add(
             CompletableFuture.runAsync(
                 () -> {
                   try {
                     semaphore.acquire();
-                    int saved =
-                        syncToiletDataInternal(
-                            currentPage, BATCH_SIZE, existingMngNos, transactionTemplate);
+                    // findAllMngNos() 전체 로딩 대신 페이지별 IN 쿼리로 중복 체크
+                    int saved = syncToiletDataWithInQuery(currentPage, BATCH_SIZE, transactionTemplate);
                     totalSavedCount.addAndGet(saved);
                     if (currentPage % 10 == 0) {
                       log.info(
                           "📈 Progress: {}/{} pages processed. Total new: {}",
-                          currentPage,
-                          targetMaxPage,
-                          totalSavedCount.get());
+                          currentPage, endPage, totalSavedCount.get());
                     }
                   } catch (Exception e) {
                     log.error("⚠️ Error processing page {}: {}", currentPage, e.getMessage());
@@ -109,7 +115,7 @@ public class PublicDataSyncService {
       CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
     }
 
-    log.info("🏁 ULTRA-FAST Sync Finished. Total new toilets added: {}", totalSavedCount.get());
+    log.info("🏁 Sync Finished. Total new toilets added: {}", totalSavedCount.get());
     return totalSavedCount.get();
   }
 
@@ -158,36 +164,6 @@ public class PublicDataSyncService {
     return 0;
   }
 
-  private int syncToiletDataInternal(
-      int pageNo, int numOfRows, Set<String> existingSet, TransactionTemplate transactionTemplate)
-      throws Exception {
-    String responseBody = fetchResponseBody(pageNo, numOfRows);
-    JsonNode rootNode = objectMapper.readTree(responseBody);
-    JsonNode bodyNode = rootNode.path("response").path("body");
-    if (bodyNode.isMissingNode()) return 0;
-
-    JsonNode itemsNode = bodyNode.path("items").path("item");
-    if (!itemsNode.isArray() || itemsNode.isEmpty()) return 0;
-
-    List<JsonNode> itemList = new ArrayList<>();
-    for (JsonNode item : itemsNode) {
-      itemList.add(item);
-    }
-
-    List<Toilet> toiletsToSave = convertToToiletEntities(itemList, existingSet);
-
-    if (!toiletsToSave.isEmpty()) {
-      transactionTemplate.execute(
-          status -> {
-            bulkInsertToilets(toiletsToSave);
-            return null;
-          });
-      addToRedisGeoBulk(toiletsToSave);
-      return toiletsToSave.size();
-    }
-    return 0;
-  }
-
   private String fetchResponseBody(int pageNo, int numOfRows) {
     return webClient
         .get()
@@ -202,7 +178,7 @@ public class PublicDataSyncService {
                     .build())
         .retrieve()
         .bodyToMono(String.class)
-        .retryWhen(Retry.backoff(3, Duration.ofSeconds(2)).jitter(0.75))
+        .retryWhen(Retry.backoff(2, Duration.ofSeconds(1)).maxBackoff(Duration.ofSeconds(5)))
         .block();
   }
 
