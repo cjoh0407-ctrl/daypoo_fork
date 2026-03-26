@@ -191,10 +191,7 @@ export function EmergencySheet({ isOpen, onClose }: EmergencySheetProps) {
         distanceMeters: calculateDistance(userPos.lat, userPos.lng, t.lat, t.lng)
       }))
       .sort((a, b) => {
-        // 1순위: 24시간 여부
-        if (a.isOpen24h && !b.isOpen24h) return -1;
-        if (!a.isOpen24h && b.isOpen24h) return 1;
-        // 2순위: 가까운 거리
+        // 급똥 상황에서는 무조건 가까운 곳 우선!
         return a.distanceMeters - b.distanceMeters;
       })
       .slice(0, 5) // 상위 5개만 노출

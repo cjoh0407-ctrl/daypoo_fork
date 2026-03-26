@@ -1128,10 +1128,12 @@ const ToiletsView = () => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<any>(null);
   const markersRef = useRef<any[]>([]);
+  const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [selectedToilet, setSelectedToilet] = useState<ToiletData | null>(null);
   const [mapScale, setMapScale] = useState(3);
   const [mapCenter, setMapCenter] = useState({ lat: 37.5172, lng: 127.0473 }); // 강남구청 중심 소폭 조절
   const [syncing, setSyncing] = useState(false);
+  const [syncResult, setSyncResult] = useState<string | null>(null);
 
   const {
     toilets: apiToilets,
@@ -1147,6 +1149,32 @@ const ToiletsView = () => {
   // API에서 받은 데이터 사용 (빈 배열일 경우 "데이터 없음" UI 표시)
   const toilets = apiToilets;
 
+  // 폴링 함수: 3초마다 동기화 상태 확인
+  const startPolling = () => {
+    pollingRef.current = setInterval(async () => {
+      try {
+        const status = await api.get('/admin/sync-toilets/status');
+        if (status.status === 'COMPLETED') {
+          clearInterval(pollingRef.current!);
+          pollingRef.current = null;
+          setSyncing(false);
+          setSyncResult(`동기화 완료! 신규 등록: ${status.totalCount}건`);
+          refetch();
+        } else if (status.status === 'FAILED') {
+          clearInterval(pollingRef.current!);
+          pollingRef.current = null;
+          setSyncing(false);
+          alert('동기화 실패: ' + status.errorMessage);
+        }
+      } catch {
+        clearInterval(pollingRef.current!);
+        pollingRef.current = null;
+        setSyncing(false);
+        alert('동기화 상태 조회 실패');
+      }
+    }, 3000);
+  };
+
   const handleSyncToilets = async () => {
     if (syncing) return;
 
@@ -1160,17 +1188,15 @@ const ToiletsView = () => {
     if (!confirmed) return;
 
     setSyncing(true);
+    setSyncResult(null);
     try {
-      const response = await api.post('/admin/sync-toilets?startPage=1&endPage=500');
-      alert(`동기화 완료!\n${response || '데이터가 성공적으로 동기화되었습니다.'}`);
-      // 동기화 후 지도 새로고침
-      refetch();
+      await api.post('/admin/sync-toilets?startPage=1&endPage=500');
+      // 202 응답 받으면 폴링 시작
+      startPolling();
     } catch (error: any) {
-      console.error('화장실 데이터 동기화 실패:', error);
-      const errorMessage = error.message || '동기화 중 오류가 발생했습니다.';
-      alert(`동기화 실패: ${errorMessage}\n\n개발자 도구 콘솔을 확인해주세요.`);
-    } finally {
       setSyncing(false);
+      console.error('동기화 시작 실패:', error);
+      alert('동기화 시작 실패: ' + (error.message || '오류가 발생했습니다.'));
     }
   };
 
@@ -1198,7 +1224,17 @@ const ToiletsView = () => {
     });
   }, []);
 
-  // 2. 마커 업데이트
+  // 2. 언마운트 시 폴링 정리
+  useEffect(() => {
+    return () => {
+      if (pollingRef.current) {
+        clearInterval(pollingRef.current);
+        pollingRef.current = null;
+      }
+    };
+  }, []);
+
+  // 3. 마커 업데이트
   useEffect(() => {
     if (!mapRef.current || !toilets) return;
     const { kakao } = window as any;
@@ -1261,6 +1297,15 @@ const ToiletsView = () => {
                 </span>
               </button>
             </div>
+
+            {/* Sync Result Message */}
+            {syncResult && (
+              <div className="absolute top-20 left-1/2 transform -translate-x-1/2 z-10">
+                <div className="bg-[#1B4332]/95 backdrop-blur-md text-white px-6 py-3 rounded-2xl shadow-2xl border-2 border-white/20">
+                  <p className="text-xs font-bold">{syncResult}</p>
+                </div>
+              </div>
+            )}
 
             {/* Map Overlay Controls (Custom Style) */}
             <div className="absolute top-6 left-6 flex flex-col gap-2 z-10">

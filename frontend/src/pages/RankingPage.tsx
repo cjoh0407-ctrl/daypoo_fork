@@ -5,6 +5,7 @@ import { Footer } from '../components/Footer';
 import { WaveDivider } from '../components/WaveDivider';
 import { Crown, TrendingUp, TrendingDown, Minus, ShoppingBag, X, MapPin, Star, Trophy, Activity } from 'lucide-react';
 import { useRankings } from '../hooks/useRankings';
+import { generateRankingAvatar } from '../utils/avatar';
 
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -16,6 +17,7 @@ type TabKey = 'total' | 'local' | 'health';
 interface RankUser {
   rank: number;
   emoji: string;
+  avatarUrl?: string; // DiceBear 아바타 URL
   nick: string;
   title: string;
   titleColor: string;
@@ -119,8 +121,12 @@ function ItemPopup({ user, onClose, openAuth }: { user: RankUser; onClose: () =>
                 style={{ background: '#fff', border: `3.5px solid ${user.titleColor}20` }}
               >
                 <ConicGlow color={user.titleColor} thickness={4} borderRadius="50%" />
-                <div className="absolute inset-[4px] rounded-full bg-white flex items-center justify-center z-10">
-                  {user.emoji}
+                <div className="absolute inset-[4px] rounded-full bg-white flex items-center justify-center z-10 overflow-hidden">
+                  {user.avatarUrl ? (
+                    <img src={user.avatarUrl} alt={user.nick} className="w-full h-full object-cover" />
+                  ) : (
+                    user.emoji
+                  )}
                 </div>
                 {user.rank <= 3 && (
                   <div className="absolute -top-6 -right-2 text-amber-500 transform rotate-12 drop-shadow-lg">
@@ -256,8 +262,12 @@ function Podium({ users, onSelect }: { users: RankUser[]; onSelect: (u: RankUser
           <div className="w-20 h-20 rounded-full flex items-center justify-center relative overflow-hidden text-4xl"
             style={{ background: '#fff', boxShadow: '0 8px 24px rgba(0,0,0,0.08)' }}>
             <ConicGlow color={user.titleColor} thickness={4} borderRadius="50%" />
-            <div className="absolute inset-[3px] rounded-full bg-white flex items-center justify-center z-10">
-              {user.emoji}
+            <div className="absolute inset-[3px] rounded-full bg-white flex items-center justify-center z-10 overflow-hidden">
+              {user.avatarUrl ? (
+                <img src={user.avatarUrl} alt={user.nick} className="w-full h-full object-cover" />
+              ) : (
+                user.emoji
+              )}
             </div>
           </div>
           {isFirst && <div className="absolute -top-5 -right-2 text-amber-500 drop-shadow-md"><Crown size={24} /></div>}
@@ -344,13 +354,17 @@ function RankItem({
 
       {/* 아바타 */}
       <div
-        className="w-12 h-12 rounded-full flex items-center justify-center text-2xl flex-shrink-0"
+        className="w-12 h-12 rounded-full flex items-center justify-center text-2xl flex-shrink-0 overflow-hidden"
         style={{
           background: '#f4f9f6',
           border: `2px solid ${user.titleColor}20`,
         }}
       >
-        {user.emoji}
+        {user.avatarUrl ? (
+          <img src={user.avatarUrl} alt={user.nick} className="w-full h-full object-cover" />
+        ) : (
+          user.emoji
+        )}
       </div>
 
       {/* 정보 */}
@@ -475,6 +489,7 @@ export function RankingPage({ openAuth }: { openAuth: (mode: 'login' | 'signup')
         .map((r) => ({
           rank: Number(r.rank || 0),
           emoji: Number(r.rank) === 1 ? '💎' : Number(r.rank) === 2 ? '🦊' : '🐸',
+          avatarUrl: generateRankingAvatar(r.userId, Number(r.rank || 0)),
           nick: r.nickname || '익명',
           title: r.titleName || '새내기 쾌변러',
           titleColor: Number(r.rank) === 1 ? '#E8A838' : Number(r.rank) === 2 ? '#B0B8B4' : Number(r.rank) === 3 ? '#CD7C4A' : '#52b788',

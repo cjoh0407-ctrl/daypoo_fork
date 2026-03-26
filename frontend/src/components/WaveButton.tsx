@@ -24,7 +24,6 @@ const WaveButton: React.FC<WaveButtonProps> = ({
 }) => {
   const [isHovered, setIsHovered] = useState(false);
 
-  // Variant-based Colors
   const colors = {
     primary: {
       bg: '#1B4332',
@@ -61,7 +60,6 @@ const WaveButton: React.FC<WaveButtonProps> = ({
 
   const currentVariant = colors[variant] || colors.primary;
 
-  // Size mapping
   const sizeClasses = {
     xs: 'px-3 py-1.5 text-[10px] rounded-lg',
     sm: 'px-4 py-2 text-xs rounded-xl',
@@ -85,7 +83,6 @@ const WaveButton: React.FC<WaveButtonProps> = ({
         border: (currentVariant as any).border || 'none',
       }}
     >
-      {/* 🌊 Wave Background Layers */}
       <AnimatePresence>
         {!disabled && (
           <div className="absolute inset-0 pointer-events-none z-0">
@@ -114,19 +111,10 @@ const WaveButton: React.FC<WaveButtonProps> = ({
         )}
       </AnimatePresence>
 
-      {/* 🔠 Button Content */}
       <span className="relative z-10 flex items-center gap-2 transition-transform duration-300 group-hover:scale-105">
         {icon && <span className="flex-shrink-0">{icon}</span>}
         {children}
       </span>
-
-      {/* ✨ Subtle Shine Effect on Hover */}
-      <motion.div
-        className="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/10 to-white/0 pointer-events-none z-0"
-        initial={{ x: '-100%' }}
-        animate={{ x: isHovered ? '100%' : '-100%' }}
-        transition={{ duration: 0.8 }}
-      />
     </motion.button>
   );
 };
