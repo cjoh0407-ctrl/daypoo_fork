@@ -165,46 +165,7 @@ public class ReportService {
             .count();
     Integer healthyRatio = records.isEmpty() ? null : (int) (healthyCount * 100 / records.size());
 
-    // AI 응답 확장 정보 채우기
-    // Stats 계산
-    Integer mostFrequentBristol =
-        computeMostFrequent(
-            records.stream()
-                .map(PooRecord::getBristolScale)
-                .filter(java.util.Objects::nonNull)
-                .collect(Collectors.toList()));
-
-    String mostFrequentCondition =
-        computeMostFrequentTag(
-            records.stream()
-                .flatMap(
-                    r ->
-                        r.getConditionTags() != null && !r.getConditionTags().isEmpty()
-                            ? java.util.Arrays.stream(r.getConditionTags().split(","))
-                            : java.util.stream.Stream.empty())
-                .collect(Collectors.toList()));
-
-    String mostFrequentDiet =
-        computeMostFrequentTag(
-            records.stream()
-                .flatMap(
-                    r ->
-                        r.getDietTags() != null && !r.getDietTags().isEmpty()
-                            ? java.util.Arrays.stream(r.getDietTags().split(","))
-                            : java.util.stream.Stream.empty())
-                .collect(Collectors.toList()));
-
-    long healthyCount =
-        records.stream()
-            .filter(
-                r ->
-                    r.getBristolScale() != null
-                        && r.getBristolScale() >= 3
-                        && r.getBristolScale() <= 4)
-            .count();
-
-    Integer healthyRatio = records.isEmpty() ? null : (int) (healthyCount * 100 / records.size());
-
+    // 7. AI 응답 기반 최종 리포트 구성
     response =
         HealthReportResponse.builder()
             .reportType(response.reportType())

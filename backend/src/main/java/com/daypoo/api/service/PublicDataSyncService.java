@@ -6,9 +6,7 @@ import com.daypoo.api.repository.ToiletRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.sql.PreparedStatement;
-import java.sql.Timestamp;
 import java.time.Duration;
-import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -27,7 +25,6 @@ import reactor.util.retry.Retry;
 @Service
 public class PublicDataSyncService {
 
-  private final ToiletRepository toiletRepository;
   private final ObjectMapper objectMapper;
   private final GeometryUtil geometryUtil;
   private final StringRedisTemplate redisTemplate;
@@ -50,7 +47,6 @@ public class PublicDataSyncService {
       JdbcTemplate jdbcTemplate,
       PlatformTransactionManager transactionManager,
       @Value("${public-data.url}") String apiUrl) {
-    this.toiletRepository = toiletRepository;
     this.objectMapper = objectMapper;
     this.geometryUtil = geometryUtil;
     this.redisTemplate = redisTemplate;
@@ -139,20 +135,14 @@ public class PublicDataSyncService {
     if (!itemsNode.isArray() || itemsNode.isEmpty()) return 0;
 
     List<JsonNode> itemList = new ArrayList<>();
-    List<String> mngNosInPage = new ArrayList<>();
     for (JsonNode item : itemsNode) {
       String mngNo = item.path("MNG_NO").asText("");
       if (!mngNo.isEmpty()) {
         itemList.add(item);
-        mngNosInPage.add(mngNo);
       }
     }
 
-    // 단일 페이지용 IN 쿼리 중복 체크
-    List<String> existingMngNos = toiletRepository.findAllMngNoIn(mngNosInPage);
-    Set<String> existingSet = new HashSet<>(existingMngNos);
-
-    List<Toilet> toiletsToSave = convertToToiletEntities(itemList, existingSet);
+    List<Toilet> toiletsToSave = convertToToiletEntities(itemList);
 
     if (!toiletsToSave.isEmpty()) {
       transactionTemplate.execute(
@@ -184,11 +174,12 @@ public class PublicDataSyncService {
         .block();
   }
 
-  private List<Toilet> convertToToiletEntities(List<JsonNode> itemList, Set<String> existingSet) {
+  private List<Toilet> convertToToiletEntities(List<JsonNode> itemList) {
     List<Toilet> toiletsToSave = new ArrayList<>();
+    Set<String> processedMngNos = new HashSet<>();
     for (JsonNode item : itemList) {
       String mngNo = item.path("MNG_NO").asText("");
-      if (mngNo.isEmpty() || existingSet.contains(mngNo)) continue;
+      if (mngNo.isEmpty() || processedMngNos.contains(mngNo)) continue;
 
       double lat = item.path("WGS84_LAT").asDouble(0.0);
       double lon = item.path("WGS84_LOT").asDouble(0.0);
@@ -211,16 +202,24 @@ public class PublicDataSyncService {
               .isUnisex(false)
               .build());
 
-      existingSet.add(mngNo);
+      processedMngNos.add(mngNo);
     }
     return toiletsToSave;
   }
 
   private void bulkInsertToilets(List<Toilet> toilets) {
-    // 3. Multi-row Insert 최적화 (reWriteBatchedInserts=true와 결합)
+    // 3. Multi-row Insert/Update (Upsert) 최적화
     String sql =
         "INSERT INTO toilets (name, mng_no, location, address, open_hours, is_24h, is_unisex, created_at, updated_at) "
-            + "VALUES (?, ?, ST_GeomFromText(?, 4326), ?, ?, ?, ?, ?, ?)";
+            + "VALUES (?, ?, ST_GeomFromText(?, 4326), ?, ?, ?, ?, NOW(), NOW()) "
+            + "ON CONFLICT (mng_no) DO UPDATE SET "
+            + "  name        = EXCLUDED.name, "
+            + "  location    = EXCLUDED.location, "
+            + "  address     = EXCLUDED.address, "
+            + "  open_hours  = EXCLUDED.open_hours, "
+            + "  is_24h      = EXCLUDED.is_24h, "
+            + "  is_unisex   = EXCLUDED.is_unisex, "
+            + "  updated_at  = NOW()";
 
     jdbcTemplate.batchUpdate(
         sql,
@@ -235,8 +234,6 @@ public class PublicDataSyncService {
             ps.setString(5, t.getOpenHours());
             ps.setBoolean(6, t.is24h());
             ps.setBoolean(7, t.isUnisex());
-            ps.setTimestamp(8, Timestamp.valueOf(LocalDateTime.now()));
-            ps.setTimestamp(9, Timestamp.valueOf(LocalDateTime.now()));
           }
 
           @Override
