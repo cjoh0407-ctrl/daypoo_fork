@@ -21,7 +21,8 @@ public record UserResponse(
     SubscriptionResponse subscription,
     Long totalAuthCount,
     Long totalVisitCount,
-    Integer consecutiveDays) {
+    Integer consecutiveDays,
+    String homeRegion) {
 
   public static UserResponse from(User user) {
     return UserResponse.from(user, null, user.getActiveSubscription());
@@ -60,6 +61,7 @@ public record UserResponse(
         .totalAuthCount(totalAuthCount)
         .totalVisitCount(totalVisitCount)
         .consecutiveDays(consecutiveDays)
+        .homeRegion(user.getHomeRegion())
         .build();
   }
 }

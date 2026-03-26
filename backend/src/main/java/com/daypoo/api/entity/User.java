@@ -32,6 +32,9 @@ public class User extends BaseTimeEntity {
   @Column(name = "equipped_title_id")
   private Long equippedTitleId;
 
+  @Column(name = "home_region", length = 50)
+  private String homeRegion;
+
   @Column(nullable = false)
   private int level = 1;
 
@@ -109,6 +112,12 @@ public class User extends BaseTimeEntity {
 
   public void equipTitle(Long titleId) {
     this.equippedTitleId = titleId;
+  }
+
+  public void updateHomeRegion(String regionName) {
+    if (regionName != null && !regionName.isBlank()) {
+      this.homeRegion = regionName;
+    }
   }
 
   public void updateNickname(String nickname) {

@@ -1,5 +1,7 @@
 package com.daypoo.api.repository;
 
+import com.daypoo.api.dto.UserRegionScoreProjection;
+import com.daypoo.api.dto.UserScoreProjection;
 import com.daypoo.api.entity.PooRecord;
 import com.daypoo.api.entity.User;
 import java.time.LocalDateTime;
@@ -45,4 +47,15 @@ public interface PooRecordRepository extends JpaRepository<PooRecord, Long> {
 
   @Query("SELECT DISTINCT p.regionName FROM PooRecord p WHERE p.regionName IS NOT NULL")
   List<String> findDistinctRegionNames();
+
+  @Query(
+      "SELECT p.user.id as userId, COUNT(p) as recordCount, COUNT(DISTINCT p.toilet) as uniqueToilets"
+          + " FROM PooRecord p GROUP BY p.user.id")
+  List<UserScoreProjection> findAllGlobalScores();
+
+  @Query(
+      "SELECT p.user.id as userId, p.regionName as regionName,"
+          + " COUNT(p) as recordCount, COUNT(DISTINCT p.toilet) as uniqueToilets"
+          + " FROM PooRecord p WHERE p.regionName IS NOT NULL GROUP BY p.user.id, p.regionName")
+  List<UserRegionScoreProjection> findAllRegionScores();
 }

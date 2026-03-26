@@ -120,6 +120,7 @@ public class PooRecordService {
 
     // 4. Reverse Geocoding
     String regionName = geocodingService.reverseGeocode(request.latitude(), request.longitude());
+    user.updateHomeRegion(regionName);
 
     // 5. arrival 키 삭제 → 재인증 시 60초 타이머 리셋 허용
     locationVerificationService.resetArrivalTime(user.getId(), toilet.getId());
