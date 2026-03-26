@@ -42,4 +42,7 @@ public interface PooRecordRepository extends JpaRepository<PooRecord, Long> {
       "SELECT COUNT(DISTINCT p.toilet) FROM PooRecord p WHERE p.user = :user AND p.regionName = :region")
   long countDistinctToiletsByUserAndRegionName(
       @Param("user") User user, @Param("region") String region);
+
+  @Query("SELECT DISTINCT p.regionName FROM PooRecord p WHERE p.regionName IS NOT NULL")
+  List<String> findDistinctRegionNames();
 }

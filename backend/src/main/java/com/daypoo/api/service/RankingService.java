@@ -20,9 +20,12 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ZSetOperations;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -81,6 +84,44 @@ public class RankingService {
     String key = REGION_RANK_KEY_PREFIX + regionName;
     checkAndInitialize(key);
     return getRankingFromRedis(key, myUser);
+  }
+
+  @EventListener(ApplicationReadyEvent.class)
+  public void onApplicationReady() {
+    log.info("[Ranking] ApplicationReadyEvent: 랭킹 재구축 수행");
+    rebuildAllRankings();
+  }
+
+  @Scheduled(cron = "0 0 4 * * *")
+  public void scheduledRankingRebuild() {
+    log.info("[Ranking] 스케줄 랭킹 재구축 수행 (매일 04:00)");
+    rebuildAllRankings();
+  }
+
+  public void rebuildAllRankings() {
+    log.info("[Ranking] 전체 랭킹 재구축 시작...");
+
+    // 1. 기존 키 삭제
+    redisTemplate.delete(GLOBAL_RANK_KEY);
+    redisTemplate.delete(HEALTH_RANK_KEY);
+    Set<String> regionKeys = redisTemplate.keys(REGION_RANK_KEY_PREFIX + "*");
+    if (regionKeys != null && !regionKeys.isEmpty()) {
+      redisTemplate.delete(regionKeys);
+    }
+
+    // 2. DB 기반 재구축
+    initializeRankingsFromDb(GLOBAL_RANK_KEY);
+    initializeRankingsFromDb(HEALTH_RANK_KEY);
+
+    // 3. 지역별 재구축
+    List<String> regions = recordRepository.findDistinctRegionNames();
+    for (String region : regions) {
+      if (region != null && !region.isBlank()) {
+        initializeRankingsFromDb(REGION_RANK_KEY_PREFIX + region);
+      }
+    }
+
+    log.info("[Ranking] 전체 랭킹 재구축 완료.");
   }
 
   public RankingResponse getGlobalRanking() {
