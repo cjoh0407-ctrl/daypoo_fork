@@ -1,4 +1,41 @@
-# Backend Modification History
+
+## [2026-03-26 09:00:00] 백엔드 컴파일 에러 수정 및 서버(Simulation) 재가동
+- **작업 내용:** 백엔드 서버(simulation 프로파일) 및 AI 서버 기동 요청 중 발생한 `ReportService.java` 컴파일 에러를 수정하고 전체 프로세스를 정상화하였습니다.
+- **상세 변경 내역:**
+  - **`ReportService.java`**: 이전 작업 과정에서 중복으로 병합된 `mostFrequentBristol`, `mostFrequentCondition` 등 통계 계산 로직 변수 선언부가 두 번 정의되어 발생한 컴파일 에러를 제거하였습니다.
+  - **서버 실행**: 
+    - AI 서버(`ai-service`): 8000번 포트에서 `python3 main.py`로 정상 기동 확인.
+    - 백엔드 서버(`backend`): `simulation` 프로파일로 8080번 포트에서 정상 기동 확인.
+- **결과/영향:** 서버가 정상적으로 빌드 및 기동되어 시뮬레이션 환경 및 AI 분석 기능을 사용할 수 있게 되었습니다.
+
+
+## [2026-03-25 20:50:00] 건강 리포트 통계 데이터(Stats) 추출 로직 추가
+- **작업 내용:** 마이페이지 건강 리포트에서 7일/30일 분석 결과가 동일하게 표시되거나 하드코딩된 데이터가 표시되는 문제를 해결하기 위해, 백엔드에서 실제 기록 기반의 통계 데이터를 계산하여 반환하도록 개선하였습니다.
+- **상세 변경 내역:**
+  - **`HealthReportResponse.java`**: 리포트 응답 DTO에 최빈 브리스톨 척도(`mostFrequentBristol`), 최빈 컨디션 태그(`mostFrequentCondition`), 최빈 식단 태그(`mostFrequentDiet`), 건강 배변 비율(`healthyRatio`) 4개 필드를 추가하였습니다.
+  - **`ReportService.java`**: 
+    - `generateReport` 메서드 내에서 분석 대상이 된 `PooRecord` 목록을 스트림으로 처리하여 가장 자주 등장하는 태그와 척도를 계산하는 로직을 구현하였습니다.
+    - 브리스톨 척도 3~4단계를 기준으로 '건강 배변 비율'을 산출하는 로직을 추가하였습니다.
+    - 범용적인 최빈값 계산을 위한 헬퍼 메서드(`computeMostFrequent`)를 추가하여 코드 재사용성을 높였습니다.
+- **결과/영향:** 이제 프론트엔드에서 하드코딩된 값 대신 실제 사용자의 기간별 분석 통계를 정확히 표시할 수 있게 되었습니다.
+
+
+## [2026-03-25 20:25:00] 즐겨찾기 API 인가 파라미터 캐스팅 에러(NPE) 해결
+- **작업 내용:** 프론트엔드 지도 페이지에서 화장실 즐겨찾기 토글 시 500 내부 서버 에러 및 '즐겨찾기 처리에 실패했습니다' 얼럿이 발생하는 문제를 해결하였습니다.
+- **상세 변경 내역:**
+  - **`FavoriteController.java`**: `toggleFavorite` 및 `getFavoriteToiletIds` 메서드에서 `@AuthenticationPrincipal UserDetails userDetails`를 사용하여 유저 정보를 바인딩하려던 로직을, `Authentication authentication` 파라미터를 명시적으로 선언하고 `authentication.getName()`을 호출하는 방식으로 수정하였습니다.
+  - **수정 사유:** 커스텀 `JwtAuthenticationFilter`가 인증 토큰(Principal)에 `UserDetails` 인터페이스가 아닌 `String email`을 직접 저장하고 있었기 때문에, 컨트롤러가 이를 `UserDetails`로 캐스팅하려다 실패하여 `NullPointerException` 등 런타임 에러가 발생하던 원인을 제거했습니다.
+- **결과/영향:** 이제 즐겨찾기 상태를 서버와 통신할 때 500 에러를 뿜지 않으며, 즐겨찾기 토글이 정상적으로 처리되어 프론트엔드의 별 표시가 유지됩니다.
+
+
+## [2026-03-25 18:45:00] 관리자 페이지 회원 삭제 오류 수정 및 연관 데이터 삭제 로직 고도화
+- **작업 내용:** 관리자 페이지에서 회원 삭제 시 발생하는 FK 제약 사유 500 에러를 해결하고, 기존 유저 자가 탈퇴 로직(`AuthService.withdraw`)을 전담 서비스(`UserDeletionService`)로 추출하여 코드 가시성과 안정성을 확보하였습니다.
+- **상세 변경 내역:**
+  - **`UserDeletionService.java`**: 엔티티 간 복잡한 FK 의존성(`VisitLog`→`PooRecord`, `Subscription`→`Payment` 등)을 고려한 안전한 삭제 순서(12단계)를 명시적으로 정의하여 물리적 삭제 프로세스를 통합했습니다.
+  - **Repository 확장**: `VisitLogRepository`, `SubscriptionRepository`, `HealthReportSnapshotRepository` 등 누락되었던 전용 삭제 메서드(`deleteAllByUser`)를 추가하여 하위 엔티티의 일괄 삭제 성능을 개선했습니다.
+  - **`AdminManagementService.java`**: `deleteUser` 메서드가 직접 `userRepository.delete`를 호출하는 대신 `UserDeletionService`를 사용하도록 변경하여 관리자의 회원 삭제 작업 시 안전을 보장했습니다.
+  - **`AuthService.java`**: `withdraw` 메서드에서 직접 관리하던 개별 삭제 로직(약 10여 줄)을 단일 호출로 리팩토링하여 중복 코드를 제거하고 유지보수성을 높였습니다.
+- **결과/영향:** 이제 관리자 및 유저 자가 탈퇴 시 연관된 모든 데이터가 부작용(FK 위반) 없이 안정적으로 삭제되며, 향후 엔티티가 추가되더라도 `UserDeletionService` 한 곳에서 일관되게 삭제 로직을 관리할 수 있게 되었습니다.
 
 ## [2026-03-25 17:50:00] 백엔드 성능 최적화 및 안정성 강화 (Phase 1-7 완료)
 - **작업 내용:** `dazzling-sauteeing-peach.md` 계획을 바탕으로 백엔드 전반의 성능 병목을 해결하고, 동시성 이슈 방지 및 모니터링 기반을 구축하였습니다.
