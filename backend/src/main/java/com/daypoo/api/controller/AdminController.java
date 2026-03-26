@@ -1,6 +1,7 @@
 package com.daypoo.api.controller;
 
 import com.daypoo.api.dto.AdminStatsResponse;
+import com.daypoo.api.dto.SyncStatusResponse;
 import com.daypoo.api.service.AdminService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -25,8 +26,17 @@ public class AdminController {
       description = "외부 API로부터 전국 공공 화장실 데이터를 수집하여 DB 및 Redis에 저장합니다. (가상 스레드 활용)")
   @PostMapping("/sync-toilets")
   public ResponseEntity<String> syncToilets(int startPage, int endPage) {
-    int count = syncService.syncAllToilets(startPage, endPage);
-    return ResponseEntity.ok(String.format("동기화가 완료되었습니다. 신규 등록: %d건", count));
+    if ("RUNNING".equals(syncService.getSyncStatus().status())) {
+      return ResponseEntity.status(409).body("이미 동기화가 진행 중입니다.");
+    }
+    syncService.syncAllToiletsAsync(startPage, endPage);
+    return ResponseEntity.accepted().body("동기화가 시작되었습니다. 잠시 후 상태를 확인해주세요.");
+  }
+
+  @Operation(summary = "공공데이터 동기화 상태 조회", description = "비동기로 진행 중인 화장실 동기화 작업의 현재 상태를 반환합니다.")
+  @GetMapping("/sync-toilets/status")
+  public ResponseEntity<SyncStatusResponse> getSyncStatus() {
+    return ResponseEntity.ok(syncService.getSyncStatus());
   }
 
   @Operation(

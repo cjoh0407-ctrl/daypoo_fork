@@ -1,90 +1,42 @@
-# 화장실 공공데이터 동기화 Upsert 전환 계획
+# 기능 수정 계획: 공공데이터 동기화 비동기 전환 및 상태 폴링 도입
 
-## Context
+## 1. 개요
+공공데이터 동기화 작업이 대량의 데이터를 처리할 때 HTTP 타임아웃을 유발하는 문제를 해결하기 위해, 작업을 비동기로 전환하고 클라이언트가 진행 상태를 확인할 수 있는 폴링 구조를 도입합니다.
 
-현재 `PublicDataSyncService`는 `mng_no` 기준으로 신규 데이터만 INSERT하고, 기존 데이터의 변경사항(이름, 주소, 개방시간 등)은 반영하지 않음. 매일 새벽 3시 스케줄러가 돌아도 공공데이터의 변경사항이 DB에 누적되지 않는 문제가 있음.
+## 2. 작업 목표
+- 백엔드 동기화 로직을 `@Async`를 이용해 비동기로 실행합니다.
+- 동기화 진행 상태(IDLE, RUNNING, COMPLETED, FAILED)를 추적하고 반환하는 API를 제공합니다.
+- 프론트엔드 수정 없이 백엔드 명세만 우선적으로 완성합니다.
 
-PostgreSQL의 `ON CONFLICT (mng_no) DO UPDATE` 문법으로 upsert 전환하여 신규 삽입과 변경 업데이트를 한 번에 처리.
+## 3. 대상 파일
+1. `backend/src/main/java/com/daypoo/api/dto/SyncStatusResponse.java` (신규)
+2. `backend/src/main/java/com/daypoo/api/service/PublicDataSyncService.java`
+3. `backend/src/main/java/com/daypoo/api/controller/AdminController.java`
+4. `docs/backend-modification-history.md` (수정 이력 기록)
 
-**중요 원칙**: 공공데이터로 덮어쓰면 안 되는 유저 생성 데이터(`avg_rating`, `review_count`, `ai_summary`)는 UPDATE 대상에서 제외.
+## 4. 상세 변경 내역
 
----
+### 4.1. SyncStatusResponse.java (신규)
+- `status`, `totalCount`, `startedAt`, `completedAt`, `errorMessage` 필드를 포함하는 record 생성.
 
-## 변경 대상 파일
+### 4.2. PublicDataSyncService.java
+- `syncStatus`, `lastCount`, `startedAt`, `completedAt`, `errorMessage` 필드를 `volatile`로 추가하여 상태를 관리합니다.
+- `@Async("taskExecutor")`가 적용된 `syncAllToiletsAsync` 메서드를 추가합니다.
+- 현재 상태를 반환하는 `getSyncStatus()` 메서드를 추가합니다.
 
-- `backend/src/main/java/com/daypoo/api/service/PublicDataSyncService.java`
+### 4.3. AdminController.java
+- `@PostMapping("/sync-toilets")`: `syncService.syncAllToiletsAsync`를 호출하고 `202 Accepted`를 반환하도록 수정합니다. (이미 실행 중일 경우 `409 Conflict` 반환)
+- `@GetMapping("/sync-toilets/status")`: 현재 동기화 상태를 반환하는 엔드포인트를 추가합니다.
 
-이 파일 하나만 수정하면 됨. DB 스키마 변경 없음 (`mng_no`의 UNIQUE 제약이 이미 V4 마이그레이션에서 추가되어 있음).
+## 5. 작업 프로세스
+1. [x] 신규 브랜치 `feature/async-toilet-sync` 생성
+2. [x] `SyncStatusResponse.java` 생성
+3. [x] `PublicDataSyncService.java` 수정 (비동기 로직 및 상태 관리)
+4. [x] `AdminController.java` 수정 (엔드포인트 연동)
+5. [x] 수정 이력(`docs/backend-modification-history.md`) 업데이트
+6. [x] 컴파일 오류 여부 확인 (`./gradlew compileJava`)
+7. [x] 작업 완료 보고
 
----
-
-## 구체적인 변경 내용
-
-### 1. `bulkInsertToilets()` SQL 변경
-
-**현재 (insert-only):**
-```sql
-INSERT INTO toilets (name, mng_no, location, address, open_hours, is_24h, is_unisex, created_at, updated_at)
-VALUES (?, ?, ST_GeomFromText(?, 4326), ?, ?, ?, ?, ?, ?)
-```
-
-**변경 후 (upsert):**
-```sql
-INSERT INTO toilets (name, mng_no, location, address, open_hours, is_24h, is_unisex, created_at, updated_at)
-VALUES (?, ?, ST_GeomFromText(?, 4326), ?, ?, ?, ?, NOW(), NOW())
-ON CONFLICT (mng_no) DO UPDATE SET
-  name        = EXCLUDED.name,
-  location    = EXCLUDED.location,
-  address     = EXCLUDED.address,
-  open_hours  = EXCLUDED.open_hours,
-  is_24h      = EXCLUDED.is_24h,
-  is_unisex   = EXCLUDED.is_unisex,
-  updated_at  = NOW()
-```
-
-**UPDATE 제외 필드 (이유):**
-- `id` — PK, 절대 변경 불가
-- `created_at` — 최초 등록일 보존
-- `avg_rating`, `review_count` — 유저가 작성한 후기 집계값
-- `ai_summary` — AI가 생성한 요약 (재생성 비용 있음)
-
-### 2. `syncPage()` 내 중복 필터링 로직 제거
-
-**현재:** 페이지의 `mng_no` 목록을 DB에서 조회 후, 기존 항목은 건너뜀
-```java
-List<String> existingMngNos = toiletRepository.findAllMngNoIn(mngNosInPage);
-Set<String> existingSet = new HashSet<>(existingMngNos);
-List<Toilet> toiletsToSave = convertToToiletEntities(itemList, existingSet);
-```
-
-**변경 후:** 필터링 없이 모든 항목을 upsert에 넘김
-```java
-List<Toilet> toilets = convertToToiletEntities(itemList);
-// existingSet 체크 불필요 — ON CONFLICT가 처리
-```
-
-### 3. `convertToToiletEntities()` 시그니처 변경
-
-`existingSet` 파라미터 제거. 기존 `if (existingSet.contains(mngNo)) continue;` 라인 삭제.
-
----
-
-## 동작 결과
-
-| 케이스 | 기존 | 변경 후 |
-|--------|------|---------|
-| 신규 화장실 | INSERT | INSERT |
-| 기존 화장실 (변경 없음) | 스킵 | UPDATE (값 동일하므로 실질적 변화 없음) |
-| 기존 화장실 (이름/주소 변경) | 스킵 (반영 안 됨) | UPDATE (반영됨) |
-| 후기/평점 | 유지 | 유지 (UPDATE 대상 아님) |
-| 즐겨찾기/방문기록 | 유지 | 유지 (toilet.id 불변) |
-
----
-
-## 검증 방법
-
-1. 백엔드 빌드 확인: `./gradlew build`
-2. 관리자 페이지 → 화장실 관리 → **공공데이터 동기화** 실행
-3. 특정 화장실 이름/주소를 수동으로 DB에서 임시 변경 후 동기화 → 원래 값으로 복원되는지 확인
-4. 해당 화장실의 후기/즐겨찾기가 동기화 후에도 유지되는지 확인
-5. 스케줄러 로그 확인: 기존과 동일한 완료 메시지 출력되는지
+## 6. 기대 효과
+- 긴 실행 시간을 가진 동기화 작업이 HTTP 연결을 점유하지 않아 타임아웃 에러를 방지할 수 있습니다.
+- 관리자가 실시간으로 동기화 진행 상황과 결과를 확인할 수 있습니다.

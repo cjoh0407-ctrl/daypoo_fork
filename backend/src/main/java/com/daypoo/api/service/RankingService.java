@@ -102,8 +102,17 @@ public class RankingService {
     Set<ZSetOperations.TypedTuple<String>> topRankersRaw =
         redisTemplate.opsForZSet().reverseRangeWithScores(key, 0, 9);
 
+    Long activeUserCount = redisTemplate.opsForZSet().size(key);
+    if (activeUserCount == null) {
+      activeUserCount = 0L;
+    }
+
     if (topRankersRaw == null || topRankersRaw.isEmpty()) {
-      return RankingResponse.builder().topRankers(new ArrayList<>()).myRank(null).build();
+      return RankingResponse.builder()
+          .topRankers(new ArrayList<>())
+          .myRank(null)
+          .activeUserCount(activeUserCount)
+          .build();
     }
 
     // N+1 Optimization: Batch fetch users and titles
@@ -170,6 +179,10 @@ public class RankingService {
               .build();
     }
 
-    return RankingResponse.builder().topRankers(topRankers).myRank(myRank).build();
+    return RankingResponse.builder()
+        .topRankers(topRankers)
+        .myRank(myRank)
+        .activeUserCount(activeUserCount)
+        .build();
   }
 }
