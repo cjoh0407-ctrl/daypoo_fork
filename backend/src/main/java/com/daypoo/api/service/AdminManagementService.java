@@ -2,6 +2,7 @@ package com.daypoo.api.service;
 
 import com.daypoo.api.dto.*;
 import com.daypoo.api.entity.*;
+import com.daypoo.api.entity.enums.AchievementType;
 import com.daypoo.api.entity.enums.InquiryStatus;
 import com.daypoo.api.entity.enums.InquiryType;
 import com.daypoo.api.entity.enums.ItemType;
@@ -31,6 +32,9 @@ public class AdminManagementService {
   private final InventoryRepository inventoryRepository;
   private final PaymentRepository paymentRepository;
   private final PooRecordRepository pooRecordRepository;
+  private final UserDeletionService userDeletionService;
+  private final TitleRepository titleRepository;
+  private final UserTitleRepository userTitleRepository;
 
   // --- 유저 관리 ---
 
@@ -107,6 +111,23 @@ public class AdminManagementService {
     user.updateRole(role);
   }
 
+  @Transactional
+  public void deleteUser(Long userId, String currentAdminEmail) {
+    User user =
+        userRepository
+            .findById(userId)
+            .orElseThrow(() -> new BusinessException(ErrorCode.ADMIN_USER_NOT_FOUND));
+
+    // 본인 삭제 방지
+    if (user.getEmail().equals(currentAdminEmail)) {
+      throw new BusinessException(ErrorCode.ADMIN_CANNOT_DELETE_SELF);
+    }
+
+    // 물리적 삭제 (FK 의존성 순서에 맞춰 연관 데이터와 함께 삭제)
+    userDeletionService.deleteUserAndRelatedData(user);
+    log.info("Admin deleted user: userId={}, email={}", userId, user.getEmail());
+  }
+
   // --- 화장실 관리 ---
 
   @Transactional(readOnly = true)
@@ -132,21 +153,6 @@ public class AdminManagementService {
                 .longitude(t.getLocation() != null ? t.getLocation().getX() : 0)
                 .createdAt(t.getCreatedAt())
                 .build());
-  }
-
-  @Transactional
-  public void updateToilet(Long toiletId, AdminToiletUpdateRequest request) {
-    Toilet toilet =
-        toiletRepository
-            .findById(toiletId)
-            .orElseThrow(() -> new BusinessException(ErrorCode.ADMIN_TOILET_NOT_FOUND));
-
-    toilet.update(
-        request.name(),
-        request.address(),
-        request.openHours(),
-        request.is24h(),
-        request.isUnisex());
   }
 
   // --- 문의 관리 ---
@@ -301,6 +307,97 @@ public class AdminManagementService {
     }
 
     itemRepository.deleteById(itemId);
+  }
+
+  // --- 칭호 관리 ---
+
+  @Transactional(readOnly = true)
+  public Page<AdminTitleResponse> getTitles(AchievementType type, Pageable pageable) {
+    Page<Title> titles;
+    if (type != null) {
+      titles = titleRepository.findAllByAchievementType(type, pageable);
+    } else {
+      titles = titleRepository.findAll(pageable);
+    }
+
+    return titles.map(
+        t ->
+            new AdminTitleResponse(
+                t.getId(),
+                t.getName(),
+                t.getDescription(),
+                t.getImageUrl(),
+                t.getAchievementType(),
+                t.getAchievementThreshold(),
+                t.getCreatedAt()));
+  }
+
+  @Transactional
+  public AdminTitleResponse createTitle(AdminTitleCreateRequest request) {
+    if (titleRepository.existsByName(request.name())) {
+      throw new BusinessException(ErrorCode.ADMIN_TITLE_NAME_DUPLICATE);
+    }
+
+    Title title =
+        Title.builder()
+            .name(request.name())
+            .description(request.description())
+            .imageUrl(request.imageUrl())
+            .achievementType(request.achievementType())
+            .achievementThreshold(request.achievementThreshold())
+            .build();
+
+    Title saved = titleRepository.save(title);
+    return new AdminTitleResponse(
+        saved.getId(),
+        saved.getName(),
+        saved.getDescription(),
+        saved.getImageUrl(),
+        saved.getAchievementType(),
+        saved.getAchievementThreshold(),
+        saved.getCreatedAt());
+  }
+
+  @Transactional
+  public AdminTitleResponse updateTitle(Long id, AdminTitleUpdateRequest request) {
+    Title title =
+        titleRepository
+            .findById(id)
+            .orElseThrow(() -> new BusinessException(ErrorCode.ADMIN_TITLE_NOT_FOUND));
+
+    // 이름 수정 시 중복 체크 (본인 이름 제외)
+    if (!title.getName().equals(request.name()) && titleRepository.existsByName(request.name())) {
+      throw new BusinessException(ErrorCode.ADMIN_TITLE_NAME_DUPLICATE);
+    }
+
+    title.update(
+        request.name(),
+        request.description(),
+        request.imageUrl(),
+        request.achievementType(),
+        request.achievementThreshold());
+
+    return new AdminTitleResponse(
+        title.getId(),
+        title.getName(),
+        title.getDescription(),
+        title.getImageUrl(),
+        title.getAchievementType(),
+        title.getAchievementThreshold(),
+        title.getCreatedAt());
+  }
+
+  @Transactional
+  public void deleteTitle(Long id) {
+    if (!titleRepository.existsById(id)) {
+      throw new BusinessException(ErrorCode.ADMIN_TITLE_NOT_FOUND);
+    }
+
+    if (userTitleRepository.existsByTitleId(id)) {
+      throw new BusinessException(ErrorCode.ADMIN_TITLE_IN_USE);
+    }
+
+    titleRepository.deleteById(id);
   }
 
   // --- 문의 테스트 데이터 생성 ---

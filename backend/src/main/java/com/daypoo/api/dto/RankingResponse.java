@@ -4,4 +4,5 @@ import java.util.List;
 import lombok.Builder;
 
 @Builder
-public record RankingResponse(List<UserRankResponse> topRankers, UserRankResponse myRank) {}
+public record RankingResponse(
+    List<UserRankResponse> topRankers, UserRankResponse myRank, long activeUserCount) {}

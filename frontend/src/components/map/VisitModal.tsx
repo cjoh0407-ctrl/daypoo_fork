@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, ChevronRight, ChevronLeft, Check, AlertTriangle, Camera, Zap, RotateCcw, Loader2, Sparkles } from 'lucide-react';
+import WaveButtonComponent from '../WaveButton';
 import {
   ToiletData, VisitRecord, PoopColor, ConditionTag, FoodTag,
   BRISTOL_TYPES, POOP_COLORS, CONDITION_TAGS, FOOD_TAGS,
@@ -222,12 +223,14 @@ export function VisitModal({ toilet, onClose, onComplete, checkInTime }: VisitMo
                         <div className="w-20 h-20 rounded-full bg-white/10 flex items-center justify-center backdrop-blur-md">
                           <Camera className="text-white" size={40} />
                         </div>
-                        <button 
+                        <WaveButtonComponent 
                           onClick={startCamera}
-                          className="px-6 py-3 bg-white text-[#1B4332] font-black rounded-2xl shadow-xl hover:scale-105 transition-transform"
+                          variant="outline"
+                          size="md"
+                          className="shadow-xl bg-white/90 backdrop-blur-md"
                         >
                           카메라 실행하기
-                        </button>
+                        </WaveButtonComponent>
                       </div>
                     )}
 
@@ -277,20 +280,22 @@ export function VisitModal({ toilet, onClose, onComplete, checkInTime }: VisitMo
                         <span className="text-sm font-bold">사진 촬영이 완료되었습니다!</span>
                       </div>
                       <div className="grid grid-cols-2 gap-3">
-                        <button
+                        <WaveButtonComponent
                           onClick={() => setStep(1)}
-                          className="py-3 px-4 bg-white border-2 border-[#eef5f0] text-[#1B4332] font-bold text-sm rounded-2xl hover:bg-[#f4faf6] transition-all"
+                          variant="ghost"
+                          size="sm"
+                          className="border border-[#eef5f0]"
                         >
                           데이터 수정하기
-                        </button>
-                        <button
+                        </WaveButtonComponent>
+                        <WaveButtonComponent
                           onClick={handleNext}
                           disabled={!canComplete}
-                          className="py-3 px-4 font-bold text-sm rounded-2xl text-white transition-all disabled:opacity-40 disabled:grayscale"
-                          style={{ background: 'linear-gradient(135deg, #1B4332 0%, #2D6A4F 100%)' }}
+                          variant="primary"
+                          size="sm"
                         >
                           {canComplete ? '바로 인증 완료 ✨' : `${remainingSeconds}초 대기`}
-                        </button>
+                        </WaveButtonComponent>
                       </div>
                     </div>
                   ) : (
@@ -410,19 +415,21 @@ export function VisitModal({ toilet, onClose, onComplete, checkInTime }: VisitMo
                 <ChevronLeft size={24} />
               </button>
             )}
-            <button
+            <WaveButtonComponent
               onClick={handleNext}
               disabled={
-                step === 0 ? false : // Step 0은 항상 다음으로 이동 가능 (수동 입력)
+                step === 0 ? false : 
                 step === 1 ? !bristolType :
                 step === 2 ? !color :
                 false
               }
-              className="flex-1 py-4 rounded-2xl font-black text-lg text-white shadow-lg transition-all active:scale-95 disabled:opacity-30 disabled:grayscale"
-              style={{ background: 'linear-gradient(135deg, #1B4332 0%, #2D6A4F 100%)' }}
+              variant="primary"
+              size="lg"
+              className="flex-1 shadow-lg"
+              icon={step === 3 ? <Sparkles size={20} /> : <ChevronRight size={20} />}
             >
               {step === 3 ? '인증 완료하기 ✨' : '다음 단계로'}
-            </button>
+            </WaveButtonComponent>
           </div>
         )}
       </motion.div>
@@ -452,19 +459,22 @@ export function VisitModal({ toilet, onClose, onComplete, checkInTime }: VisitMo
                 지금까지 입력한 내용이 사라집니다.
               </p>
               <div className="flex gap-3">
-                <button
+                <WaveButtonComponent
                   onClick={() => setShowCloseConfirm(false)}
-                  className="flex-1 py-3 rounded-2xl font-bold text-sm border-2 border-[#eef5f0] text-[#1a2b22] hover:bg-[#f4faf6]"
+                  variant="outline"
+                  size="md"
+                  className="flex-1"
                 >
                   계속 작성
-                </button>
-                <button
+                </WaveButtonComponent>
+                <WaveButtonComponent
                   onClick={onClose}
-                  className="flex-1 py-3 rounded-2xl font-bold text-sm text-white"
-                  style={{ background: '#E85D5D' }}
+                  variant="error"
+                  size="md"
+                  className="flex-1"
                 >
                   나가기
-                </button>
+                </WaveButtonComponent>
               </div>
             </motion.div>
           </motion.div>

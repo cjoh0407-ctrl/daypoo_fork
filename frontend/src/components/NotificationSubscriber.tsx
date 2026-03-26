@@ -3,6 +3,10 @@ import { useAuth } from '../context/AuthContext';
 import { useNotification } from '../context/NotificationContext';
 import { api } from '../services/apiClient';
 
+const MAX_RETRY_COUNT = 10; // F4: 최대 재시도 횟수
+const BASE_RETRY_DELAY = 1000; // F4: 기본 재시도 지연 (1초)
+const MAX_RETRY_DELAY = 30000; // F4: 최대 재시도 지연 (30초)
+
 export const NotificationSubscriber: React.FC = () => {
   const { user, refreshUser } = useAuth();
   const { showToast, fetchNotifications } = useNotification();
@@ -35,6 +39,12 @@ export const NotificationSubscriber: React.FC = () => {
       const eventSource = new EventSource(`${BASE_URL}/api/v1/notifications/subscribe?token=${subToken}`);
       eventSourceRef.current = eventSource;
 
+      // F4: 연결 성공 시 재시도 카운트 리셋
+      eventSource.onopen = () => {
+        console.log('SSE 연결 성공');
+        setRetryCount(0);
+      };
+
       eventSource.addEventListener('notification', (event) => {
         try {
           const data = JSON.parse(event.data);
@@ -56,12 +66,26 @@ export const NotificationSubscriber: React.FC = () => {
       eventSource.onerror = (err) => {
         console.error('SSE 연결 에러 (재연결 시도 중):', err);
         eventSource.close();
-        
-        // 5초 후 재연결 시도
+
+        // F4: 최대 재시도 횟수 체크
+        if (retryCount >= MAX_RETRY_COUNT) {
+          console.error('SSE 최대 재시도 횟수 초과');
+          showToast(
+            '알림 연결 실패',
+            '알림 서비스에 연결할 수 없습니다. 나중에 다시 시도해주세요.',
+            'error'
+          );
+          return;
+        }
+
+        // F4: 지수 백오프 (1초 → 2초 → 4초 → 8초 → ... 최대 30초)
+        const delay = Math.min(BASE_RETRY_DELAY * Math.pow(2, retryCount), MAX_RETRY_DELAY);
+        console.log(`SSE 재연결 시도 ${retryCount + 1}/${MAX_RETRY_COUNT} (${delay}ms 후)`);
+
         if (timeoutRef.current) clearTimeout(timeoutRef.current);
         timeoutRef.current = setTimeout(() => {
           setRetryCount(prev => prev + 1);
-        }, 5000);
+        }, delay);
       };
 
     } catch (err) {

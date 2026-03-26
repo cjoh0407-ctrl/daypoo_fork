@@ -1,14 +1,15 @@
 package com.daypoo.api.service;
 
+import com.daypoo.api.dto.SyncStatusResponse;
 import com.daypoo.api.entity.Toilet;
 import com.daypoo.api.global.GeometryUtil;
 import com.daypoo.api.repository.ToiletRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.sql.PreparedStatement;
-import java.sql.Timestamp;
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -17,6 +18,7 @@ import org.locationtech.jts.geom.Point;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -27,7 +29,6 @@ import reactor.util.retry.Retry;
 @Service
 public class PublicDataSyncService {
 
-  private final ToiletRepository toiletRepository;
   private final ObjectMapper objectMapper;
   private final GeometryUtil geometryUtil;
   private final StringRedisTemplate redisTemplate;
@@ -41,6 +42,15 @@ public class PublicDataSyncService {
   private static final String REDIS_GEO_KEY = "daypoo:toilets:geo";
   private static final int BATCH_SIZE = 500;
   private static final int MAX_CONCURRENT_REQUESTS = 10;
+  private static final DateTimeFormatter DATE_TIME_FORMATTER =
+      DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
+  // Status tracking fields
+  private volatile String syncStatus = "IDLE";
+  private volatile Integer lastCount = null;
+  private volatile String startedAt = null;
+  private volatile String completedAt = null;
+  private volatile String errorMessage = null;
 
   public PublicDataSyncService(
       ToiletRepository toiletRepository,
@@ -50,7 +60,6 @@ public class PublicDataSyncService {
       JdbcTemplate jdbcTemplate,
       PlatformTransactionManager transactionManager,
       @Value("${public-data.url}") String apiUrl) {
-    this.toiletRepository = toiletRepository;
     this.objectMapper = objectMapper;
     this.geometryUtil = geometryUtil;
     this.redisTemplate = redisTemplate;
@@ -121,6 +130,41 @@ public class PublicDataSyncService {
     return totalSavedCount.get();
   }
 
+  /** 상태 조회 메서드 */
+  public SyncStatusResponse getSyncStatus() {
+    return SyncStatusResponse.builder()
+        .status(syncStatus)
+        .totalCount(lastCount)
+        .startedAt(startedAt)
+        .completedAt(completedAt)
+        .errorMessage(errorMessage)
+        .build();
+  }
+
+  /** 비동기 실행 메서드 (기존 syncAllToilets 재사용) */
+  @Async("taskExecutor")
+  public void syncAllToiletsAsync(int startPage, int endPage) {
+    syncStatus = "RUNNING";
+    startedAt = LocalDateTime.now().format(DATE_TIME_FORMATTER);
+    completedAt = null;
+    errorMessage = null;
+    lastCount = null;
+
+    try {
+      log.info("📢 Starting background sync: {} - {}", startPage, endPage);
+      int count = syncAllToilets(startPage, endPage);
+      lastCount = count;
+      syncStatus = "COMPLETED";
+      completedAt = LocalDateTime.now().format(DATE_TIME_FORMATTER);
+      log.info("✅ Background sync finished. Count: {}", count);
+    } catch (Exception e) {
+      log.error("❌ Background sync failed: {}", e.getMessage());
+      syncStatus = "FAILED";
+      errorMessage = e.getMessage();
+      completedAt = LocalDateTime.now().format(DATE_TIME_FORMATTER);
+    }
+  }
+
   /** 단일 페이지 동기화를 위한 호환성 메서드 */
   public int syncToiletData(int pageNo, int numOfRows) throws Exception {
     TransactionTemplate transactionTemplate = new TransactionTemplate(transactionManager);
@@ -139,20 +183,14 @@ public class PublicDataSyncService {
     if (!itemsNode.isArray() || itemsNode.isEmpty()) return 0;
 
     List<JsonNode> itemList = new ArrayList<>();
-    List<String> mngNosInPage = new ArrayList<>();
     for (JsonNode item : itemsNode) {
       String mngNo = item.path("MNG_NO").asText("");
       if (!mngNo.isEmpty()) {
         itemList.add(item);
-        mngNosInPage.add(mngNo);
       }
     }
 
-    // 단일 페이지용 IN 쿼리 중복 체크
-    List<String> existingMngNos = toiletRepository.findAllMngNoIn(mngNosInPage);
-    Set<String> existingSet = new HashSet<>(existingMngNos);
-
-    List<Toilet> toiletsToSave = convertToToiletEntities(itemList, existingSet);
+    List<Toilet> toiletsToSave = convertToToiletEntities(itemList);
 
     if (!toiletsToSave.isEmpty()) {
       transactionTemplate.execute(
@@ -184,11 +222,12 @@ public class PublicDataSyncService {
         .block();
   }
 
-  private List<Toilet> convertToToiletEntities(List<JsonNode> itemList, Set<String> existingSet) {
+  private List<Toilet> convertToToiletEntities(List<JsonNode> itemList) {
     List<Toilet> toiletsToSave = new ArrayList<>();
+    Set<String> processedMngNos = new HashSet<>();
     for (JsonNode item : itemList) {
       String mngNo = item.path("MNG_NO").asText("");
-      if (mngNo.isEmpty() || existingSet.contains(mngNo)) continue;
+      if (mngNo.isEmpty() || processedMngNos.contains(mngNo)) continue;
 
       double lat = item.path("WGS84_LAT").asDouble(0.0);
       double lon = item.path("WGS84_LOT").asDouble(0.0);
@@ -211,16 +250,24 @@ public class PublicDataSyncService {
               .isUnisex(false)
               .build());
 
-      existingSet.add(mngNo);
+      processedMngNos.add(mngNo);
     }
     return toiletsToSave;
   }
 
   private void bulkInsertToilets(List<Toilet> toilets) {
-    // 3. Multi-row Insert 최적화 (reWriteBatchedInserts=true와 결합)
+    // 3. Multi-row Insert/Update (Upsert) 최적화
     String sql =
         "INSERT INTO toilets (name, mng_no, location, address, open_hours, is_24h, is_unisex, created_at, updated_at) "
-            + "VALUES (?, ?, ST_GeomFromText(?, 4326), ?, ?, ?, ?, ?, ?)";
+            + "VALUES (?, ?, ST_GeomFromText(?, 4326), ?, ?, ?, ?, NOW(), NOW()) "
+            + "ON CONFLICT (mng_no) DO UPDATE SET "
+            + "  name        = EXCLUDED.name, "
+            + "  location    = EXCLUDED.location, "
+            + "  address     = EXCLUDED.address, "
+            + "  open_hours  = EXCLUDED.open_hours, "
+            + "  is_24h      = EXCLUDED.is_24h, "
+            + "  is_unisex   = EXCLUDED.is_unisex, "
+            + "  updated_at  = NOW()";
 
     jdbcTemplate.batchUpdate(
         sql,
@@ -235,8 +282,6 @@ public class PublicDataSyncService {
             ps.setString(5, t.getOpenHours());
             ps.setBoolean(6, t.is24h());
             ps.setBoolean(7, t.isUnisex());
-            ps.setTimestamp(8, Timestamp.valueOf(LocalDateTime.now()));
-            ps.setTimestamp(9, Timestamp.valueOf(LocalDateTime.now()));
           }
 
           @Override

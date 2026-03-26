@@ -14,4 +14,7 @@ public interface HealthReportSnapshotRepository extends JpaRepository<HealthRepo
           User user, ReportType reportType, LocalDateTime from, LocalDateTime to);
 
   List<HealthReportSnapshot> findByUserOrderByCreatedAtDesc(User user);
+
+  /** 특정 유저의 모든 건강 리포트 스냅샷 삭제 (회원 탈퇴용) */
+  void deleteAllByUser(User user);
 }

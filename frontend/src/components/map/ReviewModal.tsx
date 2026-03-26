@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Star, Send, Loader2 } from 'lucide-react';
+import WaveButtonComponent from '../WaveButton';
 import { ToiletData, EMOJI_TAG_MAP } from '../../types/toilet';
 import { createReview, ToiletReviewCreateRequest } from '../../services/reviewService';
 
@@ -159,20 +160,17 @@ export function ReviewModal({ toilet, onClose, onSuccess }: ReviewModalProps) {
           </div>
         </div>
 
-        {/* 푸터 버튼 */}
         <div className="px-6 py-6 bg-[#fcfdfc] border-t border-[#eef5f0]">
-          <button
+          <WaveButtonComponent
             onClick={handleSubmit}
             disabled={isSubmitting || rating === 0 || !comment.trim()}
-            className="w-full py-4 rounded-2xl font-black text-lg text-white shadow-lg transition-all active:scale-95 disabled:opacity-40 disabled:grayscale disabled:cursor-not-allowed flex items-center justify-center gap-2"
-            style={{ background: 'linear-gradient(135deg, #1B4332 0%, #2D6A4F 100%)' }}
+            variant="primary"
+            size="lg"
+            className="w-full shadow-lg"
+            icon={isSubmitting ? <Loader2 className="animate-spin" size={20} /> : <Send size={20} />}
           >
-            {isSubmitting ? (
-              <><Loader2 className="animate-spin" size={20} /> 등록 중...</>
-            ) : (
-              <><Send size={20} /> 후기 등록하기</>
-            )}
-          </button>
+            {isSubmitting ? '등록 중...' : '후기 등록하기'}
+          </WaveButtonComponent>
         </div>
       </motion.div>
     </div>

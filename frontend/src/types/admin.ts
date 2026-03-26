@@ -2,7 +2,40 @@
 
 export type Role = 'ROLE_USER' | 'ROLE_ADMIN';
 export type InquiryStatus = 'PENDING' | 'COMPLETED';
-export type ItemType = 'AVATAR_SKIN' | 'MARKER_SKIN';
+export type ItemType = 'AVATAR_SKIN' | 'MARKER_SKIN' | 'AVATAR' | 'EFFECT';
+
+export type AchievementType =
+  | 'TOTAL_RECORDS'
+  | 'UNIQUE_TOILETS'
+  | 'CONSECUTIVE_DAYS'
+  | 'SAME_TOILET_VISITS'
+  | 'LEVEL_REACHED';
+
+export interface AdminTitleResponse {
+  id: number;
+  name: string;
+  description: string;
+  imageUrl: string | null;
+  achievementType: AchievementType;
+  achievementThreshold: number;
+  createdAt: string;
+}
+
+export interface AdminTitleCreateRequest {
+  name: string;
+  description: string;
+  imageUrl?: string | null;
+  achievementType: AchievementType;
+  achievementThreshold: number;
+}
+
+export interface AdminTitleUpdateRequest {
+  name: string;
+  description: string;
+  imageUrl?: string | null;
+  achievementType: AchievementType;
+  achievementThreshold: number;
+}
 
 // ========== User Management ==========
 export interface AdminUserListResponse {

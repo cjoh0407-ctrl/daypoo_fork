@@ -48,6 +48,30 @@ public class HealthReportSnapshot extends BaseTimeEntity {
   @Column(name = "period_end", nullable = false)
   private LocalDateTime periodEnd;
 
+  @Column(name = "most_frequent_bristol")
+  private Integer mostFrequentBristol;
+
+  @Column(name = "most_frequent_condition")
+  private String mostFrequentCondition;
+
+  @Column(name = "most_frequent_diet")
+  private String mostFrequentDiet;
+
+  @Column(name = "healthy_ratio")
+  private Integer healthyRatio;
+
+  @Column(name = "weekly_health_scores")
+  private String weeklyHealthScores; // Comma separated
+
+  @Column(name = "improvement_trend")
+  private String improvementTrend;
+
+  @Column(name = "bristol_distribution", columnDefinition = "TEXT")
+  private String bristolDistribution; // JSON String
+
+  @Column(name = "avg_daily_record_count")
+  private Double avgDailyRecordCount;
+
   @Builder
   public HealthReportSnapshot(
       User user,
@@ -58,7 +82,15 @@ public class HealthReportSnapshot extends BaseTimeEntity {
       String insights,
       int recordCount,
       LocalDateTime periodStart,
-      LocalDateTime periodEnd) {
+      LocalDateTime periodEnd,
+      Integer mostFrequentBristol,
+      String mostFrequentCondition,
+      String mostFrequentDiet,
+      Integer healthyRatio,
+      String weeklyHealthScores,
+      String improvementTrend,
+      String bristolDistribution,
+      Double avgDailyRecordCount) {
     this.user = user;
     this.reportType = reportType;
     this.healthScore = healthScore;
@@ -68,5 +100,13 @@ public class HealthReportSnapshot extends BaseTimeEntity {
     this.recordCount = recordCount;
     this.periodStart = periodStart;
     this.periodEnd = periodEnd;
+    this.mostFrequentBristol = mostFrequentBristol;
+    this.mostFrequentCondition = mostFrequentCondition;
+    this.mostFrequentDiet = mostFrequentDiet;
+    this.healthyRatio = healthyRatio;
+    this.weeklyHealthScores = weeklyHealthScores;
+    this.improvementTrend = improvementTrend;
+    this.bristolDistribution = bristolDistribution;
+    this.avgDailyRecordCount = avgDailyRecordCount;
   }
 }

@@ -191,10 +191,7 @@ export function EmergencySheet({ isOpen, onClose }: EmergencySheetProps) {
         distanceMeters: calculateDistance(userPos.lat, userPos.lng, t.lat, t.lng)
       }))
       .sort((a, b) => {
-        // 1순위: 24시간 여부
-        if (a.isOpen24h && !b.isOpen24h) return -1;
-        if (!a.isOpen24h && b.isOpen24h) return 1;
-        // 2순위: 가까운 거리
+        // 급똥 상황에서는 무조건 가까운 곳 우선!
         return a.distanceMeters - b.distanceMeters;
       })
       .slice(0, 5) // 상위 5개만 노출
@@ -226,19 +223,27 @@ export function EmergencySheet({ isOpen, onClose }: EmergencySheetProps) {
           />
 
           <motion.div
-            initial={{ y: '100%' }}
-            animate={{ y: 0 }}
-            exit={{ y: '100%' }}
-            transition={{ type: 'spring', damping: 30, stiffness: 250 }}
-            className="fixed bottom-0 left-0 right-0 z-[1001] rounded-t-[32px]"
-            style={{
-              background: 'linear-gradient(180deg, #1B4332 0%, #0D2820 100%)',
-              maxHeight: '92vh',
-              overflowY: 'auto',
-              boxShadow: '0 -20px 60px rgba(0,0,0,0.4), 0 -4px 20px rgba(82,183,136,0.15)',
-              borderTop: '2px solid rgba(82,183,136,0.3)'
+            initial={{ scale: 0.7, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.7, opacity: 0 }}
+            transition={{
+              type: 'spring',
+              damping: 20,
+              stiffness: 300,
+              mass: 0.8
             }}
+            className="fixed inset-0 z-[1001] flex items-center justify-center p-4"
           >
+            <div
+              className="w-full max-w-2xl rounded-[32px]"
+              style={{
+                background: 'linear-gradient(180deg, #1B4332 0%, #0D2820 100%)',
+                maxHeight: '90vh',
+                overflowY: 'auto',
+                boxShadow: '0 20px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(82,183,136,0.3)',
+                border: '2px solid rgba(82,183,136,0.3)'
+              }}
+            >
             <div className="w-full px-5 md:px-6 py-6 md:py-8 pb-12 text-white">
               <div className="w-12 h-1.5 bg-gradient-to-r from-transparent via-emerald-400/40 to-transparent rounded-full mx-auto mb-6" />
 
@@ -293,6 +298,7 @@ export function EmergencySheet({ isOpen, onClose }: EmergencySheetProps) {
                   현재 위치 기반 실시간 데이터 분석 · 도보 이동 시간 기준 정렬
                 </p>
               </div>
+            </div>
             </div>
           </motion.div>
         </>

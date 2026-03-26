@@ -19,16 +19,14 @@
   },
   "lint-staged": {
     "frontend/**/*.{js,jsx,ts,tsx,css}": [
-      "prettier --write",
-      "eslint --fix"
+      "frontend/node_modules/.bin/prettier --write"
     ],
     "ai-service/**/*.py": [
-      "black",
-      "isort",
-      "flake8"
+      "python3 -m black",
+      "python3 -m isort"
     ],
     "backend/**/*.java": [
-      "cd backend && ./gradlew spotlessApply"
+      "bash -c 'cd backend && ./gradlew spotlessApply'"
     ]
   },
   "dependencies": {

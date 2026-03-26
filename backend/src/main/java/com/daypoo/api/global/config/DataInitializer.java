@@ -172,7 +172,7 @@ public class DataInitializer implements CommandLineRunner {
         inquiryRepository.save(
             Inquiry.builder()
                 .user(user)
-                .type(InquiryType.TOILET_ERROR)
+                .type(InquiryType.OTHERS)
                 .title("강남역 화장실 위치가 좀 달라요")
                 .content("지도의 위치와 실제 위치가 약 50m 정도 차이가 납니다. 수정 요청드려요.")
                 .build());

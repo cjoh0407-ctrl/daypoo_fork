@@ -1,6 +1,7 @@
 package com.daypoo.api.service;
 
 import com.daypoo.api.dto.AiAnalysisResponse;
+import com.daypoo.api.dto.AiMonthlyReportRequest;
 import com.daypoo.api.dto.AiReportRequest;
 import com.daypoo.api.dto.AiReviewSummaryRequest;
 import com.daypoo.api.dto.AiReviewSummaryResponse;
@@ -93,6 +94,27 @@ public class AiClient {
       return restTemplate.postForObject(url, entity, HealthReportResponse.class);
     } catch (Exception e) {
       log.error("Failed to call AI Report Service: {}", e.getMessage());
+      throw new BusinessException(ErrorCode.AI_SERVICE_ERROR);
+    }
+  }
+
+  /** Python AI 서비스에 4주 집계 데이터를 보내 MONTHLY 건강 리포트 생성 요청 */
+  @Retryable(
+      maxAttempts = 2,
+      backoff = @Backoff(delay = 1000),
+      noRetryFor = {BusinessException.class})
+  public HealthReportResponse analyzeMonthlyReport(AiMonthlyReportRequest request) {
+    String url = aiServiceUrl + "/api/v1/report/generate/monthly";
+    HttpEntity<AiMonthlyReportRequest> entity = new HttpEntity<>(request, createHeaders());
+
+    try {
+      log.info(
+          "Requesting AI monthly report analysis for user {} ({})",
+          request.userId(),
+          request.reportType());
+      return restTemplate.postForObject(url, entity, HealthReportResponse.class);
+    } catch (Exception e) {
+      log.error("Failed to call AI Monthly Report Service: {}", e.getMessage());
       throw new BusinessException(ErrorCode.AI_SERVICE_ERROR);
     }
   }

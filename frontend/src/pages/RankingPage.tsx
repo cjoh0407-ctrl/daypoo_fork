@@ -5,9 +5,11 @@ import { Footer } from '../components/Footer';
 import { WaveDivider } from '../components/WaveDivider';
 import { Crown, TrendingUp, TrendingDown, Minus, ShoppingBag, X, MapPin, Star, Trophy, Activity } from 'lucide-react';
 import { useRankings } from '../hooks/useRankings';
+import { generateRankingAvatar } from '../utils/avatar';
 
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import WaveButtonComponent from '../components/WaveButton';
 
 // ── 타입 ──────────────────────────────────────────────────────────────
 type TabKey = 'total' | 'local' | 'health';
@@ -15,6 +17,7 @@ type TabKey = 'total' | 'local' | 'health';
 interface RankUser {
   rank: number;
   emoji: string;
+  avatarUrl?: string; // DiceBear 아바타 URL
   nick: string;
   title: string;
   titleColor: string;
@@ -118,8 +121,12 @@ function ItemPopup({ user, onClose, openAuth }: { user: RankUser; onClose: () =>
                 style={{ background: '#fff', border: `3.5px solid ${user.titleColor}20` }}
               >
                 <ConicGlow color={user.titleColor} thickness={4} borderRadius="50%" />
-                <div className="absolute inset-[4px] rounded-full bg-white flex items-center justify-center z-10">
-                  {user.emoji}
+                <div className="absolute inset-[4px] rounded-full bg-white flex items-center justify-center z-10 overflow-hidden">
+                  {user.avatarUrl ? (
+                    <img src={user.avatarUrl} alt={user.nick} className="w-full h-full object-cover" />
+                  ) : (
+                    user.emoji
+                  )}
                 </div>
                 {user.rank <= 3 && (
                   <div className="absolute -top-6 -right-2 text-amber-500 transform rotate-12 drop-shadow-lg">
@@ -183,19 +190,15 @@ function ItemPopup({ user, onClose, openAuth }: { user: RankUser; onClose: () =>
             </div>
 
             {/* 하단 유도 버튼 */}
-            <motion.button
-              whileHover={{ scale: 1.02, y: -2 }}
-              whileTap={{ scale: 0.98 }}
+            <WaveButtonComponent
               onClick={goToShop}
-              className="w-full py-5 rounded-[24px] font-black text-[#1A2B27] text-base flex items-center justify-center gap-3 shadow-2xl transition-all"
-              style={{
-                background: 'linear-gradient(135deg, #FFD045 0%, #E8A838 100%)',
-                boxShadow: '0 12px 32px rgba(232,168,56,0.3)',
-              }}
+              variant="accent"
+              size="lg"
+              className="w-full shadow-2xl"
+              icon={<ShoppingBag size={20} />}
             >
-              <ShoppingBag size={20} />
               상점 가서 이 아이템 보기
-            </motion.button>
+            </WaveButtonComponent>
             <p className="text-center text-[10px] text-gray-300 font-bold mt-4 tracking-tight">
               나만의 스타일로 랭킹 페이지를 꾸며보세요!
             </p>
@@ -259,8 +262,12 @@ function Podium({ users, onSelect }: { users: RankUser[]; onSelect: (u: RankUser
           <div className="w-20 h-20 rounded-full flex items-center justify-center relative overflow-hidden text-4xl"
             style={{ background: '#fff', boxShadow: '0 8px 24px rgba(0,0,0,0.08)' }}>
             <ConicGlow color={user.titleColor} thickness={4} borderRadius="50%" />
-            <div className="absolute inset-[3px] rounded-full bg-white flex items-center justify-center z-10">
-              {user.emoji}
+            <div className="absolute inset-[3px] rounded-full bg-white flex items-center justify-center z-10 overflow-hidden">
+              {user.avatarUrl ? (
+                <img src={user.avatarUrl} alt={user.nick} className="w-full h-full object-cover" />
+              ) : (
+                user.emoji
+              )}
             </div>
           </div>
           {isFirst && <div className="absolute -top-5 -right-2 text-amber-500 drop-shadow-md"><Crown size={24} /></div>}
@@ -347,13 +354,17 @@ function RankItem({
 
       {/* 아바타 */}
       <div
-        className="w-12 h-12 rounded-full flex items-center justify-center text-2xl flex-shrink-0"
+        className="w-12 h-12 rounded-full flex items-center justify-center text-2xl flex-shrink-0 overflow-hidden"
         style={{
           background: '#f4f9f6',
           border: `2px solid ${user.titleColor}20`,
         }}
       >
-        {user.emoji}
+        {user.avatarUrl ? (
+          <img src={user.avatarUrl} alt={user.nick} className="w-full h-full object-cover" />
+        ) : (
+          user.emoji
+        )}
       </div>
 
       {/* 정보 */}
@@ -427,13 +438,14 @@ function MyRankBar({ data }: { data: any }) {
         </div>
       </div>
 
-      <button
+      <WaveButtonComponent
         onClick={() => navigate('/map')}
-        className="w-full md:w-auto px-12 py-4.5 rounded-2xl font-black text-lg flex-shrink-0 transition-all hover:scale-105 active:scale-95 shadow-[0_15px_35px_-10px_rgba(232,168,56,0.4)] bg-[#E8A838] text-[#1B4332] z-10 relative overflow-hidden group/btn"
+        variant="accent"
+        size="lg"
+        className="w-full md:w-auto shadow-2xl"
       >
-        <span className="relative z-10">지금 바로 도전하기 →</span>
-        <div className="absolute inset-0 bg-white/20 translate-y-full group-hover/btn:translate-y-0 transition-transform duration-300" />
-      </button>
+        지금 바로 도전하기 →
+      </WaveButtonComponent>
     </motion.div>
   );
 }
@@ -477,6 +489,7 @@ export function RankingPage({ openAuth }: { openAuth: (mode: 'login' | 'signup')
         .map((r) => ({
           rank: Number(r.rank || 0),
           emoji: Number(r.rank) === 1 ? '💎' : Number(r.rank) === 2 ? '🦊' : '🐸',
+          avatarUrl: generateRankingAvatar(r.userId, Number(r.rank || 0)),
           nick: r.nickname || '익명',
           title: r.titleName || '새내기 쾌변러',
           titleColor: Number(r.rank) === 1 ? '#E8A838' : Number(r.rank) === 2 ? '#B0B8B4' : Number(r.rank) === 3 ? '#CD7C4A' : '#52b788',
@@ -631,18 +644,24 @@ export function RankingPage({ openAuth }: { openAuth: (mode: 'login' | 'signup')
             {/* 통계 칩 */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-4">
               {[
-                { label: '활성 사용자', value: '1,000', unit: '+' },
-                { 
-                  label: '내 현재 순위', 
-                  value: myRankData ? myRankData.rank.toString() : '-', 
-                  unit: '위' 
+                {
+                  label: '활성 사용자',
+                  value: (isDataValid && (data as any).activeUserCount)
+                    ? (data as any).activeUserCount.toLocaleString()
+                    : '0',
+                  unit: '+'
                 },
-                { 
-                  label: '상위권 도전', 
-                  value: (myRankData && typeof myRankData.rank === 'number' && myRankData.rank > 10) 
-                    ? (myRankData.rank - 10).toString() 
-                    : '0', 
-                  unit: '계단' 
+                {
+                  label: '내 현재 순위',
+                  value: myRankData ? myRankData.rank.toString() : '-',
+                  unit: '위'
+                },
+                {
+                  label: '상위권 도전',
+                  value: (myRankData && typeof myRankData.rank === 'number' && myRankData.rank > 10)
+                    ? (myRankData.rank - 10).toString()
+                    : '0',
+                  unit: '계단'
                 },
               ].map((s, i) => (
                 <motion.div

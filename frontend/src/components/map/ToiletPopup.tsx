@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Navigation, Star, Clock, Users, MessageCircle, Loader2, MapPin, Target, Sparkles, CheckCircle2, Smile, Wind, ScrollText, VolumeX } from 'lucide-react';
+import { X, Navigation, Star, Clock, Users, MessageCircle, Loader2, MapPin, Target, Sparkles, CheckCircle2, Smile, Wind, ScrollText, VolumeX, Check } from 'lucide-react';
+import WaveButtonComponent from '../WaveButton';
 import { ToiletData, EMOJI_TAG_MAP } from '../../types/toilet';
 import { getReviewSummary, ToiletReviewSummaryResponse } from '../../services/reviewService';
 import { ReviewModal } from './ReviewModal';
@@ -301,29 +302,28 @@ export function ToiletPopup({
                 </div>
 
                 {/* 리뷰 작성 버튼 */}
-                <motion.button
+                <WaveButtonComponent
                   onClick={handleOpenReviewModal}
-                  whileHover={{ scale: 1.02, backgroundColor: '#dcfce7', boxShadow: '0 4px 12px rgba(27,67,50,0.08)' }}
-                  whileTap={{ scale: 0.98 }}
-                  className="w-full mt-3 py-3 rounded-xl flex items-center justify-center gap-2 text-sm font-bold shadow-sm"
-                  style={{ background: '#f4faf6', color: '#2D6A4F' }}
+                  variant="ghost"
+                  size="sm"
+                  className="w-full mt-3 shadow-sm border border-emerald-100"
+                  icon={<MessageCircle size={16} />}
                 >
-                  <MessageCircle size={16} />
                   후기 남기기
-                </motion.button>
+                </WaveButtonComponent>
               </>
             ) : (
               <div className="py-8 text-center flex flex-col items-center justify-center">
                 <p className="text-sm mb-4" style={{ color: '#7a9e8a' }}>아직 후기가 없어요</p>
-                <motion.button
+                <WaveButtonComponent
                   onClick={handleOpenReviewModal}
-                  whileHover={{ scale: 1.05, boxShadow: '0 8px 16px rgba(27,67,50,0.2)' }}
-                  whileTap={{ scale: 0.95 }}
-                  className="mx-auto px-6 py-3.5 rounded-xl text-sm font-bold shadow-md flex items-center justify-center gap-2 transition-all"
-                  style={{ background: '#1B4332', color: '#fff' }}
+                  variant="primary"
+                  size="md"
+                  className="mx-auto shadow-md"
+                  icon={<Sparkles size={16} />}
                 >
-                  첫 후기 남기기 <Sparkles size={16} />
-                </motion.button>
+                  첫 후기 남기기
+                </WaveButtonComponent>
               </div>
             )}
           </div>
@@ -356,37 +356,16 @@ export function ToiletPopup({
                 <span>화장실 근처(150m 이내)로<br />이동하면 인증할 수 있어요!</span>
               </p>
             )}
-            <motion.button
+            <WaveButtonComponent
               onClick={onVisitRequest}
               disabled={!isWithinRange}
-              whileHover={isWithinRange ? { 
-                scale: 1.02, 
-                boxShadow: '0 12px 24px rgba(27,67,50,0.3)',
-                filter: 'brightness(1.05)'
-              } : {}}
-              whileTap={isWithinRange ? { scale: 0.98 } : {}}
-              className="w-full py-4 rounded-2xl font-black text-base shadow-lg disabled:opacity-40 disabled:grayscale disabled:cursor-not-allowed transition-opacity overflow-hidden relative"
-              style={{
-                background: toilet.isVisited
-                  ? 'linear-gradient(135deg, #2D6A4F 0%, #52b788 100%)'
-                  : 'linear-gradient(135deg, #1B4332 0%, #2D6A4F 100%)',
-                color: '#fff',
-              }}
+              variant="primary"
+              size="lg"
+              className="w-full shadow-lg"
+              icon={<CheckCircle2 size={18} />}
             >
-              <span className="relative z-10 flex items-center justify-center gap-2">
-                <CheckCircle2 size={18} />
-                {toilet.isVisited ? '다시 방문 인증하기' : '방문 인증하기'}
-              </span>
-              {isWithinRange && (
-                <motion.div 
-                  initial={{ left: '-100%' }}
-                  animate={{ left: '100%' }}
-                  transition={{ repeat: Infinity, duration: 2, ease: 'linear' }}
-                  className="absolute top-0 w-1/2 h-full skew-x-[-25deg] bg-white/10"
-                  style={{ pointerEvents: 'none' }}
-                />
-              )}
-            </motion.button>
+              {toilet.isVisited ? '다시 방문 인증하기' : '방문 인증하기'}
+            </WaveButtonComponent>
           </div>
         </motion.div>
       </AnimatePresence>

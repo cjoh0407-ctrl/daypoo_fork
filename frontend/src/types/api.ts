@@ -37,6 +37,9 @@ export interface UserResponse {
   subscription?: SubscriptionResponse | null;
   birthDate?: string | null;
   createdAt?: string;
+  totalAuthCount?: number;
+  totalVisitCount?: number;
+  consecutiveDays?: number;
 }
 
 /**

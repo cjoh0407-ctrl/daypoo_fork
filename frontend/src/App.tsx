@@ -51,13 +51,14 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
     );
   }
 
-  const isAdmin = user && (user.role === 'ROLE_ADMIN' || user.role === 'ADMIN');
+  const isAdmin = user && (
+    (typeof user.role === 'string' && user.role.toUpperCase().includes('ADMIN')) ||
+    (Array.isArray(user.role) && user.role.some((r: string) => r.toUpperCase().includes('ADMIN')))
+  );
 
   if (!isAdmin) {
     console.error('[AdminRoute] ❌ Access denied. Redirecting to /main.', {
-      user,
       userRole: user?.role,
-      expectedRoles: ['ROLE_ADMIN', 'ADMIN'],
       hasToken: !!localStorage.getItem('accessToken')
     });
     return <Navigate to="/main" replace />;

@@ -22,7 +22,6 @@ export function MainPage({ openAuth }: { openAuth: (mode: 'login' | 'signup') =>
           onCtaClick={() => document.getElementById('map-scroll-target')?.scrollIntoView({ behavior: 'smooth' })} 
           openAuth={openAuth}
         />
-        <WaveDivider fill="#eef5f0" />
       </div>
 
       {/* AI Health Report Section */}

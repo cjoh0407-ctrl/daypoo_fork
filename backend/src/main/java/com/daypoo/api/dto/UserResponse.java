@@ -18,7 +18,10 @@ public record UserResponse(
     Long equippedTitleId,
     String equippedTitleName,
     Boolean isPro,
-    SubscriptionResponse subscription) {
+    SubscriptionResponse subscription,
+    Long totalAuthCount,
+    Long totalVisitCount,
+    Integer consecutiveDays) {
 
   public static UserResponse from(User user) {
     return UserResponse.from(user, null, user.getActiveSubscription());
@@ -29,6 +32,16 @@ public record UserResponse(
   }
 
   public static UserResponse from(User user, String equippedTitleName, Subscription subscription) {
+    return from(user, equippedTitleName, subscription, null, null, null);
+  }
+
+  public static UserResponse from(
+      User user,
+      String equippedTitleName,
+      Subscription subscription,
+      Long totalAuthCount,
+      Long totalVisitCount,
+      Integer consecutiveDays) {
 
     return UserResponse.builder()
         .id(user.getId())
@@ -44,6 +57,9 @@ public record UserResponse(
         .equippedTitleName(equippedTitleName)
         .isPro(user.isPro())
         .subscription(SubscriptionResponse.from(subscription))
+        .totalAuthCount(totalAuthCount)
+        .totalVisitCount(totalVisitCount)
+        .consecutiveDays(consecutiveDays)
         .build();
   }
 }

@@ -1,11 +1,9 @@
 package com.daypoo.api.controller;
 
 import com.daypoo.api.dto.AdminToiletListResponse;
-import com.daypoo.api.dto.AdminToiletUpdateRequest;
 import com.daypoo.api.service.AdminManagementService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -27,13 +25,5 @@ public class AdminToiletController {
       @RequestParam(required = false) String search,
       @PageableDefault(size = 20) Pageable pageable) {
     return ResponseEntity.ok(adminManagementService.getToilets(search, pageable));
-  }
-
-  @Operation(summary = "화장실 기본 정보 수정", description = "특정 화장실의 이름, 주소, 시간 등의 기본 정보를 직접 수정합니다.")
-  @PatchMapping("/{id}")
-  public ResponseEntity<Void> updateToilet(
-      @PathVariable Long id, @Valid @RequestBody AdminToiletUpdateRequest request) {
-    adminManagementService.updateToilet(id, request);
-    return ResponseEntity.ok().build();
   }
 }

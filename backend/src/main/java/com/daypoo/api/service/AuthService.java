@@ -14,6 +14,7 @@ import com.daypoo.api.global.exception.ErrorCode;
 import com.daypoo.api.repository.*;
 import com.daypoo.api.security.JwtProvider;
 import io.jsonwebtoken.Claims;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
@@ -34,14 +35,9 @@ public class AuthService {
   private final JwtProvider jwtProvider;
   private final EmailService emailService;
   private final StringRedisTemplate redisTemplate;
-  private final NotificationRepository notificationRepository;
-  private final InventoryRepository inventoryRepository;
-  private final UserTitleRepository userTitleRepository;
-  private final PooRecordRepository pooRecordRepository;
-  private final PaymentRepository paymentRepository;
-  private final InquiryRepository inquiryRepository;
-  private final ToiletReviewRepository toiletReviewRepository;
   private final TitleRepository titleRepository;
+  private final UserDeletionService userDeletionService;
+  private final PooRecordRepository pooRecordRepository;
 
   @Transactional
   public TokenResponse socialSignUp(SocialSignUpRequest request) {
@@ -99,7 +95,50 @@ public class AuthService {
               .orElse(null);
     }
 
-    return UserResponse.from(user, titleName);
+    // Calculate statistics
+    Long totalAuthCount = pooRecordRepository.countByUser(user);
+
+    // Calculate unique visited toilets
+    List<com.daypoo.api.entity.PooRecord> records =
+        pooRecordRepository
+            .findByUserOrderByCreatedAtDesc(
+                user, org.springframework.data.domain.Pageable.unpaged())
+            .getContent();
+    Long totalVisitCount =
+        records.stream()
+            .map(com.daypoo.api.entity.PooRecord::getToilet)
+            .filter(java.util.Objects::nonNull)
+            .map(com.daypoo.api.entity.Toilet::getId)
+            .distinct()
+            .count();
+
+    // Calculate consecutive days
+    Integer consecutiveDays = 0;
+    if (!records.isEmpty()) {
+      int streak = 1;
+      java.time.LocalDate lastDate = records.get(0).getCreatedAt().toLocalDate();
+
+      for (int i = 1; i < records.size(); i++) {
+        java.time.LocalDate currentDate = records.get(i).getCreatedAt().toLocalDate();
+        long daysDiff = java.time.temporal.ChronoUnit.DAYS.between(currentDate, lastDate);
+
+        if (daysDiff == 1) {
+          streak++;
+          lastDate = currentDate;
+        } else if (daysDiff > 1) {
+          break;
+        }
+      }
+      consecutiveDays = streak;
+    }
+
+    return UserResponse.from(
+        user,
+        titleName,
+        user.getActiveSubscription(),
+        totalAuthCount,
+        totalVisitCount,
+        consecutiveDays);
   }
 
   @Transactional
@@ -258,16 +297,8 @@ public class AuthService {
       throw new BusinessException(ErrorCode.INVALID_PASSWORD);
     }
 
-    // 연관 데이터 명시적 삭제 (FK 제약 조건 오류 방지)
-    notificationRepository.deleteAllByUser(user);
-    inventoryRepository.deleteAllByUser(user);
-    userTitleRepository.deleteAllByUser(user);
-    pooRecordRepository.deleteAllByUser(user);
-    paymentRepository.deleteAllByUser(user);
-    inquiryRepository.deleteAllByUser(user);
-    toiletReviewRepository.deleteAllByUser(user);
-
-    userRepository.delete(user);
+    // 연관 데이터 통합 삭제 서비스 호출
+    userDeletionService.deleteUserAndRelatedData(user);
     log.info("User {} successfully withdrawn", email);
   }
 }
