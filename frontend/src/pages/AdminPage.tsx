@@ -31,8 +31,6 @@ import {
   Home,
   Trash2,
   Database,
-  Moon,
-  Sun,
 } from 'lucide-react';
 import WaveButtonComponent from '../components/WaveButton';
 import { generateItemAvatar } from '../utils/avatar';
@@ -104,35 +102,17 @@ const COLORS = {
   textSecondary: 'rgba(26,43,39,0.5)',
 };
 
-const DARK_COLORS = {
-  primary: '#52b788',
-  secondary: '#74c69d',
-  accent: '#FFB84D',
-  error: '#FF6B6B',
-  warning: '#FFB84D',
-  info: '#60A5FA',
-  surface: '#1a1a1a',
-  background: '#0d0d0d',
-  border: 'rgba(255,255,255,0.1)',
-  textPrimary: '#e8e8e8',
-  textSecondary: 'rgba(255,255,255,0.6)',
-};
-
 // ── Sub-Components: Common Elements ──────────────────────────────────
 const GlassCard = ({
   children,
   className = '',
   glowColor = 'rgba(27,67,50,0.05)',
   onClick,
-  theme = 'light',
-  colors = COLORS,
 }: {
   children: React.ReactNode;
   className?: string;
   glowColor?: string;
   onClick?: () => void;
-  theme?: 'light' | 'dark';
-  colors?: typeof COLORS;
 }) => (
   <motion.div
     initial={{ opacity: 0, y: 20 }}
@@ -142,49 +122,37 @@ const GlassCard = ({
     onClick={onClick}
     className={`relative overflow-hidden rounded-[24px] p-6 ${className}`}
     style={{
-      background: theme === 'dark' ? 'rgba(26, 26, 26, 0.8)' : 'rgba(255, 255, 255, 0.8)',
+      background: 'rgba(255, 255, 255, 0.8)',
       backdropFilter: 'blur(20px)',
-      border: `1px solid ${colors.border}`,
-      boxShadow: theme === 'dark' ? '0 8px 30px rgba(0,0,0,0.3)' : '0 8px 30px rgba(0,0,0,0.03)',
+      border: `1px solid ${COLORS.border}`,
+      boxShadow: '0 8px 30px rgba(0,0,0,0.03)',
     }}
   >
     {children}
   </motion.div>
 );
 
-const StatWidget = ({ title, value, trend, isUp, icon: Icon, color, progress = 0, badge, theme = 'light', colors = COLORS }: any) => {
+const StatWidget = ({ title, value, trend, isUp, icon: Icon, color, progress = 0, badge }: any) => {
   return (
     <GlassCard
       glowColor={`${color}15`}
-      className="group transition-all duration-500 hover:-translate-y-1.5"
-      theme={theme}
-      colors={colors}
+      className="group transition-all duration-500 hover:border-black/5 hover:-translate-y-1.5"
     >
       <div className="flex justify-between items-start mb-6">
         <div
           className="p-3.5 rounded-2xl transition-all duration-500 group-hover:scale-110 group-hover:rotate-6"
-          style={{ background: `${color}${theme === 'dark' ? '30' : '10'}`, color }}
+          style={{ background: `${color}10`, color }}
         >
           <Icon size={24} />
         </div>
         <div className="flex flex-col items-end gap-2">
           {badge && (
-            <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-tighter text-white"
-              style={{
-                background: theme === 'dark' ? colors.textPrimary : '#000000'
-              }}
-            >
+            <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-tighter bg-black text-white">
               {badge}
             </span>
           )}
           <div
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-[10px] font-black tracking-tight"
-            style={{
-              background: isUp
-                ? (theme === 'dark' ? 'rgba(16, 185, 129, 0.2)' : '#ECFDF5')
-                : (theme === 'dark' ? 'rgba(239, 68, 68, 0.2)' : '#FEF2F2'),
-              color: isUp ? '#10B981' : '#EF4444'
-            }}
+            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-[10px] font-black tracking-tight ${isUp ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'}`}
           >
             {isUp ? <TrendingUp size={12} /> : <TrendingUp size={12} className="rotate-180" />}
             {trend}
@@ -194,13 +162,13 @@ const StatWidget = ({ title, value, trend, isUp, icon: Icon, color, progress = 0
       <div className="flex flex-col mb-6">
         <span
           className="text-[11px] font-black uppercase tracking-[0.2em] mb-1.5"
-          style={{ color: colors.textSecondary }}
+          style={{ color: COLORS.textSecondary }}
         >
           {title}
         </span>
         <span
-          className="text-4xl font-black tracking-tighter"
-          style={{ letterSpacing: '-0.05em', color: colors.textPrimary }}
+          className="text-4xl font-black text-black tracking-tighter"
+          style={{ letterSpacing: '-0.05em' }}
         >
           {value}
         </span>
@@ -216,12 +184,7 @@ const StatWidget = ({ title, value, trend, isUp, icon: Icon, color, progress = 0
             {progress}%
           </span>
         </div>
-        <div
-          className="h-2 w-full rounded-full overflow-hidden"
-          style={{
-            background: theme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)'
-          }}
-        >
+        <div className="h-2 w-full bg-black/5 rounded-full overflow-hidden">
           <motion.div
             initial={{ width: 0 }}
             animate={{ width: `${progress}%` }}
@@ -241,29 +204,26 @@ const StatWidget = ({ title, value, trend, isUp, icon: Icon, color, progress = 0
   );
 };
 
-const CustomTooltip = ({ active, payload, label, theme = 'light', colors = COLORS }: any) => {
+const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     return (
       <div
-        className="p-4 rounded-2xl shadow-2xl border backdrop-blur-md"
-        style={{
-          borderColor: colors.border,
-          background: theme === 'dark' ? 'rgba(26, 26, 26, 0.9)' : 'rgba(255, 255, 255, 0.9)'
-        }}
+        className="p-4 rounded-2xl shadow-2xl border bg-white/90 backdrop-blur-md"
+        style={{ borderColor: COLORS.border }}
       >
         <p
           className="text-[11px] font-black uppercase tracking-wider mb-2"
-          style={{ color: colors.textSecondary }}
+          style={{ color: COLORS.textSecondary }}
         >
           {label}
         </p>
         {payload.map((entry: any, index: number) => (
           <div key={index} className="flex items-center justify-between gap-6 mb-1">
-            <span className="text-xs font-bold flex items-center gap-2" style={{ color: colors.textPrimary }}>
+            <span className="text-xs font-bold flex items-center gap-2">
               <span className="w-2 h-2 rounded-full" style={{ background: entry.color }} />
               {entry.name}
             </span>
-            <span className="text-sm font-black" style={{ color: colors.textPrimary }}>
+            <span className="text-sm font-black" style={{ color: COLORS.textPrimary }}>
               {entry.value.toLocaleString()}
             </span>
           </div>
@@ -279,14 +239,10 @@ const DashboardView = ({
   stats,
   loading,
   setActiveTab,
-  theme = 'light',
-  colors = COLORS,
 }: {
   stats: AdminStatsResponse | null;
   loading: boolean;
   setActiveTab: (tab: AdminTab) => void;
-  theme?: 'light' | 'dark';
-  colors?: typeof COLORS;
 }) => {
   const [liveUsers, setLiveUsers] = useState(342);
 
@@ -305,9 +261,9 @@ const DashboardView = ({
     })) || [];
 
   const pieData = [
-    { name: '프리미엄 (PRO)', value: 400, color: colors.primary },
+    { name: '프리미엄 (PRO)', value: 400, color: COLORS.primary },
     { name: '베이직', value: 300, color: '#52b788' },
-    { name: '무료', value: 300, color: colors.accent },
+    { name: '무료', value: 300, color: COLORS.accent },
   ];
 
   const totalUsersCount = stats?.totalUsers || 0;
@@ -320,8 +276,8 @@ const DashboardView = ({
   if (loading)
     return (
       <div className="flex flex-col items-center justify-center py-40 gap-4">
-        <RefreshCw size={40} className="animate-spin opacity-20" style={{ color: colors.primary }} />
-        <p className="text-sm font-black uppercase tracking-[0.3em]" style={{ color: colors.textSecondary }}>
+        <RefreshCw size={40} className="animate-spin text-[#1B4332] opacity-20" />
+        <p className="text-sm font-black text-black/20 uppercase tracking-[0.3em]">
           Analyzing Real-time Data...
         </p>
       </div>
@@ -337,12 +293,10 @@ const DashboardView = ({
             value={liveUsers}
             trend="+12%"
             isUp
-            color={colors.info}
+            color={COLORS.info}
             icon={Activity}
             progress={Math.min(100, Math.floor((liveUsers / 500) * 100))}
             badge="Live"
-            theme={theme}
-            colors={colors}
           />
         </div>
         <div onClick={() => setActiveTab('users')}>
@@ -351,11 +305,9 @@ const DashboardView = ({
             value={(stats?.totalUsers || 0).toLocaleString()}
             trend="+4.3%"
             isUp
-            color={colors.primary}
+            color={COLORS.primary}
             icon={Users}
             progress={78}
-            theme={theme}
-            colors={colors}
           />
         </div>
         <div onClick={() => setActiveTab('toilets')}>
@@ -364,11 +316,9 @@ const DashboardView = ({
             value={(stats?.totalToilets || 0).toLocaleString()}
             trend="+12"
             isUp
-            color={colors.accent}
+            color={COLORS.accent}
             icon={MapPin}
             progress={64}
-            theme={theme}
-            colors={colors}
           />
         </div>
         <div onClick={() => setActiveTab('cs')}>
@@ -377,12 +327,10 @@ const DashboardView = ({
             value={`${stats?.pendingInquiries || 0}`}
             trend="-5%"
             isUp={false}
-            color={colors.error}
+            color={COLORS.error}
             icon={MessageSquare}
             progress={Math.max(10, Math.min(100, (stats?.pendingInquiries || 0) * 10))}
             badge={stats?.pendingInquiries && stats.pendingInquiries > 0 ? 'Urgent' : undefined}
-            theme={theme}
-            colors={colors}
           />
         </div>
       </div>
@@ -390,28 +338,19 @@ const DashboardView = ({
       {/* 📊 Bento Grid: Main Analytics Section */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Main Growth Chart */}
-        <GlassCard className="lg:col-span-8 group" theme={theme} colors={colors}>
+        <GlassCard className="lg:col-span-8 group">
           <div className="flex items-center justify-between mb-8">
             <div>
-              <h3 className="text-xl font-black" style={{ color: colors.textPrimary }}>핵심 성장 지표</h3>
-              <p className="text-xs font-bold uppercase tracking-widest mt-1" style={{ color: colors.textSecondary }}>
+              <h3 className="text-xl font-black text-black">핵심 성장 지표</h3>
+              <p className="text-xs font-bold text-black/40 uppercase tracking-widest mt-1">
                 Growth & Revenue Analytics
               </p>
             </div>
             <div className="flex gap-2">
-              <button
-                className="px-3 py-1.5 rounded-lg text-[10px] font-black transition-colors"
-                style={{
-                  background: theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
-                  color: colors.textPrimary
-                }}
-              >
+              <button className="px-3 py-1.5 rounded-lg bg-black/5 text-[10px] font-black hover:bg-black/10 transition-colors">
                 7D
               </button>
-              <button
-                className="px-3 py-1.5 rounded-lg text-[10px] font-black transition-colors"
-                style={{ color: colors.textSecondary }}
-              >
+              <button className="px-3 py-1.5 rounded-lg text-[10px] font-black text-black/40 hover:bg-black/5 transition-colors">
                 30D
               </button>
             </div>
@@ -421,65 +360,50 @@ const DashboardView = ({
               <AreaChart data={trendData} margin={{ top: 20, right: 20, left: -20, bottom: 0 }}>
                 <defs>
                   <linearGradient id="colorUsers" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor={colors.primary} stopOpacity={0.2} />
-                    <stop offset="95%" stopColor={colors.primary} stopOpacity={0} />
+                    <stop offset="5%" stopColor={COLORS.primary} stopOpacity={0.2} />
+                    <stop offset="95%" stopColor={COLORS.primary} stopOpacity={0} />
                   </linearGradient>
                   <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor={colors.accent} stopOpacity={0.25} />
-                    <stop offset="95%" stopColor={colors.accent} stopOpacity={0} />
+                    <stop offset="5%" stopColor={COLORS.accent} stopOpacity={0.25} />
+                    <stop offset="95%" stopColor={COLORS.accent} stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid
-                  strokeDasharray="3 3"
-                  vertical={false}
-                  stroke={theme === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)'}
-                />
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(0,0,0,0.03)" />
                 <XAxis
                   dataKey="name"
                   axisLine={false}
                   tickLine={false}
-                  tick={{
-                    fontSize: 10,
-                    fontWeight: 900,
-                    fill: theme === 'dark' ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.2)'
-                  }}
+                  tick={{ fontSize: 10, fontWeight: 900, fill: 'rgba(0,0,0,0.2)' }}
                   dy={10}
                 />
                 <YAxis
                   axisLine={false}
                   tickLine={false}
-                  tick={{
-                    fontSize: 10,
-                    fontWeight: 900,
-                    fill: theme === 'dark' ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.2)'
-                  }}
+                  tick={{ fontSize: 10, fontWeight: 900, fill: 'rgba(0,0,0,0.2)' }}
                 />
                 <Tooltip
-                  content={<CustomTooltip theme={theme} colors={colors} />}
-                  cursor={{
-                    stroke: theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
-                    strokeWidth: 2
-                  }}
+                  content={<CustomTooltip />}
+                  cursor={{ stroke: 'rgba(0,0,0,0.05)', strokeWidth: 2 }}
                 />
                 <Area
                   type="monotone"
                   dataKey="users"
                   name="신규 방문"
-                  stroke={colors.primary}
+                  stroke={COLORS.primary}
                   strokeWidth={4}
                   fill="url(#colorUsers)"
                   animationDuration={2500}
-                  activeDot={{ r: 6, strokeWidth: 0, fill: colors.primary }}
+                  activeDot={{ r: 6, strokeWidth: 0, fill: COLORS.primary }}
                 />
                 <Area
                   type="monotone"
                   dataKey="sales"
                   name="유료 결제"
-                  stroke={colors.accent}
+                  stroke={COLORS.accent}
                   strokeWidth={4}
                   fill="url(#colorSales)"
                   animationDuration={2500}
-                  activeDot={{ r: 6, strokeWidth: 0, fill: colors.accent }}
+                  activeDot={{ r: 6, strokeWidth: 0, fill: COLORS.accent }}
                 />
               </AreaChart>
             </ResponsiveContainer>
@@ -488,9 +412,9 @@ const DashboardView = ({
 
         {/* Membership Segment & Service Health */}
         <div className="lg:col-span-4 space-y-6">
-          <GlassCard className="h-fit" theme={theme} colors={colors}>
-            <h3 className="text-lg font-black mb-1" style={{ color: colors.textPrimary }}>사용자 분포</h3>
-            <p className="text-[10px] font-black uppercase tracking-widest mb-6" style={{ color: colors.textSecondary }}>
+          <GlassCard className="h-fit">
+            <h3 className="text-lg font-black text-black mb-1">사용자 분포</h3>
+            <p className="text-[10px] font-black text-black/30 uppercase tracking-widest mb-6">
               User Segments
             </p>
             <div className="h-[200px] w-full relative">
@@ -3230,24 +3154,6 @@ export function AdminPage() {
   const [stats, setStats] = useState<AdminStatsResponse | null>(null);
   const [statsLoading, setStatsLoading] = useState(true);
 
-  // 다크모드 상태 관리 (localStorage 연동)
-  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
-    const saved = localStorage.getItem('daypoo_admin_theme');
-    return (saved as 'light' | 'dark') || 'light';
-  });
-
-  // 테마 토글 함수
-  const toggleTheme = () => {
-    setTheme((prev) => {
-      const next = prev === 'light' ? 'dark' : 'light';
-      localStorage.setItem('daypoo_admin_theme', next);
-      return next;
-    });
-  };
-
-  // 현재 테마에 맞는 색상 가져오기
-  const colors = theme === 'dark' ? DARK_COLORS : COLORS;
-
   // 알림 확인 여부 관리 (localStorage 연동)
   const [visitedTabs, setVisitedTabs] = useState<AdminTab[]>(() => {
     const saved = localStorage.getItem('daypoo_admin_visited_tabs');
@@ -3348,16 +3254,13 @@ export function AdminPage() {
   return (
     <div
       className="flex h-screen overflow-hidden font-['Pretendard']"
-      style={{ background: colors.background }}
+      style={{ background: COLORS.background }}
     >
       {/* 🔮 Sidebar Navigation */}
       <motion.aside
         animate={{ width: sidebarCollapsed ? 96 : 300 }}
-        className="h-full border-r backdrop-blur-3xl z-30 transition-all flex flex-col py-8"
-        style={{
-          borderColor: colors.border,
-          background: theme === 'dark' ? 'rgba(26, 26, 26, 0.8)' : 'rgba(255, 255, 255, 0.8)'
-        }}
+        className="h-full border-r bg-white/80 backdrop-blur-3xl z-30 transition-all flex flex-col py-8"
+        style={{ borderColor: COLORS.border }}
       >
         <div
           className={`mb-12 px-6 flex items-center justify-between ${sidebarCollapsed ? 'justify-center mx-auto' : ''}`}
@@ -3370,34 +3273,19 @@ export function AdminPage() {
               className="text-2xl font-black cursor-pointer"
               style={{
                 fontFamily: "'SchoolSafetyNotification'",
-                color: colors.primary,
+                color: COLORS.primary,
                 letterSpacing: '-0.05em',
               }}
             >
-              Day<span style={{ color: colors.accent }}>.</span>Poo
-              <span className="ml-2 px-2 py-0.5 text-[9px] rounded-lg"
-                style={{
-                  background: `${colors.accent}20`,
-                  color: colors.accent
-                }}
-              >
+              Day<span style={{ color: COLORS.accent }}>.</span>Poo
+              <span className="ml-2 px-2 py-0.5 text-[9px] bg-[#E8A838]/20 text-[#E8A838] rounded-lg">
                 ADMIN
               </span>
             </motion.span>
           )}
           <button
             onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-            className="p-2 rounded-xl transition-colors"
-            style={{
-              color: colors.primary,
-              backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = theme === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)';
-            }}
+            className="p-2 rounded-xl hover:bg-black/5 transition-colors text-[#1B4332]"
           >
             {sidebarCollapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
           </button>
@@ -3409,25 +3297,17 @@ export function AdminPage() {
               key={item.id}
               onClick={() => handleTabChange(item.id as AdminTab)}
               className="group relative w-full flex items-center gap-4 px-4 py-4 rounded-2xl transition-all overflow-hidden"
-              style={{ color: activeTab === item.id ? colors.primary : colors.textSecondary }}
+              style={{ color: activeTab === item.id ? COLORS.primary : COLORS.textSecondary }}
             >
               {activeTab === item.id && (
                 <motion.div
                   layoutId="activeTabBg"
-                  className="absolute inset-0 border-r-[4px]"
-                  style={{
-                    background: `${colors.primary}${theme === 'dark' ? '20' : '05'}`,
-                    borderColor: colors.primary
-                  }}
+                  className="absolute inset-0 bg-[#1B4332]/5 border-r-[4px] border-[#1B4332]"
                   transition={{ type: 'spring', stiffness: 350, damping: 30 }}
                 />
               )}
               <div
-                className="relative z-10 p-1.5 rounded-xl transition-all"
-                style={{
-                  background: activeTab === item.id ? colors.primary : '',
-                  color: activeTab === item.id ? '#FFFFFF' : ''
-                }}
+                className={`relative z-10 p-1.5 rounded-xl transition-all ${activeTab === item.id ? 'bg-[#1B4332] text-white shadow-lg shadow-green-900/20' : 'group-hover:bg-black/5'}`}
               >
                 <item.icon size={20} />
               </div>
@@ -3437,9 +3317,7 @@ export function AdminPage() {
                 </span>
               )}
               {item.badge && !sidebarCollapsed && (
-                <span className="relative z-10 text-[9px] font-black px-1.5 py-0.5 rounded-md text-white"
-                  style={{ background: colors.error }}
-                >
+                <span className="relative z-10 text-[9px] font-black px-1.5 py-0.5 rounded-md bg-[#FF4B4B] text-white">
                   {item.badge}
                 </span>
               )}
@@ -3450,42 +3328,18 @@ export function AdminPage() {
         <div className="w-full px-4 mt-auto space-y-1">
           <button
             onClick={() => navigate('/main')}
-            className="w-full py-4 rounded-2xl flex items-center gap-4 px-4 transition-colors font-bold text-sm"
-            style={{
-              color: '#10B981',
-              backgroundColor: theme === 'dark' ? 'rgba(16, 185, 129, 0.1)' : '',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = theme === 'dark' ? 'rgba(16, 185, 129, 0.2)' : '#D1FAE5';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = theme === 'dark' ? 'rgba(16, 185, 129, 0.1)' : '';
-            }}
+            className="w-full py-4 rounded-2xl flex items-center gap-4 px-4 transition-colors hover:bg-emerald-50 text-emerald-600 font-bold text-sm"
           >
-            <div className="p-1.5 rounded-xl" style={{
-              background: theme === 'dark' ? 'rgba(16, 185, 129, 0.2)' : '#D1FAE5'
-            }}>
+            <div className="p-1.5 rounded-xl bg-emerald-100">
               <Home size={20} />
             </div>
             {!sidebarCollapsed && <span>메인 페이지로</span>}
           </button>
           <button
             onClick={logout}
-            className="w-full py-4 rounded-2xl flex items-center gap-4 px-4 transition-colors font-bold text-sm"
-            style={{
-              color: '#EF4444',
-              backgroundColor: theme === 'dark' ? 'rgba(239, 68, 68, 0.1)' : '',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = theme === 'dark' ? 'rgba(239, 68, 68, 0.2)' : '#FEE2E2';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = theme === 'dark' ? 'rgba(239, 68, 68, 0.1)' : '';
-            }}
+            className="w-full py-4 rounded-2xl flex items-center gap-4 px-4 transition-colors hover:bg-red-50 text-red-500 font-bold text-sm"
           >
-            <div className="p-1.5 rounded-xl" style={{
-              background: theme === 'dark' ? 'rgba(239, 68, 68, 0.2)' : '#FEE2E2'
-            }}>
+            <div className="p-1.5 rounded-xl bg-red-100">
               <LogOut size={20} />
             </div>
             {!sidebarCollapsed && <span>로그아웃</span>}
@@ -3497,40 +3351,32 @@ export function AdminPage() {
       <main className="flex-1 h-full overflow-y-auto overflow-x-hidden relative flex flex-col">
         {/* 🧩 Header / TopBar */}
         <header
-          className="sticky top-0 z-20 px-8 py-5 flex items-center justify-between transition-all backdrop-blur-md border-b"
-          style={{
-            borderColor: colors.border,
-            background: theme === 'dark' ? 'rgba(26, 26, 26, 0.4)' : 'rgba(255, 255, 255, 0.4)'
-          }}
+          className={`sticky top-0 z-20 px-8 py-5 flex items-center justify-between transition-all backdrop-blur-md border-b bg-white/40`}
+          style={{ borderColor: COLORS.border }}
         >
           <div className="flex items-center gap-4">
             <div
-              className="p-2.5 rounded-2xl shadow-sm border"
-              style={{
-                borderColor: colors.border,
-                background: theme === 'dark' ? 'rgba(255, 255, 255, 0.05)' : '#FFFFFF'
-              }}
+              className="p-2.5 rounded-2xl bg-white shadow-sm border"
+              style={{ borderColor: COLORS.border }}
             >
               {activeTab === 'dashboard' ? (
-                <LayoutDashboard size={20} style={{ color: colors.primary }} />
+                <LayoutDashboard size={20} style={{ color: COLORS.primary }} />
               ) : activeTab === 'users' ? (
-                <Users size={20} style={{ color: colors.primary }} />
+                <Users size={20} style={{ color: COLORS.primary }} />
               ) : activeTab === 'toilets' ? (
-                <MapPin size={20} style={{ color: colors.primary }} />
+                <MapPin size={20} style={{ color: COLORS.primary }} />
               ) : activeTab === 'cs' ? (
-                <MessageSquare size={20} style={{ color: colors.primary }} />
+                <MessageSquare size={20} style={{ color: COLORS.primary }} />
               ) : activeTab === 'store' ? (
-                <ShoppingBag size={20} style={{ color: colors.primary }} />
+                <ShoppingBag size={20} style={{ color: COLORS.primary }} />
               ) : activeTab === 'titles' ? (
-                <Star size={20} style={{ color: colors.primary }} />
+                <Star size={20} style={{ color: COLORS.primary }} />
               ) : (
-                <Settings size={20} style={{ color: colors.primary }} />
+                <Settings size={20} style={{ color: COLORS.primary }} />
               )}
             </div>
             <div className="flex flex-col">
-              <h2 className="text-sm font-black uppercase tracking-widest"
-                style={{ color: colors.textPrimary }}
-              >
+              <h2 className="text-sm font-black text-black/90 uppercase tracking-widest">
                 {activeTab === 'dashboard'
                   ? '관리자 대시보드'
                   : activeTab === 'users'
@@ -3551,9 +3397,7 @@ export function AdminPage() {
                                   ? '시스템 런타임 로그'
                                   : '시스템 인프라 설정'}
               </h2>
-              <div className="flex items-center gap-2 text-[11px] font-bold"
-                style={{ color: colors.textSecondary }}
-              >
+              <div className="flex items-center gap-2 text-[11px] text-black/40 font-bold">
                 <Calendar size={12} /> {currentTime.toLocaleDateString()}
                 <Clock size={12} className="ml-2" /> {currentTime.toLocaleTimeString()}
               </div>
@@ -3561,58 +3405,28 @@ export function AdminPage() {
           </div>
 
           <div className="flex items-center gap-6">
-            {/* 🌙 테마 토글 버튼 */}
-            <button
-              onClick={toggleTheme}
-              className="p-2.5 rounded-2xl transition-all shadow-sm border"
-              style={{
-                borderColor: colors.border,
-                background: theme === 'dark' ? 'rgba(255, 255, 255, 0.05)' : '#FFFFFF',
-                color: colors.primary
-              }}
-              title={theme === 'dark' ? '라이트 모드로 전환' : '다크 모드로 전환'}
-            >
-              {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
-            </button>
-
             <div
-              className="hidden md:flex items-center border px-4 py-2.5 rounded-2xl gap-2 transition-all z-30 relative"
-              style={{
-                borderColor: colors.border,
-                background: theme === 'dark' ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.03)'
-              }}
+              className="hidden md:flex items-center bg-black/[0.03] border px-4 py-2.5 rounded-2xl gap-2 focus-within:bg-white focus-within:ring-2 ring-[#1B4332]/20 transition-all z-30 relative"
+              style={{ borderColor: COLORS.border }}
             >
-              <Search size={16} style={{ color: colors.textSecondary }} />
+              <Search size={16} className="text-black/30" />
               <input
                 type="text"
                 value={globalSearch}
                 onChange={(e) => setGlobalSearch(e.target.value)}
                 placeholder="통합 검색 (유저/신고/상점)"
-                className="bg-transparent border-none outline-none text-xs font-bold w-56"
-                style={{
-                  color: colors.textPrimary,
-                }}
+                className="bg-transparent border-none outline-none text-xs font-bold w-56 text-black placeholder:text-black/30"
               />
             </div>
 
             <div className="flex items-center gap-3 group cursor-pointer pl-2">
               <div className="text-right hidden sm:block">
-                <p className="text-sm font-black leading-none" style={{ color: colors.textPrimary }}>
-                  시스템 마스터
-                </p>
-                <p className="text-[10px] font-bold mt-1 uppercase tracking-tighter"
-                  style={{ color: colors.textSecondary }}
-                >
+                <p className="text-sm font-black text-black/80 leading-none">시스템 마스터</p>
+                <p className="text-[10px] font-bold text-black/30 mt-1 uppercase tracking-tighter">
                   최고 관리자 계정
                 </p>
               </div>
-              <div
-                className="w-12 h-12 rounded-2xl overflow-hidden shadow-md border-2 group-hover:scale-105 transition-transform flex items-center justify-center"
-                style={{
-                  background: theme === 'dark' ? 'rgba(255, 255, 255, 0.05)' : '#F3F4F6',
-                  borderColor: `${colors.primary}20`
-                }}
-              >
+              <div className="w-12 h-12 bg-gray-100 rounded-2xl overflow-hidden shadow-md border-2 border-[#1B4332]/20 group-hover:scale-105 transition-transform flex items-center justify-center">
                 <span className="text-xl">💩</span>
               </div>
             </div>
@@ -3630,7 +3444,7 @@ export function AdminPage() {
               transition={{ duration: 0.3, ease: 'easeOut' }}
             >
               {activeTab === 'dashboard' && (
-                <DashboardView stats={stats} loading={statsLoading} setActiveTab={setActiveTab} theme={theme} colors={colors} />
+                <DashboardView stats={stats} loading={statsLoading} setActiveTab={setActiveTab} />
               )}
               {activeTab === 'users' && <UsersView />}
               {activeTab === 'toilets' && <ToiletsView />}
@@ -3654,18 +3468,8 @@ export function AdminPage() {
       </main>
 
       {/* 🎇 Background Decoration */}
-      <div
-        className="fixed top-0 right-0 -z-10 w-[800px] h-[800px] blur-[120px] rounded-full translate-x-1/2 -translate-y-1/2 pointer-events-none"
-        style={{
-          background: theme === 'dark' ? `${colors.primary}15` : `${colors.primary}05`
-        }}
-      />
-      <div
-        className="fixed bottom-0 left-0 -z-10 w-[600px] h-[600px] blur-[120px] rounded-full -translate-x-1/2 translate-y-1/2 pointer-events-none"
-        style={{
-          background: theme === 'dark' ? `${colors.accent}15` : `${colors.accent}05`
-        }}
-      />
+      <div className="fixed top-0 right-0 -z-10 w-[800px] h-[800px] bg-[#1B4332]/5 blur-[120px] rounded-full translate-x-1/2 -translate-y-1/2 pointer-events-none" />
+      <div className="fixed bottom-0 left-0 -z-10 w-[600px] h-[600px] bg-[#E8A838]/5 blur-[120px] rounded-full -translate-x-1/2 translate-y-1/2 pointer-events-none" />
     </div>
   );
 }

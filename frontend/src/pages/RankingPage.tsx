@@ -23,6 +23,7 @@ interface RankUser {
   title: string;
   titleColor: string;
   titleBg: string;
+  level: number; // 신규 추가
   score: number;
   scoreLabel: string;
   change: number;
@@ -202,8 +203,151 @@ function ItemPopup({ user, onClose, openAuth }: { user: RankUser; onClose: () =>
   );
 }
 
-// ── 시상대 섹션 (Spotlight Glassmorphism) ──────────────────────────────
+// ── 시상대 섹션 (3D Flip & Repulsion Interaction) ──────────────────────────
+const FlipGlassCard = ({ 
+  user, 
+  scale = 1, 
+  delay = 0, 
+  isFirst = false, 
+  onSelect,
+  isHovered,
+  onHoverStart,
+  onHoverEnd,
+  xOffset = 0
+}: { 
+  user: RankUser; 
+  scale?: number; 
+  delay?: number; 
+  isFirst?: boolean;
+  onSelect: (u: RankUser) => void;
+  isHovered: boolean;
+  onHoverStart: () => void;
+  onHoverEnd: () => void;
+  xOffset?: number;
+}) => (
+  <motion.div
+    initial={{ opacity: 0, y: 32, scale: scale * 0.9 }}
+    animate={{ 
+      opacity: 1, 
+      y: 0, 
+      scale: isHovered ? scale * 1.08 : scale,
+      x: xOffset 
+    }}
+    transition={{ 
+      duration: 0.8, 
+      delay, 
+      ease: [0.16, 1, 0.3, 1],
+      x: { type: 'spring', stiffness: 100, damping: 20 }
+    }}
+    onMouseEnter={onHoverStart}
+    onMouseLeave={onHoverEnd}
+    onClick={() => onSelect(user)}
+    className="relative cursor-pointer group"
+    style={{ 
+      width: isFirst ? '190px' : '160px', 
+      height: isFirst ? '260px' : '220px',
+      perspective: '1200px',
+      zIndex: isHovered ? 50 : isFirst ? 20 : 10 
+    }}
+  >
+    {/* ── 배지 레이어 (Clipping 해결을 위해 최상위로 독립) ── */}
+    <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1.5 rounded-full font-black text-[10px] shadow-xl z-[60] transition-transform duration-500"
+      style={{ 
+        background: user.rank === 1 ? '#E8A838' : user.rank === 2 ? '#B0B8B4' : '#CD7C4A', 
+        color: '#fff',
+        boxShadow: `0 4px 15px ${user.rank === 1 ? 'rgba(232,168,56,0.3)' : user.rank === 2 ? 'rgba(176,184,180,0.3)' : 'rgba(205,124,74,0.3)'}`,
+        transform: `translateX(-50%) ${isHovered ? 'rotateY(180deg) scale(0)' : 'rotateY(0) scale(1)'}`, // 뒤집힐 때 숨김
+        opacity: isHovered ? 0 : 1
+      }}>
+      {user.rank}{user.rank === 1 ? 'ST' : user.rank === 2 ? 'ND' : 'RD'}
+    </div>
+
+    <motion.div
+      animate={{ rotateY: isHovered ? 180 : 0 }}
+      transition={{ type: 'spring', damping: 20, stiffness: 100 }}
+      style={{ transformStyle: 'preserve-3d', width: '100%', height: '100%' }}
+      className="relative w-full h-full"
+    >
+      {/* ── 앞면 (Front Face) ── */}
+      <div 
+        className="absolute inset-0 w-full h-full rounded-[36px] overflow-hidden flex flex-col items-center p-5 pb-6 border border-white/40 shadow-xl"
+        style={{ 
+          backfaceVisibility: 'hidden',
+          background: 'rgba(255,255,255,0.22)',
+          backdropFilter: 'blur(16px)'
+        }}
+      >
+        <div className="absolute inset-0 bg-gradient-to-br from-white/30 to-transparent" />
+        
+        <div className="relative mb-5 mt-4">
+          <div className="w-20 h-20 rounded-full flex items-center justify-center relative overflow-hidden text-4xl bg-white shadow-2xl">
+            <ConicGlow color={user.titleColor} thickness={4} borderRadius="50%" />
+            <div className="absolute inset-[4px] rounded-full bg-white flex items-center justify-center z-10 overflow-hidden">
+              {user.avatarUrl ? (
+                <img src={user.avatarUrl} alt={user.nick} className="w-full h-full object-cover" />
+              ) : (
+                user.emoji
+              )}
+            </div>
+          </div>
+          {isFirst && <div className="absolute -top-5 -right-2 text-amber-500 drop-shadow-lg scale-110"><Crown size={24} /></div>}
+        </div>
+
+        <h3 className="font-black text-[#1A2B27] text-[16px] mb-1 truncate w-full text-center">{user.nick}</h3>
+        <p className="font-black text-xl" style={{ color: '#52b788' }}>
+          {user.score.toLocaleString()}<span className="text-[10px] uppercase font-bold text-gray-400 ml-0.5">{user.scoreLabel}</span>
+        </p>
+      </div>
+
+      {/* ── 뒷면 (Back Face) ── */}
+      <div 
+        className="absolute inset-0 w-full h-full rounded-[36px] overflow-hidden flex flex-col items-center justify-center p-6 border border-white/10 shadow-[0_40px_100px_rgba(0,0,0,0.4)]"
+        style={{ 
+          backfaceVisibility: 'hidden',
+          background: 'rgba(10, 26, 20, 0.95)',
+          backdropFilter: 'blur(30px)',
+          transform: 'rotateY(180deg)'
+        }}
+      >
+        <div className="absolute inset-0 bg-gradient-to-tr from-[#1B4332]/20 via-transparent to-amber-500/5 pointer-events-none" />
+        
+        <div className="relative mb-4">
+            <div className="text-[9px] font-black text-amber-500/60 uppercase tracking-[0.3em] mb-2 text-center">Power Status</div>
+            <div className="flex items-baseline justify-center gap-1 grayscale group-hover:grayscale-0 transition-all duration-700">
+                <span className="text-[12px] font-black text-amber-500">LV.</span>
+                <span className="text-3xl font-black text-white leading-none">{user.level || '0'}</span>
+            </div>
+        </div>
+
+        <div className="w-full h-[1px] bg-gradient-to-r from-transparent via-white/10 to-transparent mb-5" />
+
+        <div className="w-full space-y-4">
+            <div className="flex flex-col items-center">
+                <span className="text-[9px] font-black text-[#52b788] uppercase tracking-widest mb-1">Current Power</span>
+                <div className="text-lg font-black text-white/90">{user.score.toLocaleString()}</div>
+            </div>
+            
+            <div className="flex justify-center gap-2">
+                <div className="flex-1 bg-white/5 rounded-xl py-2 border border-white/5 flex flex-col items-center">
+                    <span className="text-[8px] text-gray-400 font-black uppercase mb-0.5">Items</span>
+                    <span className="text-xs font-black text-white">{user.items.length}ea</span>
+                </div>
+                <div className="flex-1 bg-white/5 rounded-xl py-2 border border-white/5 flex flex-col items-center">
+                    <span className="text-[8px] text-gray-400 font-black uppercase mb-0.5">Tier</span>
+                    <span className="text-xs font-black text-amber-500">Gold</span>
+                </div>
+            </div>
+        </div>
+      </div>
+    </motion.div>
+
+    <div className="absolute -bottom-12 left-1/2 -translate-x-1/2 w-3/4 h-5 bg-black/10 blur-2xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+  </motion.div>
+);
+
 function Podium({ users, onSelect }: { users: RankUser[]; onSelect: (u: RankUser) => void }) {
+  const [hoveredRank, setHoveredRank] = useState<number | null>(null);
+
   if (!users || users.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-20 bg-white/30 backdrop-blur-md rounded-[32px] border border-white/40">
@@ -214,82 +358,73 @@ function Podium({ users, onSelect }: { users: RankUser[]; onSelect: (u: RankUser
 
   const [top1, top2, top3] = users;
 
-  const GlassCard = ({ user, scale = 1, delay = 0, isFirst = false }: { user: RankUser; scale?: number; delay?: number; isFirst?: boolean }) => (
-    <motion.div
-      initial={{ opacity: 0, y: 32, scale: scale * 0.9 }}
-      animate={{ opacity: 1, y: 0, scale }}
-      transition={{ duration: 0.8, delay, ease: [0.16, 1, 0.3, 1] }}
-      whileHover={{ y: -8, scale: scale * 1.02 }}
-      onClick={() => onSelect(user)}
-      className="relative cursor-pointer group"
-      style={{ width: isFirst ? '240px' : '200px', zIndex: isFirst ? 20 : 10 }}
-    >
-      <div className="absolute inset-0 rounded-[32px] overflow-hidden" style={{ zIndex: -1 }}>
-        <div className="absolute inset-0 backdrop-blur-xl transition-colors duration-500 group-hover:bg-white/40" 
-          style={{ background: 'rgba(255,255,255,0.25)', border: '1.5px solid rgba(255,255,255,0.4)' }} />
-        <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent" />
-      </div>
+  // Repulsion Logic 계산 함수
+  const getXOffset = (rank: number) => {
+    if (!hoveredRank) return 0;
+    if (hoveredRank === rank) return 0; // 호버 중인 카드는 직접 움직이지 않음
 
-      <div className="flex flex-col items-center p-6 pb-8">
-        <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full font-black text-xs shadow-lg"
-          style={{ 
-            background: user.rank === 1 ? '#E8A838' : user.rank === 2 ? '#B0B8B4' : '#CD7C4A', 
-            color: '#fff',
-            boxShadow: `0 4px 12px ${user.rank === 1 ? 'rgba(232,168,56,0.4)' : user.rank === 2 ? 'rgba(176,184,180,0.4)' : 'rgba(205,124,74,0.4)'}`
-          }}>
-          {user.rank}ST
-        </div>
-
-        <div className="relative mb-5 mt-2">
-          {isFirst && (
-            <motion.div
-              animate={{ scale: [1, 1.3, 1], opacity: [0.3, 0.6, 0.3] }}
-              transition={{ duration: 3, repeat: Infinity }}
-              className="absolute inset-0 rounded-full bg-amber-400/20 blur-xl"
-            />
-          )}
-          <div className="w-20 h-20 rounded-full flex items-center justify-center relative overflow-hidden text-4xl"
-            style={{ background: '#fff', boxShadow: '0 8px 24px rgba(0,0,0,0.08)' }}>
-            <ConicGlow color={user.titleColor} thickness={4} borderRadius="50%" />
-            <div className="absolute inset-[3px] rounded-full bg-white flex items-center justify-center z-10 overflow-hidden">
-              {user.avatarUrl ? (
-                <img src={user.avatarUrl} alt={user.nick} className="w-full h-full object-cover" />
-              ) : (
-                user.emoji
-              )}
-            </div>
-          </div>
-          {isFirst && <div className="absolute -top-5 -right-2 text-amber-500 drop-shadow-md"><Crown size={24} /></div>}
-        </div>
-
-        <span className="text-[10px] font-black px-2.5 py-1 rounded-full mb-2 uppercase tracking-tight"
-          style={{ background: user.titleBg, color: user.titleColor }}>
-          {user.title}
-        </span>
-        <h3 className="font-black text-[#1A2B27] text-lg mb-1">{user.nick}</h3>
-        <p className="font-black text-2xl flex items-baseline gap-0.5" style={{ color: '#52b788' }}>
-          {user.score.toLocaleString()}<span className="text-[10px] uppercase font-bold text-gray-400">{user.scoreLabel}</span>
-        </p>
-      </div>
-
-      <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 w-3/4 h-4 bg-black/5 blur-xl rounded-full" />
-    </motion.div>
-  );
+    if (hoveredRank === 1) {
+      if (rank === 2) return -35; 
+      if (rank === 3) return 35;
+    }
+    if (hoveredRank === 2) {
+      if (rank === 1) return 30;
+      if (rank === 3) return 30;
+    }
+    if (hoveredRank === 3) {
+      if (rank === 1) return -30;
+      if (rank === 2) return -30;
+    }
+    return 0;
+  };
 
   return (
-    <div className="relative flex items-center justify-center gap-6 lg:gap-10 mt-4 py-12 px-4">
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] pointer-events-none" style={{ zIndex: 0 }}>
+    <div className="relative flex items-center justify-center gap-10 lg:gap-16 mt-8 pt-24 pb-16 px-4">
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] pointer-events-none" style={{ zIndex: 0 }}>
         <motion.div
-          animate={{ scale: [1, 1.1, 1], opacity: [0.15, 0.25, 0.15] }}
-          transition={{ duration: 5, repeat: Infinity }}
+          animate={{ scale: [1, 1.15, 1], opacity: [0.2, 0.3, 0.2] }}
+          transition={{ duration: 6, repeat: Infinity }}
           className="absolute inset-0 rounded-full"
-          style={{ background: 'radial-gradient(circle, #E8A838 0%, transparent 70%)', filter: 'blur(60px)' }}
+          style={{ background: 'radial-gradient(circle, #E8A838 0%, transparent 65%)', filter: 'blur(70px)' }}
         />
       </div>
 
-      {top2 && <GlassCard user={top2} scale={1.0} delay={0.15} />}
-      {top1 && <GlassCard user={top1} scale={1.2} delay={0} isFirst />}
-      {top3 && <GlassCard user={top3} scale={0.95} delay={0.3} />}
+      {top2 && (
+        <FlipGlassCard 
+          user={top2} 
+          delay={0.15} 
+          isHovered={hoveredRank === 2}
+          onHoverStart={() => setHoveredRank(2)}
+          onHoverEnd={() => setHoveredRank(null)}
+          xOffset={getXOffset(2)}
+          onSelect={onSelect}
+        />
+      )}
+      {top1 && (
+        <FlipGlassCard 
+          user={top1} 
+          scale={1.15} 
+          delay={0} 
+          isFirst 
+          isHovered={hoveredRank === 1}
+          onHoverStart={() => setHoveredRank(1)}
+          onHoverEnd={() => setHoveredRank(null)}
+          xOffset={getXOffset(1)}
+          onSelect={onSelect}
+        />
+      )}
+      {top3 && (
+        <FlipGlassCard 
+          user={top3} 
+          scale={0.95} 
+          delay={0.3} 
+          isHovered={hoveredRank === 3}
+          onHoverStart={() => setHoveredRank(3)}
+          onHoverEnd={() => setHoveredRank(null)}
+          xOffset={getXOffset(3)}
+          onSelect={onSelect}
+        />
+      )}
     </div>
   );
 }
@@ -450,7 +585,7 @@ export function RankingPage({ openAuth }: { openAuth: (mode: 'login' | 'signup')
         geocoder.coord2RegionCode(pos.coords.longitude, pos.coords.latitude, (result: any[], status: string) => {
           if (status === kakao.maps.services.Status.OK && result.length > 0) {
             const region = result.find((r: any) => r.region_type === 'H') || result[0];
-            setRegionName(region.region_1depth_name);
+            setRegionName(region.region_2depth_name);
           }
         });
       },
@@ -472,6 +607,7 @@ export function RankingPage({ openAuth }: { openAuth: (mode: 'login' | 'signup')
           title: r.titleName || '새내기 쾌변러',
           titleColor: Number(r.rank) === 1 ? '#E8A838' : Number(r.rank) === 2 ? '#B0B8B4' : Number(r.rank) === 3 ? '#CD7C4A' : '#52b788',
           titleBg: Number(r.rank) === 1 ? 'rgba(232,168,56,0.12)' : Number(r.rank) === 2 ? 'rgba(176,184,180,0.12)' : Number(r.rank) === 3 ? 'rgba(205,124,74,0.12)' : 'rgba(82,183,136,0.1)',
+          level: Number(r.level || 0), // 신규 매핑
           score: Number(r.score || 0),
           scoreLabel: '점',
           change: 0,

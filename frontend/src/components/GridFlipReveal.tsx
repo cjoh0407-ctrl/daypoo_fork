@@ -30,7 +30,7 @@ export const GridFlipReveal: React.FC<GridFlipRevealProps> = ({
       const finishTimer = setTimeout(() => {
         setIsFinished(true);
         sessionStorage.setItem('daypoo_grid_reveal_seen', 'true');
-      }, 1900); // 전체 대기시간을 약 1초 단축 (2.8s -> 1.9s)
+      }, 1300); // 1.4s -> 1.3s로 가속 (타일 전파 즉시 페이지 노출)
 
       return () => {
         clearTimeout(startTimer);
@@ -56,7 +56,7 @@ export const GridFlipReveal: React.FC<GridFlipRevealProps> = ({
 
   return (
     <div className="relative w-full min-h-screen bg-[#F8FAF9]">
-      {/* 실제 콘텐츠 레이어 - 바닥에 깔려 있음 */}
+      {/* 실제 콘텐츠 레이어 - 타일 연출 완료 전까지 겹침 방지를 위해 숨김 */}
       <div className={`relative z-0 ${!isFinished ? 'opacity-0' : 'opacity-100'}`}>
         {children}
       </div>
@@ -75,9 +75,9 @@ export const GridFlipReveal: React.FC<GridFlipRevealProps> = ({
                 initial={{ rotateY: 0 }}
                 animate={isStarted ? { rotateY: 180, opacity: 0 } : { rotateY: 0, opacity: 1 }}
                 transition={{
-                  duration: 0.7, // 회전 가속 (1.0s -> 0.7s)
-                  ease: [0.33, 1, 0.68, 1], // 끝부분에서 탄성 있게 멈춤
-                  delay: (tile.r + tile.c) * 0.04 // 물결 전파 가속 (0.05s -> 0.04s)
+                  duration: 0.7, // 회전 가속
+                  ease: [0.33, 1, 0.68, 1],
+                  delay: tile.r * 0.08 // 수직(Top to Bottom) 물결
                 }}
                 className="w-full h-full relative"
                 style={{ transformStyle: 'preserve-3d' }}
@@ -103,7 +103,7 @@ export const GridFlipReveal: React.FC<GridFlipRevealProps> = ({
         </div>
       )}
 
-      {/* 중앙 브랜드 텍스트 (피어오르는 시차 애니메이션 - 가속 튜닝) */}
+      {/* 중앙 브랜드 텍스트 (피어오르는 시차 애니메이션 - 즉시 노출) */}
       <AnimatePresence>
         {isStarted && !isFinished && (
           <motion.div
@@ -121,8 +121,8 @@ export const GridFlipReveal: React.FC<GridFlipRevealProps> = ({
                     rotateX: [30, 0, 0, -15]
                   }}
                   transition={{ 
-                    duration: 1.5, // 텍스트 유지 시간 가속 (2.2s -> 1.5s)
-                    delay: index * 0.06, 
+                    duration: 1.2, // 로고 노출 시간 단축 (속도감 최적화)
+                    delay: index * 0.05, // 텍스트 지연 최소화
                     times: [0, 0.25, 0.75, 1],
                     ease: "easeOut"
                   }}

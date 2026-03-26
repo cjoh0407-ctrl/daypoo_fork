@@ -50,6 +50,8 @@ interface AvatarItem {
   rawType?: string; // 원본 타입 (AVATAR, EFFECT 등)
   owned: boolean;
   price?: number;
+  inventoryId?: string; // 인벤토리 ID (장착/해제 API 호출 시 필요)
+  isEquipped?: boolean; // 장착 여부
 }
 
 // ── FALLBACK 데이터 ───────────────────────────────────────────────────────
@@ -598,14 +600,20 @@ function HeroBanner({
                     boxShadow: '0 16px 48px rgba(27,67,50,0.12)',
                   }}
                 >
-                  {user?.id ? (
+                  {equippedItem?.id ? (
+                    <img
+                      src={generateItemAvatar(equippedItem.id, equippedItem.rawType || 'AVATAR')}
+                      alt={equippedItem.name}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : user?.id ? (
                     <img
                       src={generateProfileAvatar(user.id)}
                       alt={user.nickname || '프로필'}
                       className="w-full h-full object-cover"
                     />
                   ) : (
-                    equippedItem?.emoji ?? '💩'
+                    '💩'
                   )}
                 </div>
                 <div
@@ -924,11 +932,28 @@ function HomeTab({
     if (!preview) return;
 
     if (preview.owned) {
-      // 이미 소유한 아이템 → 장착만
-      setEquipped(preview);
-      setSaved(true);
-      setTimeout(() => setSaved(false), 2000);
-      setPreview(null);
+      // 이미 소유한 아이템 → 장착 API 호출
+      if (!preview.inventoryId) {
+        alert('아이템 정보가 올바르지 않습니다.');
+        return;
+      }
+
+      try {
+        await api.post(`/shop/inventory/${preview.inventoryId}/toggle`);
+
+        // 서버 데이터 다시 가져오기 (isEquipped 상태 동기화)
+        await fetchShopData();
+        
+        // 유저 정보 전역 상태 다시 가져오기 (상단 아바타 캐시/상태 갱신)
+        await refreshUser();
+
+        setSaved(true);
+        setTimeout(() => setSaved(false), 2000);
+        setPreview(null);
+      } catch (err: any) {
+        console.error('아이템 장착 실패:', err);
+        alert(err.message || '아이템 장착에 실패했습니다.');
+      }
     } else {
       // 미소유 아이템 → 구매 시도
       const userPoints = user?.points ?? 0;
@@ -938,19 +963,34 @@ function HomeTab({
         // 포인트 충분 → 구매 API 호출
         try {
           await api.post('/shop/purchase', { itemId: preview.id });
-          alert('아이템을 구매했습니다!');
 
           // 사용자 정보 새로고침 (포인트 업데이트)
           await refreshUser();
 
-          // 아이템 목록 새로고침 (owned 상태 업데이트)
+          // 아이템 목록 새로고침 (owned 상태 및 inventoryId 업데이트)
           await fetchShopData();
 
-          // 자동 장착
-          setEquipped(preview);
-          setSaved(true);
-          setTimeout(() => setSaved(false), 2000);
-          setPreview(null);
+          // 구매한 아이템 찾기 (새로 생성된 inventoryId 포함)
+          const response = await api.get<any[]>('/shop/inventory');
+          const newInventoryItem = Array.isArray(response)
+            ? response.find((inv) => String(inv.itemId) === preview.id)
+            : null;
+
+          if (newInventoryItem?.id) {
+            // 자동 장착 API 호출
+            await api.post(`/shop/inventory/${newInventoryItem.id}/toggle`);
+
+            // 최종 동기화
+            await fetchShopData();
+
+            alert('아이템을 구매하고 장착했습니다!');
+            setSaved(true);
+            setTimeout(() => setSaved(false), 2000);
+            setPreview(null);
+          } else {
+            alert('아이템을 구매했지만 장착에 실패했습니다. 인벤토리에서 직접 장착해주세요.');
+            setPreview(null);
+          }
         } catch (err: any) {
           console.error('아이템 구매 실패:', err);
           alert(err.message || '아이템 구매에 실패했습니다.');
@@ -2751,23 +2791,40 @@ export function MyPage({ openAuth }: { openAuth: (mode: 'login' | 'signup') => v
 
   const fetchShopData = useCallback(async () => {
     try {
-      const [resItems, resTitles] = await Promise.allSettled([
+      const [resItems, resTitles, resInventory] = await Promise.allSettled([
         api.get<any[]>('/shop/items'),
         api.get<any[]>('/shop/titles'),
+        api.get<any[]>('/shop/inventory'), // 인벤토리 추가
       ]);
 
       const itemsData = resItems.status === 'fulfilled' ? resItems.value : [];
       const titlesData = resTitles.status === 'fulfilled' ? resTitles.value : [];
+      const inventoryData = resInventory.status === 'fulfilled' ? resInventory.value : [];
 
       // 🚀 서버 데이터 정밀 매핑 (관리자 페이지 연동)
       // 데이터가 배열인지 한 번 더 검증 (방어적 코드)
       const safeItems = Array.isArray(itemsData) ? itemsData : [];
       const safeTitles = Array.isArray(titlesData) ? titlesData : [];
+      const safeInventory = Array.isArray(inventoryData) ? inventoryData : [];
+
+      // 인벤토리 맵 생성 (itemId -> { inventoryId, isEquipped })
+      const inventoryMap = new Map<string, { inventoryId: string; isEquipped: boolean }>();
+      safeInventory.forEach((inv) => {
+        if (inv.itemId) {
+          inventoryMap.set(String(inv.itemId), {
+            inventoryId: String(inv.id),
+            isEquipped: inv.isEquipped === true,
+          });
+        }
+      });
 
       const mappedItems: AvatarItem[] = safeItems.map((item) => {
         const itemType = item.type || 'AVATAR';
+        const itemId = String(item.id || Math.random());
+        const inventoryInfo = inventoryMap.get(itemId);
+
         return {
-          id: String(item.id || Math.random()),
+          id: itemId,
           emoji:
             item.imageUrl || (itemType === 'AVATAR' ? '🎭' : itemType === 'EFFECT' ? '✨' : '📍'),
           name: item.name || '알 수 없는 아이템',
@@ -2775,6 +2832,8 @@ export function MyPage({ openAuth }: { openAuth: (mode: 'login' | 'signup') => v
           rawType: itemType, // 원본 타입 저장
           owned: item.owned === true || false,
           price: item.price || 0,
+          inventoryId: inventoryInfo?.inventoryId,
+          isEquipped: inventoryInfo?.isEquipped || false,
         };
       });
 
@@ -2795,8 +2854,14 @@ export function MyPage({ openAuth }: { openAuth: (mode: 'login' | 'signup') => v
       setAvatarItems(mappedItems);
       setTitles(mappedTitles);
 
-      const equip = mappedItems.find((i) => i.owned);
-      if (equip) setEquipped(equip);
+      // isEquipped가 true인 아이템 찾기
+      const equip = mappedItems.find((i) => i.isEquipped === true);
+      if (equip) {
+        setEquipped(equip);
+      } else {
+        // 장착된 아이템이 없으면 null로 초기화
+        setEquipped(null);
+      }
     } catch (err) {
       console.error('마이페이지 연동 실패 (Critical):', err);
     }
