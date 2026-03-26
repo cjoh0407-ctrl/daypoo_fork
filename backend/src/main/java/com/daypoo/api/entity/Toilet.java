@@ -72,15 +72,6 @@ public class Toilet extends BaseTimeEntity {
     this.location = location;
   }
 
-  public void update(
-      String name, String address, String openHours, boolean is24h, boolean isUnisex) {
-    this.name = name;
-    this.address = address;
-    this.openHours = openHours;
-    this.is24h = is24h;
-    this.isUnisex = isUnisex;
-  }
-
   public void updateReviewStats(Double avgRating, Integer reviewCount) {
     this.avgRating = avgRating;
     this.reviewCount = reviewCount;

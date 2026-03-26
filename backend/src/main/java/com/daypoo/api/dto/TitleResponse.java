@@ -9,4 +9,8 @@ public record TitleResponse(
     String description,
     String requirementDescription,
     boolean isOwned,
-    boolean isEquipped) {}
+    boolean isEquipped,
+    String achievementType,
+    Integer achievementThreshold,
+    Long currentProgress,
+    String conditionLabel) {}

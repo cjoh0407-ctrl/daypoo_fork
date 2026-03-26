@@ -1,5 +1,6 @@
 package com.daypoo.api.entity;
 
+import com.daypoo.api.entity.enums.AchievementType;
 import com.daypoo.api.global.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -27,8 +28,9 @@ public class Title extends BaseTimeEntity {
   private String imageUrl;
 
   /** 부여 조건 타입 (예: CONTINUOUS_RECORDS, TOTAL_RECORDS, UNIQUE_TOILETS) */
+  @Enumerated(EnumType.STRING)
   @Column(name = "achievement_type", nullable = false)
-  private String achievementType;
+  private AchievementType achievementType;
 
   /** 조건 임계값 (예: 7회, 10곳 등) */
   @Column(name = "achievement_threshold", nullable = false)
@@ -39,7 +41,20 @@ public class Title extends BaseTimeEntity {
       String name,
       String description,
       String imageUrl,
-      String achievementType,
+      AchievementType achievementType,
+      Integer achievementThreshold) {
+    this.name = name;
+    this.description = description;
+    this.imageUrl = imageUrl;
+    this.achievementType = achievementType;
+    this.achievementThreshold = achievementThreshold;
+  }
+
+  public void update(
+      String name,
+      String description,
+      String imageUrl,
+      AchievementType achievementType,
       Integer achievementThreshold) {
     this.name = name;
     this.description = description;

@@ -44,7 +44,7 @@ public class UserDeletionService {
     // 2. 상호 참조 및 복합 FK 관계 처리
     // VisitLog는 PooRecord를 참조하므로 먼저 삭제
     visitLogRepository.deleteAllByUser(user);
-    
+
     // Subscription은 Payment와 관계가 있을 수 있으므로 먼저 삭제 (사양에 따라 다름)
     subscriptionRepository.deleteAllByUser(user);
 
@@ -54,7 +54,7 @@ public class UserDeletionService {
 
     // 4. 최종적으로 유저 삭제
     userRepository.delete(user);
-    
+
     log.info("Successfully deleted user: {} and all related data", userId);
   }
 }

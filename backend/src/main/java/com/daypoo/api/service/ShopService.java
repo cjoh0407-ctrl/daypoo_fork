@@ -25,6 +25,8 @@ public class ShopService {
   private final UserTitleRepository userTitleRepository;
   private final UserRepository userRepository;
 
+  private final TitleAchievementService achievementService;
+
   /** 상점 아이템 목록 조회 */
   @Transactional(readOnly = true)
   public List<ItemResponse> getAllItems(User user, ItemType type) {
@@ -117,10 +119,14 @@ public class ShopService {
     inventoryRepository.save(inventory);
   }
 
-  /** 전체 칭호 목록 및 유저 보유 여부 조회 */
-  @Transactional(readOnly = true)
+  /** 전체 칭호 목록 및 유저 보유 여부 조회 (업적 동기화 포함) */
+  @Transactional
   public List<TitleResponse> getAllTitles(User user) {
+    // 1. 업적 검사 및 칭호 강제 동기화 (신규 등록된 칭호 대응)
+    achievementService.checkAndGrantTitles(user);
+
     List<Title> allTitles = titleRepository.findAll();
+
     List<Long> ownedTitleIds =
         userTitleRepository.findAllByUser(user).stream()
             .map(ut -> ut.getTitle().getId())
@@ -128,19 +134,36 @@ public class ShopService {
 
     return allTitles.stream()
         .map(
-            title ->
-                TitleResponse.builder()
-                    .id(title.getId())
-                    .name(title.getName())
-                    .description(title.getDescription())
-                    .requirementDescription(
-                        title.getAchievementType() + ": " + title.getAchievementThreshold())
-                    .isOwned(ownedTitleIds.contains(title.getId()))
-                    .isEquipped(
-                        user.getEquippedTitleId() != null
-                            && user.getEquippedTitleId().equals(title.getId()))
-                    .build())
+            title -> {
+              long progress = achievementService.computeProgress(user, title.getAchievementType());
+              String label = getConditionLabel(title);
+
+              return TitleResponse.builder()
+                  .id(title.getId())
+                  .name(title.getName())
+                  .description(title.getDescription())
+                  .requirementDescription(label)
+                  .isOwned(ownedTitleIds.contains(title.getId()))
+                  .isEquipped(
+                      user.getEquippedTitleId() != null
+                          && user.getEquippedTitleId().equals(title.getId()))
+                  .achievementType(title.getAchievementType().name())
+                  .achievementThreshold(title.getAchievementThreshold())
+                  .currentProgress(progress)
+                  .conditionLabel(label)
+                  .build();
+            })
         .collect(Collectors.toList());
+  }
+
+  private String getConditionLabel(Title title) {
+    return switch (title.getAchievementType()) {
+      case TOTAL_RECORDS -> String.format("총 기록 %d회", title.getAchievementThreshold());
+      case UNIQUE_TOILETS -> String.format("화장실 %d곳 방문", title.getAchievementThreshold());
+      case CONSECUTIVE_DAYS -> String.format("%d일 연속 기록", title.getAchievementThreshold());
+      case SAME_TOILET_VISITS -> String.format("같은 화장실 %d회 방문", title.getAchievementThreshold());
+      case LEVEL_REACHED -> String.format("레벨 %d 달성", title.getAchievementThreshold());
+    };
   }
 
   /** 칭호 장착 */

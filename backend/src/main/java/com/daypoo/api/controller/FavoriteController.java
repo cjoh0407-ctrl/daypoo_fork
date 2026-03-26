@@ -29,8 +29,7 @@ public class FavoriteController {
 
   @Operation(summary = "즐겨찾기 화장실 ID 목록 조회", description = "로그인한 유저가 즐겨찾기한 화장실 ID들의 목록을 반환합니다.")
   @GetMapping
-  public ResponseEntity<List<Long>> getFavoriteToiletIds(
-      Authentication authentication) {
+  public ResponseEntity<List<Long>> getFavoriteToiletIds(Authentication authentication) {
     List<Long> favoriteIds = favoriteService.getFavoriteToiletIds(authentication.getName());
     return ResponseEntity.ok(favoriteIds);
   }

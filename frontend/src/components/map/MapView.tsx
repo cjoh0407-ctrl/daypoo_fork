@@ -11,7 +11,13 @@ interface MapViewProps {
   toilets: ToiletData[];
   pos: { lat: number; lng: number };
   onSelectToilet: (toilet: ToiletData) => void;
-  onBoundsChange: (bounds: { swLat: number; swLng: number; neLat: number; neLng: number; timestamp: number }) => void;
+  onBoundsChange: (bounds: {
+    swLat: number;
+    swLng: number;
+    neLat: number;
+    neLng: number;
+    timestamp: number;
+  }) => void;
   onLevelChange: (level: number) => void;
 }
 
@@ -60,8 +66,8 @@ function createToiletMarker(kakao: any, toilet: ToiletData, onSelect: (t: Toilet
     zIndex: toilet.isVisited ? 5 : 3,
     image: new kakao.maps.MarkerImage(
       'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=',
-      new kakao.maps.Size(1, 1)
-    )
+      new kakao.maps.Size(1, 1),
+    ),
   });
 
   const overlay = new kakao.maps.CustomOverlay({
@@ -69,7 +75,7 @@ function createToiletMarker(kakao: any, toilet: ToiletData, onSelect: (t: Toilet
     position: marker.getPosition(),
     yAnchor: 1.15,
     zIndex: toilet.isVisited ? 5 : 3,
-    clickable: true
+    clickable: true,
   });
 
   return { marker, overlay };
@@ -88,7 +94,7 @@ export const MapView = forwardRef<MapViewHandle, MapViewProps>(
         if (mapRef.current) {
           mapRef.current.panTo(new window.kakao.maps.LatLng(lat, lng));
         }
-      }
+      },
     }));
 
     const updateBounds = useCallback(() => {
@@ -97,12 +103,14 @@ export const MapView = forwardRef<MapViewHandle, MapViewProps>(
       const sw = b.getSouthWest();
       const ne = b.getNorthEast();
       const level = mapRef.current.getLevel();
-      
+
       onLevelChange(level);
-      onBoundsChange({ 
-        swLat: sw.getLat(), swLng: sw.getLng(), 
-        neLat: ne.getLat(), neLng: ne.getLng(),
-        timestamp: Date.now()
+      onBoundsChange({
+        swLat: sw.getLat(),
+        swLng: sw.getLng(),
+        neLat: ne.getLat(),
+        neLng: ne.getLng(),
+        timestamp: Date.now(),
       });
     }, [onBoundsChange, onLevelChange]);
 
@@ -128,15 +136,21 @@ export const MapView = forwardRef<MapViewHandle, MapViewProps>(
           averageCenter: true,
           minLevel: 5,
           gridSize: 70,
-          styles: [{
-            width: '60px', height: '60px',
-            background: 'rgba(27, 67, 50, 0.9)',
-            borderRadius: '50%', color: '#fff',
-            textAlign: 'center', fontWeight: 'bold', lineHeight: '60px',
-            border: '3px solid rgba(255,255,255,0.8)', 
-            boxShadow: '0 8px 16px rgba(0,0,0,0.3)',
-            fontSize: '16px'
-          }]
+          styles: [
+            {
+              width: '60px',
+              height: '60px',
+              background: 'rgba(27, 67, 50, 0.9)',
+              borderRadius: '50%',
+              color: '#fff',
+              textAlign: 'center',
+              fontWeight: 'bold',
+              lineHeight: '60px',
+              border: '3px solid rgba(255,255,255,0.8)',
+              boxShadow: '0 8px 16px rgba(0,0,0,0.3)',
+              fontSize: '16px',
+            },
+          ],
         });
         clustererRef.current = clusterer;
 
@@ -179,10 +193,13 @@ export const MapView = forwardRef<MapViewHandle, MapViewProps>(
     useEffect(() => {
       if (!mapRef.current || !clustererRef.current) return;
 
+      // 새 마커를 생성하지 않더라도 콜백은 항상 최신 버전으로 업데이트
+      window.setSelectedToiletGlobal = onSelectToilet;
+
       const level = mapRef.current.getLevel();
       const maxRenderCount = level >= 7 ? 500 : 1000;
       const toiletsToRender = toilets.slice(0, maxRenderCount);
-      const currentToiletsIds = new Set(toiletsToRender.map(t => t.id));
+      const currentToiletsIds = new Set(toiletsToRender.map((t) => t.id));
 
       const toRemove: any[] = [];
       const toUpdate: ToiletData[] = [];
@@ -194,7 +211,7 @@ export const MapView = forwardRef<MapViewHandle, MapViewProps>(
           markersRef.current.delete(id);
         } else {
           // 기존 마커의 isVisited 상태가 변경되었는지 확인
-          const updatedToilet = toiletsToRender.find(t => t.id === id);
+          const updatedToilet = toiletsToRender.find((t) => t.id === id);
           if (updatedToilet && updatedToilet.isVisited) {
             // 방문 완료된 화장실은 마커를 재생성
             item.overlay.setMap(null);
@@ -207,8 +224,12 @@ export const MapView = forwardRef<MapViewHandle, MapViewProps>(
       if (toRemove.length > 0) clustererRef.current.removeMarkers(toRemove);
 
       const newMarkers: any[] = [];
-      // 새 마커와 업데이트된 마커 생성
-      [...toiletsToRender.filter(t => !markersRef.current.has(t.id)), ...toUpdate].forEach((toilet) => {
+      const updateIds = new Set(toUpdate.map((t) => t.id));
+      // 새 마커와 업데이트된 마커 생성 (중복 방지: filter에서 updateIds 제외 후 toUpdate와 합산)
+      [
+        ...toiletsToRender.filter((t) => !markersRef.current.has(t.id) && !updateIds.has(t.id)),
+        ...toUpdate,
+      ].forEach((toilet) => {
         const { marker, overlay } = createToiletMarker(window.kakao, toilet, onSelectToilet);
         if (level < 5) overlay.setMap(mapRef.current);
         markersRef.current.set(toilet.id, { marker, overlay });
@@ -222,7 +243,16 @@ export const MapView = forwardRef<MapViewHandle, MapViewProps>(
     }, [toilets, onSelectToilet]);
 
     return (
-      <div ref={mapContainerRef} className="w-full h-full" style={{ borderRadius: '0', willChange: 'transform', transform: 'translateZ(0)', backfaceVisibility: 'hidden' }} />
+      <div
+        ref={mapContainerRef}
+        className="w-full h-full"
+        style={{
+          borderRadius: '0',
+          willChange: 'transform',
+          transform: 'translateZ(0)',
+          backfaceVisibility: 'hidden',
+        }}
+      />
     );
-  }
+  },
 );
