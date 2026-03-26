@@ -58,7 +58,7 @@ public class MorningRoutineScenario implements BotScenario {
 
     user.addExpAndPoints(10, 5);
     rankingService.updateGlobalRank(user);
-    rankingService.updateRegionRank(user, region, 5.0);
+    rankingService.updateRegionRank(user, region);
     titleAchievementService.checkAndGrantTitles(user);
 
     log.debug("Bot {} executed MorningRoutine at toilet {}", user.getEmail(), toiletId);

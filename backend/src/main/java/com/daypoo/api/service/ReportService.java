@@ -47,6 +47,7 @@ public class ReportService {
   private final NotificationService notificationService;
   private final HealthReportSnapshotRepository snapshotRepository;
   private final VisitLogRepository visitLogRepository;
+  private final RankingService rankingService;
 
   private static final String REPORT_CACHE_KEY_PREFIX = "daypoo:reports:v6:";
 
@@ -260,6 +261,11 @@ public class ReportService {
 
     // 7. DB 영구 저장 (Snapshot)
     saveSnapshot(user, type, response);
+
+    // DAILY 리포트 생성 시 건강왕 랭킹 업데이트
+    if (type == ReportType.DAILY) {
+      rankingService.updateHealthRank(user, (double) response.healthScore());
+    }
 
     // 8. 결과 캐싱 (24시간 유지)
     try {

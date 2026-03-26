@@ -7,6 +7,9 @@ import static org.mockito.Mockito.*;
 
 import com.daypoo.api.dto.RankingResponse;
 import com.daypoo.api.entity.User;
+import com.daypoo.api.repository.HealthReportSnapshotRepository;
+import com.daypoo.api.repository.PooRecordRepository;
+import com.daypoo.api.repository.TitleRepository;
 import com.daypoo.api.repository.UserRepository;
 import java.util.*;
 import org.junit.jupiter.api.BeforeEach;
@@ -29,6 +32,9 @@ class RankingServiceTest {
 
   @Mock private StringRedisTemplate redisTemplate;
   @Mock private UserRepository userRepository;
+  @Mock private TitleRepository titleRepository;
+  @Mock private PooRecordRepository recordRepository;
+  @Mock private HealthReportSnapshotRepository snapshotRepository;
   @Mock private ZSetOperations<String, String> zSetOperations;
 
   private User testUser;
@@ -45,21 +51,31 @@ class RankingServiceTest {
   @Test
   @DisplayName("성공: 글로벌 랭킹 업데이트")
   void updateGlobalRank_success() {
+    // given
+    given(recordRepository.countByUser(testUser)).willReturn(10L);
+    given(recordRepository.countDistinctToiletsByUser(testUser)).willReturn(5L);
+    double expectedScore = 10 + 5 * 3.0; // 25.0
+
     // when
     rankingService.updateGlobalRank(testUser);
 
     // then
-    verify(zSetOperations).add(contains("global"), eq("1"), eq(100.0));
+    verify(zSetOperations).add(contains("global"), eq("1"), eq(expectedScore));
   }
 
   @Test
-  @DisplayName("성공: 지역 랭킹 업데이트 (가점)")
+  @DisplayName("성공: 지역 랭킹 업데이트")
   void updateRegionRank_success() {
+    // given
+    given(recordRepository.countByUserAndRegionName(testUser, "역삼동")).willReturn(4L);
+    given(recordRepository.countDistinctToiletsByUserAndRegionName(testUser, "역삼동")).willReturn(2L);
+    double expectedScore = 4 + 2 * 3.0; // 10.0
+
     // when
-    rankingService.updateRegionRank(testUser, "역삼동", 5.0);
+    rankingService.updateRegionRank(testUser, "역삼동");
 
     // then
-    verify(zSetOperations).add(contains("역삼동"), eq("1"), eq(5.0));
+    verify(zSetOperations).add(contains("역삼동"), eq("1"), eq(expectedScore));
   }
 
   @Test

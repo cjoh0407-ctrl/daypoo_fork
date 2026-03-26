@@ -2,10 +2,15 @@ package com.daypoo.api.service;
 
 import com.daypoo.api.dto.RankingResponse;
 import com.daypoo.api.dto.UserRankResponse;
+import com.daypoo.api.entity.HealthReportSnapshot;
 import com.daypoo.api.entity.Title;
 import com.daypoo.api.entity.User;
+import com.daypoo.api.repository.HealthReportSnapshotRepository;
+import com.daypoo.api.repository.PooRecordRepository;
 import com.daypoo.api.repository.TitleRepository;
 import com.daypoo.api.repository.UserRepository;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -26,6 +31,8 @@ public class RankingService {
   private final StringRedisTemplate redisTemplate;
   private final UserRepository userRepository;
   private final TitleRepository titleRepository;
+  private final PooRecordRepository recordRepository;
+  private final HealthReportSnapshotRepository snapshotRepository;
 
   private static final String GLOBAL_RANK_KEY = "daypoo:rankings:global";
   private static final String HEALTH_RANK_KEY = "daypoo:rankings:health";
@@ -33,9 +40,10 @@ public class RankingService {
 
   public void updateGlobalRank(User user) {
     if (user != null && user.getId() != null) {
-      redisTemplate
-          .opsForZSet()
-          .add(GLOBAL_RANK_KEY, user.getId().toString(), (double) user.getPoints());
+      long recordCount = recordRepository.countByUser(user);
+      long uniqueToilets = recordRepository.countDistinctToiletsByUser(user);
+      double score = recordCount + uniqueToilets * 3.0;
+      redisTemplate.opsForZSet().add(GLOBAL_RANK_KEY, user.getId().toString(), score);
     }
   }
 
@@ -45,8 +53,12 @@ public class RankingService {
     }
   }
 
-  public void updateRegionRank(User user, String regionName, double score) {
+  public void updateRegionRank(User user, String regionName) {
     if (user != null && user.getId() != null) {
+      long recordCount = recordRepository.countByUserAndRegionName(user, regionName);
+      long uniqueToilets =
+          recordRepository.countDistinctToiletsByUserAndRegionName(user, regionName);
+      double score = recordCount + uniqueToilets * 3.0;
       String key = REGION_RANK_KEY_PREFIX + regionName;
       redisTemplate.opsForZSet().add(key, user.getId().toString(), score);
     }
@@ -85,15 +97,23 @@ public class RankingService {
 
   private void initializeRankingsFromDb(String key) {
     log.info("Redis [Ranking] empty: initializing for key {}", key);
-    List<User> topUsers = userRepository.findAllByOrderByPointsDesc(PageRequest.of(0, 100));
-    for (User user : topUsers) {
-      if (key.contains("health")) {
-        updateHealthRank(user, 60 + Math.random() * 40);
-      } else if (key.contains("region")) {
-        String region = key.replace(REGION_RANK_KEY_PREFIX, "");
-        updateRegionRank(user, region, 10 + Math.random() * 90);
-      } else {
-        updateGlobalRank(user);
+    if (key.equals(HEALTH_RANK_KEY)) {
+      LocalDateTime startOfDay = LocalDateTime.now().with(LocalTime.MIN);
+      LocalDateTime endOfDay = LocalDateTime.now().with(LocalTime.MAX);
+      List<HealthReportSnapshot> snapshots =
+          snapshotRepository.findTodayDailySnapshots(startOfDay, endOfDay);
+      for (HealthReportSnapshot snippet : snapshots) {
+        updateHealthRank(snippet.getUser(), snippet.getHealthScore());
+      }
+    } else {
+      List<User> topUsers = userRepository.findAll(PageRequest.of(0, 200)).getContent();
+      for (User user : topUsers) {
+        if (key.startsWith(REGION_RANK_KEY_PREFIX)) {
+          String region = key.replace(REGION_RANK_KEY_PREFIX, "");
+          updateRegionRank(user, region);
+        } else {
+          updateGlobalRank(user);
+        }
       }
     }
   }

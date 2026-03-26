@@ -37,7 +37,7 @@ public class PooRecordEventListener {
 
     // 2. 랭킹 업데이트
     rankingService.updateGlobalRank(user);
-    rankingService.updateRegionRank(user, event.regionName(), 5.0);
+    rankingService.updateRegionRank(user, event.regionName());
 
     // 3. 칭호 확인 및 부여
     titleAchievementService.checkAndGrantTitles(user);

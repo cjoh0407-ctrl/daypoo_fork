@@ -110,7 +110,7 @@ class PooRecordServiceTest {
     verify(recordRepository).save(any(PooRecord.class));
     verify(userRepository).save(testUser);
     verify(rankingService).updateGlobalRank(testUser);
-    verify(rankingService).updateRegionRank(eq(testUser), eq("역삼1동"), anyDouble());
+    verify(rankingService).updateRegionRank(eq(testUser), eq("역삼1동"));
     verify(titleAchievementService).checkAndGrantTitles(testUser);
   }
 
