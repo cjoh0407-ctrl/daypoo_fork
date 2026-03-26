@@ -99,30 +99,28 @@ jobs:
             # 새 이미지 가져오기 및 컨테이너 가동 (신규 설정 주입)
             cd /opt/daypoo
             
-            # .env 파일 생성 (docker-compose에서 읽어갈 수 있도록)
-            cat <<EOF > .env
-            DOCKERHUB_USERNAME=${{ secrets.DOCKERHUB_USERNAME }}
-            DB_HOST=${{ secrets.DB_HOST }}
-            DB_PORT=5432
-            POSTGRES_DB=daypoo_db
-            POSTGRES_USER=${{ secrets.DB_USERNAME }}
-            POSTGRES_PASSWORD=${{ secrets.DB_PASSWORD }}
-            AWS_REGION=${{ secrets.AWS_REGION }}
-            ALLOWED_ORIGINS=${{ secrets.APP_CORS_ALLOWED_ORIGINS }}
-            FRONTEND_URL=${{ secrets.APP_FRONTEND_URL }}
-            JWT_SECRET_KEY=${{ secrets.JWT_SECRET_KEY }}
-            KAKAO_CLIENT_ID=${{ secrets.KAKAO_CLIENT_ID }}
-            KAKAO_CLIENT_SECRET=${{ secrets.KAKAO_CLIENT_SECRET }}
-            GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
-            GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}
-            MAIL_USERNAME=${{ secrets.MAIL_USERNAME }}
-            MAIL_PASSWORD=${{ secrets.MAIL_PASSWORD }}
-            OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
-            PUBLIC_DATA_API_KEY=${{ secrets.PUBLIC_DATA_API_KEY }}
-            TOSS_SECRET_KEY=${{ secrets.TOSS_SECRET_KEY }}
-            VITE_TOSS_CLIENT_KEY=${{ secrets.VITE_TOSS_CLIENT_KEY }}
-            VITE_KAKAO_MAP_KEY=${{ secrets.VITE_KAKAO_MAP_KEY }}
-            EOF
+            # .env 파일 생성 (리눅스 인코딩 오류 방지를 위해 printf 사용)
+            printf "DOCKERHUB_USERNAME=%s\n" "${{ secrets.DOCKERHUB_USERNAME }}" > .env
+            printf "DB_HOST=%s\n" "${{ secrets.DB_HOST }}" >> .env
+            printf "DB_PORT=5432\n" >> .env
+            printf "POSTGRES_DB=daypoo_db\n" >> .env
+            printf "POSTGRES_USER=%s\n" "${{ secrets.DB_USERNAME }}" >> .env
+            printf "POSTGRES_PASSWORD=%s\n" "${{ secrets.DB_PASSWORD }}" >> .env
+            printf "AWS_REGION=%s\n" "${{ secrets.AWS_REGION }}" >> .env
+            printf "ALLOWED_ORIGINS=%s\n" "${{ secrets.APP_CORS_ALLOWED_ORIGINS }}" >> .env
+            printf "FRONTEND_URL=%s\n" "${{ secrets.APP_FRONTEND_URL }}" >> .env
+            printf "JWT_SECRET_KEY=%s\n" "${{ secrets.JWT_SECRET_KEY }}" >> .env
+            printf "KAKAO_CLIENT_ID=%s\n" "${{ secrets.KAKAO_CLIENT_ID }}" >> .env
+            printf "KAKAO_CLIENT_SECRET=%s\n" "${{ secrets.KAKAO_CLIENT_SECRET }}" >> .env
+            printf "GOOGLE_CLIENT_ID=%s\n" "${{ secrets.GOOGLE_CLIENT_ID }}" >> .env
+            printf "GOOGLE_CLIENT_SECRET=%s\n" "${{ secrets.GOOGLE_CLIENT_SECRET }}" >> .env
+            printf "MAIL_USERNAME=%s\n" "${{ secrets.MAIL_USERNAME }}" >> .env
+            printf "MAIL_PASSWORD=%s\n" "${{ secrets.MAIL_PASSWORD }}" >> .env
+            printf "OPENAI_API_KEY=%s\n" "${{ secrets.OPENAI_API_KEY }}" >> .env
+            printf "PUBLIC_DATA_API_KEY=%s\n" "${{ secrets.PUBLIC_DATA_API_KEY }}" >> .env
+            printf "TOSS_SECRET_KEY=%s\n" "${{ secrets.TOSS_SECRET_KEY }}" >> .env
+            printf "VITE_TOSS_CLIENT_KEY=%s\n" "${{ secrets.VITE_TOSS_CLIENT_KEY }}" >> .env
+            printf "VITE_KAKAO_MAP_KEY=%s\n" "${{ secrets.VITE_KAKAO_MAP_KEY }}" >> .env
             
             docker-compose -f docker-compose.prod.yml pull
             docker-compose -f docker-compose.prod.yml up -d
