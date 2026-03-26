@@ -33,6 +33,7 @@ import {
   Database,
 } from 'lucide-react';
 import WaveButtonComponent from '../components/WaveButton';
+import { generateItemAvatar } from '../utils/avatar';
 import {
   AreaChart,
   Area,
@@ -2037,77 +2038,63 @@ const StoreView = ({ setActiveTab }: { setActiveTab: (tab: AdminTab) => void }) 
   const handleGenerateTestData = async () => {
     if (generatingItems) return;
     const confirmed = confirm(
-      '15개의 프리미엄 상점 테스트 데이터를 생성하시겠습니까?\n이 작업은 다소 시간이 걸릴 수 있습니다.',
+      '20개의 프리미엄 상점 테스트 데이터를 생성하시겠습니까?\n이 작업은 다소 시간이 걸릴 수 있습니다.',
     );
     if (!confirmed) return;
 
     setGeneratingItems(true);
     try {
-      const avatarEmojis = [
-        '👑',
-        '🎩',
-        '🎀',
-        '🧢',
-        '🎓',
-        '🪖',
-        '🪓',
-        '🦊',
-        '🐱',
-        '🐶',
-        '🦄',
-        '🌈',
-        '🔥',
-        '❄️',
-        '💎',
-        '🌟',
-        '🍀',
-        '🍎',
-        '🍔',
-        '🚀',
+      // 아바타 아이템 (캐릭터 스타일과 어울리는 이름)
+      const avatarItems = [
+        { emoji: '👑', name: '왕족 스타일', desc: '왕실의 위엄이 느껴지는 고귀한 캐릭터' },
+        { emoji: '🎩', name: '신사 스타일', desc: '우아하고 세련된 신사 캐릭터' },
+        { emoji: '🎀', name: '러블리 핑크', desc: '사랑스럽고 귀여운 핑크 캐릭터' },
+        { emoji: '🧢', name: '힙합 스타일', desc: '스트릿 감성 넘치는 힙합 캐릭터' },
+        { emoji: '🎓', name: '졸업생 스타일', desc: '영광스러운 졸업생 캐릭터' },
+        { emoji: '🪖', name: '군인 스타일', desc: '강인하고 용맹한 군인 캐릭터' },
+        { emoji: '🦊', name: '미스터리 스타일', desc: '신비롭고 영리한 여우 캐릭터' },
+        { emoji: '🐱', name: '냥냥 스타일', desc: '귀엽고 사랑스러운 고양이 캐릭터' },
+        { emoji: '🐶', name: '멍멍 스타일', desc: '충직하고 친근한 강아지 캐릭터' },
+        { emoji: '🦄', name: '유니콘 스타일', desc: '환상적이고 신비로운 유니콘 캐릭터' },
       ];
-      const effectEmojis = [
-        '✨',
-        '🌟',
-        '💫',
-        '🔥',
-        '❄️',
-        '🌊',
-        '💨',
-        '⚡',
-        '🌈',
-        '🌀',
-        '🌌',
-        '🦋',
-        '🐝',
-        '🍁',
-        '🌸',
+
+      // 이펙트 아이템 (이모지와 어울리는 이름)
+      const effectItems = [
+        { emoji: '✨', name: '반짝이는 오라', desc: '온몸을 감싸는 반짝이는 빛' },
+        { emoji: '🌟', name: '별빛 오라', desc: '밤하늘 별처럼 빛나는 효과' },
+        { emoji: '💫', name: '유성 궤적', desc: '이동할 때 남는 유성 꼬리' },
+        { emoji: '🔥', name: '화염 오라', desc: '타오르는 불꽃 효과' },
+        { emoji: '❄️', name: '얼음 오라', desc: '차가운 얼음 결정 효과' },
+        { emoji: '🌊', name: '물결 효과', desc: '잔잔한 물결 애니메이션' },
+        { emoji: '💨', name: '바람 효과', desc: '시원한 바람이 부는 효과' },
+        { emoji: '⚡', name: '번개 오라', desc: '전기가 튀는 섬광 효과' },
+        { emoji: '🌈', name: '무지개 오라', desc: '화려한 7색 무지개 효과' },
+        { emoji: '🌀', name: '회오리 효과', desc: '빙글빙글 도는 회오리' },
       ];
 
       const testItems = [];
 
-      // 1. 아바타 8개
-      for (let i = 0; i < 8; i++) {
-        const emoji = avatarEmojis[i % avatarEmojis.length];
+      // 1. 아바타 10개
+      avatarItems.forEach((item) => {
         testItems.push({
-          name: `${emoji} 테스트 아바타 ${i + 1}`,
+          name: item.name,
           type: 'AVATAR',
           price: Math.floor(Math.random() * 20) * 100 + 500,
-          description: `[헤드] 멋진 ${emoji} 스타일의 아바타 아이템입니다.`,
-          imageUrl: emoji,
+          description: `[헤드] ${item.desc}`,
+          imageUrl: null, // DiceBear 사용
         });
-      }
+      });
 
-      // 2. 이펙트 7개
-      for (let i = 0; i < 7; i++) {
-        const emoji = effectEmojis[i % effectEmojis.length];
+      // 2. 이펙트 10개
+      effectItems.forEach((item) => {
         testItems.push({
-          name: `${emoji} 테스트 이펙트 ${i + 1}`,
+          name: item.name,
           type: 'EFFECT',
           price: Math.floor(Math.random() * 30) * 100 + 1000,
-          description: `[이펙트] 화려한 ${emoji} 효과를 경험해보세요.`,
-          imageUrl: emoji,
+          description: `[이펙트] ${item.desc}`,
+          imageUrl: null, // DiceBear 사용
         });
-      }
+      });
 
       for (const item of testItems) {
         await api.post('/admin/shop/items', {
@@ -2115,13 +2102,51 @@ const StoreView = ({ setActiveTab }: { setActiveTab: (tab: AdminTab) => void }) 
         });
       }
 
-      alert('15개의 다채로운 테스트 데이터 생성이 완료되었습니다!');
+      alert('20개의 다채로운 테스트 데이터 생성이 완료되었습니다!');
       fetchItems();
     } catch (error) {
       console.error('테스트 데이터 생성 실패:', error);
       alert('데이터 생성 중 오류가 발생했습니다.');
     } finally {
       setGeneratingItems(false);
+    }
+  };
+
+  const handleDeleteAllItems = async () => {
+    if (items.length === 0) {
+      alert('삭제할 아이템이 없습니다.');
+      return;
+    }
+
+    const confirmed = confirm(
+      `현재 표시된 ${items.length}개의 아이템을 전부 삭제하시겠습니까?\n\n⚠️ 이 작업은 되돌릴 수 없습니다!`
+    );
+    if (!confirmed) return;
+
+    setLoading(true);
+    try {
+      let successCount = 0;
+      let failCount = 0;
+
+      for (const item of items) {
+        try {
+          await api.delete(`/admin/shop/items/${item.id}`);
+          successCount++;
+        } catch (error) {
+          console.error(`아이템 ${item.id} 삭제 실패:`, error);
+          failCount++;
+        }
+      }
+
+      alert(
+        `삭제 완료!\n성공: ${successCount}개 / 실패: ${failCount}개`
+      );
+      fetchItems();
+    } catch (error) {
+      console.error('일괄 삭제 실패:', error);
+      alert('삭제 중 오류가 발생했습니다.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -2212,6 +2237,16 @@ const StoreView = ({ setActiveTab }: { setActiveTab: (tab: AdminTab) => void }) 
             >
               {generatingItems ? '생성 중...' : '테스트 아이템 20개 생성'}
             </WaveButtonComponent>
+            <WaveButtonComponent
+              onClick={handleDeleteAllItems}
+              disabled={loading || items.length === 0}
+              variant="secondary"
+              size="sm"
+              className="shadow-md"
+              icon={<Trash2 size={14} />}
+            >
+              현재 페이지 전체 삭제
+            </WaveButtonComponent>
           </div>
         </div>
         <button
@@ -2239,27 +2274,17 @@ const StoreView = ({ setActiveTab }: { setActiveTab: (tab: AdminTab) => void }) 
               return (
                 <GlassCard key={item.id} className="group cursor-pointer">
                   <div className="w-full aspect-square rounded-[24px] mb-4 bg-black/[0.02] flex items-center justify-center relative overflow-hidden">
-                    {item.imageUrl && !isEmoji(item.imageUrl) ? (
+                    <div
+                      className="w-16 h-16 rounded-full blur-3xl opacity-20 absolute"
+                      style={{ background: color }}
+                    />
+                    <div className="w-full h-full flex items-center justify-center transition-transform group-hover:scale-105 duration-500">
                       <img
-                        src={item.imageUrl}
+                        src={generateItemAvatar(item.id, item.type)}
                         alt={item.name}
-                        className="w-full h-full object-cover rounded-[24px]"
+                        className="w-full h-full object-cover"
                       />
-                    ) : (
-                      <>
-                        <div
-                          className="w-16 h-16 rounded-full blur-3xl opacity-20 absolute"
-                          style={{ background: color }}
-                        />
-                        <div className="p-6 transition-transform group-hover:scale-110 duration-500 text-4xl">
-                          {isEmoji(item.imageUrl || '') ? (
-                            item.imageUrl
-                          ) : (
-                            <ShoppingBag size={48} style={{ color }} />
-                          )}
-                        </div>
-                      </>
-                    )}
+                    </div>
                     <div className="absolute top-3 right-3 flex gap-1">
                       <span className="text-[9px] font-black px-1.5 py-0.5 rounded-md bg-white/90 border text-black/40">
                         {getItemTypeLabel(item.type)}

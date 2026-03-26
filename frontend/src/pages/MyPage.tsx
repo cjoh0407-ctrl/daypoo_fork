@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence, useInView } from 'framer-motion';
-import { generateProfileAvatar } from '../utils/avatar';
+import { generateProfileAvatar, generateItemAvatar } from '../utils/avatar';
 import { Navbar } from '../components/Navbar';
 import {
   ShoppingBag,
@@ -47,6 +47,7 @@ interface AvatarItem {
   emoji: string;
   name: string;
   type: '헤드' | '이펙트' | '마커';
+  rawType?: string; // 원본 타입 (AVATAR, EFFECT 등)
   owned: boolean;
   price?: number;
 }
@@ -879,6 +880,13 @@ function HomeTab({
   }));
 
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [currentPage, setCurrentPage] = useState(0);
+  const itemsPerPage = 12;
+
+  // shopTab 변경 시 페이지 리셋
+  useEffect(() => {
+    setCurrentPage(0);
+  }, [shopTab]);
 
   // 토스 페이먼츠 결제창 호출
   const handleTossPayment = async () => {
@@ -1027,7 +1035,7 @@ function HomeTab({
           </div>
         </div>
 
-        <div className="px-6 pb-4">
+        <div className="px-6 pb-6">
           <AnimatePresence mode="wait">
             <motion.div
               key={shopTab}
@@ -1036,19 +1044,87 @@ function HomeTab({
               exit={{ opacity: 0, y: -12 }}
               transition={{ duration: 0.25 }}
             >
-              {deckCards.length > 0 ? (
-                <DepthDeckCarousel
-                  cards={deckCards}
-                  onSelect={(id) => {
-                    const item = items.find((i) => i.id === id);
-                    if (item) setPreview(item);
-                  }}
-                  cardWidth={180}
-                  cardHeight={240}
-                />
+              {items.length > 0 ? (
+                <>
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-6">
+                    {items
+                      .slice(currentPage * itemsPerPage, (currentPage + 1) * itemsPerPage)
+                      .map((item, idx) => {
+                        const avatarType = item.rawType || 'AVATAR';
+                        const isSelected = preview?.id === item.id;
+                        const isOwned = item.owned;
+                        const color = isOwned ? '#2D6A4F' : '#E8A838';
+
+                        return (
+                          <motion.div
+                            key={item.id}
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            transition={{ delay: idx * 0.03 }}
+                            onClick={() => setPreview(item)}
+                            className={`group cursor-pointer rounded-[24px] border-2 transition-all overflow-hidden ${
+                              isSelected
+                                ? 'border-emerald-500 shadow-2xl shadow-emerald-500/20'
+                                : 'border-gray-100 hover:border-emerald-200 hover:shadow-xl'
+                            }`}
+                            style={{ background: '#fff' }}
+                          >
+                            <div className="aspect-square bg-black/[0.02] flex items-center justify-center relative overflow-hidden p-4">
+                              <div
+                                className="w-12 h-12 rounded-full blur-2xl opacity-20 absolute"
+                                style={{ background: color }}
+                              />
+                              <img
+                                src={generateItemAvatar(item.id, avatarType)}
+                                alt={item.name}
+                                className="w-full h-full object-cover transition-transform group-hover:scale-110 duration-500"
+                              />
+                              {isOwned && (
+                                <div className="absolute top-2 right-2 w-7 h-7 rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-lg">
+                                  <Check size={14} strokeWidth={3} />
+                                </div>
+                              )}
+                            </div>
+                            <div className="p-3 border-t border-gray-100">
+                              <h5 className="font-black text-sm mb-1 text-black truncate">{item.name}</h5>
+                              <div className="flex items-center justify-between">
+                                <span className="text-[10px] font-bold text-gray-400 uppercase">{item.type}</span>
+                                <span className="font-black text-sm" style={{ color }}>
+                                  {isOwned ? '보유중' : `${item.price?.toLocaleString()}P`}
+                                </span>
+                              </div>
+                            </div>
+                          </motion.div>
+                        );
+                      })}
+                  </div>
+
+                  {/* 페이징 */}
+                  {Math.ceil(items.length / itemsPerPage) > 1 && (
+                    <div className="flex items-center justify-center gap-2">
+                      <button
+                        onClick={() => setCurrentPage(Math.max(0, currentPage - 1))}
+                        disabled={currentPage === 0}
+                        className="px-4 py-2 rounded-xl font-bold text-sm transition-all disabled:opacity-30 disabled:cursor-not-allowed bg-gray-100 text-gray-700 hover:bg-gray-200"
+                      >
+                        이전
+                      </button>
+                      <span className="text-sm font-bold text-gray-400 px-4">
+                        {currentPage + 1} / {Math.ceil(items.length / itemsPerPage)}
+                      </span>
+                      <button
+                        onClick={() => setCurrentPage(Math.min(Math.ceil(items.length / itemsPerPage) - 1, currentPage + 1))}
+                        disabled={currentPage >= Math.ceil(items.length / itemsPerPage) - 1}
+                        className="px-4 py-2 rounded-xl font-bold text-sm transition-all disabled:opacity-30 disabled:cursor-not-allowed bg-gray-100 text-gray-700 hover:bg-gray-200"
+                      >
+                        다음
+                      </button>
+                    </div>
+                  )}
+                </>
               ) : (
                 <div className="flex items-center justify-center h-52 text-lg font-bold text-gray-300">
-                  아이템이 없어요
+                  {shopTab === 'inventory' ? '보유한 아이템이 없어요' : '판매 중인 아이템이 없어요'}
                 </div>
               )}
             </motion.div>
@@ -2696,6 +2772,7 @@ export function MyPage({ openAuth }: { openAuth: (mode: 'login' | 'signup') => v
             item.imageUrl || (itemType === 'AVATAR' ? '🎭' : itemType === 'EFFECT' ? '✨' : '📍'),
           name: item.name || '알 수 없는 아이템',
           type: itemType === 'AVATAR' ? '헤드' : itemType === 'EFFECT' ? '이펙트' : '마커',
+          rawType: itemType, // 원본 타입 저장
           owned: item.owned === true || false,
           price: item.price || 0,
         };

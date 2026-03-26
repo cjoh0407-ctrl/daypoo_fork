@@ -10,6 +10,7 @@ import { generateRankingAvatar } from '../utils/avatar';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import WaveButtonComponent from '../components/WaveButton';
+import { GridFlipReveal } from '../components/GridFlipReveal';
 
 // ── 타입 ──────────────────────────────────────────────────────────────
 type TabKey = 'total' | 'local' | 'health';
@@ -47,8 +48,8 @@ function ConicGlow({ color, thickness = 1.5, borderRadius = '16px' }: { color: s
 
 // ── 데이터 ────────────────────────────────────────────────────────────
 const TAB_CONFIG: { key: TabKey; label: string; desc: string; icon: React.ReactNode }[] = [
-  { key: 'total',  label: '전체 랭킹',    desc: '누적 인증 횟수 기준',          icon: <Trophy size={16} /> },
-  { key: 'local',  label: '우리 동네 왕',  desc: '현재 위치 기반 지역 랭킹',     icon: <MapPin size={16} /> },
+  { key: 'total',  label: '전체 랭킹',    desc: '기록 인증 + 장소 방문 점수 합산',          icon: <Trophy size={16} /> },
+  { key: 'local',  label: '우리 동네 왕',  desc: '현재 위치 기반 지역 활동 점수',     icon: <MapPin size={16} /> },
   { key: 'health', label: '건강왕',        desc: 'AI 쾌변 점수 기준',            icon: <Activity size={16} /> },
 ];
 
@@ -77,13 +78,11 @@ function ItemPopup({ user, onClose, openAuth }: { user: RankUser; onClose: () =>
       openAuth('login');
       return;
     }
-    // 마이페이지의 컬렉션->상점 탭으로 이동하기 위해 쿼리 스트링 전달
     navigate('/mypage?tab=collection&sub=shop');
   };
 
   return (
     <>
-      {/* 백드롭 */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -92,7 +91,6 @@ function ItemPopup({ user, onClose, openAuth }: { user: RankUser; onClose: () =>
         className="fixed inset-0 z-[300] bg-[#0A1A14]/60 backdrop-blur-md"
       />
       
-      {/* 본문 모달 */}
       <div className="fixed inset-0 flex items-center justify-center z-[301] pointer-events-none p-4">
         <motion.div
           initial={{ opacity: 0, scale: 0.9, y: 30 }}
@@ -101,12 +99,10 @@ function ItemPopup({ user, onClose, openAuth }: { user: RankUser; onClose: () =>
           transition={{ type: 'spring', damping: 25, stiffness: 350 }}
           className="w-full max-w-[380px] bg-white rounded-[44px] overflow-hidden shadow-[0_32px_80px_rgba(0,0,0,0.25)] border border-white relative pointer-events-auto"
         >
-          {/* 상단 화려한 색상 장식 */}
           <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-b from-[#1B4332]/5 to-transparent pointer-events-none" />
           <div className="absolute top-8 right-10 w-24 h-24 bg-emerald-100/30 blur-3xl rounded-full" />
           
           <div className="p-8 pt-10 relative">
-            {/* 닫기 버튼 */}
             <button
               onClick={onClose}
               className="absolute top-6 right-6 w-10 h-10 rounded-full flex items-center justify-center transition-all bg-gray-50 text-gray-400 hover:text-gray-900 hover:bg-gray-100"
@@ -114,7 +110,6 @@ function ItemPopup({ user, onClose, openAuth }: { user: RankUser; onClose: () =>
               <X size={20} />
             </button>
 
-            {/* 유저 프로필 섹션 */}
             <div className="flex flex-col items-center mb-8">
               <div
                 className="w-24 h-24 rounded-full flex items-center justify-center text-5xl mb-4 shadow-xl relative"
@@ -152,7 +147,6 @@ function ItemPopup({ user, onClose, openAuth }: { user: RankUser; onClose: () =>
               </div>
             </div>
 
-            {/* 아이템 리스트 */}
             <div className="bg-gray-50/50 rounded-[32px] p-6 border border-gray-100/50 mb-8">
               <div className="flex items-center justify-between mb-4 px-1">
                 <span className="text-xs font-black text-gray-400 uppercase tracking-widest flex items-center gap-1.5">
@@ -189,7 +183,6 @@ function ItemPopup({ user, onClose, openAuth }: { user: RankUser; onClose: () =>
               )}
             </div>
 
-            {/* 하단 유도 버튼 */}
             <WaveButtonComponent
               onClick={goToShop}
               variant="accent"
@@ -231,16 +224,13 @@ function Podium({ users, onSelect }: { users: RankUser[]; onSelect: (u: RankUser
       className="relative cursor-pointer group"
       style={{ width: isFirst ? '240px' : '200px', zIndex: isFirst ? 20 : 10 }}
     >
-      {/* 카드 배경 (Glassmorphism) */}
       <div className="absolute inset-0 rounded-[32px] overflow-hidden" style={{ zIndex: -1 }}>
         <div className="absolute inset-0 backdrop-blur-xl transition-colors duration-500 group-hover:bg-white/40" 
           style={{ background: 'rgba(255,255,255,0.25)', border: '1.5px solid rgba(255,255,255,0.4)' }} />
         <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent" />
       </div>
 
-      {/* 내부 콘텐츠 */}
       <div className="flex flex-col items-center p-6 pb-8">
-        {/* 순위 배지 */}
         <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full font-black text-xs shadow-lg"
           style={{ 
             background: user.rank === 1 ? '#E8A838' : user.rank === 2 ? '#B0B8B4' : '#CD7C4A', 
@@ -250,7 +240,6 @@ function Podium({ users, onSelect }: { users: RankUser[]; onSelect: (u: RankUser
           {user.rank}ST
         </div>
 
-        {/* 아바타 영역 */}
         <div className="relative mb-5 mt-2">
           {isFirst && (
             <motion.div
@@ -273,7 +262,6 @@ function Podium({ users, onSelect }: { users: RankUser[]; onSelect: (u: RankUser
           {isFirst && <div className="absolute -top-5 -right-2 text-amber-500 drop-shadow-md"><Crown size={24} /></div>}
         </div>
 
-        {/* 텍스트 */}
         <span className="text-[10px] font-black px-2.5 py-1 rounded-full mb-2 uppercase tracking-tight"
           style={{ background: user.titleBg, color: user.titleColor }}>
           {user.title}
@@ -284,14 +272,12 @@ function Podium({ users, onSelect }: { users: RankUser[]; onSelect: (u: RankUser
         </p>
       </div>
 
-      {/* 바닥 그림자 */}
       <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 w-3/4 h-4 bg-black/5 blur-xl rounded-full" />
     </motion.div>
   );
 
   return (
     <div className="relative flex items-center justify-center gap-6 lg:gap-10 mt-4 py-12 px-4">
-      {/* 1등 뒤 스포트라이트 배경 */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] pointer-events-none" style={{ zIndex: 0 }}>
         <motion.div
           animate={{ scale: [1, 1.1, 1], opacity: [0.15, 0.25, 0.15] }}
@@ -343,8 +329,6 @@ function RankItem({
       )}
       
       <div className="relative z-10 flex items-center gap-4 w-full">
-        {/* 기존 내부 콘텐츠 유지 (순위, 아바타, 정보, 점수 등) */}
-      {/* 순위 */}
       <span
         className="w-8 text-center font-black text-base flex-shrink-0"
         style={{ color: rankColor }}
@@ -352,7 +336,6 @@ function RankItem({
         {user.rank}
       </span>
 
-      {/* 아바타 */}
       <div
         className="w-12 h-12 rounded-full flex items-center justify-center text-2xl flex-shrink-0 overflow-hidden"
         style={{
@@ -367,7 +350,6 @@ function RankItem({
         )}
       </div>
 
-      {/* 정보 */}
       <div className="flex-1 min-w-0 flex flex-col justify-center">
         <div>
           <span
@@ -380,7 +362,6 @@ function RankItem({
         <p className="font-black text-[#1A2B27] text-lg leading-tight truncate">{user.nick}</p>
       </div>
 
-        {/* 점수 + 변화 */}
         <div className="flex flex-col items-end gap-1 flex-shrink-0">
           <span className="font-black text-xl" style={{ color: '#52b788', letterSpacing: '-0.03em' }}>
             {user.score.toLocaleString()}{user.scoreLabel}
@@ -459,7 +440,6 @@ export function RankingPage({ openAuth }: { openAuth: (mode: 'login' | 'signup')
   const listRef = useRef<HTMLDivElement>(null);
   const inView = useInView(listRef, { once: true, margin: '-40px' });
 
-  // 현위치 기반 행정구역명 자동 감지 (Kakao Geocoder)
   useEffect(() => {
     if (!navigator.geolocation) return;
     navigator.geolocation.getCurrentPosition(
@@ -474,14 +454,12 @@ export function RankingPage({ openAuth }: { openAuth: (mode: 'login' | 'signup')
           }
         });
       },
-      () => { /* 위치 권한 거부 시 기본값(서울) 사용 */ }
+      () => { }
     );
   }, []);
 
-  // 실시간 랭킹 데이터 가져오기
   const { data, loading, error } = useRankings(tab, regionName);
 
-  // 백엔드 데이터를 프론트엔드 UI 포맷으로 변환
   const isDataValid = data && typeof data === 'object' && !Array.isArray(data);
   const users: RankUser[] = (isDataValid && Array.isArray((data as any).topRankers))
     ? ((data as any).topRankers as any[])
@@ -495,9 +473,13 @@ export function RankingPage({ openAuth }: { openAuth: (mode: 'login' | 'signup')
           titleColor: Number(r.rank) === 1 ? '#E8A838' : Number(r.rank) === 2 ? '#B0B8B4' : Number(r.rank) === 3 ? '#CD7C4A' : '#52b788',
           titleBg: Number(r.rank) === 1 ? 'rgba(232,168,56,0.12)' : Number(r.rank) === 2 ? 'rgba(176,184,180,0.12)' : Number(r.rank) === 3 ? 'rgba(205,124,74,0.12)' : 'rgba(82,183,136,0.1)',
           score: Number(r.score || 0),
-          scoreLabel: tab === 'health' ? '점' : '인증',
+          scoreLabel: '점',
           change: 0,
-          items: [],
+          items: (r.equippedItems || []).map((item: any) => ({
+            icon: item.icon || '🎁',
+            name: item.name || '아이템',
+            type: item.type || '장식'
+          })),
         }))
     : [];
 
@@ -505,8 +487,6 @@ export function RankingPage({ openAuth }: { openAuth: (mode: 'login' | 'signup')
     if (!isDataValid) return null;
     const rawMyRank = (data as any).myRank;
     
-    // 만약 백엔드에서 내 순위가 안 오더라도 (아직 랭킹에 안 들었더라도),
-    // 현재 로그인된 유저가 있다면 기본 정보로 표시
     if (!rawMyRank) {
       if (!user) return null;
       return {
@@ -530,7 +510,7 @@ export function RankingPage({ openAuth }: { openAuth: (mode: 'login' | 'signup')
       lv: rawMyRank.level || 1,
       score: myScore,
       top: topPercent,
-      needed: 5, // 가상값
+      needed: 5,
     };
   }, [isDataValid, data, user, users.length]);
 
@@ -541,220 +521,212 @@ export function RankingPage({ openAuth }: { openAuth: (mode: 'login' | 'signup')
   }, []);
 
   return (
-    <div className="min-h-screen" style={{ background: '#F8FAF9' }}>
-      <Navbar openAuth={openAuth} />
+    <GridFlipReveal rows={10} cols={12}>
+      <div className="min-h-screen" style={{ background: '#F8FAF9' }}>
+        <Navbar openAuth={openAuth} />
 
-      {/* ── 히어로 + 시상대 ─────────────────────────────────── */}
-      <div className="relative overflow-hidden" style={{ background: '#F8FAF9' }}>
-        {/* 배경 글로우 */}
-        <div
-          className="absolute inset-0 pointer-events-none"
-          style={{
-            background: 'radial-gradient(ellipse 60% 40% at 50% 0%, rgba(232,168,56,0.12) 0%, transparent 70%)',
-          }}
-        />
+        <div className="relative overflow-hidden" style={{ background: '#F8FAF9' }}>
+          <div
+            className="absolute inset-0 pointer-events-none"
+            style={{
+              background: 'radial-gradient(ellipse 60% 40% at 50% 0%, rgba(232,168,56,0.12) 0%, transparent 70%)',
+            }}
+          />
 
-        <section className="relative z-10 pt-32 pb-40 px-6">
-          <div className="max-w-4xl mx-auto">
-            {/* 헤더 */}
-            <motion.div
-              initial={{ opacity: 0, y: 24 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-              className="text-center mb-10"
-            >
-              <span
-                className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-bold mb-6"
-                style={{ background: 'rgba(232,168,56,0.1)', color: '#E8A838', border: '1px solid rgba(232,168,56,0.2)' }}
-              >
-                <Trophy size={14} /> 명예의 전당
-              </span>
-              <h1
-                className="font-black leading-tight"
-                style={{ fontSize: 'clamp(36px, 8vw, 64px)', color: '#1A2B27', letterSpacing: '-0.04em' }}
-              >
-                오늘의 쾌변
-                <br />
-                <span style={{
-                  background: 'linear-gradient(135deg, #E8A838 0%, #d4922a 100%)',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                }}>
-                  챔피언
-                </span>
-              </h1>
-            </motion.div>
-
-            {/* 탭 */}
-            <div
-              className="flex rounded-2xl p-1 mb-12"
-              style={{ background: 'rgba(0,0,0,0.04)', border: '1px solid rgba(0,0,0,0.05)' }}
-            >
-              {TAB_CONFIG.map((t) => (
-                <button
-                  key={t.key}
-                  onClick={() => setTab(t.key)}
-                  className="flex-1 py-3 rounded-xl text-sm font-bold transition-all relative"
-                  style={{ color: tab === t.key ? '#fff' : 'rgba(0,0,0,0.4)' }}
-                >
-                  {tab === t.key && (
-                    <motion.div
-                      layoutId="tabBg"
-                      className="absolute inset-0 rounded-xl"
-                      style={{ background: '#E8A838', boxShadow: '0 4px 12px rgba(232,168,56,0.3)' }}
-                      transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-                    />
-                  )}
-                  <span className="relative z-10 flex items-center justify-center gap-2">
-                    {t.icon}
-                    <span className="leading-none">{t.label}</span>
-                  </span>
-                </button>
-              ))}
-            </div>
-
-            {/* 탭 설명 */}
-            <AnimatePresence mode="wait">
-              <motion.p
-                key={tab}
-                initial={{ opacity: 0, y: 8 }}
+          <section className="relative z-10 pt-32 pb-40 px-6">
+            <div className="max-w-4xl mx-auto">
+              <motion.div
+                initial={{ opacity: 0, y: 24 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                transition={{ duration: 0.25 }}
-                className="text-center text-sm mb-6"
-                style={{ color: 'rgba(0,0,0,0.4)' }}
+                transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+                className="text-center mb-10"
               >
-                {currentTab.desc}
-              </motion.p>
-            </AnimatePresence>
-
-            {/* 시상대 */}
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={tab}
-                initial={{ opacity: 0, scale: 0.97 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.97 }}
-                transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-              >
-                <Podium users={users.slice(0, 3)} onSelect={handleSelect} />
-              </motion.div>
-            </AnimatePresence>
-
-            {/* 통계 칩 */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-4">
-              {[
-                {
-                  label: '활성 사용자',
-                  value: (isDataValid && (data as any).activeUserCount)
-                    ? (data as any).activeUserCount.toLocaleString()
-                    : '0',
-                  unit: '+'
-                },
-                {
-                  label: '내 현재 순위',
-                  value: myRankData ? myRankData.rank.toString() : '-',
-                  unit: '위'
-                },
-                {
-                  label: '상위권 도전',
-                  value: (myRankData && typeof myRankData.rank === 'number' && myRankData.rank > 10)
-                    ? (myRankData.rank - 10).toString()
-                    : '0',
-                  unit: '계단'
-                },
-              ].map((s, i) => (
-                <motion.div
-                  key={i}
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.3 + i * 0.08 }}
-                  className="rounded-3xl py-4 px-6 text-center"
-                  style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.05)', boxShadow: '0 8px 24px rgba(27,67,50,0.04)' }}
+                <span
+                  className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-bold mb-6"
+                  style={{ background: 'rgba(232,168,56,0.1)', color: '#E8A838', border: '1px solid rgba(232,168,56,0.2)' }}
                 >
-                  <p className="font-black text-4xl" style={{ color: '#E8A838', letterSpacing: '-0.04em' }}>
-                    {s.value}<span className="text-base font-bold ml-0.5">{s.unit}</span>
-                  </p>
-                  <p className="text-sm mt-1.5 font-bold" style={{ color: 'rgba(0,0,0,0.4)' }}>{s.label}</p>
-                </motion.div>
-              ))}
-            </div>
-
-            {/* 내 순위 카드 (이동됨) */}
-            <div className="mt-4 mb-4">
-              {myRankData && <MyRankBar data={myRankData} />}
-            </div>
-          </div>
-        </section>
-
-        <WaveDivider fill="#eef5f0" />
-      </div>
-
-      {/* ── 랭킹 리스트 ─────────────────────────────────────── */}
-      <div className="relative overflow-hidden" style={{ background: '#eef5f0' }}>
-        <section className="pt-16 pb-40 px-6" ref={listRef}>
-          <div className="max-w-2xl mx-auto">
-            <div className="flex items-center justify-between mb-10">
-              <h2 className="font-black text-3xl text-[#1A2B27]" style={{ letterSpacing: '-0.03em' }}>
-                TOP 10
-              </h2>
-              <span className="text-base" style={{ color: 'rgba(0,0,0,0.3)' }}>
-                매일 자정 업데이트
-              </span>
-            </div>
-
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={tab}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.25 }}
-                className="min-h-[400px]"
-              >
-                {loading ? (
-                  <div className="flex flex-col items-center justify-center py-20 gap-4">
-                    <motion.div
-                      animate={{ rotate: 360 }}
-                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                      className="text-emerald-600"
-                    >
-                      <Activity size={32} />
-                    </motion.div>
-                    <p className="text-sm font-bold text-gray-400">랭킹 데이터를 불러오는 중...</p>
-                  </div>
-                ) : error ? (
-                  <div className="flex flex-col items-center justify-center py-20 gap-4">
-                    <p className="text-sm font-bold text-red-400">데이터를 불러오지 못했습니다.</p>
-                    <button 
-                      onClick={() => window.location.reload()}
-                      className="px-4 py-2 bg-gray-100 rounded-xl text-xs font-bold text-gray-500"
-                    >
-                      다시 시도
-                    </button>
-                  </div>
-                ) : (
-                  inView && users.map((user, i) => (
-                    <RankItem
-                      key={`${tab}-${user.rank}`}
-                      user={user}
-                      index={i}
-                      onSelect={handleSelect}
-                    />
-                  ))
-                )}
+                  <Trophy size={14} /> 명예의 전당
+                </span>
+                <h1
+                  className="font-black leading-tight"
+                  style={{ fontSize: 'clamp(36px, 8vw, 64px)', color: '#1A2B27', letterSpacing: '-0.04em' }}
+                >
+                  오늘의 쾌변
+                  <br />
+                  <span style={{
+                    background: 'linear-gradient(135deg, #E8A838 0%, #d4922a 100%)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                  }}>
+                    챔피언
+                  </span>
+                </h1>
               </motion.div>
-            </AnimatePresence>
-          </div>
-        </section>
-        <WaveDivider fill="#111e18" />
-      </div>
 
-      {/* 아이템 팝업 */}
-      {selectedUser && (
-        <ItemPopup user={selectedUser} onClose={() => setSelectedUser(null)} openAuth={openAuth} />
-      )}
-      <Footer />
-    </div>
+              <div
+                className="flex rounded-2xl p-1 mb-12"
+                style={{ background: 'rgba(0,0,0,0.04)', border: '1px solid rgba(0,0,0,0.05)' }}
+              >
+                {TAB_CONFIG.map((t) => (
+                  <button
+                    key={t.key}
+                    onClick={() => setTab(t.key)}
+                    className="flex-1 py-3 rounded-xl text-sm font-bold transition-all relative"
+                    style={{ color: tab === t.key ? '#fff' : 'rgba(0,0,0,0.4)' }}
+                  >
+                    {tab === t.key && (
+                      <motion.div
+                        layoutId="tabBg"
+                        className="absolute inset-0 rounded-xl"
+                        style={{ background: '#E8A838', boxShadow: '0 4px 12px rgba(232,168,56,0.3)' }}
+                        transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                      />
+                    )}
+                    <span className="relative z-10 flex items-center justify-center gap-2">
+                      {t.icon}
+                      <span className="leading-none">{t.label}</span>
+                    </span>
+                  </button>
+                ))}
+              </div>
+
+              <AnimatePresence mode="wait">
+                <motion.p
+                  key={tab}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  transition={{ duration: 0.25 }}
+                  className="text-center text-sm mb-6"
+                  style={{ color: 'rgba(0,0,0,0.4)' }}
+                >
+                  {currentTab.desc}
+                </motion.p>
+              </AnimatePresence>
+
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={tab}
+                  initial={{ opacity: 0, scale: 0.97 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.97 }}
+                  transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+                >
+                  <Podium users={users.slice(0, 3)} onSelect={handleSelect} />
+                </motion.div>
+              </AnimatePresence>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-4">
+                {[
+                  {
+                    label: '활성 사용자',
+                    value: (isDataValid && (data as any).activeUserCount)
+                      ? (data as any).activeUserCount.toLocaleString()
+                      : '0',
+                    unit: '+'
+                  },
+                  {
+                    label: '내 현재 순위',
+                    value: myRankData ? myRankData.rank.toString() : '-',
+                    unit: '위'
+                  },
+                  {
+                    label: '상위권 도전',
+                    value: (myRankData && typeof myRankData.rank === 'number' && myRankData.rank > 10)
+                      ? (myRankData.rank - 10).toString()
+                      : '0',
+                    unit: '계단'
+                  },
+                ].map((s, i) => (
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3 + i * 0.08 }}
+                    className="rounded-3xl py-4 px-6 text-center"
+                    style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.05)', boxShadow: '0 8px 24px rgba(27,67,50,0.04)' }}
+                  >
+                    <p className="font-black text-4xl" style={{ color: '#E8A838', letterSpacing: '-0.04em' }}>
+                      {s.value}<span className="text-base font-bold ml-0.5">{s.unit}</span>
+                    </p>
+                    <p className="text-sm mt-1.5 font-bold" style={{ color: 'rgba(0,0,0,0.4)' }}>{s.label}</p>
+                  </motion.div>
+                ))}
+              </div>
+
+              <div className="mt-4 mb-4">
+                {myRankData && <MyRankBar data={myRankData} />}
+              </div>
+            </div>
+          </section>
+
+          <WaveDivider fill="#eef5f0" />
+        </div>
+
+        <div className="relative overflow-hidden" style={{ background: '#eef5f0' }}>
+          <section className="pt-16 pb-40 px-6" ref={listRef}>
+            <div className="max-w-2xl mx-auto">
+              <div className="flex items-center justify-between mb-10">
+                <h2 className="font-black text-3xl text-[#1A2B27]" style={{ letterSpacing: '-0.03em' }}>
+                  TOP 10
+                </h2>
+                <span className="text-base" style={{ color: 'rgba(0,0,0,0.3)' }}>
+                  매일 자정 업데이트
+                </span>
+              </div>
+
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={tab}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.25 }}
+                  className="min-h-[400px]"
+                >
+                  {loading ? (
+                    <div className="flex flex-col items-center justify-center py-20 gap-4">
+                      <motion.div
+                        animate={{ rotate: 360 }}
+                        transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                        className="text-emerald-600"
+                      >
+                        <Activity size={32} />
+                      </motion.div>
+                      <p className="text-sm font-bold text-gray-400">랭킹 데이터를 불러오는 중...</p>
+                    </div>
+                  ) : error ? (
+                    <div className="flex flex-col items-center justify-center py-20 gap-4">
+                      <p className="text-sm font-bold text-red-400">데이터를 불러오지 못했습니다.</p>
+                      <button 
+                        onClick={() => window.location.reload()}
+                        className="px-4 py-2 bg-gray-100 rounded-xl text-xs font-bold text-gray-500"
+                      >
+                        다시 시도
+                      </button>
+                    </div>
+                  ) : (
+                    inView && users.map((user, i) => (
+                      <RankItem
+                        key={`${tab}-${user.rank}`}
+                        user={user}
+                        index={i}
+                        onSelect={handleSelect}
+                      />
+                    ))
+                  )}
+                </motion.div>
+              </AnimatePresence>
+            </div>
+          </section>
+          <WaveDivider fill="#111e18" />
+        </div>
+
+        {selectedUser && (
+          <ItemPopup user={selectedUser} onClose={() => setSelectedUser(null)} openAuth={openAuth} />
+        )}
+        <Footer />
+      </div>
+    </GridFlipReveal>
   );
 }

@@ -85,3 +85,21 @@ export const generateProfileAvatar = (userId: string | number): string => {
 export const generateSmallAvatar = (userId: string | number): string => {
   return generateAvatar(userId, 'funEmoji', 48);
 };
+
+/**
+ * 상점 아이템용 아바타 (아이템 타입별 다른 스타일)
+ *
+ * @param itemId - 아이템 ID
+ * @param itemType - 아이템 타입 ('AVATAR' | 'EFFECT' | 기타)
+ * @returns SVG 데이터 URI
+ */
+export const generateItemAvatar = (
+  itemId: string | number,
+  itemType: string = 'AVATAR'
+): string => {
+  // 아이템 타입별로 다른 스타일 적용
+  const style: AvatarStyle = itemType === 'AVATAR' ? 'avataaars' :
+                              itemType === 'EFFECT' ? 'pixelArt' :
+                              'bottts';
+  return generateAvatar(itemId, style, 200);
+};
