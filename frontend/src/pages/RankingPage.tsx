@@ -1,5 +1,5 @@
-import { useState, useRef, useCallback, useEffect, useMemo } from 'react';
-import { motion, AnimatePresence, useInView } from 'framer-motion';
+import { useState, useCallback, useEffect, useMemo } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Navbar } from '../components/Navbar';
 import { Footer } from '../components/Footer';
 import { WaveDivider } from '../components/WaveDivider';
@@ -300,9 +300,9 @@ const FlipGlassCard = ({
       </div>
 
       {/* ── 뒷면 (Back Face) ── */}
-      <div 
+      <div
         className="absolute inset-0 w-full h-full rounded-[36px] overflow-hidden flex flex-col items-center justify-center p-6 border border-white/10 shadow-[0_40px_100px_rgba(0,0,0,0.4)]"
-        style={{ 
+        style={{
           backfaceVisibility: 'hidden',
           background: 'rgba(10, 26, 20, 0.95)',
           backdropFilter: 'blur(30px)',
@@ -310,7 +310,7 @@ const FlipGlassCard = ({
         }}
       >
         <div className="absolute inset-0 bg-gradient-to-tr from-[#1B4332]/20 via-transparent to-amber-500/5 pointer-events-none" />
-        
+
         <div className="relative mb-4">
             <div className="text-[9px] font-black text-amber-500/60 uppercase tracking-[0.3em] mb-2 text-center">Power Status</div>
             <div className="flex items-baseline justify-center gap-1 grayscale group-hover:grayscale-0 transition-all duration-700">
@@ -326,7 +326,7 @@ const FlipGlassCard = ({
                 <span className="text-[9px] font-black text-[#52b788] uppercase tracking-widest mb-1">Current Power</span>
                 <div className="text-lg font-black text-white/90">{user.score.toLocaleString()}</div>
             </div>
-            
+
             <div className="flex justify-center gap-2">
                 <div className="flex-1 bg-white/5 rounded-xl py-2 border border-white/5 flex flex-col items-center">
                     <span className="text-[8px] text-gray-400 font-black uppercase mb-0.5">Items</span>
@@ -572,8 +572,6 @@ export function RankingPage({ openAuth }: { openAuth: (mode: 'login' | 'signup')
   const [tab, setTab] = useState<TabKey>('total');
   const [selectedUser, setSelectedUser] = useState<RankUser | null>(null);
   const [regionName, setRegionName] = useState<string | undefined>(undefined);
-  const listRef = useRef<HTMLDivElement>(null);
-  const inView = useInView(listRef, { once: true, margin: '-40px' });
 
   useEffect(() => {
     if (!navigator.geolocation) return;
@@ -800,7 +798,7 @@ export function RankingPage({ openAuth }: { openAuth: (mode: 'login' | 'signup')
         </div>
 
         <div className="relative overflow-hidden" style={{ background: '#eef5f0' }}>
-          <section className="pt-16 pb-40 px-6" ref={listRef}>
+          <section className="pt-16 pb-40 px-6">
             <div className="max-w-2xl mx-auto">
               <div className="flex items-center justify-between mb-10">
                 <h2 className="font-black text-3xl text-[#1A2B27]" style={{ letterSpacing: '-0.03em' }}>
@@ -842,7 +840,7 @@ export function RankingPage({ openAuth }: { openAuth: (mode: 'login' | 'signup')
                       </button>
                     </div>
                   ) : (
-                    inView && users.map((user, i) => (
+                    users.map((user, i) => (
                       <RankItem
                         key={`${tab}-${user.rank}`}
                         user={user}
