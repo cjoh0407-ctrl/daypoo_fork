@@ -10,12 +10,12 @@ data "aws_ami" "amazon_linux_2023" {
 
 resource "aws_key_pair" "main" {
   key_name   = "${var.project_name}-key"
-  public_key = file("~/.ssh/id_rsa.pub") # SSH 퍼블릭 키 경로 (본인 설정에 맞춰 수정)
+  public_key = file(pathexpand("~/.ssh/id_rsa.pub")) # SSH 퍼블릭 키 자동 인식
 }
 
 resource "aws_instance" "app" {
   ami                    = data.aws_ami.amazon_linux_2023.id
-  instance_type          = "t2.micro"
+  instance_type          = "t3.micro"
   key_name               = aws_key_pair.main.key_name
   vpc_security_group_ids = [aws_security_group.ec2.id]
   subnet_id              = aws_subnet.public_1.id
