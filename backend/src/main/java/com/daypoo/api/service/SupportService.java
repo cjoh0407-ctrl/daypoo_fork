@@ -22,6 +22,7 @@ public class SupportService {
 
   private final InquiryRepository inquiryRepository;
   private final FaqRepository faqRepository;
+  private final SystemLogService systemLogService;
 
   /** 1:1 문의 등록 */
   public void createInquiry(User user, InquiryRequest request) {
@@ -33,6 +34,7 @@ public class SupportService {
             .content(request.content())
             .build();
     inquiryRepository.save(inquiry);
+    systemLogService.info("Support", "New inquiry received: " + request.title());
   }
 
   /** 내 문의 내역 조회 */

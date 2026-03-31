@@ -38,6 +38,7 @@ public class AuthService {
   private final TitleRepository titleRepository;
   private final UserDeletionService userDeletionService;
   private final PooRecordRepository pooRecordRepository;
+  private final SystemLogService systemLogService;
 
   @Transactional
   public TokenResponse socialSignUp(SocialSignUpRequest request) {
@@ -70,6 +71,7 @@ public class AuthService {
             .build();
 
     userRepository.save(user);
+    systemLogService.info("Auth", "Social user registered: " + email);
 
     String accessToken = jwtProvider.createAccessToken(user.getEmail(), user.getRole().name());
     String refreshToken = jwtProvider.createRefreshToken(user.getEmail());
@@ -155,6 +157,7 @@ public class AuthService {
             .build();
 
     userRepository.save(user);
+    systemLogService.info("Auth", "New user registered: " + request.email());
   }
 
   public String findIdByNickname(String nickname) {
@@ -197,6 +200,7 @@ public class AuthService {
     String accessToken = jwtProvider.createAccessToken(user.getEmail(), user.getRole().name());
     String refreshToken = jwtProvider.createRefreshToken(user.getEmail());
 
+    systemLogService.info("Auth", "User login: " + user.getEmail());
     return TokenResponse.builder().accessToken(accessToken).refreshToken(refreshToken).build();
   }
 
@@ -283,6 +287,7 @@ public class AuthService {
             .set("blacklist:" + accessToken, "logout", remainingTime, TimeUnit.MILLISECONDS);
       }
     }
+    systemLogService.info("Auth", "User logout: " + email);
     log.info("User {} logged out and token blacklisted", email);
   }
 
@@ -299,6 +304,7 @@ public class AuthService {
 
     // 연관 데이터 통합 삭제 서비스 호출
     userDeletionService.deleteUserAndRelatedData(user);
+    systemLogService.info("Auth", "User withdrawn: " + email);
     log.info("User {} successfully withdrawn", email);
   }
 }

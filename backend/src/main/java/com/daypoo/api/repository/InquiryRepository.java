@@ -3,6 +3,7 @@ package com.daypoo.api.repository;
 import com.daypoo.api.entity.Inquiry;
 import com.daypoo.api.entity.User;
 import com.daypoo.api.entity.enums.InquiryStatus;
+import java.time.LocalDateTime;
 import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -14,6 +15,8 @@ public interface InquiryRepository extends JpaRepository<Inquiry, Long> {
   Page<Inquiry> findAllByStatus(InquiryStatus status, Pageable pageable);
 
   long countByStatus(InquiryStatus status);
+
+  long countByCreatedAtBetween(LocalDateTime start, LocalDateTime end);
 
   void deleteAllByUser(User user);
 }

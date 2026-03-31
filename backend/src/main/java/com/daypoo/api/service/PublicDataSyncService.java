@@ -35,6 +35,7 @@ public class PublicDataSyncService {
   private final JdbcTemplate jdbcTemplate;
   private final PlatformTransactionManager transactionManager;
   private final WebClient webClient;
+  private final SystemLogService systemLogService;
 
   @Value("${public-data.api-key}")
   private String apiKey;
@@ -69,27 +70,32 @@ public class PublicDataSyncService {
       StringRedisTemplate redisTemplate,
       JdbcTemplate jdbcTemplate,
       PlatformTransactionManager transactionManager,
-      @Value("${public-data.url}") String apiUrl) {
+      @Value("${public-data.url}") String apiUrl,
+      SystemLogService systemLogService) {
     this.objectMapper = objectMapper;
     this.geometryUtil = geometryUtil;
     this.redisTemplate = redisTemplate;
     this.jdbcTemplate = jdbcTemplate;
     this.transactionManager = transactionManager;
     this.webClient = WebClient.builder().baseUrl(apiUrl).build();
+    this.systemLogService = systemLogService;
   }
 
   /** 매일 새벽 3시에 공공데이터 전체 동기화를 실행합니다. 서버 시작 시에는 toilet 데이터가 없는 경우에만 소규모 동기화를 수행합니다. */
   @org.springframework.scheduling.annotation.Scheduled(cron = "0 0 3 * * *")
   public void scheduledSync() {
     log.info("🕒 [Scheduled] Starting daily public data sync...");
+    systemLogService.info("System", "Scheduled toilet data sync started");
     try {
       int[] result = syncAllToilets(1, 550);
+      systemLogService.info("System", "Scheduled sync completed. Total: " + result[0] + ", Inserted: " + result[1] + ", Updated: " + result[2]);
       log.info(
           "✅ [Scheduled] Daily sync completed. Total: {}, Inserted: {}, Updated: {}",
           result[0],
           result[1],
           result[2]);
     } catch (Exception e) {
+      systemLogService.error("System", "Scheduled sync failed: " + e.getMessage());
       log.error("❌ [Scheduled] Daily sync failed: {}", e.getMessage());
     }
   }
@@ -184,18 +190,21 @@ public class PublicDataSyncService {
 
     try {
       log.info("📢 Starting background sync: {} - {}", startPage, endPage);
+      systemLogService.info("System", "Background toilet sync started: pages " + startPage + "-" + endPage);
       int[] result = syncAllToilets(startPage, endPage);
       lastCount = result[0];
       insertedCount = result[1];
       updatedCount = result[2];
       syncStatus = "COMPLETED";
       completedAt = LocalDateTime.now().format(DATE_TIME_FORMATTER);
+      systemLogService.info("System", "Background sync completed. Total: " + result[0] + ", Inserted: " + result[1] + ", Updated: " + result[2]);
       log.info(
           "✅ Background sync finished. Total: {}, Inserted: {}, Updated: {}",
           result[0],
           result[1],
           result[2]);
     } catch (Exception e) {
+      systemLogService.error("System", "Background sync failed: " + e.getMessage());
       log.error("❌ Background sync failed: {}", e.getMessage());
       syncStatus = "FAILED";
       errorMessage = e.getMessage();
