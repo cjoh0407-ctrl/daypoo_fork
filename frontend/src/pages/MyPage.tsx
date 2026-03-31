@@ -3094,6 +3094,30 @@ export function MyPage({ openAuth }: { openAuth: (mode: 'login' | 'signup') => v
         };
       });
 
+      // 🚀 인벤토리 전용 아이템(비매품/기본템) 병합 로직 추가
+      // 상점 응답(/shop/items)에 없더라도 인벤토리 응답(/shop/inventory)에 있다면 수동으로 mappedItems에 추가합니다.
+      safeInventory.forEach((inv) => {
+        const itemId = String(inv.itemId);
+        const exists = mappedItems.find((m) => m.id === itemId);
+
+        if (!exists) {
+          const itemType = inv.itemType || 'AVATAR';
+          mappedItems.push({
+            id: itemId,
+            emoji:
+              inv.imageUrl || (itemType === 'AVATAR' ? '🎭' : itemType === 'EFFECT' ? '✨' : '📍'),
+            imageUrl: inv.imageUrl,
+            name: inv.itemName || '비매품 아이템',
+            type: itemType === 'AVATAR' ? '헤드' : itemType === 'EFFECT' ? '이펙트' : '마커',
+            rawType: itemType,
+            owned: true, // 인벤토리에 존재하면 무조건 소유한 것
+            price: 0,
+            inventoryId: String(inv.id),
+            isEquipped: inv.isEquipped === true,
+          });
+        }
+      });
+
       const mappedTitles = safeTitles.map((t) => ({
         id: String(t.id || Math.random()),
         label: t.name || t.label || '비밀 칭호',
