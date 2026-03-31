@@ -5,7 +5,7 @@ import { Footer } from '../components/Footer';
 import { WaveDivider } from '../components/WaveDivider';
 import { Crown, TrendingUp, TrendingDown, Minus, ShoppingBag, X, MapPin, Star, Trophy, Activity } from 'lucide-react';
 import { useRankings } from '../hooks/useRankings';
-import { generateRankingAvatar, generateItemAvatar, parseDicebearUrl } from '../utils/avatar';
+import { generateRankingAvatar, generateItemAvatar, parseDicebearUrl, DEFAULT_AVATAR_URL } from '../utils/avatar';
 
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -179,7 +179,7 @@ function ItemPopup({ user, onClose, openAuth }: { user: RankUser; onClose: () =>
                   {user.avatarUrl ? (
                     <img src={user.avatarUrl} alt={user.nick} className="w-full h-full object-cover" />
                   ) : (
-                    user.emoji
+                    <img src={DEFAULT_AVATAR_URL} alt={user.nick} className="w-full h-full object-cover" />
                   )}
                 </div>
                 {user.rank <= 3 && (
@@ -345,7 +345,7 @@ const FlipGlassCard = ({
               {user.avatarUrl ? (
                 <img src={user.avatarUrl} alt={user.nick} className="w-full h-full object-cover" />
               ) : (
-                user.emoji
+                <img src={DEFAULT_AVATAR_URL} alt={user.nick} className="w-full h-full object-cover" />
               )}
             </div>
           </div>
@@ -392,8 +392,10 @@ const FlipGlassCard = ({
                     <span className="text-xs font-black text-white">{user.items.length}ea</span>
                 </div>
                 <div className="flex-1 bg-white/5 rounded-xl py-2 border border-white/5 flex flex-col items-center">
-                    <span className="text-[8px] text-gray-400 font-black uppercase mb-0.5">Tier</span>
-                    <span className="text-xs font-black text-amber-500">Gold</span>
+                    <span className="text-[8px] text-gray-400 font-black uppercase mb-0.5">등급</span>
+                    <span className="text-xs font-black text-amber-500">
+                      {user.rank === 1 ? '다이아몬드' : user.rank === 2 ? '플래티넘' : '골드'}
+                    </span>
                 </div>
             </div>
         </div>
@@ -549,7 +551,7 @@ function RankItem({
           {user.avatarUrl ? (
             <img src={user.avatarUrl} alt={user.nick} className="w-full h-full object-cover" />
           ) : (
-            user.emoji
+            <img src={DEFAULT_AVATAR_URL} alt={user.nick} className="w-full h-full object-cover" />
           )}
         </div>
       </div>
@@ -614,10 +616,21 @@ function MyRankBar({ data }: { data: any }) {
             </div>
           </div>
           <div className="flex items-center gap-6">
-            <div className="flex items-center gap-2.5">
-              <div className="w-2.5 h-2.5 rounded-full bg-[#E8A838] shadow-[0_0_10px_rgba(232,168,56,0.5)]" />
-              <span className="text-white/40 text-sm font-medium">활동 점수</span>
-              <span className="text-white font-black text-2xl tracking-tight">{data.score.toLocaleString()}</span>
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-emerald-500/30 bg-white">
+                <img
+                  src={generateRankingAvatar(data.userId || 0, data.rank === '-' ? 99 : data.rank, data.equippedAvatarUrl)}
+                  alt="My Avatar"
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <div className="flex flex-col">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-2.5 h-2.5 rounded-full bg-[#E8A838] shadow-[0_0_10px_rgba(232,168,56,0.5)]" />
+                  <span className="text-white/40 text-sm font-medium">활동 점수</span>
+                  <span className="text-white font-black text-2xl tracking-tight">{data.score.toLocaleString()}</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -653,7 +666,7 @@ export function RankingPage({ openAuth }: { openAuth: (mode: 'login' | 'signup')
           emoji: Number(r.rank) === 1 ? '💎' : Number(r.rank) === 2 ? '🦊' : '🐸',
           avatarUrl: generateRankingAvatar(r.userId, Number(r.rank || 0), r.equippedAvatarUrl),
           nick: r.nickname || '익명',
-          title: r.titleName || '새내기 쾌변러',
+          title: r.titleName || '보유 칭호 없음',
           titleColor: Number(r.rank) === 1 ? '#E8A838' : Number(r.rank) === 2 ? '#B0B8B4' : Number(r.rank) === 3 ? '#CD7C4A' : '#52b788',
           titleBg: Number(r.rank) === 1 ? 'rgba(232,168,56,0.12)' : Number(r.rank) === 2 ? 'rgba(176,184,180,0.12)' : Number(r.rank) === 3 ? 'rgba(205,124,74,0.12)' : 'rgba(82,183,136,0.1)',
           level: Number(r.level || 0),
