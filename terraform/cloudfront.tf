@@ -31,7 +31,40 @@ resource "aws_cloudfront_distribution" "main" {
     forwarded_values {
       query_string = true
       cookies { forward = "all" }
-      headers = ["Origin", "Authorization"] # API 필수 헤더 전달
+      headers = ["Origin", "Authorization", "Content-Type", "Accept", "Host"] # 필수 헤더 추가
+    }
+    viewer_protocol_policy = "redirect-to-https"
+    min_ttl                = 0
+    default_ttl            = 0
+    max_ttl                = 0
+  }
+
+  # OAuth2 및 소셜 로그인 관련 라우팅 추가
+  ordered_cache_behavior {
+    path_pattern     = "/oauth2/*"
+    target_origin_id = "EC2-Backend"
+    allowed_methods  = ["GET", "HEAD", "OPTIONS", "PUT", "POST", "PATCH", "DELETE"]
+    cached_methods   = ["GET", "HEAD"]
+    forwarded_values {
+      query_string = true
+      cookies { forward = "all" }
+      headers = ["Origin", "Authorization", "Content-Type", "Accept", "Host"]
+    }
+    viewer_protocol_policy = "redirect-to-https"
+    min_ttl                = 0
+    default_ttl            = 0
+    max_ttl                = 0
+  }
+
+  ordered_cache_behavior {
+    path_pattern     = "/login/*"
+    target_origin_id = "EC2-Backend"
+    allowed_methods  = ["GET", "HEAD", "OPTIONS", "PUT", "POST", "PATCH", "DELETE"]
+    cached_methods   = ["GET", "HEAD"]
+    forwarded_values {
+      query_string = true
+      cookies { forward = "all" }
+      headers = ["Origin", "Authorization", "Content-Type", "Accept", "Host"]
     }
     viewer_protocol_policy = "redirect-to-https"
     min_ttl                = 0
@@ -59,6 +92,21 @@ resource "aws_cloudfront_distribution" "main" {
 
   viewer_certificate {
     cloudfront_default_certificate = true
+  }
+
+  # SPA 라우팅을 위한 에러 응답 설정
+  custom_error_response {
+    error_code            = 403
+    response_code         = 200
+    response_page_path    = "/index.html"
+    error_caching_min_ttl = 0
+  }
+
+  custom_error_response {
+    error_code            = 404
+    response_code         = 200
+    response_page_path    = "/index.html"
+    error_caching_min_ttl = 0
   }
 
   tags = {
