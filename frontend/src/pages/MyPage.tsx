@@ -64,50 +64,8 @@ export const isEmoji = (str: string) => {
   return str && str.length <= 4 && /\p{Extended_Pictographic}/u.test(str);
 };
 
-// ── FALLBACK 데이터 ───────────────────────────────────────────────────────
-const FALLBACK_AVATAR_ITEMS: AvatarItem[] = [
-  // 헤드 (Head)
-  { id: 'i1', emoji: '👑', name: '황금 왕관', type: '헤드', owned: true },
-  { id: 'i2', emoji: '🎩', name: '마법사 모자', type: '헤드', owned: true },
-  { id: 'i7', emoji: '🎀', name: '핑크 리본', type: '헤드', owned: false, price: 300 },
-  { id: 'i8', emoji: '🧢', name: '힙합 스냅백', type: '헤드', owned: false, price: 450 },
-  { id: 'i9', emoji: '🎓', name: '졸업모자', type: '헤드', owned: false, price: 600 },
-  { id: 'i10', emoji: '🪖', name: '전투 헬멧', type: '헤드', owned: false, price: 1200 },
+// [CLEANUP] 하드코딩된 FALLBACK 데이터와 BRISTOL_DATA는 백엔드 연동이 완료되었으므로 제거합니다.
 
-  // 이펙트 (Effect)
-  { id: 'i3', emoji: '✨', name: '황금 오라', type: '이펙트', owned: true },
-  { id: 'i4', emoji: '🌟', name: '별빛 오라', type: '이펙트', owned: false, price: 500 },
-  { id: 'i5', emoji: '🦋', name: '나비 날개', type: '이펙트', owned: false, price: 800 },
-  { id: 'i11', emoji: '🔥', name: '불꽃 오라', type: '이펙트', owned: false, price: 1500 },
-  { id: 'i12', emoji: '❄️', name: '눈꽃 장식', type: '이펙트', owned: false, price: 900 },
-  { id: 'i13', emoji: '⚡', name: '전기 이펙트', type: '이펙트', owned: false, price: 1800 },
-
-  // 마커 (Marker)
-  { id: 'i6', emoji: '💎', name: '다이아 마커', type: '마커', owned: false, price: 1200 },
-  { id: 'i14', emoji: '🌈', name: '무지개 마커', type: '마커', owned: false, price: 2500 },
-  { id: 'i15', emoji: '🖤', name: '다크 마커', type: '마커', owned: false, price: 1000 },
-  { id: 'i16', emoji: '🌹', name: '장미 마커', type: '마커', owned: false, price: 700 },
-  { id: 'i17', emoji: '🪐', name: '행성 마커', type: '마커', owned: false, price: 3000 },
-];
-
-const FALLBACK_TITLES = [
-  { id: 't1', label: '전설의 쾌변가', earned: true, selected: true },
-  { id: 't2', label: '화장실 정복자', earned: true, selected: false },
-  { id: 't3', label: '쾌변 마스터', earned: true, selected: false },
-  { id: 't4', label: '섬유질왕', earned: true, selected: false },
-  { id: 't5', label: '7일 연속왕', earned: false, selected: false },
-  { id: 't6', label: '100회 달성', earned: false, selected: false },
-];
-
-const BRISTOL_DATA = [
-  { day: '월', type: 2, emoji: <Activity size={16} />, color: '#E8A838' },
-  { day: '화', type: 3, emoji: <Activity size={16} />, color: '#52b788' },
-  { day: '수', type: 4, emoji: <CheckCircle2 size={16} />, color: '#52b788' },
-  { day: '목', type: 4, emoji: <CheckCircle2 size={16} />, color: '#52b788' },
-  { day: '금', type: 5, emoji: <Cloud size={16} />, color: '#E8A838' },
-  { day: '토', type: 6, emoji: <Waves size={16} />, color: '#E85D5D' },
-  { day: '일', type: 4, emoji: <CheckCircle2 size={16} />, color: '#52b788' },
-];
 
 // ── 카운트업 ──────────────────────────────────────────────────────────
 function CountUp({ target, suffix = '' }: { target: number; suffix?: string }) {
@@ -1378,10 +1336,10 @@ function HomeTab({
             </div>
             <div>
               <h3 className="text-lg sm:text-2xl font-black text-[#1A2B27] tracking-tight">
-                오늘의 건강 지표
+                오늘의 장 건강 분석
               </h3>
               <p className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest mt-1">
-                AI Analyst Doctor Poo
+                AI Poo Analyst Doctor Poo
               </p>
             </div>
           </div>
@@ -1459,8 +1417,7 @@ function HomeTab({
         <div className="relative p-5 sm:p-8 rounded-[20px] sm:rounded-[36px] overflow-hidden bg-emerald-50/50 border border-emerald-100 shadow-inner">
           <Sparkles size={24} className="absolute top-5 sm:top-7 right-5 sm:right-8 text-emerald-300 opacity-60" />
           <p className="text-[13px] font-black text-emerald-600 mb-3 flex items-center gap-2.5">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-sm" /> 심층 AI
-            분석 가이드
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-sm" /> 인공지능 쾌변 솔루션 가이드
           </p>
           {loadingHealth ? (
             <p className="text-lg font-bold text-gray-400 animate-pulse">AI 분석 중...</p>
@@ -1639,7 +1596,7 @@ function CollectionTab({
         </div>
         <div className="relative z-10">
           <p className="text-xs font-black text-amber-500 uppercase tracking-[0.25em] mb-2.5">
-            Collection Progress
+            수집 현황
           </p>
           <h2 className="text-3xl font-black text-[#1A2B27] mb-6 tracking-tighter">
             나의 명예로운 자취
@@ -1656,9 +1613,11 @@ function CollectionTab({
             </div>
             <div className="p-4 sm:p-6 rounded-[20px] sm:rounded-[28px] bg-gray-50 border border-gray-100 shadow-inner">
               <p className="text-[10px] sm:text-xs font-bold text-gray-400 mb-1 sm:mb-2 uppercase tracking-wide">
-                수집 랭크
+                수집 진행률
               </p>
-              <p className="text-xl sm:text-3xl font-black text-[#E8A838]">TOP 4%</p>
+              <p className="text-xl sm:text-3xl font-black text-[#E8A838]">
+                {titles.length > 0 ? Math.round((earnedCount / titles.length) * 100) : 0}%
+              </p>
             </div>
           </div>
 
@@ -1691,7 +1650,7 @@ function CollectionTab({
         <div className="px-4 sm:px-10 pt-6 sm:pt-10 pb-4 sm:pb-6">
           <div className="flex items-center justify-between mb-2">
             <p className="text-sm font-black text-gray-400 uppercase tracking-widest">
-              Achieved Titles
+              보유 칭호 목록
             </p>
             <div className="flex items-center gap-2 px-4 py-1.5 bg-emerald-50 rounded-full text-xs font-black text-emerald-600 border border-emerald-100 shadow-sm">
               <Check size={14} /> 수집 정보
@@ -1718,7 +1677,7 @@ function CollectionTab({
             <div className="space-y-6">
               <div className="text-center">
                 <div className="inline-flex items-center gap-2 px-3 py-1 bg-white border border-gray-200 rounded-full text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">
-                  Title Information
+                  칭호 상세 정보
                 </div>
                 <h4 className="text-2xl font-black text-[#1B4332] mb-2">{selectedPreview.label}</h4>
                 <p className="text-sm font-bold text-gray-500 max-w-md mx-auto leading-relaxed">
@@ -1731,7 +1690,7 @@ function CollectionTab({
                   <div className="flex justify-between items-end">
                     <div>
                       <p className="text-[10px] font-black text-amber-500 uppercase tracking-widest mb-1">
-                        Acquisition Condition
+                        획득 필요 조건
                       </p>
                       <p className="text-sm font-black text-gray-700">
                         {selectedPreview.conditionLabel}
@@ -1866,15 +1825,9 @@ function ReportTab({ records = [], reportCacheRef }: { records?: any[]; reportCa
           ][(r.bristolScale ?? 4) - 1] || <Activity size={20} />,
           color: (r.bristolScale ?? 4) >= 3 && (r.bristolScale ?? 4) <= 5 ? '#52b788' : '#E8A838',
         }))
-      : [
-          { day: '월', type: 3, emoji: <Activity size={20} />, color: '#52b788' },
-          { day: '화', type: 4, emoji: <CheckCircle2 size={20} />, color: '#52b788' },
-          { day: '수', type: 4, emoji: <CheckCircle2 size={20} />, color: '#52b788' },
-          { day: '목', type: 2, emoji: <Activity size={20} />, color: '#E8A838' },
-          { day: '금', type: 4, emoji: <CheckCircle2 size={20} />, color: '#52b788' },
-          { day: '토', type: 5, emoji: <Cloud size={20} />, color: '#52b788' },
-          { day: '일', type: 4, emoji: <CheckCircle2 size={20} />, color: '#52b788' },
-        ];
+      : [];
+
+  const hasData = displayData.length > 0;
 
   const [activeSubTab, setActiveSubTab] = useState<'daily' | 'weekly' | 'monthly'>('daily');
   const [reportData, setReportData] = useState<any>(null);
@@ -2013,11 +1966,11 @@ function ReportTab({ records = [], reportCacheRef }: { records?: any[]; reportCa
                         현재 장 상태
                       </p>
                       <p className="text-lg sm:text-2xl font-black text-[#1B4332] flex items-center gap-1.5 sm:gap-2.5">
-                        {reportData?.healthScore > 80
+                        {!hasData ? '분석 데이터 없음' : (reportData?.healthScore > 80
                           ? '아주 좋음'
                           : reportData?.healthScore > 60
                             ? '좋음'
-                            : '보통'}
+                            : '보통')}
                         <Sparkles size={22} className="text-amber-400" />
                       </p>
                     </div>
@@ -2542,7 +2495,7 @@ function ReportTab({ records = [], reportCacheRef }: { records?: any[]; reportCa
                     </div>
                     <div>
                       <h3 className="text-xl font-black text-[#1A2B27] tracking-tight">AI 맞춤 프리미엄 솔루션</h3>
-                      <p className="text-[11px] font-black text-amber-600 uppercase tracking-widest mt-0.5">Premium Precision Analysis</p>
+                      <p className="text-[11px] font-black text-amber-600 uppercase tracking-widest mt-0.5">AI Poo Premium Guide</p>
                     </div>
                   </div>
                   <button
@@ -2557,7 +2510,7 @@ function ReportTab({ records = [], reportCacheRef }: { records?: any[]; reportCa
                   <div className="rounded-[32px] bg-emerald-50/50 border border-emerald-100 p-8 shadow-inner">
                     <div className="flex items-center gap-2 mb-4">
                       <Sparkles size={18} className="text-emerald-500" />
-                      <span className="text-sm font-black text-emerald-700 uppercase tracking-widest">General Advisory</span>
+                      <span className="text-sm font-black text-emerald-700 uppercase tracking-widest">분석가 조언</span>
                     </div>
                     <p className="text-lg font-bold text-emerald-900 leading-relaxed italic">
                       "{reportData?.solution}"
@@ -2567,7 +2520,7 @@ function ReportTab({ records = [], reportCacheRef }: { records?: any[]; reportCa
                   <div className="space-y-6">
                     <div className="flex items-center gap-2 px-2">
                       <Activity size={20} className="text-amber-500" />
-                      <span className="text-sm font-black text-gray-400 uppercase tracking-widest">Detailed Clinical Insight</span>
+                      <span className="text-sm font-black text-gray-400 uppercase tracking-widest">상세 분석 데이터</span>
                     </div>
                     <div className="bg-gray-50/50 rounded-[32px] border border-gray-100 p-8 shadow-sm overflow-x-auto custom-scrollbar">
                       <div className="prose prose-emerald max-w-none text-gray-700 font-medium leading-extra-relaxed text-sm md:text-base prose-headings:font-black prose-headings:text-[#1A2B27] prose-p:text-gray-600 prose-li:text-gray-600 prose-strong:text-emerald-700 prose-table:break-keep">
@@ -3149,8 +3102,8 @@ export function MyPage({ openAuth }: { openAuth: (mode: 'login' | 'signup') => v
         selected: t.isEquipped === true || t.equipped === true || t.selected === true || false,
         achievementType: t.achievementType,
         achievementThreshold: t.achievementThreshold,
-        currentProgress: t.currentProgress,
-        conditionLabel: t.conditionLabel || t.requirementDescription,
+        currentProgress: t.currentProgress || 0,
+        conditionLabel: t.conditionLabel || t.requirementDescription || '활동을 통해 획득 가능',
       }));
 
       console.log('Mapped Store & Collection Data:', { mappedItems, mappedTitles });
