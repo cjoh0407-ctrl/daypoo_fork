@@ -68,4 +68,11 @@ public class AdminSettingsService {
                 .map(SystemSettings::isSignupEnabled)
                 .orElse(true);
     }
+
+    @Transactional(readOnly = true)
+    public Long getDefaultAvatarItemId() {
+        return systemSettingsRepository.findCurrent()
+                .map(SystemSettings::getDefaultAvatarItemId)
+                .orElse(null);
+    }
 }

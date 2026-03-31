@@ -7,6 +7,7 @@ import com.daypoo.api.dto.SignUpRequest;
 import com.daypoo.api.dto.SocialSignUpRequest;
 import com.daypoo.api.dto.TokenResponse;
 import com.daypoo.api.dto.UserResponse;
+import com.daypoo.api.entity.Item;
 import com.daypoo.api.entity.User;
 import com.daypoo.api.entity.enums.Role;
 import com.daypoo.api.global.exception.BusinessException;
@@ -42,6 +43,7 @@ public class AuthService {
   private final PooRecordRepository pooRecordRepository;
   private final SystemLogService systemLogService;
   private final InventoryRepository inventoryRepository;
+  private final ItemRepository itemRepository;
   private final AdminSettingsService adminSettingsService;
 
   @Transactional
@@ -77,6 +79,7 @@ public class AuthService {
         .build();
 
     userRepository.save(user);
+    assignDefaultAvatar(user);
     systemLogService.info("Auth", "Social user registered: " + email);
 
     String accessToken = jwtProvider.createAccessToken(user.getEmail(), user.getRole().name());
@@ -171,7 +174,23 @@ public class AuthService {
         .build();
 
     userRepository.save(user);
+    assignDefaultAvatar(user);
     systemLogService.info("Auth", "New user registered: " + request.email());
+  }
+
+  private void assignDefaultAvatar(User user) {
+    Long defaultItemId = adminSettingsService.getDefaultAvatarItemId();
+    if (defaultItemId == null) {
+      return;
+    }
+    itemRepository.findById(defaultItemId).ifPresent(item -> {
+      Inventory inventory = Inventory.builder()
+          .user(user)
+          .item(item)
+          .isEquipped(true)
+          .build();
+      inventoryRepository.save(inventory);
+    });
   }
 
   public String findIdByNickname(String nickname) {

@@ -25,6 +25,7 @@ public class ShopService {
   private final UserTitleRepository userTitleRepository;
   private final UserRepository userRepository;
 
+  private final AdminSettingsService adminSettingsService;
   private final TitleAchievementService achievementService;
 
   /** 상점 아이템 목록 조회 */
@@ -32,6 +33,14 @@ public class ShopService {
   public List<ItemResponse> getAllItems(User user, ItemType type) {
     List<Item> items =
         (type == null) ? itemRepository.findAll() : itemRepository.findAllByType(type);
+
+    // 기본 아바타는 상점 목록에서 제외
+    Long defaultAvatarItemId = adminSettingsService.getDefaultAvatarItemId();
+    if (defaultAvatarItemId != null) {
+      items = items.stream()
+          .filter(item -> !item.getId().equals(defaultAvatarItemId))
+          .collect(Collectors.toList());
+    }
 
     // 사용자가 소유한 아이템 ID 목록 조회
     List<Long> ownedItemIds =
