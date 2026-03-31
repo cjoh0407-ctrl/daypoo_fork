@@ -69,23 +69,32 @@ export const useAvatar = (
 };
 
 /**
- * 랭킹 페이지용 아바타 (현재는 디폴트로 통일)
+ * 랭킹 페이지용 아바타 (장착 아바타가 있으면 반영)
  */
-export const generateRankingAvatar = (userId: string | number, rank: number): string => {
+export const generateRankingAvatar = (userId: string | number, rank: number, equippedAvatarUrl?: string | null): string => {
+  if (equippedAvatarUrl) {
+    return parseDicebearUrl(equippedAvatarUrl, userId, 'AVATAR', 128);
+  }
   return generateAvatar(userId, 'funEmoji', 128);
 };
 
 /**
- * 프로필용 아바타 (큰 사이즈, 현재는 디폴트로 통일)
+ * 프로필용 아바타 (큰 사이즈, 장착 아바타가 있으면 반영)
  */
-export const generateProfileAvatar = (userId: string | number): string => {
+export const generateProfileAvatar = (userId: string | number, equippedAvatarUrl?: string | null): string => {
+  if (equippedAvatarUrl) {
+    return parseDicebearUrl(equippedAvatarUrl, userId, 'AVATAR', 256);
+  }
   return generateAvatar(userId, 'avataaars', 256);
 };
 
 /**
- * 채팅/댓글용 아바타 (작은 사이즈, 현재는 디폴트로 통일)
+ * 채팅/댓글용 아바타 (작은 사이즈, 장착 아바타가 있으면 반영)
  */
-export const generateSmallAvatar = (userId: string | number): string => {
+export const generateSmallAvatar = (userId: string | number, equippedAvatarUrl?: string | null): string => {
+  if (equippedAvatarUrl) {
+    return parseDicebearUrl(equippedAvatarUrl, userId, 'AVATAR', 48);
+  }
   return generateAvatar(userId, 'funEmoji', 48);
 };
 

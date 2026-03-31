@@ -41,6 +41,7 @@ export interface UserResponse {
   totalAuthCount?: number;
   totalVisitCount?: number;
   consecutiveDays?: number;
+  equippedAvatarUrl?: string | null;
 }
 
 /**

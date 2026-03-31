@@ -15,6 +15,10 @@ export const NotificationSubscriber: React.FC = () => {
   const timeoutRef = useRef<any>(null);
 
   const connectSSE = useCallback(async () => {
+    // SSE 기능 임시 비활성화 (백엔드 미구현 시)
+    const SSE_ENABLED = false; // TODO: 백엔드 SSE 구현 완료 시 true로 변경
+    if (!SSE_ENABLED) return;
+
     const accessToken = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken');
     if (!accessToken || !user) return;
 

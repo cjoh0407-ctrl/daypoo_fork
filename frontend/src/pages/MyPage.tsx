@@ -701,14 +701,18 @@ function HeroBanner({
                   }}
                 >
                   {equippedItem?.id ? (
-                    <img
-                      src={parseDicebearUrl(equippedItem.imageUrl, equippedItem.id, equippedItem.rawType || 'AVATAR')}
-                      alt={equippedItem.name}
-                      className="w-full h-full object-cover"
-                    />
+                    equippedItem.emoji && /\p{Emoji}/u.test(equippedItem.emoji) ? (
+                      <span className="text-5xl select-none">{equippedItem.emoji}</span>
+                    ) : (
+                      <img
+                        src={parseDicebearUrl(equippedItem.imageUrl, equippedItem.id, equippedItem.rawType || 'AVATAR')}
+                        alt={equippedItem.name}
+                        className="w-full h-full object-cover"
+                      />
+                    )
                   ) : user?.id ? (
                     <img
-                      src={generateProfileAvatar(user.id)}
+                      src={generateProfileAvatar(user.id, user.equippedAvatarUrl)}
                       alt={user.nickname || '프로필'}
                       className="w-full h-full object-cover"
                     />
@@ -1226,9 +1230,9 @@ function HomeTab({
                                 className="w-12 h-12 rounded-full blur-2xl opacity-20 absolute"
                                 style={{ background: color }}
                               />
-                              {avatarType === 'EFFECT' ? (
+                              {item.emoji && /\p{Emoji}/u.test(item.emoji) ? (
                                 <span className="text-6xl transition-transform group-hover:scale-110 duration-500 select-none">
-                                  {item.emoji || '✨'}
+                                  {item.emoji}
                                 </span>
                               ) : (
                                 <img
@@ -1309,14 +1313,14 @@ function HomeTab({
               style={{ background: 'rgba(255,255,255,0.92)' }}
             >
               <div className="w-14 h-14 rounded-2xl bg-emerald-50 flex-shrink-0 relative overflow-hidden group flex items-center justify-center">
-                {preview.rawType === 'EFFECT' ? (
-                  <span className="text-3xl select-none">{preview.emoji || '✨'}</span>
+                {preview.emoji && /\p{Emoji}/u.test(preview.emoji) ? (
+                  <span className="text-3xl select-none">{preview.emoji}</span>
                 ) : (
-                <img 
-                  src={parseDicebearUrl(preview.imageUrl, preview.id, preview.rawType || 'AVATAR')} 
-                  className="w-full h-full object-contain p-1.5 transition-transform group-hover:scale-110" 
-                  alt={preview.name}
-                />
+                  <img
+                    src={parseDicebearUrl(preview.imageUrl, preview.id, preview.rawType || 'AVATAR')}
+                    className="w-full h-full object-contain p-1.5 transition-transform group-hover:scale-110"
+                    alt={preview.name}
+                  />
                 )}
                 <div className="absolute inset-0 bg-emerald-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
               </div>

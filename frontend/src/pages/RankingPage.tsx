@@ -651,13 +651,7 @@ export function RankingPage({ openAuth }: { openAuth: (mode: 'login' | 'signup')
         .map((r) => ({
           rank: Number(r.rank || 0),
           emoji: Number(r.rank) === 1 ? '💎' : Number(r.rank) === 2 ? '🦊' : '🐸',
-          avatarUrl: (() => {
-            const avatarItem: any = (r.equippedItems || []).find((item) => item.type === 'AVATAR');
-            if (avatarItem && (avatarItem.imageUrl || avatarItem.icon)) {
-              return parseDicebearUrl(avatarItem.imageUrl || avatarItem.icon, r.userId, 'AVATAR');
-            }
-            return avatarItem ? generateItemAvatar(r.userId, 'AVATAR') : generateRankingAvatar(r.userId, Number(r.rank || 0));
-          })(),
+          avatarUrl: generateRankingAvatar(r.userId, Number(r.rank || 0), r.equippedAvatarUrl),
           nick: r.nickname || '익명',
           title: r.titleName || '새내기 쾌변러',
           titleColor: Number(r.rank) === 1 ? '#E8A838' : Number(r.rank) === 2 ? '#B0B8B4' : Number(r.rank) === 3 ? '#CD7C4A' : '#52b788',

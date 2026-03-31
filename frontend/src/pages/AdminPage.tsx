@@ -2021,24 +2021,28 @@ const StoreView = ({ setActiveTab }: { setActiveTab: (tab: AdminTab) => void }) 
           type: 'AVATAR',
           price: 0,
           description: '[헤드] 👑 기품 있는 국왕의 상징',
+          imageUrl: '👑',
         },
         {
           name: '마법사 모자',
           type: 'AVATAR',
           price: 0,
           description: '[헤드] 🎩 신비로운 마력을 지닌 모자',
+          imageUrl: '🎩',
         },
         {
           name: '핑크 리본',
           type: 'AVATAR',
           price: 300,
           description: '[헤드] 🎀 러블리한 감성의 핑크 리본',
+          imageUrl: '🎀',
         },
         {
           name: '힙합 스냅백',
           type: 'AVATAR',
           price: 450,
           description: '[헤드] 🧢 스트릿 감성이 넘치는 스냅백',
+          imageUrl: '🧢',
         },
         {
           name: '황금 오라',
@@ -2073,18 +2077,25 @@ const StoreView = ({ setActiveTab }: { setActiveTab: (tab: AdminTab) => void }) 
       const allItems = [...avatars];
 
       for (const item of allItems) {
-        await api.post('/admin/shop/items', {
-          ...item,
-          imageUrl: item.imageUrl || null,
-        });
+        try {
+          await api.post('/admin/shop/items', {
+            ...item,
+            imageUrl: item.imageUrl || null,
+          });
+          console.log(`✅ 아이템 생성 성공: ${item.name}`);
+        } catch (itemError: any) {
+          console.error(`❌ 아이템 생성 실패: ${item.name}`, itemError);
+          throw new Error(`"${item.name}" 생성 중 오류: ${itemError.message || itemError}`);
+        }
       }
 
       alert('기본 아이템 동기화가 완료되었습니다.\n마이페이지의 [상점] 탭에서 확인하실 수 있습니다.');
       setSyncingStore(false);
       fetchItems();
-    } catch (error) {
+    } catch (error: any) {
       console.error('동기화 실패:', error);
-      alert('동기화 중 오류가 발생했습니다.');
+      const errorMsg = error?.response?.data?.message || error?.message || '알 수 없는 오류';
+      alert(`동기화 중 오류가 발생했습니다.\n\n상세: ${errorMsg}`);
     } finally {
       setSyncingStore(false);
     }
@@ -2327,7 +2338,7 @@ const StoreView = ({ setActiveTab }: { setActiveTab: (tab: AdminTab) => void }) 
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 place-items-center">
             {items.map((item) => {
               const color = getItemTypeColor(item.type);
               return (
@@ -2338,7 +2349,7 @@ const StoreView = ({ setActiveTab }: { setActiveTab: (tab: AdminTab) => void }) 
                       style={{ background: color }}
                     />
                     <div className="w-full h-full flex items-center justify-center transition-transform group-hover:scale-105 duration-500">
-                      {item.type === 'EFFECT' && item.imageUrl ? (
+                      {item.imageUrl && /\p{Emoji}/u.test(item.imageUrl) ? (
                         <span className="text-7xl select-none">{item.imageUrl}</span>
                       ) : (
                         <img

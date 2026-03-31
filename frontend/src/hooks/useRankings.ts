@@ -15,6 +15,7 @@ interface UserRankResponse {
   score: number;
   rank: number;
   equippedItems: EquippedItemResponse[]; // 신규 추가
+  equippedAvatarUrl?: string | null; // 신규 추가
 }
 
 interface RankingResponse {
