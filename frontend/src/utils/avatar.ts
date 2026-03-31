@@ -31,29 +31,34 @@ const AVATAR_STYLES = {
  * <img src={avatarUrl} alt="avatar" />
  * ```
  */
+/**
+ * 사용자 ID 또는 닉네임 기반 고유 아바타 생성 (무작위 생성 복구)
+ *
+ * @param seed - 사용자 ID 또는 닉네임 (고유값)
+ * @param style - 아바타 스타일 (기본: funEmoji)
+ * @param size - 아바타 크기 (기본: 256)
+ * @returns SVG 데이터 URI
+ */
 export const generateAvatar = (
   seed: string | number,
   style: AvatarStyle = 'funEmoji',
-  size: number = 128
+  size: number = 256
 ): string => {
+  // 사용자별 고유한 아바타를 위해 seed를 사용합니다.
   const avatar = createAvatar(AVATAR_STYLES[style] as any, {
     seed: `daypoo-${seed}`,
     size,
   });
-
   return avatar.toDataUri();
 };
 
 /**
+ * 디폴트 아바타 URL
+ */
+export const DEFAULT_AVATAR_URL = generateAvatar('default');
+
+/**
  * React 컴포넌트에서 사용하기 쉬운 훅
- *
- * @example
- * ```tsx
- * function UserProfile({ userId }: { userId: number }) {
- *   const avatarUrl = useAvatar(userId);
- *   return <img src={avatarUrl} alt="avatar" className="w-12 h-12 rounded-full" />;
- * }
- * ```
  */
 export const useAvatar = (
   seed: string | number,
@@ -64,23 +69,21 @@ export const useAvatar = (
 };
 
 /**
- * 랭킹 페이지용 아바타 (좀 더 화려한 스타일)
+ * 랭킹 페이지용 아바타 (현재는 디폴트로 통일)
  */
 export const generateRankingAvatar = (userId: string | number, rank: number): string => {
-  // 1-3위는 avataaars (화려함), 나머지는 funEmoji (심플함)
-  const style: AvatarStyle = rank <= 3 ? 'avataaars' : 'funEmoji';
-  return generateAvatar(userId, style, 128);
+  return generateAvatar(userId, 'funEmoji', 128);
 };
 
 /**
- * 프로필용 아바타 (큰 사이즈)
+ * 프로필용 아바타 (큰 사이즈, 현재는 디폴트로 통일)
  */
 export const generateProfileAvatar = (userId: string | number): string => {
   return generateAvatar(userId, 'avataaars', 256);
 };
 
 /**
- * 채팅/댓글용 아바타 (작은 사이즈)
+ * 채팅/댓글용 아바타 (작은 사이즈, 현재는 디폴트로 통일)
  */
 export const generateSmallAvatar = (userId: string | number): string => {
   return generateAvatar(userId, 'funEmoji', 48);
@@ -88,27 +91,26 @@ export const generateSmallAvatar = (userId: string | number): string => {
 
 /**
  * 상점 아이템용 아바타 (아이템 타입별 다른 스타일)
- *
- * @param itemId - 아이템 ID
- * @param itemType - 아이템 타입 ('AVATAR' | 'EFFECT' | 기타)
- * @returns SVG 데이터 URI
+ * - 아이템의 경우 각각 개성이 있어야 하므로 DiceBear 생성을 유지합니다.
  */
 export const generateItemAvatar = (
   itemId: string | number,
   itemType: string = 'AVATAR'
 ): string => {
-  // 아이템 타입별로 다른 스타일 적용
   const style: AvatarStyle = itemType === 'AVATAR' ? 'avataaars' :
                               itemType === 'EFFECT' ? 'pixelArt' :
                               'bottts';
-  return generateAvatar(itemId, style, 200);
+  
+  // 아이템은 여전히 DiceBear를 사용하여 고유하게 보이도록 합니다.
+  const avatar = createAvatar(AVATAR_STYLES[style] as any, {
+    seed: `item-${itemId}`,
+    size: 200,
+  });
+  return avatar.toDataUri();
 };
 
 /**
  * imageUrl 값을 파싱하여 실제 표시할 이미지 또는 특수 아바타 이미지를 반환
- * - 'dicebear:{style}:{seed}' 형태면 해당 명세대로 아바타 생성 (seed 그대로 사용)
- * - 일반 URL 또는 이모지면 원본 반환
- * - 없으면 fallbackId 기반으로 자동 생성
  */
 export const parseDicebearUrl = (
   imageUrl: string | null | undefined,
@@ -122,7 +124,6 @@ export const parseDicebearUrl = (
       const styleStr = parts[1] as AvatarStyle;
       const seed = parts.slice(2).join(':');
       const validStyle = AVATAR_STYLES[styleStr] ? styleStr : 'funEmoji';
-      // 자체 커스텀 시드이므로 daypoo- 접두사 없이 그대로 생성
       const avatar = createAvatar(AVATAR_STYLES[validStyle] as any, {
         seed: seed,
         size,
@@ -133,6 +134,12 @@ export const parseDicebearUrl = (
   
   if (imageUrl && imageUrl.trim() !== '') {
     return imageUrl; // URL or Emoji
+  }
+
+  // 폴백이 'USER'인 경우만 디폴트 실루엣 반환 (유저 프로필 용도)
+  // 'AVATAR' 타입의 상점 아이템인 경우는 아래의 generateItemAvatar를 타도록 함
+  if (fallbackType === 'USER') {
+    return DEFAULT_AVATAR_URL;
   }
 
   return generateItemAvatar(fallbackId, fallbackType);

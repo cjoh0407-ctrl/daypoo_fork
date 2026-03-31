@@ -64,7 +64,7 @@ export function HeroSection({ onCtaClick, openAuth }: HeroSectionProps) {
 
   return (
     <>
-      <section ref={ref} className="relative min-h-screen flex items-center justify-center bg-[#111E18] overflow-hidden px-4 sm:px-8 py-20 sm:py-32">
+      <section ref={ref} className="relative min-h-screen flex items-center justify-center bg-[#111E18] overflow-hidden px-4 sm:px-8 pt-32 pb-20 sm:pt-32 sm:pb-32">
         {/* Dynamic Background Noise */}
         <div className="absolute inset-0 opacity-[0.15] mix-blend-color-dodge pointer-events-none">
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-emerald-400/20 blur-[150px] rounded-full" />

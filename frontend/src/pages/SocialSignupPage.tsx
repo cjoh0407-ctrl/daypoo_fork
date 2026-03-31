@@ -56,7 +56,7 @@ export function SocialSignupPage() {
 
     setIsSubmitting(true);
     try {
-      const response = await api.post('/auth/social/signup', {
+      const response = await api.post<any>('/auth/social/signup', {
         registrationToken: registrationToken, // camelCase로 수정
         nickname: nickname
       });

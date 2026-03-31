@@ -2079,7 +2079,8 @@ const StoreView = ({ setActiveTab }: { setActiveTab: (tab: AdminTab) => void }) 
         });
       }
 
-      alert('기본 아이템 동기화가 완료되었습니다.');
+      alert('기본 아이템 동기화가 완료되었습니다.\n마이페이지의 [상점] 탭에서 확인하실 수 있습니다.');
+      setSyncingStore(false);
       fetchItems();
     } catch (error) {
       console.error('동기화 실패:', error);
@@ -2129,13 +2130,17 @@ const StoreView = ({ setActiveTab }: { setActiveTab: (tab: AdminTab) => void }) 
       const testItems: AdminItemCreateRequest[] = [];
 
       // 1. 아바타 10개
-      avatarItems.forEach((item) => {
+      const avatarStyles: AvatarStyle[] = ['avataaars', 'bottts', 'lorelei', 'pixelArt', 'funEmoji'];
+      avatarItems.forEach((item, index) => {
+        const randomStyle = avatarStyles[Math.floor(Math.random() * avatarStyles.length)];
+        const randomSeed = `test-avatar-${index}-${Math.random().toString(36).substring(7)}`;
+        
         testItems.push({
           name: item.name,
           type: 'AVATAR',
           price: Math.floor(Math.random() * 20) * 100 + 500,
           description: `[헤드] ${item.desc}`,
-          imageUrl: null, // DiceBear 사용
+          imageUrl: `dicebear:${randomStyle}:${randomSeed}`, 
         });
       });
 
@@ -2156,7 +2161,7 @@ const StoreView = ({ setActiveTab }: { setActiveTab: (tab: AdminTab) => void }) 
         });
       }
 
-      alert('20개의 다채로운 테스트 데이터 생성이 완료되었습니다!');
+      alert('20개의 다채롭고 고유한 이미지를 가진 테스트 데이터 생성이 완료되었습니다!');
       fetchItems();
     } catch (error) {
       console.error('테스트 데이터 생성 실패:', error);

@@ -124,60 +124,94 @@ export const MapView = forwardRef<MapViewHandle, MapViewProps>(
     }, []);
 
     useEffect(() => {
-      if (!window.kakao || !mapContainerRef.current || mapRef.current) return;
+      if (!mapContainerRef.current || mapRef.current) return;
 
-      window.kakao.maps.load(() => {
-        const center = new window.kakao.maps.LatLng(pos.lat, pos.lng);
-        const map = new window.kakao.maps.Map(mapContainerRef.current, { center, level: 4 });
-        mapRef.current = map;
+      const initMap = () => {
+        if (!window.kakao?.maps) {
+          setTimeout(initMap, 100);
+          return;
+        }
 
-        const clusterer = new window.kakao.maps.MarkerClusterer({
-          map,
-          averageCenter: true,
-          minLevel: 5,
-          gridSize: 70,
-          styles: [
-            {
-              width: '60px',
-              height: '60px',
-              background: 'rgba(27, 67, 50, 0.9)',
-              borderRadius: '50%',
-              color: '#fff',
-              textAlign: 'center',
-              fontWeight: 'bold',
-              lineHeight: '60px',
-              border: '3px solid rgba(255,255,255,0.8)',
-              boxShadow: '0 8px 16px rgba(0,0,0,0.3)',
-              fontSize: '16px',
-            },
-          ],
+        window.kakao.maps.load(() => {
+          if (!mapContainerRef.current) return;
+          
+          const center = new window.kakao.maps.LatLng(pos.lat, pos.lng);
+          const map = new window.kakao.maps.Map(mapContainerRef.current, {
+            center,
+            level: 4,
+            draggable: true,
+            scrollwheel: true,
+          });
+
+          map.setDraggable(true);
+          map.setZoomable(true);
+          mapRef.current = map;
+
+          const clusterer = new window.kakao.maps.MarkerClusterer({
+            map,
+            averageCenter: true,
+            minLevel: 5,
+            gridSize: 70,
+            styles: [
+              {
+                width: '60px',
+                height: '60px',
+                background: 'rgba(27, 67, 50, 0.9)',
+                borderRadius: '50%',
+                color: '#fff',
+                textAlign: 'center',
+                fontWeight: 'bold',
+                lineHeight: '60px',
+                border: '3px solid rgba(255,255,255,0.8)',
+                boxShadow: '0 8px 16px rgba(0,0,0,0.3)',
+                fontSize: '16px',
+              },
+            ],
+          });
+          clustererRef.current = clusterer;
+
+          window.kakao.maps.event.addListener(map, 'idle', updateBounds);
+          window.kakao.maps.event.addListener(map, 'zoom_changed', updateMarkersVisibility);
+
+          window.kakao.maps.event.addListener(map, 'tilesloaded', () => {
+            map.setDraggable(true);
+            map.setZoomable(true);
+          });
+
+          updateBounds();
+
+          requestAnimationFrame(() => {
+            setTimeout(() => {
+              if (mapRef.current) {
+                mapRef.current.relayout();
+                mapRef.current.setDraggable(true);
+                mapRef.current.setZoomable(true);
+              }
+            }, 100);
+          });
+
+          const myOverlay = new window.kakao.maps.CustomOverlay({
+            position: center,
+            content: `
+              <div style="display:flex;flex-direction:column;align-items:center;">
+                <div style="
+                  width:40px;height:40px;border-radius:50%;
+                  background:linear-gradient(135deg,#3B82F6,#60a5fa);
+                  display:flex;align-items:center;justify-content:center;
+                  font-size:22px;
+                  box-shadow:0 0 0 4px rgba(59,130,246,0.25),0 4px 14px rgba(59,130,246,0.4);
+                  border:2.5px solid #fff;
+                  animation:mypulse 2s infinite;
+                ">🧑</div>
+              </div>`,
+            zIndex: 10,
+          });
+          myOverlay.setMap(map);
+          myOverlayRef.current = myOverlay;
         });
-        clustererRef.current = clusterer;
+      };
 
-        window.kakao.maps.event.addListener(map, 'idle', updateBounds);
-        window.kakao.maps.event.addListener(map, 'zoom_changed', updateMarkersVisibility);
-
-        updateBounds();
-
-        const myOverlay = new window.kakao.maps.CustomOverlay({
-          position: center,
-          content: `
-            <div style="display:flex;flex-direction:column;align-items:center;">
-              <div style="
-                width:40px;height:40px;border-radius:50%;
-                background:linear-gradient(135deg,#3B82F6,#60a5fa);
-                display:flex;align-items:center;justify-content:center;
-                font-size:22px;
-                box-shadow:0 0 0 4px rgba(59,130,246,0.25),0 4px 14px rgba(59,130,246,0.4);
-                border:2.5px solid #fff;
-                animation:mypulse 2s infinite;
-              ">🧑</div>
-            </div>`,
-          zIndex: 10,
-        });
-        myOverlay.setMap(map);
-        myOverlayRef.current = myOverlay;
-      });
+      initMap();
 
       return () => {
         delete window.setSelectedToiletGlobal;
@@ -193,7 +227,6 @@ export const MapView = forwardRef<MapViewHandle, MapViewProps>(
     useEffect(() => {
       if (!mapRef.current || !clustererRef.current) return;
 
-      // 새 마커를 생성하지 않더라도 콜백은 항상 최신 버전으로 업데이트
       window.setSelectedToiletGlobal = onSelectToilet;
 
       const level = mapRef.current.getLevel();
@@ -210,10 +243,8 @@ export const MapView = forwardRef<MapViewHandle, MapViewProps>(
           toRemove.push(item.marker);
           markersRef.current.delete(id);
         } else {
-          // 기존 마커의 isVisited 상태가 변경되었는지 확인
           const updatedToilet = toiletsToRender.find((t) => t.id === id);
           if (updatedToilet && updatedToilet.isVisited) {
-            // 방문 완료된 화장실은 마커를 재생성
             item.overlay.setMap(null);
             toRemove.push(item.marker);
             markersRef.current.delete(id);
@@ -225,7 +256,6 @@ export const MapView = forwardRef<MapViewHandle, MapViewProps>(
 
       const newMarkers: any[] = [];
       const updateIds = new Set(toUpdate.map((t) => t.id));
-      // 새 마커와 업데이트된 마커 생성 (중복 방지: filter에서 updateIds 제외 후 toUpdate와 합산)
       [
         ...toiletsToRender.filter((t) => !markersRef.current.has(t.id) && !updateIds.has(t.id)),
         ...toUpdate,
@@ -251,8 +281,11 @@ export const MapView = forwardRef<MapViewHandle, MapViewProps>(
           willChange: 'transform',
           transform: 'translateZ(0)',
           backfaceVisibility: 'hidden',
+          touchAction: 'pan-x pan-y pinch-zoom',
         }}
       />
     );
   },
 );
+
+MapView.displayName = 'MapView';

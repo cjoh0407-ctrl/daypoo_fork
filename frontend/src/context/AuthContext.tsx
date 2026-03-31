@@ -60,7 +60,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     try {
       console.log('[AuthContext] Fetching user info from /auth/me...');
-      const userData = await api.get('/auth/me');
+      const userData = await api.get<any>('/auth/me');
       console.log('[AuthContext] ✅ User data received:', {
         email: userData.email,
         nickname: userData.nickname,
