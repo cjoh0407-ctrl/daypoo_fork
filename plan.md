@@ -1,44 +1,40 @@
-# 🚀 배포 오류 해결 및 자동화 최적화 계획
+# 🛠 어드민 페이지 빌드 오류 수정 계획
 
-현재 AWS 배포 과정에서 발생한 `docker-compose` 명령어 부재 문제를 해결하고, 전체적인 배포 안정성을 높이기 위한 계획입니다.
+제공해주신 가이드에 따라 `AdminPage.tsx`와 `admin.ts`에서 발생하는 빌드 환경의 여러 오류(import 누락, 필드 누락, 변수 미선언 등)를 수정하겠습니다.
 
 ## 🎯 목표
+- `lucide-react` 아이콘 `X` 임포트 추가
+- `DailyStat` 및 `AdminStatsResponse` 인터페이스 필드 보완
+- `AdminPage.tsx` 내 미선언 변수 선언 및 타입 추론 오류 해결
+- 전체 빌드 오류 제거 및 어드민 대시보드 정상 작동 확인
 
-- GitHub Actions에서 발생한 `docker-compose: command not found` 오류 해결
-- 최신 Docker Compose V2(`docker compose`)로 전환
-- 배포 스크립트의 안정성 강화 (set -e 도입 등)
-- 최종 배포 후 사이트 정상 작동(504 에러 해결) 확인
+## 🛠 분석 및 수정 제안
 
-## 🛠 분석 결과
+### 1. AdminPage.tsx (페이지 컴포넌트)
+- [ ] **X 아이콘 임포트**: `lucide-react`에서 `X` 아이콘 추가
+- [ ] **totalUsersCount 선언**: `DashboardView` 내에서 `stats?.totalUsers || 0` 값을 할당하여 사용
+- [ ] **testItems 타입 지정**: `AdminItemCreateRequest[]`로 타입 명시하여 추론 오류 해결
 
-- **현상:** GitHub Actions Job 3 (Deploy to EC2)은 성공으로 뜨지만, 실제 EC2 내부 로그에서 `docker-compose` 명령어를 찾지 못해 컨테이너가 갱신되지 않음
-- **원인:** 최신 Docker 환경(EC2)에서는 `docker-compose`(독립 바이너리) 대신 Docker 플러그인 형태인 `docker compose`를 권장하며, 기존 명령어가 설치되어 있지 않을 가능성이 높음
-- **결과:** 이전 버전의 컨테이너가 떠 있거나, 컨테이너가 죽은 상태에서 갱신되지 않아 CloudFront에서 504 Gateway Timeout 발생
+### 2. admin.ts (타입 정의 파일)
+- [ ] **DailyStat 수정**: `visits?: number` 필드 추가 (백엔드 데이터 대응)
+- [ ] **AdminStatsResponse 수정**: `userDistribution` 인터페이스 추가 및 옵셔널 필드로 정의
 
 ## 📋 작업 단계
 
-### Phase 1: 워크플로우 파일 수정 (`.github/workflows/deploy-aws.yml`)
+### Phase 1: 타입 정의 수정 (`admin.ts`)
+- `DailyStat` 및 `AdminStatsResponse` 인터페이스 업데이트
 
-- [ ] 실행 스크립트 상단에 `set -e` 추가 (명령어 실패 시 즉시 중단 및 에러 보고)
-- [ ] 모든 `docker-compose` 명령어를 `docker compose`로 수정
-- [ ] 인코딩 문제 방지를 위한 `printf` 구문 점검
+### Phase 2: 페이지 컴포넌트 수정 (`AdminPage.tsx`)
+- 임포트 목록 수정
+- `DashboardView` 및 `AdminTestView` (또는 관련 함수) 내 변수 및 타입 수정
 
-### Phase 2: 배포 실행 및 모니터링
-
-- [ ] 수정한 워크플로우를 `main` 브랜치에 푸시
-- [ ] GitHub Actions 실행 상태 및 상세 로그 모니터링
-- [ ] `docker compose pull` 및 `up -d` 성공 여부 확인
-
-### Phase 3: 최종 검증 (브라우저 확인)
-
-- [ ] 배포 URL(`https://d18knl7kbyubx3.cloudfront.net`) 접속
-- [ ] 푸터(Footer) 디자인 수정 사항 반영 여부 확인
-- [ ] 랭킹 페이지 등 API 호출이 504에서 벗어나 정상 데이터(200)를 수신하는지 확인
+### Phase 3: 검증
+- 수정 사항이 정상적으로 반영되었는지 파일 확인
+- 가능할 경우 로컬 빌드 테스트 또는 정적 분석 체크
 
 ## ⚠️ 주의사항
-
-- 배포 중 다운타임 발생 가능성이 있으나, 수 초 내외로 예상됩니다.
-- DB 연결 오류 등 2차적인 장애가 있는지 배포 로그를 세밀히 관찰하겠습니다.
+- 대규모 파일이므로(143KB 이상) 수정 시 `multi_replace_file_content`를 사용하여 정확한 라인 범위를 타겟팅하겠습니다.
+- 기존 로직을 해치지 않도록 주의하겠습니다.
 
 ---
 [✅ 규칙을 잘 수행했습니다.]

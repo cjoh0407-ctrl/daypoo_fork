@@ -148,6 +148,7 @@ export interface DailyStat {
   users: number;
   inquiries: number;
   sales: number;
+  visits?: number;
 }
 
 export interface AdminStatsResponse {
@@ -157,6 +158,7 @@ export interface AdminStatsResponse {
   todayNewUsers: number;
   todayInquiries: number;
   weeklyTrend: DailyStat[];
+  userDistribution?: { pro: number; basic: number; free: number };
 }
 
 // ========== System/Sync Management ==========

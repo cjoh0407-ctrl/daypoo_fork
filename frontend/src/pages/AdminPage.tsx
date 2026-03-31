@@ -32,6 +32,7 @@ import {
   Database,
   Sparkles,
   Lock,
+  X,
 } from 'lucide-react';
 import WaveButtonComponent from '../components/WaveButton';
 import { generateItemAvatar, parseDicebearUrl } from '../utils/avatar';
@@ -72,6 +73,7 @@ import {
   AdminTitleResponse,
   AdminTitleCreateRequest,
   AdminTitleUpdateRequest,
+  AdminItemCreateRequest,
   AchievementType,
   SyncStatusResponse,
 } from '../types/admin';
@@ -246,6 +248,7 @@ const DashboardView = ({
   loading: boolean;
   setActiveTab: (tab: AdminTab) => void;
 }) => {
+  const totalUsersCount = stats?.totalUsers || 0;
   const [liveUsers, setLiveUsers] = useState(342);
 
   useEffect(() => {
@@ -2123,7 +2126,7 @@ const StoreView = ({ setActiveTab }: { setActiveTab: (tab: AdminTab) => void }) 
         { emoji: '🌀', name: '회오리 효과', desc: '빙글빙글 도는 회오리' },
       ];
 
-      const testItems = [];
+      const testItems: AdminItemCreateRequest[] = [];
 
       // 1. 아바타 10개
       avatarItems.forEach((item) => {

@@ -1,5 +1,19 @@
 # 프론트엔드 변경 이력 (Frontend Modification History)
 
+## 2026-03-31 12:02:00
+
+- **작업 내용:** 어드민 페이지(AdminPage.tsx) 빌드 오류 수정 및 타입 시스템 안정화
+- **상세 변경 내역:**
+  - **타입 정의 수정 (`frontend/src/types/admin.ts`):**
+    - `DailyStat` 인터페이스에 `visits?: number` 필드를 추가했습니다.
+    - `AdminStatsResponse` 인터페이스에 `userDistribution` 필드를 추가하여 백엔드 통계 데이터 대응을 준비했습니다.
+  - **페이지 컴포넌트 수정 (`frontend/src/pages/AdminPage.tsx`):**
+    - `lucide-react`에서 누락된 `X` 아이콘 임포트를 추가했습니다.
+    - `DashboardView` 내에서 선언 없이 사용되던 `totalUsersCount` 변수를 추가했습니다.
+    - `handleGenerateTestData` 내 `testItems` 배열에 `AdminItemCreateRequest[]` 타입을 명시적으로 지정하여 타입 추론 오류를 해결했습니다.
+    - `AdminItemCreateRequest` 타입 임포트를 추가했습니다.
+- **결과/영향:** 어드민 대시보드와 관련된 주요 빌드 단계의 TypeScript 오류가 모두 해결되었으며, 향후 백엔드 데이터와의 연동성이 향상되었습니다.
+
 ## 2026-03-31 11:50:00
 
 - **작업 내용:** 배포 자동화(GitHub Actions) 스크립트 오류 수정 및 배포 안정화
