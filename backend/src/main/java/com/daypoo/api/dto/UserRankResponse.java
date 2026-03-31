@@ -11,4 +11,5 @@ public record UserRankResponse(
     int level,
     long score,
     long rank,
-    List<EquippedItemResponse> equippedItems) {}
+    List<EquippedItemResponse> equippedItems,
+    String equippedAvatarUrl) {}

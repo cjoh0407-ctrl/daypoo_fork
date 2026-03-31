@@ -240,7 +240,16 @@ public class RankingService {
                   if (user == null) return null;
 
                   Long rank = redisTemplate.opsForZSet().reverseRank(key, userId.toString());
-                  String titleName = titleMap.getOrDefault(user.getEquippedTitleId(), "새내기 쾌변러");
+                  String titleName = user.getEquippedTitleId() != null
+                      ? titleMap.get(user.getEquippedTitleId())
+                      : null;
+
+                  List<EquippedItemResponse> equippedItems = equippedItemsMap.getOrDefault(userId, List.of());
+                  String equippedAvatarUrl = equippedItems.stream()
+                      .filter(item -> "AVATAR".equals(item.type()))
+                      .map(EquippedItemResponse::icon)
+                      .findFirst()
+                      .orElse(null);
 
                   return UserRankResponse.builder()
                       .userId(userId)
@@ -249,7 +258,8 @@ public class RankingService {
                       .level(user.getLevel())
                       .score(tuple.getScore() != null ? tuple.getScore().longValue() : 0L)
                       .rank((rank != null ? rank : 0L) + 1L)
-                      .equippedItems(equippedItemsMap.getOrDefault(userId, List.of()))
+                      .equippedItems(equippedItems)
+                      .equippedAvatarUrl(equippedAvatarUrl)
                       .build();
                 })
             .filter(Objects::nonNull)
@@ -260,7 +270,16 @@ public class RankingService {
       Long myRankRaw = redisTemplate.opsForZSet().reverseRank(key, myUser.getId().toString());
       if (myRankRaw != null) {
         Double myScoreRaw = redisTemplate.opsForZSet().score(key, myUser.getId().toString());
-        String myTitleName = titleMap.getOrDefault(myUser.getEquippedTitleId(), "새내기 쾌변러");
+        String myTitleName = myUser.getEquippedTitleId() != null
+            ? titleMap.get(myUser.getEquippedTitleId())
+            : null;
+
+        List<EquippedItemResponse> myEquippedItems = equippedItemsMap.getOrDefault(myUser.getId(), List.of());
+        String myEquippedAvatarUrl = myEquippedItems.stream()
+            .filter(item -> "AVATAR".equals(item.type()))
+            .map(EquippedItemResponse::icon)
+            .findFirst()
+            .orElse(null);
 
         myRank =
             UserRankResponse.builder()
@@ -270,7 +289,8 @@ public class RankingService {
                 .level(myUser.getLevel())
                 .score(myScoreRaw != null ? myScoreRaw.longValue() : 0L)
                 .rank(myRankRaw + 1L)
-                .equippedItems(List.of())
+                .equippedItems(myEquippedItems)
+                .equippedAvatarUrl(myEquippedAvatarUrl)
                 .build();
       }
     }
