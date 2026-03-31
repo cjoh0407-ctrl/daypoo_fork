@@ -5,7 +5,7 @@ import { UserResponse } from '../types/api';
 interface AuthContextType {
   user: UserResponse | null;
   loading: boolean;
-  login: (accessToken: string, refreshToken: string) => Promise<void>;
+  login: (accessToken: string, refreshToken: string, stayLoggedIn?: boolean) => Promise<void>;
   logout: () => Promise<void>;
   deleteMe: (password: string) => Promise<void>;
   refreshUser: () => Promise<void>;
@@ -18,9 +18,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<UserResponse | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const isTokenExpiredByTime = useCallback(() => {
+    const expiresAt = localStorage.getItem('tokenExpiresAt');
+    if (!expiresAt) return false; // 만료 시간 없으면 (로그인 유지 미사용) 세션 기반
+    return Date.now() > Number(expiresAt);
+  }, []);
+
+  const getToken = useCallback((key: string) => {
+    // 로그인 유지 만료 체크
+    if (isTokenExpiredByTime()) {
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
+      localStorage.removeItem('tokenExpiresAt');
+      sessionStorage.removeItem('accessToken');
+      sessionStorage.removeItem('refreshToken');
+      return null;
+    }
+    return localStorage.getItem(key) || sessionStorage.getItem(key);
+  }, [isTokenExpiredByTime]);
+
+  const removeTokens = useCallback(() => {
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
+    localStorage.removeItem('tokenExpiresAt');
+    sessionStorage.removeItem('accessToken');
+    sessionStorage.removeItem('refreshToken');
+  }, []);
+
   const refreshUser = useCallback(async () => {
     setLoading(true);
-    const token = localStorage.getItem('accessToken');
+    const token = getToken('accessToken');
 
     console.log('[AuthContext] refreshUser called. Has token:', !!token);
 
@@ -47,8 +74,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         status: err.response?.status
       });
       // 토큰이 유효하지 않으면 로그아웃 처리
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('refreshToken');
+      removeTokens();
       setUser(null);
     } finally {
       setLoading(false);
@@ -64,9 +90,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // SSE 로직은 별도 Subscriber 컴포넌트로 이동함
   }, []);
 
-  const login = async (accessToken: string, refreshToken: string) => {
-    localStorage.setItem('accessToken', accessToken);
-    localStorage.setItem('refreshToken', refreshToken);
+  const login = async (accessToken: string, refreshToken: string, stayLoggedIn = false) => {
+    // 기존 토큰 정리
+    removeTokens();
+    if (stayLoggedIn) {
+      // 로그인 유지: localStorage에 저장 + 3일 만료 시간 설정
+      const THREE_DAYS_MS = 3 * 24 * 60 * 60 * 1000;
+      localStorage.setItem('accessToken', accessToken);
+      localStorage.setItem('refreshToken', refreshToken);
+      localStorage.setItem('tokenExpiresAt', String(Date.now() + THREE_DAYS_MS));
+    } else {
+      // 로그인 유지 안 함: sessionStorage (브라우저 닫으면 삭제)
+      sessionStorage.setItem('accessToken', accessToken);
+      sessionStorage.setItem('refreshToken', refreshToken);
+    }
     await refreshUser();
   };
 
@@ -77,8 +114,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.warn('Backend logout failed or not implemented:', err);
       });
     } finally {
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('refreshToken');
+      removeTokens();
       setUser(null);
     }
   }, []);
