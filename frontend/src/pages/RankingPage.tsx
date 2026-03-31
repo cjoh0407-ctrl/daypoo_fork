@@ -801,20 +801,100 @@ export function RankingPage({ openAuth }: { openAuth: (mode: 'login' | 'signup')
                   transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
                 >
                   {tab === 'local' && !regionName ? (
-                    <div className="flex flex-col items-center justify-center py-20 px-6 bg-white/50 rounded-3xl border border-gray-100">
-                      <MapPin size={48} className="text-gray-300 mb-4" />
-                      <h3 className="text-xl font-black text-gray-800 mb-2">홈 지역이 설정되지 않았습니다</h3>
-                      <p className="text-sm text-gray-500 text-center mb-6 max-w-md">
-                        우리 동네 랭킹을 확인하려면 마이페이지에서 홈 지역을 설정해주세요.
-                      </p>
-                      <WaveButtonComponent
-                        onClick={() => window.location.href = '/mypage?tab=settings'}
-                        variant="primary"
-                        size="md"
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      className="relative flex flex-col items-center justify-center py-16 px-6 rounded-[40px] overflow-hidden"
+                      style={{
+                        background: 'linear-gradient(135deg, rgba(27,67,50,0.05) 0%, rgba(232,168,56,0.08) 100%)',
+                        border: '2px solid rgba(27,67,50,0.1)',
+                      }}
+                    >
+                      {/* 배경 장식 */}
+                      <div className="absolute top-0 right-0 w-32 h-32 bg-[#E8A838] opacity-5 rounded-full blur-3xl" />
+                      <div className="absolute bottom-0 left-0 w-40 h-40 bg-[#1B4332] opacity-5 rounded-full blur-3xl" />
+
+                      {/* 메인 아이콘 */}
+                      <motion.div
+                        animate={{
+                          y: [0, -10, 0],
+                        }}
+                        transition={{
+                          duration: 2,
+                          repeat: Infinity,
+                          ease: "easeInOut"
+                        }}
+                        className="relative mb-6 z-10"
                       >
-                        설정하러 가기
-                      </WaveButtonComponent>
-                    </div>
+                        <div className="relative flex items-center justify-center">
+                          {/* 배경 원 */}
+                          <div className="absolute w-24 h-24 rounded-full bg-gradient-to-br from-[#1B4332]/10 to-[#E8A838]/10 blur-xl" />
+                          {/* 아이콘 컨테이너 */}
+                          <div className="relative w-20 h-20 rounded-full bg-white shadow-2xl flex items-center justify-center border-4 border-[#E8A838]/20">
+                            <MapPin size={40} className="text-[#1B4332]" strokeWidth={2.5} />
+                          </div>
+                          {/* 반짝이는 별 */}
+                          <motion.div
+                            animate={{
+                              scale: [1, 1.2, 1],
+                              opacity: [0.5, 1, 0.5],
+                            }}
+                            transition={{
+                              duration: 1.5,
+                              repeat: Infinity,
+                              ease: "easeInOut"
+                            }}
+                            className="absolute -top-2 -right-2"
+                          >
+                            <Star size={20} fill="#E8A838" className="text-[#E8A838]" />
+                          </motion.div>
+                        </div>
+                      </motion.div>
+
+                      {/* 타이틀 */}
+                      <h3 className="text-2xl sm:text-3xl font-black mb-3 relative z-10"
+                        style={{
+                          background: 'linear-gradient(135deg, #1B4332 0%, #2D6A4F 50%, #E8A838 100%)',
+                          WebkitBackgroundClip: 'text',
+                          WebkitTextFillColor: 'transparent',
+                          backgroundClip: 'text',
+                        }}
+                      >
+                        우리 동네 활동이 필요해요!
+                      </h3>
+
+                      {/* 설명 */}
+                      <p className="text-sm sm:text-base text-gray-600 text-center mb-2 max-w-md relative z-10 leading-relaxed">
+                        <span className="font-bold text-[#1B4332]">화장실 방문 인증</span>을 하면<br className="sm:hidden" />
+                        우리 동네 랭킹에 참여할 수 있어요
+                      </p>
+                      <p className="text-xs text-gray-400 mb-8 relative z-10">
+                        💪 지금 바로 시작하고 1등에 도전하세요!
+                      </p>
+
+                      {/* CTA 버튼 */}
+                      <div className="flex flex-col sm:flex-row gap-3 relative z-10">
+                        <WaveButtonComponent
+                          onClick={() => window.location.href = '/map'}
+                          variant="primary"
+                          size="lg"
+                          className="shadow-xl"
+                        >
+                          <span className="flex items-center gap-2">
+                            <MapPin size={18} />
+                            방문 인증하러 가기
+                          </span>
+                        </WaveButtonComponent>
+                      </div>
+
+                      {/* 하단 안내 */}
+                      <div className="mt-8 p-4 rounded-2xl bg-white/60 backdrop-blur-sm border border-gray-100 relative z-10">
+                        <p className="text-xs text-gray-500 text-center">
+                          💡 <span className="font-bold">TIP:</span> 지도에서 가까운 화장실을 찾아 방문 인증을 완료하면<br className="hidden sm:block" />
+                          자동으로 우리 동네 랭킹에 등록됩니다
+                        </p>
+                      </div>
+                    </motion.div>
                   ) : users.length === 0 && !loading ? (
                     <div className="flex flex-col items-center justify-center py-20 px-6 bg-white/50 rounded-3xl border border-gray-100">
                       <Trophy size={48} className="text-gray-300 mb-4" />

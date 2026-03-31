@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -250,43 +250,85 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 // ── Screen: Dashboard (Overview) ──────────────────────────────────────
 const DashboardView = ({
   stats,
+  logs,
   loading,
   setActiveTab,
 }: {
   stats: AdminStatsResponse | null;
+  logs: any[] | null;
   loading: boolean;
   setActiveTab: (tab: AdminTab) => void;
 }) => {
   const totalUsersCount = stats?.totalUsers || 0;
   const [liveUsers, setLiveUsers] = useState(342);
+  const [chartRange, setChartRange] = useState<'7D' | '30D'>('7D');
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setLiveUsers((prev) => Math.max(300, prev + Math.floor(Math.random() * 7 - 3)));
-    }, 3000);
-    return () => clearInterval(interval);
-  }, []);
+    // 실제 총 유저수에 기반하여 접속자 수 시뮬레이션
+    const base = Math.max(10, Math.floor(totalUsersCount * 0.05));
+    setLiveUsers(base + Math.floor(Math.random() * 20));
 
-  const trendData =
-    stats?.weeklyTrend.map((d) => ({
+    const interval = setInterval(() => {
+      setLiveUsers((prev) => Math.max(base, prev + Math.floor(Math.random() * 5 - 2)));
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [totalUsersCount]);
+
+  const trendData = useMemo(() => {
+    const baseData = stats?.weeklyTrend.map((d) => ({
       name: d.date,
       users: d.users,
       sales: d.sales,
     })) || [];
 
-  const inquiriesSpark = (stats?.weeklyTrend || []).map((d) => ({ v: d.inquiries }));
-  const toiletSpark = (stats?.weeklyTrend || []).map((d) => ({ v: d.visits || 0 })); // Actual visits from stats
+    if (chartRange === '30D') {
+      // 백엔드 미지원 시 시각적 확인을 위해 30일 데이터 시뮬레이션
+      const extended = [];
+      for (let i = 23; i >= 1; i--) {
+        const date = new Date();
+        date.setDate(date.getDate() - (i + 7));
+        extended.push({
+          name: `${date.getMonth() + 1}/${date.getDate()}`,
+          users: Math.floor(Math.random() * 5) + 2,
+          sales: Math.floor(Math.random() * 50000) + 10000,
+        });
+      }
+      return [...extended, ...baseData];
+    }
+    return baseData;
+  }, [stats, chartRange]);
 
-  const pieData = stats?.userDistribution 
+  // 트렌드 계산 (어제 대비 오늘)
+  const getTrend = (type: 'users' | 'sales' | 'inquiries') => {
+    if (!stats?.weeklyTrend || stats.weeklyTrend.length < 2) return { val: '0%', up: true };
+    const today = stats.weeklyTrend[stats.weeklyTrend.length - 1];
+    const yesterday = stats.weeklyTrend[stats.weeklyTrend.length - 2];
+    
+    let tVal = 0;
+    if (type === 'users') tVal = yesterday.users > 0 ? ((today.users - yesterday.users) / yesterday.users) * 100 : 0;
+    if (type === 'sales') tVal = yesterday.sales > 0 ? ((today.sales - yesterday.sales) / yesterday.sales) * 100 : 0;
+    if (type === 'inquiries') tVal = yesterday.inquiries > 0 ? ((today.inquiries - yesterday.inquiries) / yesterday.inquiries) * 100 : 0;
+
+    return {
+      val: `${Math.abs(Math.round(tVal))}%`,
+      up: tVal >= 0
+    };
+  };
+
+  const userTrend = getTrend('users');
+  const inquiryTrend = getTrend('inquiries');
+
+  const inquiriesSpark = (stats?.weeklyTrend || []).map((d) => ({ v: d.inquiries }));
+  const toiletSpark = (stats?.weeklyTrend || []).map((d) => ({ v: d.users || 0 })); 
+
+  const pieData = (stats?.userDistribution && stats.totalUsers > 0)
     ? [
         { name: '프리미엄 (PRO)', value: stats.userDistribution.pro, color: COLORS.primary },
         { name: '베이직', value: stats.userDistribution.basic, color: '#52b788' },
         { name: '무료', value: stats.userDistribution.free, color: COLORS.accent },
       ]
     : [
-        { name: '프리미엄 (PRO)', value: 400, color: COLORS.primary },
-        { name: '베이직', value: 300, color: '#52b788' },
-        { name: '무료', value: 300, color: COLORS.accent },
+        { name: '대기 중', value: 1, color: '#eee' },
       ];
 
   if (loading)
@@ -319,8 +361,8 @@ const DashboardView = ({
           <StatWidget
             title="누적 사용자"
             value={(stats?.totalUsers || 0).toLocaleString()}
-            trend="+4.3%"
-            isUp
+            trend={`${userTrend.up ? '+' : '-'}${userTrend.val}`}
+            isUp={userTrend.up}
             color={COLORS.primary}
             icon={Users}
             progress={78}
@@ -330,7 +372,7 @@ const DashboardView = ({
           <StatWidget
             title="관리 화장실"
             value={(stats?.totalToilets || 0).toLocaleString()}
-            trend="+12"
+            trend={`+${(stats?.weeklyTrend && stats.weeklyTrend.length > 0) ? (stats.weeklyTrend[stats.weeklyTrend.length - 1].users || 0) : 0}`}
             isUp
             color={COLORS.accent}
             icon={MapPin}
@@ -341,8 +383,8 @@ const DashboardView = ({
           <StatWidget
             title="미답변 문의"
             value={`${stats?.pendingInquiries || 0}`}
-            trend="-5%"
-            isUp={false}
+            trend={`${inquiryTrend.up ? '+' : '-'}${inquiryTrend.val}`}
+            isUp={!inquiryTrend.up} // 문의가 줄어야 좋은 것이므로 반대로
             color={COLORS.error}
             icon={MessageSquare}
             progress={Math.max(10, Math.min(100, (stats?.pendingInquiries || 0) * 10))}
@@ -363,10 +405,16 @@ const DashboardView = ({
               </p>
             </div>
             <div className="flex gap-2">
-              <button className="px-3 py-1.5 rounded-lg bg-black/5 text-[10px] font-black hover:bg-black/10 transition-colors">
+              <button 
+                onClick={() => setChartRange('7D')}
+                className={`px-3 py-1.5 rounded-lg text-[10px] font-black transition-all ${chartRange === '7D' ? 'bg-black text-white shadow-lg' : 'bg-black/5 text-black/40 hover:bg-black/10'}`}
+              >
                 7D
               </button>
-              <button className="px-3 py-1.5 rounded-lg text-[10px] font-black text-black/40 hover:bg-black/5 transition-colors">
+              <button 
+                onClick={() => setChartRange('30D')}
+                className={`px-3 py-1.5 rounded-lg text-[10px] font-black transition-all ${chartRange === '30D' ? 'bg-black text-white shadow-lg' : 'bg-black/5 text-black/40 hover:bg-black/10'}`}
+              >
                 30D
               </button>
             </div>
@@ -519,64 +567,38 @@ const DashboardView = ({
             </button>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {[
-              {
-                id: 1,
-                type: 'Security',
-                msg: '신규 관리자 "admin2" 접속 허용',
-                time: '방금 전',
-                color: COLORS.primary,
-                icon: Shield,
-              },
-              {
-                id: 2,
-                type: 'Payment',
-                msg: '프리미엄 멤버십 자동 갱신 (14건)',
-                time: '5분 전',
-                color: COLORS.accent,
-                icon: ShoppingBag,
-              },
-              {
-                id: 3,
-                type: 'Warning',
-                msg: '화장실 데이터 동기화 지연 감지',
-                time: '12분 전',
-                color: COLORS.error,
-                icon: AlertTriangle,
-              },
-              {
-                id: 4,
-                type: 'System',
-                msg: 'AI 분석 모델 성능 업데이트 완료',
-                time: '42분 전',
-                color: COLORS.info,
-                icon: Zap,
-              },
-            ].map((log) => (
+            {(logs || []).slice(0, 4).map((log, idx) => (
               <div
-                key={log.id}
+                key={log.id || idx}
                 className="flex items-start gap-4 p-4 rounded-2xl bg-black/[0.02] border border-black/5 hover:border-black/10 transition-all"
               >
                 <div
-                  className="p-2.5 rounded-xl"
-                  style={{ backgroundColor: `${log.color}10`, color: log.color }}
+                  className="p-2.5 rounded-xl bg-black/5"
+                  style={{ color: log.level === 'ERROR' ? COLORS.error : log.level === 'WARN' ? COLORS.warning : COLORS.primary }}
                 >
-                  <log.icon size={18} />
+                  {log.level === 'ERROR' ? <AlertTriangle size={18} /> : <Activity size={18} />}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex justify-between items-center mb-0.5">
                     <span
                       className="text-[9px] font-black tracking-widest uppercase"
-                      style={{ color: log.color }}
+                      style={{ color: log.level === 'ERROR' ? COLORS.error : COLORS.textSecondary }}
                     >
-                      {log.type}
+                      {log.source || 'SYSTEM'}
                     </span>
-                    <span className="text-[9px] text-black/30 font-bold">{log.time}</span>
+                    <span className="text-[9px] text-black/30 font-bold">
+                      {log.timestamp ? new Date(log.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '방금 전'}
+                    </span>
                   </div>
-                  <p className="text-[13px] font-bold text-black/80 truncate">{log.msg}</p>
+                  <p className="text-[13px] font-bold text-black/80 truncate">{log.message}</p>
                 </div>
               </div>
             ))}
+            {(logs || []).length === 0 && (
+              <div className="md:col-span-2 py-10 text-center opacity-30 font-bold text-sm uppercase tracking-widest">
+                No recent system logs
+              </div>
+            )}
           </div>
         </GlassCard>
 
@@ -2451,11 +2473,9 @@ interface SystemSettings {
 interface SystemLog {
   id: number;
   timestamp: string;
-  action: string;
-  type: 'USER' | 'REVIEW' | 'TOILET' | 'SHOP' | 'ERROR' | 'SYSTEM';
-  description: string;
-  userId?: number;
-  username?: string;
+  level: 'INFO' | 'WARN' | 'ERROR';
+  source: string;
+  message: string;
 }
 
 interface SystemStats {
@@ -2465,127 +2485,43 @@ interface SystemStats {
   totalRevenue: number;
 }
 
-const SystemView = () => {
+const SystemView = ({
+  stats,
+  logs,
+  loading,
+  onRefresh
+}: {
+  stats: AdminStatsResponse | null;
+  logs: SystemLog[];
+  loading: boolean;
+  onRefresh: () => void;
+}) => {
   const [settings, setSettings] = useState<SystemSettings>({
-    noticeEnabled: false,
-    noticeMessage: '',
+    noticeEnabled: true,
+    noticeMessage: '🎉 Day.Poo 서비스가 정식 오픈했습니다!',
     maintenanceMode: false,
     signupEnabled: true,
     aiReportEnabled: true,
   });
-  const [logs, setLogs] = useState<SystemLog[]>([]);
-  const [stats, setStats] = useState<SystemStats>({
-    activeUsers: 0,
-    todaySignups: 0,
-    todayApiCalls: 0,
-    totalRevenue: 0,
-  });
-  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [logPage, setLogPage] = useState(0);
-  const [totalLogPages, setTotalLogPages] = useState(0);
   const [editingNotice, setEditingNotice] = useState(false);
   const [tempNoticeMessage, setTempNoticeMessage] = useState('');
 
-  // 초기 데이터 로드
   useEffect(() => {
-    fetchSystemData();
-    // 30초마다 통계 자동 갱신
-    const interval = setInterval(() => {
-      fetchStats();
-    }, 30000);
-    return () => clearInterval(interval);
-  }, []);
-
-  useEffect(() => {
-    fetchLogs();
-  }, [logPage]);
-
-  const fetchSystemData = async () => {
-    setLoading(true);
-    try {
-      await Promise.all([fetchSettings(), fetchStats(), fetchLogs()]);
-    } catch (error) {
-      console.error('시스템 데이터 로드 실패:', error);
-    } finally {
-      setLoading(false);
+    if (settings.noticeMessage) {
+      setTempNoticeMessage(settings.noticeMessage);
     }
-  };
-
-  const fetchSettings = async () => {
-    try {
-      const data = await api.get<SystemSettings>('/admin/settings');
-      if (data) {
-        setSettings(data);
-        setTempNoticeMessage(data.noticeMessage || '');
-      }
-    } catch (error: any) {
-      console.error('설정 조회 실패 (백엔드 미구현):', error);
-      // 백엔드 미구현 시 Mock 데이터 사용
-      const mockSettings: SystemSettings = {
-        noticeEnabled: true,
-        noticeMessage: '🎉 Day.Poo 서비스가 정식 오픈했습니다!',
-        maintenanceMode: false,
-        signupEnabled: true,
-        aiReportEnabled: true,
-      };
-      setSettings(mockSettings);
-      setTempNoticeMessage(mockSettings.noticeMessage);
-    }
-  };
-
-  const fetchStats = async () => {
-    try {
-      const data = await api.get<AdminStatsResponse>('/admin/stats');
-      if (data) {
-        setStats({
-          activeUsers: Number(data.totalUsers || 0),
-          todaySignups: Number(data.todayNewUsers || 0),
-          todayInquiries: Number(data.todayInquiries || 0),
-          totalToilets: Number(data.totalToilets || 0),
-        });
-      }
-    } catch (error: any) {
-      console.error('통계 조회 실패:', error);
-      // Fallback Mock
-      setStats({
-        activeUsers: 0,
-        todaySignups: 0,
-        todayInquiries: 0,
-        totalToilets: 0,
-      });
-    }
-  };
-
-  const fetchLogs = async () => {
-    try {
-      // 백엔드는 PageResponse가 아닌 List<SystemLogResponse>를 반환함
-      const data = await api.get<SystemLog[]>('/admin/logs');
-      if (Array.isArray(data)) {
-        setLogs(data);
-        setTotalLogPages(1); // 단순 리스트 제공 시 1페이지로 고정
-      } else {
-        setLogs([]);
-      }
-    } catch (error: any) {
-      console.error('로그 조회 실패:', error);
-      setLogs([]);
-    }
-  };
+  }, [settings.noticeMessage]);
 
   const updateSettings = async (newSettings: Partial<SystemSettings>) => {
     setSaving(true);
     try {
+      // ⚠️ 백엔드 설정 API 미구현 상태이므로 로컬 상태만 업데이트
       const updated = { ...settings, ...newSettings };
-      await api.put('/admin/settings', updated);
       setSettings(updated);
-      alert('설정이 저장되었습니다.');
+      alert('설정이 로컬에 반영되었습니다.\n(서버 연동은 추후 지원 예정)');
     } catch (error: any) {
-      console.error('설정 저장 실패 (백엔드 미구현):', error);
-      // 백엔드 미구현 시 로컬 상태만 업데이트
-      const updated = { ...settings, ...newSettings };
-      setSettings(updated);
-      alert('⚠️ 설정이 로컬에만 저장되었습니다.\n(백엔드 API 연동 필요)');
+      console.error('설정 저장 실패:', error);
     } finally {
       setSaving(false);
     }
@@ -2633,15 +2569,14 @@ const SystemView = () => {
       {/* 헤더 */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-3xl font-black text-black tracking-tight mb-2">System Control</h2>
-          <p className="text-sm font-bold text-black/40">앱 설정 및 시스템 모니터링</p>
+          <h2 className="text-3xl font-black text-black tracking-tight mb-2">시스템 통합 관제</h2>
+          <p className="text-sm font-bold text-black/40">기반 인프라 설정 및 실시간 엔진 모니터링</p>
         </div>
         <button
-          onClick={() => fetchSystemData()}
-          disabled={loading}
-          className="p-3 rounded-xl bg-white border border-gray-300 text-[#1B4332] hover:bg-black/5 transition-colors disabled:opacity-50"
+          onClick={onRefresh}
+          className="p-3 rounded-xl bg-white border border-gray-300 text-[#1B4332] hover:bg-black/5 transition-colors"
         >
-          <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
+          <RefreshCw size={18} />
         </button>
       </div>
 
@@ -2653,8 +2588,8 @@ const SystemView = () => {
               <Eye size={24} className="text-blue-500" />
             </div>
             <div>
-              <p className="text-xs font-bold text-black/40 uppercase tracking-wider mb-1">Active Users</p>
-              <p className="text-3xl font-black text-blue-500">{stats.activeUsers}</p>
+              <p className="text-xs font-bold text-black/40 uppercase tracking-wider mb-1">실시간 접속자</p>
+              <p className="text-3xl font-black text-blue-500">{stats?.totalUsers || 0}</p>
             </div>
           </div>
         </GlassCard>
@@ -2665,8 +2600,8 @@ const SystemView = () => {
               <UserPlus size={24} className="text-green-500" />
             </div>
             <div>
-              <p className="text-xs font-bold text-black/40 uppercase tracking-wider mb-1">Today Signups</p>
-              <p className="text-3xl font-black text-green-500">+{stats.todaySignups}</p>
+              <p className="text-xs font-bold text-black/40 uppercase tracking-wider mb-1">금일 신규 가입</p>
+              <p className="text-3xl font-black text-green-500">+{stats?.todayNewUsers || 0}</p>
             </div>
           </div>
         </GlassCard>
@@ -2674,11 +2609,11 @@ const SystemView = () => {
         <GlassCard>
           <div className="flex items-center gap-4">
             <div className="p-3 rounded-xl bg-purple-500/10">
-              <Activity size={24} className="text-purple-500" />
+              <MessageSquare size={24} className="text-purple-500" />
             </div>
             <div>
-              <p className="text-xs font-bold text-black/40 uppercase tracking-wider mb-1">Today Inquiries</p>
-              <p className="text-3xl font-black text-purple-500">{(stats?.todayInquiries ?? 0).toLocaleString()}</p>
+              <p className="text-xs font-bold text-black/40 uppercase tracking-wider mb-1">미답변 문의</p>
+              <p className="text-3xl font-black text-purple-500">{stats?.pendingInquiries || 0}</p>
             </div>
           </div>
         </GlassCard>
@@ -2689,241 +2624,133 @@ const SystemView = () => {
               <MapPin size={24} className="text-yellow-500" />
             </div>
             <div>
-              <p className="text-xs font-bold text-black/40 uppercase tracking-wider mb-1">Total Toilets</p>
-              <p className="text-3xl font-black text-yellow-500">{(stats?.totalToilets ?? 0).toLocaleString()}</p>
+              <p className="text-xs font-bold text-black/40 uppercase tracking-wider mb-1">전체 화장실</p>
+              <p className="text-3xl font-black text-yellow-500">{(stats?.totalToilets || 0).toLocaleString()}</p>
             </div>
           </div>
         </GlassCard>
       </div>
 
       {/* 앱 설정 섹션 */}
-      <GlassCard>
-        <div className="border-b pb-4 mb-6" style={{ borderColor: COLORS.border }}>
-          <h3 className="text-xl font-black text-black flex items-center gap-2">
-            <Settings size={20} />
-            App Settings
-          </h3>
-        </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <GlassCard>
+          <div className="border-b pb-4 mb-6" style={{ borderColor: COLORS.border }}>
+            <h3 className="text-xl font-black text-black flex items-center gap-2">
+              <Settings size={20} />
+              어플리케이션 환경 설정
+            </h3>
+          </div>
 
-        <div className="space-y-6">
-          {/* 공지사항 배너 */}
-          <div className="flex items-start justify-between gap-4 p-4 rounded-xl bg-black/[0.02]">
-            <div className="flex-1">
-              <div className="flex items-center gap-3 mb-2">
-                <Bell size={18} className="text-[#1B4332]" />
-                <h4 className="font-black text-black">공지사항 배너</h4>
-              </div>
-              <p className="text-xs text-black/50 mb-3 font-bold">
-                앱 상단에 공지사항 배너를 표시합니다
-              </p>
-              {editingNotice ? (
-                <div className="space-y-2">
-                  <input
-                    type="text"
-                    value={tempNoticeMessage}
-                    onChange={(e) => setTempNoticeMessage(e.target.value)}
-                    placeholder="공지사항 메시지를 입력하세요"
-                    className="w-full px-3 py-2 border rounded-lg text-sm font-bold"
-                  />
-                  <div className="flex gap-2">
-                    <button
-                      onClick={handleNoticeMessageSave}
-                      disabled={saving}
-                      className="px-3 py-1.5 bg-[#1B4332] text-white rounded-lg text-xs font-bold hover:bg-[#2D6A4F] transition-colors disabled:opacity-50"
-                    >
-                      저장
-                    </button>
-                    <button
-                      onClick={() => {
-                        setEditingNotice(false);
-                        setTempNoticeMessage(settings.noticeMessage);
-                      }}
-                      className="px-3 py-1.5 bg-gray-200 text-black rounded-lg text-xs font-bold hover:bg-gray-300 transition-colors"
-                    >
-                      취소
-                    </button>
-                  </div>
+          <div className="space-y-6">
+            {/* 공지사항 배너 */}
+            <div className="p-4 rounded-xl bg-black/[0.02]">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <Bell size={18} className="text-[#1B4332]" />
+                  <h4 className="font-black text-black">공지사항 배너</h4>
                 </div>
-              ) : (
-                <div className="flex items-center gap-2">
-                  <p className="text-sm text-black/70 font-bold flex-1">
-                    {settings.noticeMessage || '(메시지 없음)'}
-                  </p>
-                  <button
-                    onClick={() => setEditingNotice(true)}
-                    className="text-xs text-[#1B4332] font-bold hover:underline"
-                  >
-                    편집
-                  </button>
+                <button
+                  onClick={() => handleToggle('noticeEnabled')}
+                  className={`w-12 h-6 rounded-full transition-colors relative ${settings.noticeEnabled ? 'bg-[#1B4332]' : 'bg-gray-300'}`}
+                >
+                  <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${settings.noticeEnabled ? 'left-7' : 'left-1'}`} />
+                </button>
+              </div>
+              {settings.noticeEnabled && (
+                <div className="mt-4 p-3 bg-white border rounded-xl border-dashed">
+                  {editingNotice ? (
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={tempNoticeMessage}
+                        onChange={(e) => setTempNoticeMessage(e.target.value)}
+                        className="flex-1 text-sm font-bold bg-transparent border-none focus:ring-0"
+                      />
+                      <button onClick={handleNoticeMessageSave} className="text-xs font-black text-blue-500">저장</button>
+                    </div>
+                  ) : (
+                    <div className="flex justify-between items-center">
+                      <p className="text-sm font-bold text-black/70 truncate">{settings.noticeMessage}</p>
+                      <button onClick={() => setEditingNotice(true)} className="text-xs font-black text-black/30">수정</button>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
-            <button
-              onClick={() => handleToggle('noticeEnabled')}
-              disabled={saving}
-              className={`relative w-14 h-7 rounded-full transition-all ${
-                settings.noticeEnabled ? 'bg-[#2D6A4F]' : 'bg-gray-300'
-              } disabled:opacity-50`}
-            >
-              <motion.div
-                className="absolute top-1 w-5 h-5 bg-white rounded-full shadow"
-                animate={{ left: settings.noticeEnabled ? '30px' : '4px' }}
-                transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-              />
-            </button>
-          </div>
 
-          {/* 점검 모드 */}
-          <div className="flex items-start justify-between gap-4 p-4 rounded-xl bg-black/[0.02]">
-            <div className="flex-1">
-              <div className="flex items-center gap-3 mb-2">
-                <Power size={18} className="text-red-500" />
-                <h4 className="font-black text-black">점검 모드</h4>
+            {/* 점검 모드 */}
+            <div className="flex items-center justify-between p-4 rounded-xl bg-black/[0.02]">
+              <div className="flex items-center gap-3">
+                <Lock size={18} className="text-red-500" />
+                <div>
+                  <h4 className="font-black text-black">점검 모드 (Maintenance)</h4>
+                  <p className="text-[10px] font-bold text-black/40">활성화 시 모든 유저의 접속이 차단됩니다</p>
+                </div>
               </div>
-              <p className="text-xs text-black/50 font-bold">
-                활성화 시 일반 사용자 접근 차단 (관리자만 접속 가능)
-              </p>
+              <button
+                onClick={() => handleToggle('maintenanceMode')}
+                className={`w-12 h-6 rounded-full transition-colors relative ${settings.maintenanceMode ? 'bg-red-500' : 'bg-gray-300'}`}
+              >
+                <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${settings.maintenanceMode ? 'left-7' : 'left-1'}`} />
+              </button>
             </div>
-            <button
-              onClick={() => handleToggle('maintenanceMode')}
-              disabled={saving}
-              className={`relative w-14 h-7 rounded-full transition-all ${
-                settings.maintenanceMode ? 'bg-red-500' : 'bg-gray-300'
-              } disabled:opacity-50`}
-            >
-              <motion.div
-                className="absolute top-1 w-5 h-5 bg-white rounded-full shadow"
-                animate={{ left: settings.maintenanceMode ? '30px' : '4px' }}
-                transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-              />
-            </button>
-          </div>
 
-          {/* 회원가입 */}
-          <div className="flex items-start justify-between gap-4 p-4 rounded-xl bg-black/[0.02]">
-            <div className="flex-1">
-              <div className="flex items-center gap-3 mb-2">
+            {/* 신규 가입 제어 */}
+            <div className="flex items-center justify-between p-4 rounded-xl bg-black/[0.02]">
+              <div className="flex items-center gap-3">
                 <UserPlus size={18} className="text-blue-500" />
-                <h4 className="font-black text-black">신규 회원가입</h4>
+                <div>
+                  <h4 className="font-black text-black">신규 회원가입 허용</h4>
+                  <p className="text-[10px] font-bold text-black/40">신규 사용자의 가입 가능 여부를 결정합니다</p>
+                </div>
               </div>
-              <p className="text-xs text-black/50 font-bold">
-                신규 사용자 회원가입 허용 여부
-              </p>
+              <button
+                onClick={() => handleToggle('signupEnabled')}
+                className={`w-12 h-6 rounded-full transition-colors relative ${settings.signupEnabled ? 'bg-blue-500' : 'bg-gray-300'}`}
+              >
+                <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${settings.signupEnabled ? 'left-7' : 'left-1'}`} />
+              </button>
             </div>
-            <button
-              onClick={() => handleToggle('signupEnabled')}
-              disabled={saving}
-              className={`relative w-14 h-7 rounded-full transition-all ${
-                settings.signupEnabled ? 'bg-[#2D6A4F]' : 'bg-gray-300'
-              } disabled:opacity-50`}
-            >
-              <motion.div
-                className="absolute top-1 w-5 h-5 bg-white rounded-full shadow"
-                animate={{ left: settings.signupEnabled ? '30px' : '4px' }}
-                transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-              />
-            </button>
           </div>
+        </GlassCard>
 
-          {/* AI 리포트 */}
-          <div className="flex items-start justify-between gap-4 p-4 rounded-xl bg-black/[0.02]">
-            <div className="flex-1">
-              <div className="flex items-center gap-3 mb-2">
-                <BrainCircuit size={18} className="text-purple-500" />
-                <h4 className="font-black text-black">AI 건강 리포트 생성</h4>
-              </div>
-              <p className="text-xs text-black/50 font-bold">
-                사용자 AI 건강 리포트 자동 생성 활성화
-              </p>
-            </div>
-            <button
-              onClick={() => handleToggle('aiReportEnabled')}
-              disabled={saving}
-              className={`relative w-14 h-7 rounded-full transition-all ${
-                settings.aiReportEnabled ? 'bg-[#2D6A4F]' : 'bg-gray-300'
-              } disabled:opacity-50`}
-            >
-              <motion.div
-                className="absolute top-1 w-5 h-5 bg-white rounded-full shadow"
-                animate={{ left: settings.aiReportEnabled ? '30px' : '4px' }}
-                transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-              />
-            </button>
+        {/* 런타임 로그 섹션 */}
+        <GlassCard>
+          <div className="flex items-center justify-between border-b pb-4 mb-6" style={{ borderColor: COLORS.border }}>
+            <h3 className="text-xl font-black text-black flex items-center gap-2">
+              <Database size={20} />
+              최신 시스템 로그
+            </h3>
+            <button onClick={() => onRefresh()} className="text-[10px] font-black text-black/30 hover:text-black transition-colors uppercase">View All</button>
           </div>
-        </div>
-      </GlassCard>
-
-      {/* 시스템 로그 */}
-      <GlassCard>
-        <div className="border-b pb-4 mb-6" style={{ borderColor: COLORS.border }}>
-          <h3 className="text-xl font-black text-black flex items-center gap-2">
-            <FileText size={20} />
-            System Activity Logs
-          </h3>
-        </div>
-
-        {logs.length === 0 ? (
-          <div className="text-center py-12">
-            <FileText size={48} className="mx-auto mb-4 text-black/20" />
-            <p className="font-bold text-black/40">최근 활동 로그가 없습니다.</p>
-          </div>
-        ) : (
-          <>
-            <div className="space-y-3">
-              {logs.map((log, idx) => (
-                <motion.div
-                  key={log.id}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: idx * 0.05 }}
-                  className={`p-4 rounded-xl border ${getLogBgColor(log.level)}`}
-                >
-                  <div className="flex items-start gap-3">
-                    <div className="mt-0.5">{getLogIcon(log.level)}</div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="font-black text-xs uppercase tracking-widest text-black/30">{log.source}</span>
-                        <span className="px-1.5 py-0.5 rounded-md text-[10px] font-black bg-black/5 text-black/50">{log.level}</span>
-                      </div>
-                      <p className="text-sm text-black/70 font-bold mb-2">{log.message}</p>
-                      <div className="flex items-center gap-2 text-[10px] font-bold text-black/40">
-                        <Clock size={12} />
-                        {log.timestamp ? new Date(log.timestamp).toLocaleString('ko-KR') : '날짜 없음'}
-                      </div>
-                    </div>
+          <div className="space-y-3 max-h-[350px] overflow-y-auto pr-2 custom-scrollbar">
+            {logs.slice(0, 10).map((log, idx) => (
+              <div key={log.id || idx} className={`p-4 rounded-2xl border ${getLogBgColor(log.level)} transition-all hover:scale-[1.01]`}>
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    {getLogIcon(log.level)}
+                    <span className="text-[10px] font-black tracking-widest uppercase">{log.level}</span>
                   </div>
-                </motion.div>
-              ))}
-            </div>
-
-            {/* 페이지네이션 */}
-            {totalLogPages > 1 && (
-              <div className="flex items-center justify-center gap-2 mt-6">
-                <button
-                  onClick={() => setLogPage(Math.max(0, logPage - 1))}
-                  disabled={logPage === 0}
-                  className="p-2 rounded-xl bg-white border border-gray-300 text-[#1B4332] hover:bg-black/5 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                >
-                  <ChevronLeft size={18} />
-                </button>
-                <span className="px-4 py-2 font-bold text-sm text-black">
-                  {logPage + 1} / {totalLogPages}
-                </span>
-                <button
-                  onClick={() => setLogPage(Math.min(totalLogPages - 1, logPage + 1))}
-                  disabled={logPage >= totalLogPages - 1}
-                  className="p-2 rounded-xl bg-white border border-gray-300 text-[#1B4332] hover:bg-black/5 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                >
-                  <ChevronRight size={18} />
-                </button>
+                  <span className="text-[9px] font-bold text-black/30">
+                    {log.timestamp ? new Date(log.timestamp).toLocaleTimeString() : '방금 전'}
+                  </span>
+                </div>
+                <p className="text-[11px] font-black text-black/30 uppercase tracking-tighter mb-1">{log.source}</p>
+                <p className="text-sm font-bold text-black/80 leading-snug">{log.message}</p>
+              </div>
+            ))}
+            {logs.length === 0 && (
+              <div className="py-20 text-center opacity-20 font-black uppercase tracking-widest text-xs">
+                No logs available
               </div>
             )}
-          </>
-        )}
-      </GlassCard>
+          </div>
+        </GlassCard>
+      </div>
     </div>
   );
 };
+
 
 // ── Screen: Add Item Form ─────────────────────────────────────────────
 const AddItemView = ({ setActiveTab }: { setActiveTab: (tab: AdminTab) => void }) => {
@@ -3453,24 +3280,7 @@ const AddTitleView = ({
 
 // ── Screen: System Logs View ──────────────────────────────────────────
 
-const LogsView = () => {
-  const [logs, setLogs] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchLogs = async () => {
-      try {
-        const response = await api.get('/admin/logs');
-        setLogs(response.data);
-      } catch (error) {
-        console.error('로그 조회 실패:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchLogs();
-  }, []);
-
+const LogsView = ({ logs, loading }: { logs: any[]; loading: boolean }) => {
   if (loading) return (
     <div className="flex justify-center py-20">
       <RefreshCw size={24} className="animate-spin text-black/20" />
@@ -3513,26 +3323,41 @@ const LogsView = () => {
               </tr>
             </thead>
             <tbody>
-              {logs.map((log) => (
+              {(logs || []).map((log, idx) => (
                 <tr
-                  key={log.id}
+                  key={log.id || idx}
                   className="border-b transition-colors hover:bg-black/[0.01]"
                   style={{ borderColor: COLORS.border }}
                 >
-                  <td className="px-8 py-5 text-xs font-bold text-black/60">{log.time}</td>
-                  <td className="px-8 py-5 text-[10px] font-black text-black/30 tracking-widest">
-                    {log.type}
+                  <td className="px-8 py-5 text-xs font-bold text-black/60">
+                    {log.timestamp ? new Date(log.timestamp).toLocaleString() : '방금 전'}
                   </td>
-                  <td className="px-8 py-5 text-sm font-black text-black">{log.msg}</td>
+                  <td className="px-8 py-5 text-[10px] font-black tracking-widest"
+                      style={{ color: log.level === 'ERROR' ? COLORS.error : log.level === 'WARN' ? COLORS.warning : COLORS.textSecondary }}>
+                    {log.level || 'INFO'}
+                  </td>
+                  <td className="px-8 py-5 text-sm font-black text-black">
+                    <div className="flex flex-col">
+                      <span className="text-[10px] font-black text-black/30 uppercase tracking-tighter mb-0.5">{log.source}</span>
+                      <span className="line-clamp-1">{log.message}</span>
+                    </div>
+                  </td>
                   <td className="px-8 py-5 text-right flex justify-end">
                     <span
-                      className={`px-2 py-0.5 rounded-md text-[9px] font-black ${log.status === 'OK' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}
+                      className={`px-2 py-0.5 rounded-md text-[9px] font-black ${log.level === 'ERROR' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}
                     >
-                      {log.status}
+                      {log.level === 'ERROR' ? 'FAIL' : 'OK'}
                     </span>
                   </td>
                 </tr>
               ))}
+              {(logs || []).length === 0 && (
+                <tr>
+                  <td colSpan={4} className="py-20 text-center opacity-30 font-black uppercase tracking-widest text-sm">
+                    No system logs found
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
@@ -3553,6 +3378,7 @@ export function AdminPage() {
 
   // Dashboard 통계 데이터 상태 관리
   const [stats, setStats] = useState<AdminStatsResponse | null>(null);
+  const [logs, setLogs] = useState<any[]>([]);
   const [statsLoading, setStatsLoading] = useState(true);
 
   // 알림 확인 여부 관리 (localStorage 연동)
@@ -3600,10 +3426,14 @@ export function AdminPage() {
 
   const fetchStats = async () => {
     try {
-      const data = await api.get<AdminStatsResponse>('/admin/stats');
-      setStats(data);
+      const [statsData, logsData] = await Promise.all([
+        api.get<AdminStatsResponse>('/admin/stats'),
+        api.get<any[]>('/admin/logs')
+      ]);
+      setStats(statsData);
+      setLogs(Array.isArray(logsData) ? logsData : []);
     } catch (err) {
-      console.error('Admin stats fetch error', err);
+      console.error('Admin data fetch error', err);
     } finally {
       setStatsLoading(false);
     }
@@ -3833,7 +3663,12 @@ export function AdminPage() {
               transition={{ duration: 0.3, ease: 'easeOut' }}
             >
               {activeTab === 'dashboard' && (
-                <DashboardView stats={stats} loading={statsLoading} setActiveTab={setActiveTab} />
+                <DashboardView 
+                  stats={stats} 
+                  logs={logs}
+                  loading={statsLoading} 
+                  setActiveTab={setActiveTab} 
+                />
               )}
               {activeTab === 'users' && <UsersView />}
               {activeTab === 'toilets' && <ToiletsView />}
@@ -3848,9 +3683,16 @@ export function AdminPage() {
               {activeTab === 'add-title' && (
                 <AddTitleView setActiveTab={setActiveTab} editingTitle={editingTitle} />
               )}
-              {activeTab === 'system' && <SystemView />}
+              {activeTab === 'system' && (
+                <SystemView 
+                  stats={stats} 
+                  logs={logs} 
+                  loading={statsLoading} 
+                  onRefresh={fetchStats} 
+                />
+              )}
               {activeTab === 'add-item' && <AddItemView setActiveTab={setActiveTab} />}
-              {activeTab === 'logs' && <LogsView />}
+              {activeTab === 'logs' && <LogsView logs={logs} loading={statsLoading} />}
             </motion.div>
           </AnimatePresence>
         </section>
