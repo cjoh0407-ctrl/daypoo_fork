@@ -92,12 +92,14 @@ public class User extends BaseTimeEntity {
     this.points = 0L;
   }
 
+  private static final int MAX_LEVEL = 30;
+
   public void addExpAndPoints(long addedExp, long addedPoints) {
     this.exp += addedExp;
     this.points += addedPoints;
 
     // Simple level up logic: level * 100 exp to level up
-    while (this.exp >= this.level * 100) {
+    while (this.level < MAX_LEVEL && this.exp >= this.level * 100) {
       this.exp -= this.level * 100;
       this.level += 1;
     }

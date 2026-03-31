@@ -18,6 +18,7 @@ import com.daypoo.api.repository.ToiletRepository;
 import com.daypoo.api.repository.VisitCountProjection;
 import com.daypoo.api.repository.VisitLogRepository;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Collections;
@@ -49,9 +50,10 @@ public class PooRecordService {
   private final AiClient aiClient;
   private final com.daypoo.api.repository.UserRepository userRepository;
 
-  // 보상 설정 (방문 1회당 경험치 5, 포인트 5)
+  // 보상 설정 (방문 1회당 경험치 5, 포인트 10 / 같은 화장실 하루 3회 상한)
   private static final int REWARD_EXP = 5;
-  private static final int REWARD_POINTS = 5;
+  private static final int REWARD_POINTS = 10;
+  private static final int DAILY_POINT_LIMIT_PER_TOILET = 3;
 
   /** 화장실 도착 체크인 담당 */
   @Transactional
@@ -144,9 +146,15 @@ public class PooRecordService {
                 .regionName(regionName)
                 .build());
 
-    // 7. 보상 · 랭킹 · 칭호 비동기 처리 이벤트 발행
+    // 7. 보상 · 랭킹 · 칭호 비동기 처리 이벤트 발행 (같은 화장실 하루 3회 초과 시 포인트 미지급)
+    LocalDateTime todayStart = LocalDate.now().atStartOfDay();
+    LocalDateTime todayEnd = todayStart.plusDays(1);
+    long todayCount = visitLogRepository.countByUserAndToiletAndEventTypeAndCreatedAtBetween(
+        user, toilet, VisitEventType.RECORD_CREATED, todayStart, todayEnd);
+    int rewardPoints = todayCount < DAILY_POINT_LIMIT_PER_TOILET ? REWARD_POINTS : 0;
+
     eventPublisher.publishEvent(
-        new PooRecordCreatedEvent(user.getEmail(), regionName, REWARD_EXP, REWARD_POINTS));
+        new PooRecordCreatedEvent(user.getEmail(), regionName, REWARD_EXP, rewardPoints));
 
     // 8. Visit Log 기록 완료
     long arrivalTimeMillis =
