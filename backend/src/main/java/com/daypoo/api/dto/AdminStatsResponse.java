@@ -3,9 +3,13 @@ package com.daypoo.api.dto;
 import java.util.List;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
 
 @Getter
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class AdminStatsResponse {
   private long totalUsers;
   private long totalToilets;
@@ -13,13 +17,26 @@ public class AdminStatsResponse {
   private long todayNewUsers;
   private long todayInquiries;
   private List<DailyStat> weeklyTrend;
+  private UserDistribution userDistribution;
 
   @Getter
   @Builder
+  @NoArgsConstructor
+  @AllArgsConstructor
   public static class DailyStat {
     private String date;
     private long users;
     private long inquiries;
     private long sales;
+  }
+
+  @Getter
+  @Builder
+  @NoArgsConstructor
+  @AllArgsConstructor
+  public static class UserDistribution {
+    private long pro;
+    private long basic;
+    private long free;
   }
 }

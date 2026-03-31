@@ -1,10 +1,14 @@
 package com.daypoo.api.service;
 
 import com.daypoo.api.dto.AdminStatsResponse;
+import com.daypoo.api.dto.AdminStatsResponse.DailyStat;
+import com.daypoo.api.dto.AdminStatsResponse.UserDistribution;
 import com.daypoo.api.dto.SystemLogResponse;
 import com.daypoo.api.entity.Inquiry;
 import com.daypoo.api.entity.Payment;
+import com.daypoo.api.entity.User;
 import com.daypoo.api.entity.enums.InquiryStatus;
+import com.daypoo.api.entity.enums.Role;
 import com.daypoo.api.repository.InquiryRepository;
 import com.daypoo.api.repository.PaymentRepository;
 import com.daypoo.api.repository.ToiletRepository;
@@ -33,27 +37,26 @@ public class AdminService {
 
   @Transactional(readOnly = true)
   public AdminStatsResponse getAdminStats() {
-    long totalUsers = userRepository.count();
+    long allUsers = userRepository.count();
     long totalToilets = toiletRepository.count();
-    long pendingInquiries = inquiryRepository.countByStatus(InquiryStatus.PENDING);
+    long pendingInquiriesCount = inquiryRepository.countByStatus(InquiryStatus.PENDING);
 
     // 1. 유저 분포 통계 (PRO, BASIC, FREE)
     // ROLE_PRO, ROLE_PREMIUM -> pro
-    // ROLE_USER -> free (현재는 basic 구분이 모호하므로 free로 집계)
-    long proUsers = userRepository.countByRoleIn(List.of(
-        com.daypoo.api.entity.enums.Role.ROLE_PRO, 
-        com.daypoo.api.entity.enums.Role.ROLE_PREMIUM
+    long proUsersCount = userRepository.countByRoleIn(List.of(
+        Role.ROLE_PRO, 
+        Role.ROLE_PREMIUM
     ));
-    long freeUsers = totalUsers - proUsers;
+    long freeUsersCount = allUsers - proUsersCount;
 
-    AdminStatsResponse.UserDistribution distribution = AdminStatsResponse.UserDistribution.builder()
-        .pro(proUsers)
+    UserDistribution distributionStats = UserDistribution.builder()
+        .pro(proUsersCount)
         .basic(0)
-        .free(freeUsers)
+        .free(freeUsersCount)
         .build();
 
     // 2. 7일 트렌드 데이터 생성
-    List<AdminStatsResponse.DailyStat> weeklyTrend = new ArrayList<>();
+    List<DailyStat> weeklyTrend = new ArrayList<>();
     DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM/dd");
 
     for (int i = 6; i >= 0; i--) {
@@ -79,7 +82,7 @@ public class AdminService {
       long dailyInquiries = inquiryRepository.countByCreatedAtBetween(start, end);
 
       weeklyTrend.add(
-          AdminStatsResponse.DailyStat.builder()
+          DailyStat.builder()
               .date(date.format(formatter))
               .users(dailyUsers)
               .inquiries((int) dailyInquiries)
@@ -91,13 +94,13 @@ public class AdminService {
     long todayNewUsers = userRepository.countByCreatedAtAfter(todayStart);
 
     return AdminStatsResponse.builder()
-        .totalUsers(totalUsers)
+        .totalUsers(allUsers)
         .totalToilets(totalToilets)
-        .pendingInquiries(pendingInquiries)
+        .pendingInquiries(pendingInquiriesCount)
         .todayNewUsers(todayNewUsers)
         .todayInquiries(inquiryRepository.count())
         .weeklyTrend(weeklyTrend)
-        .userDistribution(distribution)
+        .userDistribution(distributionStats)
         .build();
   }
 
@@ -110,11 +113,7 @@ public class AdminService {
   public void generateTestData() {
     log.info("Generating test data for Admin Dashboard...");
 
-    // 1. 기존 데이터 삭제 (선택 사항, 여기서는 누적)
-    // paymentRepository.deleteAll();
-
-    // 2. 과거 14일치 결제 데이터 생성
-    com.daypoo.api.entity.User user =
+    User user =
         userRepository.findAll().stream()
             .findFirst()
             .orElseThrow(() -> new RuntimeException("테스트 데이터를 생성할 유저가 없습니다."));
@@ -144,7 +143,7 @@ public class AdminService {
     log.info("Successfully generated test data.");
   }
 
-  private void generateInquiryTestData(com.daypoo.api.entity.User user) {
+  private void generateInquiryTestData(User user) {
     log.info("Generating 30 mock inquiries...");
     String[] titles = {
       "화장실 청소 상태가 안 좋아요",
@@ -160,7 +159,6 @@ public class AdminService {
     com.daypoo.api.entity.enums.InquiryType[] types =
         com.daypoo.api.entity.enums.InquiryType.values();
 
-    LocalDateTime now = LocalDateTime.now();
     for (int i = 1; i <= 30; i++) {
       Inquiry inquiry =
           Inquiry.builder()
@@ -170,9 +168,6 @@ public class AdminService {
               .content("이것은 테스트를 위한 " + i + "번째 문의 내용입니다. 상세한 처리를 부탁드립니다.")
               .build();
 
-      // 생성 시간을 1초씩 다르게 설정 (정렬 충돌 방지)
-      // BaseTimeEntity의 수동 설정을 위해 리플렉션이나 다른 방법을 쓰지 않고,
-      // 단순히 save 후 flush를 보장하기 위해 saveAndFlush 사용
       inquiryRepository.save(inquiry);
     }
     inquiryRepository.flush();
