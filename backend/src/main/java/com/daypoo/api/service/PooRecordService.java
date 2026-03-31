@@ -57,7 +57,8 @@ public class PooRecordService {
 
   /** 화장실 도착 체크인 담당 */
   @Transactional
-  public PooCheckInResponse checkIn(String email, Long toiletId, double lat, double lon) {
+  public PooCheckInResponse checkIn(
+      String email, Long toiletId, double lat, double lon, Long enteredAt) {
     User user = userService.getByEmail(email);
 
     // 위치 검증 (확대된 150m 반경 사용)
@@ -81,7 +82,7 @@ public class PooRecordService {
 
     // 도착 시간 기록 및 반환 (Fast Check-in 로직 대응)
     long arrivalTimeMillis =
-        locationVerificationService.getOrSetArrivalTime(user.getId(), toiletId);
+        locationVerificationService.getOrSetArrivalTime(user.getId(), toiletId, enteredAt);
     log.info(
         "User {} checked-in at toilet {}. Arrival Time: {}", email, toiletId, arrivalTimeMillis);
 
@@ -109,6 +110,9 @@ public class PooRecordService {
   @Transactional
   public PooRecordResponse createRecord(String email, PooRecordCreateRequest request) {
     // 1. 엔티티 검증
+    if (request.toiletId() == null) {
+      throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
+    }
     User user = userService.getByEmail(email);
     Toilet toilet =
         toiletRepository
@@ -158,7 +162,7 @@ public class PooRecordService {
 
     // 8. Visit Log 기록 완료
     long arrivalTimeMillis =
-        locationVerificationService.getOrSetArrivalTime(user.getId(), toilet.getId());
+        locationVerificationService.getOrSetArrivalTime(user.getId(), toilet.getId(), null);
     LocalDateTime arrivalAt =
         LocalDateTime.ofInstant(Instant.ofEpochMilli(arrivalTimeMillis), ZoneId.systemDefault());
 

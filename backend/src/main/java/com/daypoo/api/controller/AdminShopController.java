@@ -27,8 +27,9 @@ public class AdminShopController {
   @GetMapping
   public ResponseEntity<Page<ItemResponse>> getItems(
       @RequestParam(required = false) ItemType type,
+      @RequestParam(required = false) String search,
       @PageableDefault(size = 20) Pageable pageable) {
-    return ResponseEntity.ok(adminManagementService.getItems(type, pageable));
+    return ResponseEntity.ok(adminManagementService.getItems(type, search, pageable));
   }
 
   @Operation(summary = "신규 아이템 생성", description = "이름, 설명, 타입, 가격, 이미지 정보를 기반으로 신규 아이템을 등록합니다.")

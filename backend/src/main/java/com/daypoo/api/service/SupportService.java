@@ -7,6 +7,8 @@ import com.daypoo.api.entity.Faq;
 import com.daypoo.api.entity.Inquiry;
 import com.daypoo.api.entity.User;
 import com.daypoo.api.entity.enums.InquiryType;
+import com.daypoo.api.global.exception.BusinessException;
+import com.daypoo.api.global.exception.ErrorCode;
 import com.daypoo.api.repository.FaqRepository;
 import com.daypoo.api.repository.InquiryRepository;
 import java.util.List;
@@ -53,6 +55,24 @@ public class SupportService {
                     .createdAt(i.getCreatedAt())
                     .build())
         .collect(Collectors.toList());
+  }
+
+  /** 문의 삭제 (사용자 본인 확인) */
+  public void deleteInquiry(User user, Long inquiryId) {
+    if (inquiryId == null) {
+      throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
+    }
+    Inquiry inquiry =
+        inquiryRepository
+            .findById(inquiryId)
+            .orElseThrow(() -> new BusinessException(ErrorCode.ADMIN_INQUIRY_NOT_FOUND));
+
+    if (!inquiry.getUser().getId().equals(user.getId())) {
+      throw new BusinessException(ErrorCode.HANDLE_ACCESS_DENIED);
+    }
+
+    inquiryRepository.delete(inquiry);
+    systemLogService.info("Support", "Inquiry deleted by user: " + inquiryId);
   }
 
   /** 카테고리별 FAQ 조회 */

@@ -52,6 +52,7 @@ public enum ErrorCode {
 
   // Toilet
   TOILET_NOT_FOUND(HttpStatus.NOT_FOUND, "T001", "화장실을 찾을 수 없습니다."),
+  ALREADY_REVIEWED(HttpStatus.BAD_REQUEST, "T002", "이미 이 화장실에 대한 리뷰를 작성하셨습니다."),
 
   // Subscription
   SUBSCRIPTION_NOT_FOUND(HttpStatus.NOT_FOUND, "B001", "구독 정보를 찾을 수 없습니다.");

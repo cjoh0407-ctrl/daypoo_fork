@@ -46,6 +46,10 @@ public class ToiletReviewService {
             .findById(toiletId)
             .orElseThrow(() -> new BusinessException(ErrorCode.TOILET_NOT_FOUND));
 
+    if (toiletReviewRepository.existsByUserIdAndToiletId(user.getId(), toiletId)) {
+      throw new BusinessException(ErrorCode.ALREADY_REVIEWED);
+    }
+
     String emojiTags =
         request.getEmojiTags() != null ? String.join(",", request.getEmojiTags()) : "";
 

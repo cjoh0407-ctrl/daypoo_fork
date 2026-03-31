@@ -25,8 +25,9 @@ public class AdminTitleController {
   @GetMapping
   public Page<AdminTitleResponse> getTitles(
       @RequestParam(required = false) AchievementType type,
+      @RequestParam(required = false) String search,
       @PageableDefault(size = 20) Pageable pageable) {
-    return adminManagementService.getTitles(type, pageable);
+    return adminManagementService.getTitles(type, search, pageable);
   }
 
   @Operation(summary = "칭호 생성")

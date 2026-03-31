@@ -37,9 +37,13 @@ public class NotificationController {
   /** 실시간 알림 구독 (SSE) */
   @GetMapping(value = "/subscribe", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
   @Operation(summary = "실시간 알림 구독 (SSE)", description = "클라이언트와 서버 간의 SSE 연결을 수립합니다.")
-  public SseEmitter subscribe(@AuthenticationPrincipal String email) {
+  public ResponseEntity<SseEmitter> subscribe(@AuthenticationPrincipal String email) {
     User user = userService.getByEmail(email);
-    return notificationService.subscribe(user.getId());
+    SseEmitter emitter = notificationService.subscribe(user.getId());
+    return ResponseEntity.ok()
+        .header("X-Accel-Buffering", "no") // Nginx 프록시 버퍼링 비활성화
+        .header("Cache-Control", "no-cache") // 캐시 비활성화
+        .body(emitter);
   }
 
   /** 내 알림 목록 조회 */

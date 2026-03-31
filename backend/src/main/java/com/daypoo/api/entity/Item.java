@@ -31,7 +31,7 @@ public class Item extends BaseTimeEntity {
   @Column(nullable = false)
   private long price;
 
-  @Column(name = "image_url")
+  @Column(name = "image_url", length = 1024)
   private String imageUrl;
 
   @Builder

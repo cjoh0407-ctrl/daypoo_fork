@@ -12,5 +12,10 @@ public interface TitleRepository extends JpaRepository<Title, Long> {
 
   Page<Title> findAllByAchievementType(AchievementType achievementType, Pageable pageable);
 
+  Page<Title> findByNameContaining(String name, Pageable pageable);
+
+  Page<Title> findByAchievementTypeAndNameContaining(
+      AchievementType achievementType, String name, Pageable pageable);
+
   boolean existsByName(String name);
 }

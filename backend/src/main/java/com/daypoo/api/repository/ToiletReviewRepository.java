@@ -11,6 +11,8 @@ import org.springframework.data.repository.query.Param;
 
 public interface ToiletReviewRepository extends JpaRepository<ToiletReview, Long> {
 
+  boolean existsByUserIdAndToiletId(Long userId, Long toiletId);
+
   List<ToiletReview> findTop5ByToiletIdOrderByCreatedAtDesc(Long toiletId);
 
   Page<ToiletReview> findByToiletIdOrderByCreatedAtDesc(Long toiletId, Pageable pageable);

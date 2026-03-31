@@ -40,43 +40,40 @@ public class AdminManagementService {
 
   @Transactional(readOnly = true)
   public Page<AdminUserListResponse> getUsers(String search, Role role, Pageable pageable) {
-    Specification<User> spec =
-        (root, query, cb) -> {
-          List<jakarta.persistence.criteria.Predicate> predicates = new ArrayList<>();
-          if (search != null && !search.isBlank()) {
-            predicates.add(
-                cb.or(
-                    cb.like(root.get("email"), "%" + search + "%"),
-                    cb.like(root.get("nickname"), "%" + search + "%")));
-          }
-          if (role != null) {
-            predicates.add(cb.equal(root.get("role"), role));
-          }
-          return cb.and(predicates.toArray(new jakarta.persistence.criteria.Predicate[0]));
-        };
+    Specification<User> spec = (root, query, cb) -> {
+      List<jakarta.persistence.criteria.Predicate> predicates = new ArrayList<>();
+      if (search != null && !search.isBlank()) {
+        predicates.add(
+            cb.or(
+                cb.like(root.get("email"), "%" + search + "%"),
+                cb.like(root.get("nickname"), "%" + search + "%")));
+      }
+      if (role != null) {
+        predicates.add(cb.equal(root.get("role"), role));
+      }
+      return cb.and(predicates.toArray(new jakarta.persistence.criteria.Predicate[0]));
+    };
 
     return userRepository
         .findAll(spec, pageable)
         .map(
-            user ->
-                AdminUserListResponse.builder()
-                    .id(user.getId())
-                    .email(user.getEmail())
-                    .nickname(user.getNickname())
-                    .role(user.getRole())
-                    .level(user.getLevel())
-                    .points(user.getPoints())
-                    .recordCount((int) pooRecordRepository.countByUserId(user.getId()))
-                    .createdAt(user.getCreatedAt())
-                    .build());
+            user -> AdminUserListResponse.builder()
+                .id(user.getId())
+                .email(user.getEmail())
+                .nickname(user.getNickname())
+                .role(user.getRole())
+                .level(user.getLevel())
+                .points(user.getPoints())
+                .recordCount((int) pooRecordRepository.countByUserId(user.getId()))
+                .createdAt(user.getCreatedAt())
+                .build());
   }
 
   @Transactional(readOnly = true)
   public AdminUserDetailResponse getUserDetail(Long userId) {
-    User user =
-        userRepository
-            .findById(userId)
-            .orElseThrow(() -> new BusinessException(ErrorCode.ADMIN_USER_NOT_FOUND));
+    User user = userRepository
+        .findById(userId)
+        .orElseThrow(() -> new BusinessException(ErrorCode.ADMIN_USER_NOT_FOUND));
 
     long paymentCount = paymentRepository.countByUserId(userId);
     Long totalAmount = paymentRepository.sumAmountByUserId(userId);
@@ -99,10 +96,9 @@ public class AdminManagementService {
 
   @Transactional
   public void updateUserRole(Long userId, Role role, String currentAdminEmail) {
-    User user =
-        userRepository
-            .findById(userId)
-            .orElseThrow(() -> new BusinessException(ErrorCode.ADMIN_USER_NOT_FOUND));
+    User user = userRepository
+        .findById(userId)
+        .orElseThrow(() -> new BusinessException(ErrorCode.ADMIN_USER_NOT_FOUND));
 
     if (user.getEmail().equals(currentAdminEmail)) {
       throw new BusinessException(ErrorCode.ADMIN_CANNOT_CHANGE_OWN_ROLE);
@@ -113,10 +109,9 @@ public class AdminManagementService {
 
   @Transactional
   public void deleteUser(Long userId, String currentAdminEmail) {
-    User user =
-        userRepository
-            .findById(userId)
-            .orElseThrow(() -> new BusinessException(ErrorCode.ADMIN_USER_NOT_FOUND));
+    User user = userRepository
+        .findById(userId)
+        .orElseThrow(() -> new BusinessException(ErrorCode.ADMIN_USER_NOT_FOUND));
 
     // 본인 삭제 방지
     if (user.getEmail().equals(currentAdminEmail)) {
@@ -140,32 +135,40 @@ public class AdminManagementService {
     }
 
     return toilets.map(
-        t ->
-            AdminToiletListResponse.builder()
-                .id(t.getId())
-                .name(t.getName())
-                .mngNo(t.getMngNo())
-                .address(t.getAddress())
-                .openHours(t.getOpenHours())
-                .is24h(t.is24h())
-                .isUnisex(t.isUnisex())
-                .latitude(t.getLocation() != null ? t.getLocation().getY() : 0)
-                .longitude(t.getLocation() != null ? t.getLocation().getX() : 0)
-                .createdAt(t.getCreatedAt())
-                .build());
+        t -> AdminToiletListResponse.builder()
+            .id(t.getId())
+            .name(t.getName())
+            .mngNo(t.getMngNo())
+            .address(t.getAddress())
+            .openHours(t.getOpenHours())
+            .is24h(t.is24h())
+            .isUnisex(t.isUnisex())
+            .latitude(t.getLocation() != null ? t.getLocation().getY() : 0)
+            .longitude(t.getLocation() != null ? t.getLocation().getX() : 0)
+            .createdAt(t.getCreatedAt())
+            .build());
   }
 
   // --- 문의 관리 ---
 
   @Transactional(readOnly = true)
-  public Page<AdminInquiryListResponse> getInquiries(InquiryStatus status, Pageable pageable) {
-    log.info("Fetching inquiries - Status: {}, Pageable: {}", status, pageable);
+  public Page<AdminInquiryListResponse> getInquiries(
+      InquiryStatus status, String search, Pageable pageable) {
+    log.info("Fetching inquiries - Status: {}, Search: {}, Pageable: {}", status, search, pageable);
     try {
       Page<Inquiry> inquiries;
       if (status != null) {
-        inquiries = inquiryRepository.findAllByStatus(status, pageable);
+        if (search != null && !search.isBlank()) {
+          inquiries = inquiryRepository.findByStatusAndSearch(status, search, pageable);
+        } else {
+          inquiries = inquiryRepository.findAllByStatus(status, pageable);
+        }
       } else {
-        inquiries = inquiryRepository.findAll(pageable);
+        if (search != null && !search.isBlank()) {
+          inquiries = inquiryRepository.findBySearch(search, pageable);
+        } else {
+          inquiries = inquiryRepository.findAll(pageable);
+        }
       }
 
       log.info(
@@ -198,10 +201,9 @@ public class AdminManagementService {
 
   @Transactional(readOnly = true)
   public AdminInquiryDetailResponse getInquiryDetail(Long inquiryId) {
-    Inquiry inquiry =
-        inquiryRepository
-            .findById(inquiryId)
-            .orElseThrow(() -> new BusinessException(ErrorCode.ADMIN_INQUIRY_NOT_FOUND));
+    Inquiry inquiry = inquiryRepository
+        .findById(inquiryId)
+        .orElseThrow(() -> new BusinessException(ErrorCode.ADMIN_INQUIRY_NOT_FOUND));
 
     return AdminInquiryDetailResponse.builder()
         .id(inquiry.getId())
@@ -219,10 +221,9 @@ public class AdminManagementService {
 
   @Transactional
   public void answerInquiry(Long inquiryId, AdminInquiryAnswerRequest request) {
-    Inquiry inquiry =
-        inquiryRepository
-            .findById(inquiryId)
-            .orElseThrow(() -> new BusinessException(ErrorCode.ADMIN_INQUIRY_NOT_FOUND));
+    Inquiry inquiry = inquiryRepository
+        .findById(inquiryId)
+        .orElseThrow(() -> new BusinessException(ErrorCode.ADMIN_INQUIRY_NOT_FOUND));
 
     if (inquiry.getStatus() == InquiryStatus.COMPLETED) {
       throw new BusinessException(ErrorCode.ADMIN_INQUIRY_ALREADY_ANSWERED);
@@ -234,36 +235,42 @@ public class AdminManagementService {
   // --- 상점 아이템 관리 ---
 
   @Transactional(readOnly = true)
-  public Page<ItemResponse> getItems(ItemType type, Pageable pageable) {
+  public Page<ItemResponse> getItems(ItemType type, String search, Pageable pageable) {
     Page<Item> items;
     if (type != null) {
-      items = itemRepository.findAllByType(type, pageable);
+      if (search != null && !search.isBlank()) {
+        items = itemRepository.findByTypeAndNameContaining(type, search, pageable);
+      } else {
+        items = itemRepository.findAllByType(type, pageable);
+      }
     } else {
-      items = itemRepository.findAll(pageable);
+      if (search != null && !search.isBlank()) {
+        items = itemRepository.findByNameContaining(search, pageable);
+      } else {
+        items = itemRepository.findAll(pageable);
+      }
     }
 
     return items.map(
-        item ->
-            ItemResponse.builder()
-                .id(item.getId())
-                .name(item.getName())
-                .description(item.getDescription())
-                .type(item.getType())
-                .price(item.getPrice())
-                .imageUrl(item.getImageUrl())
-                .build());
+        item -> ItemResponse.builder()
+            .id(item.getId())
+            .name(item.getName())
+            .description(item.getDescription())
+            .type(item.getType())
+            .price(item.getPrice())
+            .imageUrl(item.getImageUrl())
+            .build());
   }
 
   @Transactional
   public ItemResponse createItem(AdminItemCreateRequest request) {
-    Item item =
-        Item.builder()
-            .name(request.name())
-            .description(request.description())
-            .type(request.type())
-            .price(request.price())
-            .imageUrl(request.imageUrl())
-            .build();
+    Item item = Item.builder()
+        .name(request.name())
+        .description(request.description())
+        .type(request.type())
+        .price(request.price())
+        .imageUrl(request.imageUrl())
+        .build();
 
     Item saved = itemRepository.save(item);
     return ItemResponse.builder()
@@ -278,10 +285,9 @@ public class AdminManagementService {
 
   @Transactional
   public ItemResponse updateItem(Long itemId, AdminItemUpdateRequest request) {
-    Item item =
-        itemRepository
-            .findById(itemId)
-            .orElseThrow(() -> new BusinessException(ErrorCode.ADMIN_ITEM_NOT_FOUND));
+    Item item = itemRepository
+        .findById(itemId)
+        .orElseThrow(() -> new BusinessException(ErrorCode.ADMIN_ITEM_NOT_FOUND));
 
     item.update(
         request.name(), request.description(), request.type(), request.price(), request.imageUrl());
@@ -312,24 +318,31 @@ public class AdminManagementService {
   // --- 칭호 관리 ---
 
   @Transactional(readOnly = true)
-  public Page<AdminTitleResponse> getTitles(AchievementType type, Pageable pageable) {
+  public Page<AdminTitleResponse> getTitles(AchievementType type, String search, Pageable pageable) {
     Page<Title> titles;
     if (type != null) {
-      titles = titleRepository.findAllByAchievementType(type, pageable);
+      if (search != null && !search.isBlank()) {
+        titles = titleRepository.findByAchievementTypeAndNameContaining(type, search, pageable);
+      } else {
+        titles = titleRepository.findAllByAchievementType(type, pageable);
+      }
     } else {
-      titles = titleRepository.findAll(pageable);
+      if (search != null && !search.isBlank()) {
+        titles = titleRepository.findByNameContaining(search, pageable);
+      } else {
+        titles = titleRepository.findAll(pageable);
+      }
     }
 
     return titles.map(
-        t ->
-            new AdminTitleResponse(
-                t.getId(),
-                t.getName(),
-                t.getDescription(),
-                t.getImageUrl(),
-                t.getAchievementType(),
-                t.getAchievementThreshold(),
-                t.getCreatedAt()));
+        t -> new AdminTitleResponse(
+            t.getId(),
+            t.getName(),
+            t.getDescription(),
+            t.getImageUrl(),
+            t.getAchievementType(),
+            t.getAchievementThreshold(),
+            t.getCreatedAt()));
   }
 
   @Transactional
@@ -338,14 +351,13 @@ public class AdminManagementService {
       throw new BusinessException(ErrorCode.ADMIN_TITLE_NAME_DUPLICATE);
     }
 
-    Title title =
-        Title.builder()
-            .name(request.name())
-            .description(request.description())
-            .imageUrl(request.imageUrl())
-            .achievementType(request.achievementType())
-            .achievementThreshold(request.achievementThreshold())
-            .build();
+    Title title = Title.builder()
+        .name(request.name())
+        .description(request.description())
+        .imageUrl(request.imageUrl())
+        .achievementType(request.achievementType())
+        .achievementThreshold(request.achievementThreshold())
+        .build();
 
     Title saved = titleRepository.save(title);
     return new AdminTitleResponse(
@@ -360,10 +372,9 @@ public class AdminManagementService {
 
   @Transactional
   public AdminTitleResponse updateTitle(Long id, AdminTitleUpdateRequest request) {
-    Title title =
-        titleRepository
-            .findById(id)
-            .orElseThrow(() -> new BusinessException(ErrorCode.ADMIN_TITLE_NOT_FOUND));
+    Title title = titleRepository
+        .findById(id)
+        .orElseThrow(() -> new BusinessException(ErrorCode.ADMIN_TITLE_NOT_FOUND));
 
     // 이름 수정 시 중복 체크 (본인 이름 제외)
     if (!title.getName().equals(request.name()) && titleRepository.existsByName(request.name())) {
@@ -407,45 +418,41 @@ public class AdminManagementService {
     log.info("Generating 30 inquiry test data...");
 
     // 테스트용 사용자 가져오기 (없으면 첫 번째 사용자 사용)
-    User testUser =
-        userRepository
-            .findByEmail("user1@daypoo.com")
-            .or(() -> userRepository.findByEmail("user2@daypoo.com"))
-            .orElseGet(
-                () ->
-                    userRepository.findAll().stream()
-                        .filter(u -> u.getRole() == Role.ROLE_USER)
-                        .findFirst()
-                        .orElseThrow(() -> new RuntimeException("테스트 문의를 생성할 유저가 없습니다.")));
+    User testUser = userRepository
+        .findByEmail("user1@daypoo.com")
+        .or(() -> userRepository.findByEmail("user2@daypoo.com"))
+        .orElseGet(
+            () -> userRepository.findAll().stream()
+                .filter(u -> u.getRole() == Role.ROLE_USER)
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("테스트 문의를 생성할 유저가 없습니다.")));
 
     log.info("Using test user: {}", testUser.getEmail());
 
     // 30개의 문의 생성
     InquiryType[] types = InquiryType.values();
     String[] titles = {
-      "앱 사용 중 오류가 발생합니다",
-      "결제가 완료되지 않아요",
-      "화장실 정보가 잘못되었어요",
-      "포인트가 적립되지 않았습니다",
-      "아이템 구매 후 인벤토리 확인이 안 돼요",
-      "AI 분석 결과가 이상합니다",
-      "지도에서 화장실이 표시되지 않아요",
-      "리뷰 작성 후 반영이 안 됩니다",
-      "랭킹 점수가 업데이트되지 않아요",
-      "알림이 오지 않습니다"
+        "앱 사용 중 오류가 발생합니다",
+        "결제가 완료되지 않아요",
+        "화장실 정보가 잘못되었어요",
+        "포인트가 적립되지 않았습니다",
+        "아이템 구매 후 인벤토리 확인이 안 돼요",
+        "AI 분석 결과가 이상합니다",
+        "지도에서 화장실이 표시되지 않아요",
+        "리뷰 작성 후 반영이 안 됩니다",
+        "랭킹 점수가 업데이트되지 않아요",
+        "알림이 오지 않습니다"
     };
 
     for (int i = 0; i < 30; i++) {
       InquiryType type = types[i % types.length];
       String title = titles[i % titles.length] + " #" + (i + 1);
-      String content =
-          "문의 내용입니다. 테스트 데이터 "
-              + (i + 1)
-              + "번째 문의입니다.\n"
-              + "상세한 설명을 여기에 작성합니다. 문제가 발생한 상황과 재현 방법을 알려주세요.";
+      String content = "문의 내용입니다. 테스트 데이터 "
+          + (i + 1)
+          + "번째 문의입니다.\n"
+          + "상세한 설명을 여기에 작성합니다. 문제가 발생한 상황과 재현 방법을 알려주세요.";
 
-      Inquiry inquiry =
-          Inquiry.builder().user(testUser).type(type).title(title).content(content).build();
+      Inquiry inquiry = Inquiry.builder().user(testUser).type(type).title(title).content(content).build();
 
       inquiryRepository.save(inquiry);
 

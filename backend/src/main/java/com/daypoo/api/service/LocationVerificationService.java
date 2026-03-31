@@ -36,17 +36,18 @@ public class LocationVerificationService {
   }
 
   /** 화장실 도착 시간 기록 및 최초 시간 반환 (Fast Check-in 용) */
-  public long getOrSetArrivalTime(Long userId, Long toiletId) {
+  public long getOrSetArrivalTime(Long userId, Long toiletId, Long enteredAt) {
     String key = "daypoo:record:arrival:user:" + userId + ":toilet:" + toiletId;
     long currentTime = System.currentTimeMillis();
-    String currentTimeStr = String.valueOf(currentTime);
+    long arrivalTime = (enteredAt != null) ? enteredAt : currentTime;
+    String arrivalTimeStr = String.valueOf(arrivalTime);
 
     // 도착 시간은 1시간 동안만 유지 (그 안에 기록을 완료해야 함)
     Boolean isFirst =
-        redisTemplate.opsForValue().setIfAbsent(key, currentTimeStr, Duration.ofHours(1));
+        redisTemplate.opsForValue().setIfAbsent(key, arrivalTimeStr, Duration.ofHours(1));
 
     if (Boolean.TRUE.equals(isFirst)) {
-      return currentTime;
+      return arrivalTime;
     } else {
       String existingTimeStr = redisTemplate.opsForValue().get(key);
       if (existingTimeStr != null) {

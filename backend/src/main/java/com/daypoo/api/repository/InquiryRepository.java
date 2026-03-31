@@ -12,7 +12,19 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface InquiryRepository extends JpaRepository<Inquiry, Long> {
   List<Inquiry> findAllByUserOrderByCreatedAtDesc(User user);
 
+  java.util.Optional<Inquiry> findByIdAndUser(Long id, User user);
+
   Page<Inquiry> findAllByStatus(InquiryStatus status, Pageable pageable);
+
+  Page<Inquiry> findByUserId(Long userId, Pageable pageable);
+
+  @org.springframework.data.jpa.repository.Query(
+      "SELECT i FROM Inquiry i WHERE i.title LIKE %:search% OR i.user.email LIKE %:search% OR i.user.nickname LIKE %:search%")
+  Page<Inquiry> findBySearch(String search, Pageable pageable);
+
+  @org.springframework.data.jpa.repository.Query(
+      "SELECT i FROM Inquiry i WHERE i.status = :status AND (i.title LIKE %:search% OR i.user.email LIKE %:search% OR i.user.nickname LIKE %:search%)")
+  Page<Inquiry> findByStatusAndSearch(InquiryStatus status, String search, Pageable pageable);
 
   long countByStatus(InquiryStatus status);
 

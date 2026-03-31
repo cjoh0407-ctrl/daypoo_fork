@@ -63,6 +63,8 @@ public class SecurityConfig {
                     .requestMatchers(
                         "/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**", "/openapi.yaml")
                     .permitAll()
+                    .requestMatchers("/api/v1/notifications/subscribe")
+                    .permitAll()
                     .requestMatchers(HttpMethod.GET, "/api/v1/toilets/**", "/api/v1/support/faqs")
                     .permitAll()
                     .requestMatchers("/api/v1/support/inquiries", "/api/v1/support/inquiries/**")

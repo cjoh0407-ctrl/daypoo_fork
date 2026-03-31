@@ -35,6 +35,15 @@ public class SupportController {
     return ResponseEntity.ok(supportService.getMyInquiries(user));
   }
 
+  /** 내 문의 삭제 */
+  @DeleteMapping("/inquiries/{id}")
+  public ResponseEntity<Void> deleteInquiry(
+      @AuthenticationPrincipal String email, @PathVariable("id") Long id) {
+    User user = userService.getByEmail(email);
+    supportService.deleteInquiry(user, id);
+    return ResponseEntity.ok().build();
+  }
+
   /** FAQ 조회 */
   @GetMapping("/faqs")
   public ResponseEntity<List<FaqResponse>> getFaqs(

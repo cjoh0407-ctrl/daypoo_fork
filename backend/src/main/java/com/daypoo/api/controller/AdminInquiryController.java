@@ -29,12 +29,13 @@ public class AdminInquiryController {
   @GetMapping
   public ResponseEntity<Page<AdminInquiryListResponse>> getInquiries(
       @RequestParam(required = false) InquiryStatus status,
+      @RequestParam(required = false) String search,
       @PageableDefault(
               size = 20,
               sort = "createdAt",
               direction = org.springframework.data.domain.Sort.Direction.DESC)
           Pageable pageable) {
-    return ResponseEntity.ok(adminManagementService.getInquiries(status, pageable));
+    return ResponseEntity.ok(adminManagementService.getInquiries(status, search, pageable));
   }
 
   @Operation(summary = "문의 상세 조회", description = "문의 내용 및 기존 답변이 포함된 상세 데이터를 조회합니다.")

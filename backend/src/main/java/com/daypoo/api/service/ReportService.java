@@ -114,7 +114,7 @@ public class ReportService {
 
         if (!shouldRegenerate) {
           log.info("Returning cached {} report for user {}.", type, user.getId());
-          return response;
+          return applyPremiumMasking(response, isPremium);
         }
         log.info("Force re-generation for user {} [{}]: {}.", user.getId(), type, reason);
       } catch (Exception e) {
@@ -192,7 +192,7 @@ public class ReportService {
           }
         }
 
-        return HealthReportResponse.builder()
+        HealthReportResponse snapshotResponse = HealthReportResponse.builder()
             .reportType(s.getReportType().name())
             .healthScore(s.getHealthScore())
             .summary(s.getSummary())
@@ -212,6 +212,8 @@ public class ReportService {
             .bristolDistribution(bristolDist)
             .avgDailyRecordCount(s.getAvgDailyRecordCount())
             .build();
+
+        return applyPremiumMasking(snapshotResponse, isPremium);
       } else {
         log.info(
             "Old snapshot found for user {}, forcing re-generation to include new metrics",
@@ -368,7 +370,34 @@ public class ReportService {
         "AI가 분석한 당신의 최신 건강 분석 리포트를 지금 바로 확인해보세요.",
         "/reports/" + type.name().toLowerCase());
 
-    return response;
+    return applyPremiumMasking(response, isPremium);
+  }
+
+  /** 무료 회원의 리포트 요청 시, 프리미엄 전용 필드를 숨깁니다. */
+  private HealthReportResponse applyPremiumMasking(HealthReportResponse response, boolean isPremium) {
+    if (isPremium) {
+      return response;
+    }
+    return HealthReportResponse.builder()
+        .reportType(response.reportType())
+        .healthScore(response.healthScore())
+        .summary(response.summary())
+        .solution(response.solution())
+        .premiumSolution(null) // 프리미엄 솔루션 제거 (보안 마스킹)
+        .insights(null)        // 인사이트 통계 제거 (프리미엄 전용)
+        .recordCount(response.recordCount())
+        .periodStart(response.periodStart())
+        .periodEnd(response.periodEnd())
+        .analyzedAt(response.analyzedAt())
+        .mostFrequentBristol(response.mostFrequentBristol())
+        .mostFrequentCondition(response.mostFrequentCondition())
+        .mostFrequentDiet(response.mostFrequentDiet())
+        .healthyRatio(response.healthyRatio())
+        .weeklyHealthScores(response.weeklyHealthScores())
+        .improvementTrend(response.improvementTrend())
+        .bristolDistribution(response.bristolDistribution())
+        .avgDailyRecordCount(response.avgDailyRecordCount())
+        .build();
   }
 
   /** 리포트 히스토리 조회 (PRO/PREMIUM 전용) */

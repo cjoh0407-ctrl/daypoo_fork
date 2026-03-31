@@ -24,7 +24,7 @@ public class Title extends BaseTimeEntity {
   @Column(nullable = false)
   private String description;
 
-  @Column(name = "image_url")
+  @Column(name = "image_url", length = 1024)
   private String imageUrl;
 
   /** 부여 조건 타입 (예: CONTINUOUS_RECORDS, TOTAL_RECORDS, UNIQUE_TOILETS) */

@@ -63,6 +63,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     String path = request.getRequestURI();
     if (path != null && path.contains("/notifications/subscribe")) {
       String tokenParam = request.getParameter("token");
+      if (!StringUtils.hasText(tokenParam)) {
+        tokenParam = request.getParameter("sseToken");
+      }
       if (StringUtils.hasText(tokenParam)) {
         return tokenParam;
       }
