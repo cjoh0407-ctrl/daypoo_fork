@@ -55,7 +55,11 @@ public enum ErrorCode {
   ALREADY_REVIEWED(HttpStatus.BAD_REQUEST, "T002", "이미 이 화장실에 대한 리뷰를 작성하셨습니다."),
 
   // Subscription
-  SUBSCRIPTION_NOT_FOUND(HttpStatus.NOT_FOUND, "B001", "구독 정보를 찾을 수 없습니다.");
+  SUBSCRIPTION_NOT_FOUND(HttpStatus.NOT_FOUND, "B001", "구독 정보를 찾을 수 없습니다."),
+
+  // Global Settings
+  SIGNUP_DISABLED(HttpStatus.FORBIDDEN, "G001", "현재 신규 회원가입이 제한된 상태입니다."),
+  MAINTENANCE_MODE(HttpStatus.SERVICE_UNAVAILABLE, "G002", "현재 시스템 점검 중입니다. 잠시 후 다시 시도해주세요.");
 
   private final HttpStatus status;
   private final String code;

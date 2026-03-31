@@ -16,6 +16,8 @@ public class AdminStatsResponse {
   private long pendingInquiries;
   private long todayNewUsers;
   private long todayInquiries;
+  private long totalRevenue;
+  private long todayApiCalls;
   private List<DailyStat> weeklyTrend;
   private UserDistribution userDistribution;
 

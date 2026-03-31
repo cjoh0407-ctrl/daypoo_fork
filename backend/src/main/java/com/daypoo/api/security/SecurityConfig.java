@@ -33,6 +33,7 @@ public class SecurityConfig {
   private List<String> allowedOrigins;
 
   private final JwtAuthenticationFilter jwtAuthenticationFilter;
+  private final com.daypoo.api.global.filter.MaintenanceModeFilter maintenanceModeFilter;
   private final CustomOAuth2UserService customOAuth2UserService;
   private final OAuth2SuccessHandler oAuth2SuccessHandler;
   private final HttpCookieOAuth2AuthorizationRequestRepository
@@ -89,7 +90,8 @@ public class SecurityConfig {
                                   exception.getMessage(), java.nio.charset.StandardCharsets.UTF_8);
                           response.sendRedirect(frontendUrl + "/login?error=" + encodedMessage);
                         }))
-        .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+        .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+        .addFilterAfter(maintenanceModeFilter, JwtAuthenticationFilter.class);
 
     return http.build();
   }

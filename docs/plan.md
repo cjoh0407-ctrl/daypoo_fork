@@ -2,7 +2,15 @@
 
 ## 📋 개요
 
-`DayPoo 프로젝트 QA 리포트 (2026-03-31)` 내용에 기반하여 도출된 13가지의 결함과 기능 개선 요청에 대한 수정 계획을 수립합니다. 프로젝트 규약에 따라 **직접 수정 가능한 백엔드/인프라 이슈**와 **사용자 승인(요청)이 필요한 프론트엔드 이슈**로 나누어 접근합니다.
+`DayPoo 프로젝트 QA 리포트 (2026-03-31)` 내용에 기반하여 도출된 결함 수정 및 기능 개선을 진행하기 전, 최신 코드를 유지하기 위해 **업스트림(upstream) 저장소로부터 최신 변경사항을 반영**하고 이후 본격적인 작업을 수행합니다.
+
+---
+
+## 🔄 [PHASE 0] 업스트림 동기화 및 작업 준비 (현재 요청 사항)
+
+1. **작업 내용 임시 저장**: 현재 `fix/avatar-assignment-bug` 브랜치에서 수정 중인 내역(`AuthService.java` 등)을 `git stash` 명령어로 안전하게 보관합니다.
+2. **최신 코드 반영**: `git fetch upstream` 및 `git pull upstream main`을 실행하여 원본 저장소의 최신 반영 사항을 현재 브랜치에 가져옵니다.
+3. **변경사항 복구**: `git stash pop`을 통해 보관했던 수정 내역을 다시 불러오고, 충돌 발생 시 해결합니다.
 
 ---
 
@@ -34,7 +42,28 @@
 
 ---
 
-## 🎨 [PHASE 2] 프론트엔드 개선 및 수정 계획 (수정 승인 필요 ⚠️)
+## ⚙️ [PHASE 2] 시스템 전역 설정 및 관리자 기능 강화 (현재 요청 사항)
+
+### 1. 시스템 설정 도메인 구현
+- `SystemSettings` 엔티티 생성: 공지 메시지, 공지 활성화 여부, 점검 모드, 회원가입 허용 여부, AI 리포트 활성화 여부 필드 추가
+- `SystemSettingsRepository` 및 초기 데이터(Initial Seed) 설정 추가
+- `SystemSettingsResponse`, `SystemSettingsUpdateRequest` DTO 구현
+
+### 2. 관리자 설정 API 구현 (`AdminController`)
+- `GET /api/v1/admin/settings`: 현재 설정값 조회
+- `PUT /api/v1/admin/settings`: 설정값 업데이트 로직 구현
+
+### 3. 기능 로직 연동 및 비즈니스 제어
+- **점검 모드(maintenanceMode)**: `MaintenanceModeFilter` 또는 Interceptor를 구현하여 `true`일 경우 비관리자 요청에 503 HTTP 에러 반환
+- **회원가입 제한(signupEnabled)**: `AuthService.java` 내 `signUp` 및 `socialSignUp` 로직에서 해당 옵션 체크하여 가입 차단 구현
+
+### 4. 관리자 통신 DTO 고도화 (`AdminStatsResponse`)
+- `AdminStatsResponse`에 `totalRevenue`(누적 수익), `todayApiCalls`(당일 AI 호출 건수) 필드 추가
+- `AdminService`에서 해당 통계 데이터를 집계하여 반환하도록 계산 로직 업데이트
+
+---
+
+## 🎨 [PHASE 3] 프론트엔드 개선 및 수정 계획 (수정 승인 필요 ⚠️)
 
 _현재 로컬 룰(FRONTEND DIRECTORY RESTRICTION)에 의해 프론트엔드 폴더 직접 수정이 제한되어 있습니다. 아래 작업은 **사용자님이 수정을 명시적으로 허가해 주실 경우** 진행합니다._
 

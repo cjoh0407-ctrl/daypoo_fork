@@ -41,6 +41,11 @@ public class AdminService {
     long totalToilets = toiletRepository.count();
     long pendingInquiriesCount = inquiryRepository.countByStatus(InquiryStatus.PENDING);
 
+    // 누적 매출 계산 (Payment 테이블 전체 합계)
+    long totalRevenue = paymentRepository.findAll().stream()
+        .mapToLong(Payment::getAmount)
+        .sum();
+
     // 1. 유저 분포 통계 (PRO, BASIC, FREE)
     // ROLE_PRO, ROLE_PREMIUM -> pro
     long proUsersCount = userRepository.countByRoleIn(List.of(
@@ -91,14 +96,24 @@ public class AdminService {
     }
 
     LocalDateTime todayStart = LocalDate.now().atStartOfDay();
+    LocalDateTime todayEnd = LocalDate.now().atTime(23, 59, 59);
     long todayNewUsers = userRepository.countByCreatedAtAfter(todayStart);
+    long todayInquiriesCount = inquiryRepository.countByCreatedAtBetween(todayStart, todayEnd);
+    
+    // 당일 AI 호출 건수 집계 (SystemLog 기준)
+    // build/check-in/report 생성 시 'AI' source로 로그를 남긴다고 가정
+    long todayApiCalls = systemLogService.getRecentLogs().stream()
+        .filter(l -> "AI".equals(l.source()) && l.timestamp().isAfter(todayStart))
+        .count();
 
     return AdminStatsResponse.builder()
         .totalUsers(allUsers)
         .totalToilets(totalToilets)
         .pendingInquiries(pendingInquiriesCount)
         .todayNewUsers(todayNewUsers)
-        .todayInquiries(inquiryRepository.count())
+        .todayInquiries(todayInquiriesCount)
+        .totalRevenue(totalRevenue)
+        .todayApiCalls(todayApiCalls)
         .weeklyTrend(weeklyTrend)
         .userDistribution(distributionStats)
         .build();

@@ -3,6 +3,7 @@ package com.daypoo.api.controller;
 import com.daypoo.api.dto.AdminStatsResponse;
 import com.daypoo.api.dto.SyncStatusResponse;
 import com.daypoo.api.service.AdminService;
+import com.daypoo.api.service.AdminSettingsService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class AdminController {
 
   private final AdminService adminService;
+  private final AdminSettingsService adminSettingsService;
   private final com.daypoo.api.service.PublicDataSyncService syncService;
   private final com.daypoo.api.service.RankingService rankingService;
 
@@ -67,5 +69,18 @@ public class AdminController {
   public ResponseEntity<String> rebuildRankings() {
     rankingService.rebuildAllRankings();
     return ResponseEntity.ok("랭킹 전체 재구축이 완료되었습니다.");
+  }
+
+  @Operation(summary = "시스템 설정 조회", description = "관리자 설정 페이지에서 사용하는 시스템 전역 설정값을 조회합니다.")
+  @GetMapping("/settings")
+  public ResponseEntity<com.daypoo.api.dto.SystemSettingsResponse> getSettings() {
+    return ResponseEntity.ok(adminSettingsService.getSettings());
+  }
+
+  @Operation(summary = "시스템 설정 업데이트", description = "공지사항, 점검 모드, 회원가입 제한 등 시스템 설정을 업데이트합니다.")
+  @org.springframework.web.bind.annotation.PutMapping("/settings")
+  public ResponseEntity<com.daypoo.api.dto.SystemSettingsResponse> updateSettings(
+      @org.springframework.web.bind.annotation.RequestBody com.daypoo.api.dto.SystemSettingsUpdateRequest request) {
+    return ResponseEntity.ok(adminSettingsService.updateSettings(request));
   }
 }

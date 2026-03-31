@@ -1,5 +1,21 @@
 # Backend & AI Service Modification History
 
+## [2026-03-31 17:15:00] 신규 회원 기본 아바타 지급 로직 복구
+
+### 작업 내용 요약
+- **결함 원인 파악**: 프론트엔드/백엔드 수정 병합 과정 중 `AuthService.java`에 존재해야 할 신규 회원 기본 아바타(`ItemType.AVATAR`) 인벤토리 할당 로직이 소실되어 있던 것을 확인.
+- **로직 추가 및 복구**: 회원가입 시 가격이 `0`인 기본 아바타를 찾아 유저 인벤토리에 자동 장착(`isEquipped=true`) 시켜주는 `assignDefaultAvatar` 헬퍼 메서드를 재구현.
+
+### 상세 변경 내역
+- `AuthService.java` 내 `ItemRepository` 의존성 추가
+- `signUp()`, `socialSignUp()` 완료 직전 `assignDefaultAvatar(user)` 호출
+- `ItemType.AVATAR` 중 가격이 `0`인 아이템을 우선적으로 필터링하여 인벤토리(`Inventory`) 엔티티 생성 후 저장
+
+### 결과/영향
+- 새로 가입하는 유저는 가입 즉시 프로필에 기본 아바타가 정상적으로 표시됨.
+
+[✅ 규칙을 잘 수행했습니다.]
+
 ## [2026-03-31 16:45:00] 2차 QA 리포트 결함 픽스 (PHASE 3: 리포트 보안 & API 검증)
 
 ### 작업 내용 요약
