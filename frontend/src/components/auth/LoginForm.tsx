@@ -16,9 +16,11 @@ interface LoginFormProps {
 export function LoginForm({ onSwitch, onSuccess, onClose }: LoginFormProps) {
   const { login: authLogin } = useAuth();
   const navigate = useNavigate();
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState(() => localStorage.getItem('rememberedEmail') || '');
   const [password, setPassword] = useState('');
   const [showPw, setShowPw] = useState(false);
+  const [rememberEmail, setRememberEmail] = useState(() => !!localStorage.getItem('rememberedEmail'));
+  const [stayLoggedIn, setStayLoggedIn] = useState(() => localStorage.getItem('stayLoggedIn') === 'true');
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
   const [shake, setShake] = useState(false);
@@ -43,7 +45,16 @@ export function LoginForm({ onSwitch, onSuccess, onClose }: LoginFormProps) {
     try {
       const res: any = await api.post('/auth/login', { email, password });
       if (res && res.accessToken) {
-        await authLogin(res.accessToken, res.refreshToken || '');
+        // 아이디 기억하기
+        if (rememberEmail) {
+          localStorage.setItem('rememberedEmail', email);
+        } else {
+          localStorage.removeItem('rememberedEmail');
+        }
+        // 로그인 유지 설정 저장
+        localStorage.setItem('stayLoggedIn', String(stayLoggedIn));
+
+        await authLogin(res.accessToken, res.refreshToken || '', stayLoggedIn);
         
         // ROLE_ADMIN 체크
         try {
@@ -99,7 +110,19 @@ export function LoginForm({ onSwitch, onSuccess, onClose }: LoginFormProps) {
             }
           />
         </motion.div>
-        <div className="flex justify-end -mt-1">
+        <div className="flex items-center justify-between -mt-1">
+          <div className="flex items-center gap-3">
+            <label className="flex items-center gap-1.5 cursor-pointer select-none">
+              <input type="checkbox" checked={rememberEmail} onChange={(e) => setRememberEmail(e.target.checked)}
+                className="w-3.5 h-3.5 rounded border-gray-300 accent-[#1B4332]" />
+              <span className="text-xs" style={{ color: 'rgba(26,43,39,0.5)' }}>아이디 기억하기</span>
+            </label>
+            <label className="flex items-center gap-1.5 cursor-pointer select-none">
+              <input type="checkbox" checked={stayLoggedIn} onChange={(e) => setStayLoggedIn(e.target.checked)}
+                className="w-3.5 h-3.5 rounded border-gray-300 accent-[#1B4332]" />
+              <span className="text-xs" style={{ color: 'rgba(26,43,39,0.5)' }}>로그인 유지</span>
+            </label>
+          </div>
           <Link to="/forgot-password" onClick={onClose} className="text-xs transition-colors hover:text-[#1A2B27]" style={{ color: 'rgba(26,43,39,0.4)' }}>
             비밀번호를 잊으셨나요?
           </Link>

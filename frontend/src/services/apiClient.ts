@@ -7,12 +7,38 @@ export interface ApiError extends Error {
   status: number;
 }
 
+function isTokenExpiredByTime(): boolean {
+  const expiresAt = localStorage.getItem('tokenExpiresAt');
+  if (!expiresAt) return false;
+  return Date.now() > Number(expiresAt);
+}
+
+function getToken(key: string): string | null {
+  if (isTokenExpiredByTime()) {
+    removeTokens();
+    return null;
+  }
+  return localStorage.getItem(key) || sessionStorage.getItem(key);
+}
+
+function getTokenStorage(): Storage {
+  return sessionStorage.getItem('accessToken') ? sessionStorage : localStorage;
+}
+
+function removeTokens() {
+  localStorage.removeItem('accessToken');
+  localStorage.removeItem('refreshToken');
+  localStorage.removeItem('tokenExpiresAt');
+  sessionStorage.removeItem('accessToken');
+  sessionStorage.removeItem('refreshToken');
+}
+
 class ApiClient {
   private baseUrl = BASE_URL;
   private refreshPromise: Promise<boolean> | null = null; // F3: 토큰 리프레시 뮤텍스
 
   private async request<T>(method: string, endpoint: string, body?: any, timeout: number = 30000): Promise<T> {
-    const token = localStorage.getItem('accessToken');
+    const token = getToken('accessToken');
 
     // 헤더 설정
     const headers: Record<string, string> = {
@@ -45,8 +71,7 @@ class ApiClient {
           return this.request<T>(method, endpoint, body, timeout);
         } else {
           // 리프레시 실패 시 (만료된 리프레시 토큰 등)
-          localStorage.removeItem('accessToken');
-          localStorage.removeItem('refreshToken');
+          removeTokens();
           const error = new Error('인증이 만료되었습니다.') as ApiError;
           error.code = 'AUTHENTICATION_REQUIRED';
           error.status = 401;
@@ -110,7 +135,7 @@ class ApiClient {
   }
 
   private async doRefreshToken(): Promise<boolean> {
-    const refreshToken = localStorage.getItem('refreshToken');
+    const refreshToken = getToken('refreshToken');
     if (!refreshToken) return false;
 
     try {
@@ -129,9 +154,10 @@ class ApiClient {
       const data = (resData && typeof resData === 'object' && 'data' in resData) ? resData.data : resData;
 
       if (data && data.accessToken) {
-        localStorage.setItem('accessToken', data.accessToken);
+        const storage = getTokenStorage();
+        storage.setItem('accessToken', data.accessToken);
         if (data.refreshToken) {
-          localStorage.setItem('refreshToken', data.refreshToken);
+          storage.setItem('refreshToken', data.refreshToken);
         }
         return true;
       }

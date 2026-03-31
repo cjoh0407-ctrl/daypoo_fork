@@ -15,9 +15,16 @@ export const AuthCallback = () => {
 
     if (accessToken) {
       navigatedRef.current = true;
-      localStorage.setItem('accessToken', accessToken);
-      if (refreshToken) {
-        localStorage.setItem('refreshToken', refreshToken);
+      // 로그인 유지 설정에 따라 저장소 선택
+      const stayLoggedIn = localStorage.getItem('stayLoggedIn') === 'true';
+      if (stayLoggedIn) {
+        const THREE_DAYS_MS = 3 * 24 * 60 * 60 * 1000;
+        localStorage.setItem('accessToken', accessToken);
+        if (refreshToken) localStorage.setItem('refreshToken', refreshToken);
+        localStorage.setItem('tokenExpiresAt', String(Date.now() + THREE_DAYS_MS));
+      } else {
+        sessionStorage.setItem('accessToken', accessToken);
+        if (refreshToken) sessionStorage.setItem('refreshToken', refreshToken);
       }
       
       // 로그인 성공 시 메인 또는 원래 있던 페이지로 이동
