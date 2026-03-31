@@ -29,6 +29,7 @@ public class AdminService {
   private final ToiletRepository toiletRepository;
   private final InquiryRepository inquiryRepository;
   private final PaymentRepository paymentRepository;
+  private final SystemLogService systemLogService;
 
   @Transactional(readOnly = true)
   public AdminStatsResponse getAdminStats() {
@@ -59,20 +60,25 @@ public class AdminService {
               .mapToLong(Payment::getAmount)
               .sum();
 
+      long dailyInquiries = inquiryRepository.countByCreatedAtBetween(start, end);
+
       weeklyTrend.add(
           AdminStatsResponse.DailyStat.builder()
               .date(date.format(formatter))
-              .users(dailyUsers + (long) (Math.random() * 5)) // 실제 데이터 + 약간의 랜덤값 (테스트용)
-              .inquiries((int) (Math.random() * 5))
+              .users(dailyUsers)
+              .inquiries((int) dailyInquiries)
               .sales(sales)
               .build());
     }
+
+    LocalDateTime todayStart = LocalDate.now().atStartOfDay();
+    long todayNewUsers = userRepository.countByCreatedAtAfter(todayStart);
 
     return AdminStatsResponse.builder()
         .totalUsers(totalUsers)
         .totalToilets(totalToilets)
         .pendingInquiries(pendingInquiries)
-        .todayNewUsers(12) // 임시 값
+        .todayNewUsers(todayNewUsers)
         .todayInquiries(inquiryRepository.count())
         .weeklyTrend(weeklyTrend)
         .build();
@@ -80,41 +86,7 @@ public class AdminService {
 
   @Transactional(readOnly = true)
   public List<SystemLogResponse> getSystemLogs() {
-    List<SystemLogResponse> logs = new ArrayList<>();
-    LocalDateTime now = LocalDateTime.now();
-
-    logs.add(
-        new SystemLogResponse(
-            1L, "INFO", "Auth", "New user registered: user123", now.minusMinutes(5)));
-    logs.add(
-        new SystemLogResponse(
-            2L, "WARN", "API", "Rate limit exceeded for IP: 192.168.1.1", now.minusMinutes(12)));
-    logs.add(
-        new SystemLogResponse(
-            3L, "INFO", "AI", "Poop analysis completed for record #502", now.minusMinutes(25)));
-    logs.add(
-        new SystemLogResponse(
-            4L, "ERROR", "Payment", "Toss payment failed for order #ORD-772", now.minusHours(1)));
-    logs.add(
-        new SystemLogResponse(
-            5L, "INFO", "System", "Scheduled toilet data sync started", now.minusHours(2)));
-    logs.add(
-        new SystemLogResponse(
-            6L, "INFO", "Auth", "Social login successful: Kakao user", now.minusHours(3)));
-    logs.add(
-        new SystemLogResponse(
-            7L, "WARN", "DB", "Slow query detected in Ranking calculation", now.minusHours(4)));
-    logs.add(
-        new SystemLogResponse(
-            8L, "INFO", "Support", "New inquiry received: App crashing on Map", now.minusHours(5)));
-    logs.add(
-        new SystemLogResponse(
-            9L, "ERROR", "AI", "AI model endpoint timeout (408)", now.minusHours(6)));
-    logs.add(
-        new SystemLogResponse(
-            10L, "INFO", "System", "Backend server restarted (v1.0.4)", now.minusDays(1)));
-
-    return logs;
+    return systemLogService.getRecentLogs();
   }
 
   @Transactional

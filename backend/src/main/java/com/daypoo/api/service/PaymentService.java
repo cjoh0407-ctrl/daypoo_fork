@@ -33,18 +33,21 @@ public class PaymentService {
   private final SubscriptionService subscriptionService;
   private final ObjectMapper objectMapper;
   private final RestTemplate restTemplate;
+  private final SystemLogService systemLogService;
 
   public PaymentService(
       UserService userService,
       PaymentRepository paymentRepository,
       SubscriptionService subscriptionService,
       ObjectMapper objectMapper,
-      @Qualifier("externalRestTemplate") RestTemplate restTemplate) {
+      @Qualifier("externalRestTemplate") RestTemplate restTemplate,
+      SystemLogService systemLogService) {
     this.userService = userService;
     this.paymentRepository = paymentRepository;
     this.subscriptionService = subscriptionService;
     this.objectMapper = objectMapper;
     this.restTemplate = restTemplate;
+    this.systemLogService = systemLogService;
   }
 
   @Value("${toss.secret-key}")
@@ -86,11 +89,14 @@ public class PaymentService {
                   .build());
 
       handleMembershipOrPoints(user, savedPayment);
+      systemLogService.info("Payment", "Payment confirmed: orderId=" + orderId + ", amount=" + amount + ", user=" + email);
       log.info("✅ Payment confirmed, recorded, and membership/points updated for user: {}", email);
 
     } catch (HttpClientErrorException e) {
+      systemLogService.error("Payment", "Toss payment failed: orderId=" + orderId + ", user=" + email);
       handleTossError(e);
     } catch (Exception e) {
+      systemLogService.error("Payment", "Unexpected payment error: " + e.getMessage());
       log.error("❌ Unexpected Payment Error: {}", e.getMessage());
       throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR);
     }
