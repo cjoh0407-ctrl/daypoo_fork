@@ -6,6 +6,7 @@ import com.daypoo.api.entity.enums.AchievementType;
 import com.daypoo.api.entity.enums.InquiryStatus;
 import com.daypoo.api.entity.enums.InquiryType;
 import com.daypoo.api.entity.enums.ItemType;
+import com.daypoo.api.entity.enums.NotificationType;
 import com.daypoo.api.entity.enums.Role;
 import com.daypoo.api.global.exception.BusinessException;
 import com.daypoo.api.global.exception.ErrorCode;
@@ -35,6 +36,7 @@ public class AdminManagementService {
   private final UserDeletionService userDeletionService;
   private final TitleRepository titleRepository;
   private final UserTitleRepository userTitleRepository;
+  private final NotificationService notificationService;
 
   // --- 유저 관리 ---
 
@@ -230,6 +232,13 @@ public class AdminManagementService {
     }
 
     inquiry.answer(request.answer());
+
+    notificationService.send(
+        inquiry.getUser(),
+        NotificationType.SYSTEM,
+        "1:1 문의 답변이 도착했습니다.",
+        "'" + inquiry.getTitle() + "' 문의에 대한 답변이 등록되었습니다.",
+        "/support");
   }
 
   // --- 상점 아이템 관리 ---
