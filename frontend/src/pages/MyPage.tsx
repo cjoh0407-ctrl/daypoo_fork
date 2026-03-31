@@ -702,7 +702,7 @@ function HeroBanner({
                 >
                   {equippedItem?.id ? (
                     <img
-                      src={parseDicebearUrl(equippedItem.imageUrl || equippedItem.emoji, equippedItem.id, equippedItem.rawType || 'AVATAR')}
+                      src={parseDicebearUrl(equippedItem.imageUrl, equippedItem.id, equippedItem.rawType || 'AVATAR')}
                       alt={equippedItem.name}
                       className="w-full h-full object-cover"
                     />
@@ -1232,9 +1232,9 @@ function HomeTab({
                                 </span>
                               ) : (
                                 <img
-                                  src={parseDicebearUrl(item.imageUrl || item.emoji, item.id, avatarType)}
+                                  src={parseDicebearUrl(item.imageUrl, item.id, avatarType)}
                                   alt={item.name}
-                                  className="w-full h-full object-cover transition-transform group-hover:scale-110 duration-500"
+                                  className="w-full h-full object-contain transition-transform group-hover:scale-110 duration-500"
                                 />
                               )}
                               {isOwned && (
@@ -1312,7 +1312,11 @@ function HomeTab({
                 {preview.rawType === 'EFFECT' ? (
                   <span className="text-3xl select-none">{preview.emoji || '✨'}</span>
                 ) : (
-                  <img src={parseDicebearUrl(preview.imageUrl || preview.emoji, preview.id, preview.rawType || 'AVATAR')} className="w-full h-full object-cover p-2 transition-transform group-hover:scale-110" />
+                <img 
+                  src={parseDicebearUrl(preview.imageUrl, preview.id, preview.rawType || 'AVATAR')} 
+                  className="w-full h-full object-contain p-1.5 transition-transform group-hover:scale-110" 
+                  alt={preview.name}
+                />
                 )}
                 <div className="absolute inset-0 bg-emerald-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
               </div>
