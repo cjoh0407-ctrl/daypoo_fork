@@ -250,12 +250,9 @@ export function ToiletPopup({
               <>
                 {/* AI 요약 */}
                 {reviewSummary.aiSummary && (
-                  <div className="mb-3 p-3 rounded-xl" style={{ background: '#f4faf6' }}>
-                    <div className="flex items-center gap-1.5 mb-1">
-                      <Sparkles size={14} style={{ color: '#2D6A4F' }} />
-                      <span className="text-xs font-bold" style={{ color: '#2D6A4F' }}>AI 요약</span>
-                    </div>
-                    <p className="text-sm leading-relaxed" style={{ color: '#5a7a6a' }}>
+                  <div className="mb-3 px-3 py-2 rounded-xl flex items-center gap-2" style={{ background: '#f4faf6' }}>
+                    <Sparkles size={13} style={{ color: '#2D6A4F', flexShrink: 0 }} />
+                    <p className="text-xs font-bold truncate" style={{ color: '#5a7a6a' }}>
                       {reviewSummary.aiSummary}
                     </p>
                   </div>
@@ -263,7 +260,7 @@ export function ToiletPopup({
 
                 {/* 최근 리뷰 3개 */}
                 <div className="space-y-3">
-                  {reviewSummary.recentReviews.slice(0, 3).map((review) => (
+                  {reviewSummary.recentReviews.slice(0, 2).map((review) => (
                     <div key={review.id} className="pb-3 border-b last:border-0" style={{ borderColor: '#eef5f0' }}>
                       <div className="flex items-center justify-between mb-1.5">
                         <div className="flex items-center gap-2">

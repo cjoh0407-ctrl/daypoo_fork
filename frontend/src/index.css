@@ -126,3 +126,80 @@ body {
 .nav-link:hover::after { 
   width: 100%; 
 }
+
+/* Custom Scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(26, 43, 39, 0.1);
+  border-radius: 10px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(26, 43, 39, 0.2);
+}
+
+/* Prose Table Overrides */
+.prose table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.5rem 0;
+  border-radius: 20px;
+  overflow: hidden;
+  border: 1px solid rgba(27, 67, 50, 0.08);
+  table-layout: auto;
+}
+.prose thead {
+  background: rgba(27, 67, 50, 0.04);
+  border-bottom: 2px solid rgba(27, 67, 50, 0.06);
+}
+.prose th {
+  padding: 16px 24px;
+  text-align: left;
+  font-size: 0.95rem;
+  font-weight: 900;
+  color: #1B4332;
+  letter-spacing: -0.01em;
+  background: rgba(27, 67, 50, 0.04);
+}
+.prose th:first-child, .prose td:first-child {
+  white-space: nowrap;
+  width: 1%; /* Shrink to fit content */
+  min-width: 90px;
+  padding-right: 32px;
+  font-weight: 900;
+  text-align: center;
+}
+/* Ensure key metrics column doesn't break awkwardly - but keep text neutral for long desc */
+.prose td:nth-child(3) {
+  width: auto;
+  color: #4B5563; /* Mid-gray for readability */
+  text-align: left;
+}
+/* For 30-day report, metrics should still be bold and colored */
+.prose table:has(th:contains("주요 지표")) td:nth-child(3) {
+  white-space: nowrap;
+  font-family: 'Inter', sans-serif;
+  font-weight: 800;
+  color: #059669;
+}
+.prose td {
+  padding: 24px;
+  font-size: 0.95rem;
+  border-top: 1px solid rgba(27, 67, 50, 0.04);
+  color: #374151;
+  vertical-align: top; /* Top align for multiple lines */
+  line-height: 1.7;
+  word-break: keep-all; 
+  overflow-wrap: break-word;
+  text-align: left;
+}
+.prose tr:last-child td {
+  border-bottom: none;
+}
+.prose tr:hover td {
+  background: rgba(27, 67, 50, 0.02);
+}

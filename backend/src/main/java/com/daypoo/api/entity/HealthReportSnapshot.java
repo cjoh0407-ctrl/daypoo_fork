@@ -39,6 +39,9 @@ public class HealthReportSnapshot extends BaseTimeEntity {
   @Column(columnDefinition = "TEXT")
   private String insights;
 
+  @Column(name = "premium_solution", columnDefinition = "TEXT")
+  private String premiumSolution;
+
   @Column(name = "record_count", nullable = false)
   private int recordCount;
 
@@ -79,6 +82,7 @@ public class HealthReportSnapshot extends BaseTimeEntity {
       int healthScore,
       String summary,
       String solution,
+      String premiumSolution,
       String insights,
       int recordCount,
       LocalDateTime periodStart,
@@ -96,6 +100,7 @@ public class HealthReportSnapshot extends BaseTimeEntity {
     this.healthScore = healthScore;
     this.summary = summary;
     this.solution = solution;
+    this.premiumSolution = premiumSolution;
     this.insights = insights;
     this.recordCount = recordCount;
     this.periodStart = periodStart;

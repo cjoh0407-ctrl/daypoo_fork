@@ -1,47 +1,106 @@
+Reusing configuration cache.
+> Task :processResources UP-TO-DATE
+> Task :compileJava UP-TO-DATE
+> Task :classes UP-TO-DATE
+> Task :resolveMainClassName UP-TO-DATE
 
-> Task :compileJava
-D:\poop-map\backend\src\main\java\com\daypoo\api\service\TitleAchievementService.java:62: error: cannot find symbol
-    log.info("New title granted to user {}: {}", user.getUsername(), title.getName());
-                                                     ^
-  symbol:   method getUsername()
-  location: variable user of type User
-D:\poop-map\backend\src\main\java\com\daypoo\api\controller\RankingController.java:26: error: cannot find symbol
-            ? userRepository.findByUsername(username).orElse(null)
-                            ^
-  symbol:   method findByUsername(String)
-  location: variable userRepository of type UserRepository
-D:\poop-map\backend\src\main\java\com\daypoo\api\controller\RankingController.java:37: error: cannot find symbol
-            ? userRepository.findByUsername(username).orElse(null)
-                            ^
-  symbol:   method findByUsername(String)
-  location: variable userRepository of type UserRepository
-D:\poop-map\backend\src\main\java\com\daypoo\api\controller\RankingController.java:48: error: cannot find symbol
-            ? userRepository.findByUsername(username).orElse(null)
-                            ^
-  symbol:   method findByUsername(String)
-  location: variable userRepository of type UserRepository
-D:\poop-map\backend\src\main\java\com\daypoo\api\controller\SupportController.java:49: error: cannot find symbol
-        .findByUsername(username)
-        ^
-  symbol:   method findByUsername(String)
-  location: variable userRepository of type UserRepository
-Note: D:\poop-map\backend\src\main\java\com\daypoo\api\security\CookieUtils.java uses or overrides a deprecated API.
-Note: Recompile with -Xlint:deprecation for details.
-Note: Some input files use unchecked or unsafe operations.
-Note: Recompile with -Xlint:unchecked for details.
-5 errors
+> Task :bootRun
 
-> Task :compileJava FAILED
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
 
-FAILURE: Build failed with an exception.
+ :: Spring Boot ::                (v3.4.3)
 
-* What went wrong:
-Execution failed for task ':compileJava'.
-> Compilation failed; see the compiler error output for details.
-
-* Try:
-> Run with --info option to get more log output.
-> Run with --scan to get full insights.
-
-BUILD FAILED in 4s
-1 actionable task: 1 executed
+2026-03-31T09:16:17.919+09:00  INFO 90885 --- [daypoo-api] [  restartedMain] com.daypoo.api.ApiApplication            : Starting ApiApplication using Java 21.0.9 with PID 90885 (/Users/changjun/Desktop/project/daypoo_fork/backend/build/classes/java/main started by changjun in /Users/changjun/Desktop/project/daypoo_fork/backend)
+2026-03-31T09:16:17.920+09:00  INFO 90885 --- [daypoo-api] [  restartedMain] com.daypoo.api.ApiApplication            : No active profile set, falling back to 1 default profile: "default"
+2026-03-31T09:16:17.940+09:00  INFO 90885 --- [daypoo-api] [  restartedMain] .e.DevToolsPropertyDefaultsPostProcessor : Devtools property defaults active! Set 'spring.devtools.add-properties' to 'false' to disable
+2026-03-31T09:16:17.941+09:00  INFO 90885 --- [daypoo-api] [  restartedMain] .e.DevToolsPropertyDefaultsPostProcessor : For additional web related logging consider setting the 'logging.level.web' property to 'DEBUG'
+2026-03-31T09:16:18.667+09:00  INFO 90885 --- [daypoo-api] [  restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Multiple Spring Data modules found, entering strict repository configuration mode
+2026-03-31T09:16:18.668+09:00  INFO 90885 --- [daypoo-api] [  restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-03-31T09:16:18.766+09:00  INFO 90885 --- [daypoo-api] [  restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 93 ms. Found 16 JPA repository interfaces.
+2026-03-31T09:16:18.774+09:00  INFO 90885 --- [daypoo-api] [  restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Multiple Spring Data modules found, entering strict repository configuration mode
+2026-03-31T09:16:18.774+09:00  INFO 90885 --- [daypoo-api] [  restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2026-03-31T09:16:18.785+09:00  INFO 90885 --- [daypoo-api] [  restartedMain] .RepositoryConfigurationExtensionSupport : Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.daypoo.api.repository.FaqRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-03-31T09:16:18.785+09:00  INFO 90885 --- [daypoo-api] [  restartedMain] .RepositoryConfigurationExtensionSupport : Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.daypoo.api.repository.FavoriteRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-03-31T09:16:18.785+09:00  INFO 90885 --- [daypoo-api] [  restartedMain] .RepositoryConfigurationExtensionSupport : Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.daypoo.api.repository.HealthReportSnapshotRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-03-31T09:16:18.785+09:00  INFO 90885 --- [daypoo-api] [  restartedMain] .RepositoryConfigurationExtensionSupport : Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.daypoo.api.repository.InquiryRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-03-31T09:16:18.785+09:00  INFO 90885 --- [daypoo-api] [  restartedMain] .RepositoryConfigurationExtensionSupport : Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.daypoo.api.repository.InventoryRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-03-31T09:16:18.785+09:00  INFO 90885 --- [daypoo-api] [  restartedMain] .RepositoryConfigurationExtensionSupport : Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.daypoo.api.repository.ItemRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-03-31T09:16:18.785+09:00  INFO 90885 --- [daypoo-api] [  restartedMain] .RepositoryConfigurationExtensionSupport : Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.daypoo.api.repository.NotificationRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-03-31T09:16:18.785+09:00  INFO 90885 --- [daypoo-api] [  restartedMain] .RepositoryConfigurationExtensionSupport : Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.daypoo.api.repository.PaymentRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-03-31T09:16:18.785+09:00  INFO 90885 --- [daypoo-api] [  restartedMain] .RepositoryConfigurationExtensionSupport : Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.daypoo.api.repository.PooRecordRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-03-31T09:16:18.785+09:00  INFO 90885 --- [daypoo-api] [  restartedMain] .RepositoryConfigurationExtensionSupport : Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.daypoo.api.repository.SubscriptionRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-03-31T09:16:18.786+09:00  INFO 90885 --- [daypoo-api] [  restartedMain] .RepositoryConfigurationExtensionSupport : Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.daypoo.api.repository.TitleRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-03-31T09:16:18.786+09:00  INFO 90885 --- [daypoo-api] [  restartedMain] .RepositoryConfigurationExtensionSupport : Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.daypoo.api.repository.ToiletRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-03-31T09:16:18.786+09:00  INFO 90885 --- [daypoo-api] [  restartedMain] .RepositoryConfigurationExtensionSupport : Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.daypoo.api.repository.ToiletReviewRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-03-31T09:16:18.786+09:00  INFO 90885 --- [daypoo-api] [  restartedMain] .RepositoryConfigurationExtensionSupport : Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.daypoo.api.repository.UserRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-03-31T09:16:18.786+09:00  INFO 90885 --- [daypoo-api] [  restartedMain] .RepositoryConfigurationExtensionSupport : Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.daypoo.api.repository.UserTitleRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-03-31T09:16:18.786+09:00  INFO 90885 --- [daypoo-api] [  restartedMain] .RepositoryConfigurationExtensionSupport : Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.daypoo.api.repository.VisitLogRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-03-31T09:16:18.786+09:00  INFO 90885 --- [daypoo-api] [  restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 6 ms. Found 0 Redis repository interfaces.
+2026-03-31T09:16:19.301+09:00  INFO 90885 --- [daypoo-api] [  restartedMain] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8080 (http)
+2026-03-31T09:16:19.310+09:00  INFO 90885 --- [daypoo-api] [  restartedMain] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-03-31T09:16:19.310+09:00  INFO 90885 --- [daypoo-api] [  restartedMain] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.36]
+2026-03-31T09:16:19.333+09:00  INFO 90885 --- [daypoo-api] [  restartedMain] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2026-03-31T09:16:19.333+09:00  INFO 90885 --- [daypoo-api] [  restartedMain] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 1392 ms
+2026-03-31T09:16:20.259+09:00  INFO 90885 --- [daypoo-api] [  restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-03-31T09:16:20.364+09:00  INFO 90885 --- [daypoo-api] [  restartedMain] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection org.postgresql.jdbc.PgConnection@5548bd91
+2026-03-31T09:16:20.365+09:00  INFO 90885 --- [daypoo-api] [  restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2026-03-31T09:16:20.385+09:00  INFO 90885 --- [daypoo-api] [  restartedMain] org.flywaydb.core.FlywayExecutor         : Database: jdbc:postgresql://localhost:5432/daypoo_db?reWriteBatchedInserts=true (PostgreSQL 16.4)
+2026-03-31T09:16:20.452+09:00  INFO 90885 --- [daypoo-api] [  restartedMain] o.f.core.internal.command.DbValidate     : Successfully validated 24 migrations (execution time 00:00.032s)
+2026-03-31T09:16:20.519+09:00  INFO 90885 --- [daypoo-api] [  restartedMain] o.f.core.internal.command.DbMigrate      : Current version of schema "public": 23
+2026-03-31T09:16:20.520+09:00  INFO 90885 --- [daypoo-api] [  restartedMain] o.f.core.internal.command.DbMigrate      : Schema "public" is up to date. No migration necessary.
+2026-03-31T09:16:20.595+09:00  INFO 90885 --- [daypoo-api] [  restartedMain] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2026-03-31T09:16:20.626+09:00  INFO 90885 --- [daypoo-api] [  restartedMain] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.6.8.Final
+2026-03-31T09:16:20.631+09:00  INFO 90885 --- [daypoo-api] [  restartedMain] o.h.spatial.integration.SpatialService   : HHH80000001: hibernate-spatial integration enabled : true
+2026-03-31T09:16:20.645+09:00  INFO 90885 --- [daypoo-api] [  restartedMain] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2026-03-31T09:16:20.726+09:00  WARN 90885 --- [daypoo-api] [  restartedMain] org.hibernate.orm.deprecation            : HHH90000025: PostgreSQLDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2026-03-31T09:16:20.733+09:00  INFO 90885 --- [daypoo-api] [  restartedMain] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+	Database JDBC URL [Connecting through datasource 'HikariDataSource (HikariPool-1)']
+	Database driver: undefined/unknown
+	Database version: 16.4
+	Autocommit mode: undefined/unknown
+	Isolation level: undefined/unknown
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2026-03-31T09:16:20.740+09:00  INFO 90885 --- [daypoo-api] [  restartedMain] org.hibernate.spatial                    : HHH80000003: hibernate-spatial adding type contributions from : org.hibernate.spatial.dialect.postgis.PostgisDialectContributor
+2026-03-31T09:16:20.841+09:00  INFO 90885 --- [daypoo-api] [  restartedMain] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-03-31T09:16:20.853+09:00  INFO 90885 --- [daypoo-api] [  restartedMain] org.hibernate.spatial                    : HHH80000003: hibernate-spatial adding type contributions from : org.hibernate.spatial.dialect.postgis.PostgisDialectContributor
+2026-03-31T09:16:21.060+09:00  INFO 90885 --- [daypoo-api] [  restartedMain] org.hibernate.spatial                    : HHH80000004: hibernate-spatial adding function contributions from : org.hibernate.spatial.dialect.postgis.PostgisDialectContributor
+2026-03-31T09:16:21.446+09:00  INFO 90885 --- [daypoo-api] [  restartedMain] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-03-31T09:16:22.111+09:00  INFO 90885 --- [daypoo-api] [  restartedMain] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-03-31T09:16:22.362+09:00  INFO 90885 --- [daypoo-api] [  restartedMain] o.s.d.j.r.query.QueryEnhancerFactory     : Hibernate is in classpath; If applicable, HQL parser will be used.
+2026-03-31T09:16:23.863+09:00  WARN 90885 --- [daypoo-api] [  restartedMain] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2026-03-31T09:16:24.184+09:00  INFO 90885 --- [daypoo-api] [  restartedMain] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 4 endpoints beneath base path '/actuator'
+2026-03-31T09:16:24.799+09:00  INFO 90885 --- [daypoo-api] [  restartedMain] o.s.b.d.a.OptionalLiveReloadServer       : LiveReload server is running on port 35729
+2026-03-31T09:16:24.844+09:00  INFO 90885 --- [daypoo-api] [  restartedMain] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8080 (http) with context path '/'
+2026-03-31T09:16:25.072+09:00  INFO 90885 --- [daypoo-api] [  restartedMain] com.daypoo.api.ApiApplication            : Started ApiApplication in 7.353 seconds (process running for 7.572)
+2026-03-31T09:16:25.103+09:00  INFO 90885 --- [daypoo-api] [  restartedMain] c.d.api.global.config.DataInitializer    : 🏁 DataInitializer started...
+2026-03-31T09:16:25.190+09:00  INFO 90885 --- [daypoo-api] [  restartedMain] c.d.api.global.config.DataInitializer    : ✅ DataInitializer completed.
+2026-03-31T09:16:25.194+09:00  INFO 90885 --- [daypoo-api] [  restartedMain] com.daypoo.api.ApiApplication            : 🔍 [Env-Check] MAIL_USERNAME: da****om
+2026-03-31T09:16:25.194+09:00  INFO 90885 --- [daypoo-api] [  restartedMain] com.daypoo.api.ApiApplication            : 🔍 [Env-Check] MAIL_PASSWORD: vm****ln
+2026-03-31T09:16:25.194+09:00  INFO 90885 --- [daypoo-api] [  restartedMain] com.daypoo.api.ApiApplication            : 🔍 [Env-Check] TOSS_SECRET_KEY: te****n5
+2026-03-31T09:16:25.194+09:00  INFO 90885 --- [daypoo-api] [  restartedMain] com.daypoo.api.ApiApplication            : ℹ️ [Self-Check] Mail self-check disabled (app.self-check.mail-enabled=false).
+2026-03-31T09:16:25.195+09:00  INFO 90885 --- [daypoo-api] [  restartedMain] com.daypoo.api.service.RankingService    : [Ranking] ApplicationReadyEvent: 랭킹 재구축 수행
+2026-03-31T09:16:25.195+09:00  INFO 90885 --- [daypoo-api] [  restartedMain] com.daypoo.api.service.RankingService    : [Ranking] 전체 랭킹 재구축 시작...
+2026-03-31T09:16:30.434+09:00  INFO 90885 --- [daypoo-api] [  restartedMain] com.daypoo.api.service.RankingService    : [Ranking] 전체 랭킹 재구축 완료: 9938명
+2026-03-31T09:16:41.912+09:00  INFO 90885 --- [daypoo-api] [nio-8080-exec-1] o.apache.tomcat.util.http.parser.Cookie  : A cookie header was received [g_state={"i_l":0,"i_ll":1772000109666,"i_e":{"enable_itp_optimization":0},"i_b":"vCiUWP8zg0hjzJ8Th4jMHmWcjFETw9kBgWBVHpe407I"}] that contained an invalid cookie. That cookie will be ignored.
+ Note: further occurrences of this error will be logged at DEBUG level.
+2026-03-31T09:16:41.917+09:00  INFO 90885 --- [daypoo-api] [nio-8080-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-03-31T09:16:41.917+09:00  INFO 90885 --- [daypoo-api] [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2026-03-31T09:16:41.919+09:00  INFO 90885 --- [daypoo-api] [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 1 ms
+2026-03-31T09:16:41.999+09:00 ERROR 90885 --- [daypoo-api] [nio-8080-exec-1] c.d.api.global.aop.ServiceLoggingAspect  : [SERVICE] Error: AuthService.getCurrentUserInfo() - 사용자를 찾을 수 없습니다.
+2026-03-31T09:16:42.002+09:00 ERROR 90885 --- [daypoo-api] [nio-8080-exec-1] c.d.a.g.e.GlobalExceptionHandler         : BusinessException: 사용자를 찾을 수 없습니다.
+2026-03-31T09:16:42.020+09:00  WARN 90885 --- [daypoo-api] [nio-8080-exec-1] .m.m.a.ExceptionHandlerExceptionResolver : Resolved [com.daypoo.api.global.exception.BusinessException: 사용자를 찾을 수 없습니다.]
+2026-03-31T09:16:42.030+09:00 ERROR 90885 --- [daypoo-api] [nio-8080-exec-2] c.d.api.global.aop.ServiceLoggingAspect  : [SERVICE] Error: AuthService.getCurrentUserInfo() - 사용자를 찾을 수 없습니다.
+2026-03-31T09:16:42.031+09:00 ERROR 90885 --- [daypoo-api] [nio-8080-exec-2] c.d.a.g.e.GlobalExceptionHandler         : BusinessException: 사용자를 찾을 수 없습니다.
+2026-03-31T09:16:42.032+09:00  WARN 90885 --- [daypoo-api] [nio-8080-exec-2] .m.m.a.ExceptionHandlerExceptionResolver : Resolved [com.daypoo.api.global.exception.BusinessException: 사용자를 찾을 수 없습니다.]
+2026-03-31T09:16:55.215+09:00  INFO 90885 --- [daypoo-api] [  restartedMain] com.daypoo.api.service.RankingService    : [Ranking] 지역 랭킹 재구축 완료: 39453개 레코드
+2026-03-31T09:16:55.231+09:00  INFO 90885 --- [daypoo-api] [  restartedMain] com.daypoo.api.service.RankingService    : [Ranking] 전체 랭킹 재구축 완료.
+2026-03-31T09:18:45.564+09:00  INFO 90885 --- [daypoo-api] [nio-8080-exec-6] c.d.api.security.OAuth2SuccessHandler    : Existing OAuth2 User Login Success! Redirecting to: http://localhost:5173/auth/callback?access_token=eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJjam9oMDQwN0BnbWFpbC5jb20iLCJyb2xlIjoiUk9MRV9QUk8iLCJleHAiOjE3NzQ5MTk5MjV9.w8FhOHhH7Z-v_ri2oGOXrSN6Haw55vF_Y10MK4wCKiiEpslqqDsdGys5zgyWTGH0oulN4dW6gt-Do46sOQOBmg&refresh_token=eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJjam9oMDQwN0BnbWFpbC5jb20iLCJleHAiOjE3NzYxMjU5MjV9.JoX55pKsh-qvaphNPW4FTmxcv3wVge0V1e1VZC3VWQ9f4wNRx9VX94wenYEfgZWjim13-pV7HXiA2g1H6w9vSQ
+2026-03-31T09:18:45.983+09:00  INFO 90885 --- [daypoo-api] [nio-8080-exec-5] c.d.api.service.NotificationService      : New SSE subscription for user: 40880. Total active emitters: 1
+2026-03-31T09:18:45.991+09:00  INFO 90885 --- [daypoo-api] [nio-8080-exec-6] c.d.api.service.NotificationService      : New SSE subscription for user: 40880. Total active emitters: 1
+2026-03-31T09:18:52.595+09:00  INFO 90885 --- [daypoo-api] [nio-8080-exec-7] com.daypoo.api.service.RankingService    : Redis [Ranking] empty: initializing for key daypoo:rankings:health

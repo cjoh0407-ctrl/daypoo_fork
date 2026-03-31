@@ -26,12 +26,12 @@ public class AdminController {
       summary = "공공데이터 화장실 정보 동기화",
       description = "외부 API로부터 전국 공공 화장실 데이터를 수집하여 DB 및 Redis에 저장합니다. (가상 스레드 활용)")
   @PostMapping("/sync-toilets")
-  public ResponseEntity<String> syncToilets(int startPage, int endPage) {
+  public ResponseEntity<java.util.Map<String, String>> syncToilets(int startPage, int endPage) {
     if ("RUNNING".equals(syncService.getSyncStatus().status())) {
-      return ResponseEntity.status(409).body("이미 동기화가 진행 중입니다.");
+      return ResponseEntity.status(409).body(java.util.Map.of("message", "이미 동기화가 진행 중입니다."));
     }
     syncService.syncAllToiletsAsync(startPage, endPage);
-    return ResponseEntity.accepted().body("동기화가 시작되었습니다. 잠시 후 상태를 확인해주세요.");
+    return ResponseEntity.accepted().body(java.util.Map.of("message", "동기화가 시작되었습니다. 잠시 후 상태를 확인해주세요."));
   }
 
   @Operation(summary = "공공데이터 동기화 상태 조회", description = "비동기로 진행 중인 화장실 동기화 작업의 현재 상태를 반환합니다.")

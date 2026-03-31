@@ -33,6 +33,7 @@ class HealthReportRequest(BaseModel):
     userId: str
     reportType: str
     records: List[PooRecordData]
+    isPremium: bool = False
 
 
 class HealthReportResponse(BaseModel):
@@ -40,6 +41,7 @@ class HealthReportResponse(BaseModel):
     healthScore: int
     summary: str
     solution: str
+    premiumSolution: Optional[str] = None
     insights: List[str]
     analyzedAt: str
 
@@ -57,3 +59,14 @@ class HealthReportMonthlyRequest(BaseModel):
     userId: str
     reportType: str  # "MONTHLY"
     weeklySummaries: List[WeeklySummaryData]
+    isPremium: bool = False
+
+
+class ReviewSummaryRequest(BaseModel):
+    toiletId: int
+    toiletName: str
+    reviews: List[str]
+
+
+class ReviewSummaryResponse(BaseModel):
+    summary: str

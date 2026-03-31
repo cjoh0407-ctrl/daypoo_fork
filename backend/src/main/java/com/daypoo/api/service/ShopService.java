@@ -95,6 +95,7 @@ public class ShopService {
   }
 
   /** 아이템 장착/해제 */
+  @Transactional
   public void toggleEquipItem(User user, Long inventoryId) {
     Inventory inventory =
         inventoryRepository
@@ -120,11 +121,10 @@ public class ShopService {
   }
 
   /** 전체 칭호 목록 및 유저 보유 여부 조회 (업적 동기화 포함) */
-  @Transactional
+  @Transactional(readOnly = true)
   public List<TitleResponse> getAllTitles(User user) {
-    // 1. 업적 검사 및 칭호 강제 동기화 (신규 등록된 칭호 대응)
-    achievementService.checkAndGrantTitles(user);
-
+    // [Manual Acquisition] 업적 검사는 frontend에서 progress 비교로 수행하며, 
+    // 실제 부여는 acquireTitle 엔드포인트를 통해 명시적으로 수행됨
     List<Title> allTitles = titleRepository.findAll();
 
     List<Long> ownedTitleIds =
@@ -177,6 +177,12 @@ public class ShopService {
     }
     user.equipTitle(titleId);
     userRepository.save(user);
+  }
+
+  /** 칭호 수동 획득 */
+  @Transactional
+  public void acquireTitle(User user, Long titleId) {
+    achievementService.grantTitleSpecific(user, titleId);
   }
 
   /** 칭호 해제 */

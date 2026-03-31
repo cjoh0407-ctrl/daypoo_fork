@@ -5,4 +5,5 @@ import java.util.List;
 public record AiMonthlyReportRequest(
     String userId,
     String reportType, // "MONTHLY"
-    List<WeeklySummaryData> weeklySummaries) {}
+    List<WeeklySummaryData> weeklySummaries,
+    boolean isPremium) {}

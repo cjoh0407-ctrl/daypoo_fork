@@ -40,17 +40,27 @@ public class PublicDataSyncService {
   private String apiKey;
 
   private static final String REDIS_GEO_KEY = "daypoo:toilets:geo";
-  private static final int BATCH_SIZE = 500;
+  private static final int BATCH_SIZE = 100;
   private static final int MAX_CONCURRENT_REQUESTS = 10;
-  private static final DateTimeFormatter DATE_TIME_FORMATTER =
-      DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+  private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
   // Status tracking fields
   private volatile String syncStatus = "IDLE";
   private volatile Integer lastCount = null;
+  private volatile Integer insertedCount = null;
+  private volatile Integer updatedCount = null;
   private volatile String startedAt = null;
   private volatile String completedAt = null;
   private volatile String errorMessage = null;
+  
+  private record ExistingToiletInfo(
+      String name,
+      String address,
+      String locationWkt,
+      String openHours,
+      boolean is24h,
+      boolean isUnisex
+  ) {}
 
   public PublicDataSyncService(
       ToiletRepository toiletRepository,
@@ -68,66 +78,79 @@ public class PublicDataSyncService {
     this.webClient = WebClient.builder().baseUrl(apiUrl).build();
   }
 
-  /** 매일 새벽 3시에 공공데이터 전체 동기화를 실행합니다. 서버 시작 시에는 toilet 데이터가 없는 경우에만 소규모 동기화를 수행합니다. */
+  /**
+   * 매일 새벽 3시에 공공데이터 전체 동기화를 실행합니다. 서버 시작 시에는 toilet 데이터가 없는 경우에만 소규모 동기화를 수행합니다.
+   */
   @org.springframework.scheduling.annotation.Scheduled(cron = "0 0 3 * * *")
   public void scheduledSync() {
     log.info("🕒 [Scheduled] Starting daily public data sync...");
     try {
-      int saved = syncAllToilets(1, 30);
-      log.info("✅ [Scheduled] Daily sync completed. New toilets: {}", saved);
+      int[] result = syncAllToilets(1, 550);
+      log.info("✅ [Scheduled] Daily sync completed. Total: {}, Inserted: {}, Updated: {}",
+          result[0], result[1], result[2]);
     } catch (Exception e) {
       log.error("❌ [Scheduled] Daily sync failed: {}", e.getMessage());
     }
   }
 
-  /** [초고속 모드] 가상 스레드와 병렬 파이프라이닝을 사용하여 데이터를 동기화합니다. */
-  public int syncAllToilets(int startPage, int endPage) {
-    AtomicInteger totalSavedCount = new AtomicInteger(0);
+  /** 가상 스레드 + 배치 단위 처리로 메모리 안전하게 동기화합니다. 반환: [총처리, 신규, 업데이트] */
+  public int[] syncAllToilets(int startPage, int endPage) {
+    AtomicInteger totalCount = new AtomicInteger(0);
+    AtomicInteger totalInserted = new AtomicInteger(0);
+    AtomicInteger totalUpdated = new AtomicInteger(0);
+    int batchPages = 20;
 
     log.info(
-        "🚀 Starting public data sync using Virtual Threads (pages: {}-{}, concurrent: {})...",
+        "🚀 Starting public data sync (pages: {}-{}, batch: {}, concurrent: {})...",
         startPage,
         endPage,
+        batchPages,
         MAX_CONCURRENT_REQUESTS);
 
     TransactionTemplate transactionTemplate = new TransactionTemplate(transactionManager);
 
-    try (ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor()) {
-      Semaphore semaphore = new Semaphore(MAX_CONCURRENT_REQUESTS);
-      List<CompletableFuture<Void>> futures = new ArrayList<>();
+    for (int batchStart = startPage; batchStart <= endPage; batchStart += batchPages) {
+      int batchEnd = Math.min(batchStart + batchPages - 1, endPage);
 
-      for (int page = startPage; page <= endPage; page++) {
-        int currentPage = page;
-        futures.add(
-            CompletableFuture.runAsync(
-                () -> {
-                  try {
-                    semaphore.acquire();
-                    // findAllMngNos() 전체 로딩 대신 페이지별 IN 쿼리로 중복 체크
-                    int saved =
-                        syncToiletDataWithInQuery(currentPage, BATCH_SIZE, transactionTemplate);
-                    totalSavedCount.addAndGet(saved);
-                    if (currentPage % 10 == 0) {
-                      log.info(
-                          "📈 Progress: {}/{} pages processed. Total new: {}",
-                          currentPage,
-                          endPage,
-                          totalSavedCount.get());
+      try (ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor()) {
+        Semaphore semaphore = new Semaphore(MAX_CONCURRENT_REQUESTS);
+        List<CompletableFuture<Void>> futures = new ArrayList<>();
+
+        for (int page = batchStart; page <= batchEnd; page++) {
+          int currentPage = page;
+          futures.add(
+              CompletableFuture.runAsync(
+                  () -> {
+                    try {
+                      semaphore.acquire();
+                      int[] result = syncToiletDataWithInQuery(currentPage, BATCH_SIZE, transactionTemplate);
+                      totalCount.addAndGet(result[0]);
+                      totalInserted.addAndGet(result[1]);
+                      totalUpdated.addAndGet(result[2]);
+                    } catch (Exception e) {
+                      log.error("⚠️ Error processing page {}: {}", currentPage, e.getMessage());
+                    } finally {
+                      semaphore.release();
                     }
-                  } catch (Exception e) {
-                    log.error("⚠️ Error processing page {}: {}", currentPage, e.getMessage());
-                  } finally {
-                    semaphore.release();
-                  }
-                },
-                executor));
+                  },
+                  executor));
+        }
+
+        CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
       }
 
-      CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+      log.info(
+          "📈 Batch {}-{} done. Total: {}, Inserted: {}, Updated: {}",
+          batchStart,
+          batchEnd,
+          totalCount.get(),
+          totalInserted.get(),
+          totalUpdated.get());
     }
 
-    log.info("🏁 Sync Finished. Total new toilets added: {}", totalSavedCount.get());
-    return totalSavedCount.get();
+    log.info("🏁 Sync Finished. Total: {}, Inserted: {}, Updated: {}",
+        totalCount.get(), totalInserted.get(), totalUpdated.get());
+    return new int[] { totalCount.get(), totalInserted.get(), totalUpdated.get() };
   }
 
   /** 상태 조회 메서드 */
@@ -135,13 +158,15 @@ public class PublicDataSyncService {
     return SyncStatusResponse.builder()
         .status(syncStatus)
         .totalCount(lastCount)
+        .insertedCount(insertedCount)
+        .updatedCount(updatedCount)
         .startedAt(startedAt)
         .completedAt(completedAt)
         .errorMessage(errorMessage)
         .build();
   }
 
-  /** 비동기 실행 메서드 (기존 syncAllToilets 재사용) */
+  /** 비동기 실행 메서드 */
   @Async("taskExecutor")
   public void syncAllToiletsAsync(int startPage, int endPage) {
     syncStatus = "RUNNING";
@@ -149,14 +174,19 @@ public class PublicDataSyncService {
     completedAt = null;
     errorMessage = null;
     lastCount = null;
+    insertedCount = null;
+    updatedCount = null;
 
     try {
       log.info("📢 Starting background sync: {} - {}", startPage, endPage);
-      int count = syncAllToilets(startPage, endPage);
-      lastCount = count;
+      int[] result = syncAllToilets(startPage, endPage);
+      lastCount = result[0];
+      insertedCount = result[1];
+      updatedCount = result[2];
       syncStatus = "COMPLETED";
       completedAt = LocalDateTime.now().format(DATE_TIME_FORMATTER);
-      log.info("✅ Background sync finished. Count: {}", count);
+      log.info("✅ Background sync finished. Total: {}, Inserted: {}, Updated: {}",
+          result[0], result[1], result[2]);
     } catch (Exception e) {
       log.error("❌ Background sync failed: {}", e.getMessage());
       syncStatus = "FAILED";
@@ -165,22 +195,24 @@ public class PublicDataSyncService {
     }
   }
 
-  /** 단일 페이지 동기화를 위한 호환성 메서드 */
-  public int syncToiletData(int pageNo, int numOfRows) throws Exception {
+  /** 단일 페이지 동기화를 위한 호환성 메서드. 반환: [총처리, 신규, 업데이트] */
+  public int[] syncToiletData(int pageNo, int numOfRows) throws Exception {
     TransactionTemplate transactionTemplate = new TransactionTemplate(transactionManager);
-    // 단일 페이지 호출 시에는 해당 페이지의 MNG_NO만 DB에서 조회하여 중복 체크 (메모리 낭비 방지)
     return syncToiletDataWithInQuery(pageNo, numOfRows, transactionTemplate);
   }
 
-  private int syncToiletDataWithInQuery(
+  /** 반환: [총처리, 신규, 업데이트] */
+  private int[] syncToiletDataWithInQuery(
       int pageNo, int numOfRows, TransactionTemplate transactionTemplate) throws Exception {
     String responseBody = fetchResponseBody(pageNo, numOfRows);
     JsonNode rootNode = objectMapper.readTree(responseBody);
     JsonNode bodyNode = rootNode.path("response").path("body");
-    if (bodyNode.isMissingNode()) return 0;
+    if (bodyNode.isMissingNode())
+      return new int[] { 0, 0, 0 };
 
     JsonNode itemsNode = bodyNode.path("items").path("item");
-    if (!itemsNode.isArray() || itemsNode.isEmpty()) return 0;
+    if (!itemsNode.isArray() || itemsNode.isEmpty())
+      return new int[] { 0, 0, 0 };
 
     List<JsonNode> itemList = new ArrayList<>();
     for (JsonNode item : itemsNode) {
@@ -191,31 +223,83 @@ public class PublicDataSyncService {
     }
 
     List<Toilet> toiletsToSave = convertToToiletEntities(itemList);
+    if (toiletsToSave.isEmpty()) return new int[] { 0, 0, 0 };
 
-    if (!toiletsToSave.isEmpty()) {
-      transactionTemplate.execute(
-          status -> {
-            bulkInsertToilets(toiletsToSave);
-            return null;
-          });
-      addToRedisGeoBulk(toiletsToSave);
-      return toiletsToSave.size();
+    // upsert 전에 기존 데이터 상세 조회하여 실제 변경 여부 확인
+    List<String> mngNos = toiletsToSave.stream()
+        .map(Toilet::getMngNo)
+        .collect(java.util.stream.Collectors.toList());
+    String inClause = mngNos.stream()
+        .map(m -> "'" + m.replace("'", "''") + "'")
+        .collect(java.util.stream.Collectors.joining(","));
+    
+    Map<String, ExistingToiletInfo> existingMap = jdbcTemplate.query(
+        "SELECT mng_no, name, address, ST_AsText(location) as location_wkt, open_hours, is_24h, is_unisex FROM toilets WHERE mng_no IN (" + inClause + ")",
+        (rs) -> {
+          Map<String, ExistingToiletInfo> map = new HashMap<>();
+          while (rs.next()) {
+            map.put(rs.getString("mng_no"), new ExistingToiletInfo(
+                rs.getString("name"),
+                rs.getString("address"),
+                rs.getString("location_wkt"),
+                rs.getString("open_hours"),
+                rs.getBoolean("is_24h"),
+                rs.getBoolean("is_unisex")
+            ));
+          }
+          return map;
+        }
+    );
+    if (existingMap == null) existingMap = new HashMap<>();
+
+    int inserted = 0;
+    int updated = 0;
+    List<Toilet> changedToilets = new ArrayList<>();
+
+    for (Toilet apiToilet : toiletsToSave) {
+      ExistingToiletInfo existing = existingMap.get(apiToilet.getMngNo());
+      if (existing == null) {
+        inserted++;
+        changedToilets.add(apiToilet);
+      } else {
+        String apiWkt = apiToilet.getLocation() != null ? normalizeWkt(apiToilet.getLocation().toText()) : null;
+        String dbWkt = normalizeWkt(existing.locationWkt());
+
+        boolean isChanged = !Objects.equals(normalize(apiToilet.getName()), normalize(existing.name()))
+            || !Objects.equals(normalize(apiToilet.getAddress()), normalize(existing.address()))
+            || !Objects.equals(apiWkt, dbWkt)
+            || !Objects.equals(normalize(apiToilet.getOpenHours()), normalize(existing.openHours()))
+            || apiToilet.is24h() != existing.is24h()
+            || apiToilet.isUnisex() != existing.isUnisex();
+        
+        if (isChanged) {
+          updated++;
+          changedToilets.add(apiToilet);
+        }
+      }
     }
-    return 0;
+
+    if (!changedToilets.isEmpty()) {
+      transactionTemplate.execute(status -> {
+        bulkInsertToilets(changedToilets);
+        return null;
+      });
+      addToRedisGeoBulk(changedToilets);
+    }
+    return new int[] { toiletsToSave.size(), inserted, updated };
   }
 
   private String fetchResponseBody(int pageNo, int numOfRows) {
     return webClient
         .get()
         .uri(
-            uriBuilder ->
-                uriBuilder
-                    .path("")
-                    .queryParam("serviceKey", apiKey)
-                    .queryParam("pageNo", pageNo)
-                    .queryParam("numOfRows", numOfRows)
-                    .queryParam("returnType", "json")
-                    .build())
+            uriBuilder -> uriBuilder
+                .path("")
+                .queryParam("serviceKey", apiKey)
+                .queryParam("pageNo", pageNo)
+                .queryParam("numOfRows", numOfRows)
+                .queryParam("returnType", "json")
+                .build())
         .retrieve()
         .bodyToMono(String.class)
         .retryWhen(Retry.backoff(2, Duration.ofSeconds(1)).maxBackoff(Duration.ofSeconds(5)))
@@ -227,14 +311,14 @@ public class PublicDataSyncService {
     Set<String> processedMngNos = new HashSet<>();
     for (JsonNode item : itemList) {
       String mngNo = item.path("MNG_NO").asText("");
-      if (mngNo.isEmpty() || processedMngNos.contains(mngNo)) continue;
+      if (mngNo.isEmpty() || processedMngNos.contains(mngNo))
+        continue;
 
       double lat = item.path("WGS84_LAT").asDouble(0.0);
       double lon = item.path("WGS84_LOT").asDouble(0.0);
-      Point location =
-          (lat >= 33.0 && lat <= 39.0 && lon >= 124.0 && lon <= 132.0)
-              ? geometryUtil.createPoint(lon, lat)
-              : null;
+      Point location = (lat >= 33.0 && lat <= 39.0 && lon >= 124.0 && lon <= 132.0)
+          ? geometryUtil.createPoint(lon, lat)
+          : null;
 
       toiletsToSave.add(
           Toilet.builder()
@@ -257,17 +341,19 @@ public class PublicDataSyncService {
 
   private void bulkInsertToilets(List<Toilet> toilets) {
     // 3. Multi-row Insert/Update (Upsert) 최적화
-    String sql =
-        "INSERT INTO toilets (name, mng_no, location, address, open_hours, is_24h, is_unisex, created_at, updated_at) "
-            + "VALUES (?, ?, ST_GeomFromText(?, 4326), ?, ?, ?, ?, NOW(), NOW()) "
-            + "ON CONFLICT (mng_no) DO UPDATE SET "
-            + "  name        = EXCLUDED.name, "
-            + "  location    = EXCLUDED.location, "
-            + "  address     = EXCLUDED.address, "
-            + "  open_hours  = EXCLUDED.open_hours, "
-            + "  is_24h      = EXCLUDED.is_24h, "
-            + "  is_unisex   = EXCLUDED.is_unisex, "
-            + "  updated_at  = NOW()";
+    String sql = "INSERT INTO toilets (name, mng_no, location, address, open_hours, is_24h, is_unisex, created_at, updated_at) "
+        + "VALUES (?, ?, ST_GeomFromText(?, 4326), ?, ?, ?, ?, NOW(), NOW()) "
+        + "ON CONFLICT (mng_no) DO UPDATE SET "
+        + "  name        = EXCLUDED.name, "
+        + "  location    = EXCLUDED.location, "
+        + "  address     = EXCLUDED.address, "
+        + "  open_hours  = EXCLUDED.open_hours, "
+        + "  is_24h      = EXCLUDED.is_24h, "
+        + "  is_unisex   = EXCLUDED.is_unisex, "
+        + "  updated_at  = NOW() "
+        + "  WHERE (toilets.name != EXCLUDED.name OR toilets.address != EXCLUDED.address "
+        + "  OR toilets.location IS DISTINCT FROM EXCLUDED.location OR toilets.open_hours != EXCLUDED.open_hours "
+        + "  OR toilets.is_24h != EXCLUDED.is_24h OR toilets.is_unisex != EXCLUDED.is_unisex)";
 
     jdbcTemplate.batchUpdate(
         sql,
@@ -309,5 +395,15 @@ public class PublicDataSyncService {
         log.warn("Failed to add geo data to Redis bulk: {}", e.getMessage());
       }
     }
+  }
+
+  private String normalize(String s) {
+    if (s == null) return null;
+    return s.trim().isEmpty() ? null : s.trim();
+  }
+
+  private String normalizeWkt(String wkt) {
+    if (wkt == null) return null;
+    return wkt.replace(" ", "").toUpperCase();
   }
 }

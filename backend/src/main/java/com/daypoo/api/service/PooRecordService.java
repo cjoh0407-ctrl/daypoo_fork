@@ -47,6 +47,7 @@ public class PooRecordService {
   private final PooRecordMapper recordMapper;
   private final VisitLogRepository visitLogRepository;
   private final AiClient aiClient;
+  private final com.daypoo.api.repository.UserRepository userRepository;
 
   // 보상 설정 (방문 1회당 경험치 5, 포인트 5)
   private static final int REWARD_EXP = 5;
@@ -118,9 +119,13 @@ public class PooRecordService {
     // 3. AI 분석 or 수동 입력값 결정
     PoopAttributes attrs = resolvePoopAttributes(request);
 
-    // 4. Reverse Geocoding
-    String regionName = geocodingService.reverseGeocode(request.latitude(), request.longitude());
+    // 4. 지역명 추출: 화장실 주소 파싱 우선, 주소 없으면 역지오코딩 fallback
+    String regionName = extractRegionFromAddress(toilet.getAddress());
+    if ("기타".equals(regionName)) {
+      regionName = geocodingService.reverseGeocode(request.latitude(), request.longitude());
+    }
     user.updateHomeRegion(regionName);
+    userRepository.save(user);
 
     // 5. arrival 키 삭제 → 재인증 시 60초 타이머 리셋 허용
     locationVerificationService.resetArrivalTime(user.getId(), toilet.getId());
@@ -329,5 +334,34 @@ public class PooRecordService {
     }
 
     return recordMapper.toResponse(record);
+  }
+
+  /**
+   * 주소 문자열에서 구/군/시 단위 지역명을 추출합니다.
+   * 예: "서울특별시 강동구 천호대로157길 14" → "강동구"
+   *     "경기도 안양시 동안구 부림로 156" → "동안구"
+   *     "전북특별자치도 군산시 성산면 철새로 25" → "군산시"
+   */
+  private String extractRegionFromAddress(String address) {
+    if (address == null || address.isBlank()) {
+      return "기타";
+    }
+    String[] parts = address.split("\\s+");
+    // 주소 토큰에서 구/군/시 단위를 찾음 (시·도 다음에 오는 세부 행정구역)
+    for (int i = 1; i < parts.length; i++) {
+      String part = parts[i];
+      if (part.endsWith("구") || part.endsWith("군")) {
+        return part;
+      }
+      // "안양시", "군산시" 등 시 단위 (첫 번째 토큰의 광역시/도가 아닌 경우)
+      if (part.endsWith("시") && i >= 1) {
+        // 다음 토큰이 구로 끝나면 그걸 반환 (예: "안양시 동안구" → "동안구")
+        if (i + 1 < parts.length && parts[i + 1].endsWith("구")) {
+          return parts[i + 1];
+        }
+        return part;
+      }
+    }
+    return "기타";
   }
 }
