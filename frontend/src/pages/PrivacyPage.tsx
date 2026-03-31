@@ -6,7 +6,7 @@ export function PrivacyPage() {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-[#F8FAF9] py-20 px-6">
+    <div className="min-h-screen bg-[#F8FAF9] py-10 sm:py-20 px-4 sm:px-6">
       <div className="max-w-3xl mx-auto">
         <button
           onClick={() => navigate(-1)}
@@ -18,7 +18,7 @@ export function PrivacyPage() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-[32px] p-10 shadow-sm border border-[#d4e8db]"
+          className="bg-white rounded-[24px] sm:rounded-[32px] p-6 sm:p-10 shadow-sm border border-[#d4e8db]"
         >
           <div className="flex items-center gap-3 mb-8">
             <div className="w-12 h-12 rounded-2xl bg-[#fdf3de] flex items-center justify-center">

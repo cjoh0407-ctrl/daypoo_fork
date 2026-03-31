@@ -9,7 +9,6 @@ import com.daypoo.api.repository.PooRecordRepository;
 import com.daypoo.api.repository.TitleRepository;
 import com.daypoo.api.repository.UserTitleRepository;
 import com.daypoo.api.repository.VisitCountProjection;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -36,8 +35,10 @@ public class TitleAchievementService {
   /** 개별 칭호 획득 (사용자 수동 요청) */
   @Transactional
   public void grantTitleSpecific(User user, Long titleId) {
-    Title title = titleRepository.findById(titleId)
-        .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 칭호입니다."));
+    Title title =
+        titleRepository
+            .findById(titleId)
+            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 칭호입니다."));
 
     if (userTitleRepository.existsByUserAndTitle(user, title)) {
       throw new IllegalStateException("이미 획득한 칭호입니다.");

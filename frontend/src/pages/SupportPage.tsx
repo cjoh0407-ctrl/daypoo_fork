@@ -172,7 +172,7 @@ function ModernSearch({ value, onChange }: { value: string; onChange: (v: string
           scale: isFocused ? 1.02 : 1,
           boxShadow: isFocused ? '0 15px 45px rgba(27,67,50,0.15)' : '0 4px 25px rgba(0,0,0,0.06)',
         }}
-        className="relative flex items-center bg-white border border-black/[0.05] rounded-[28px] p-2 pr-6 overflow-hidden transition-shadow"
+        className="relative flex items-center bg-white border border-black/[0.05] rounded-[24px] sm:rounded-[28px] p-1.5 sm:p-2 pr-4 sm:pr-6 overflow-hidden transition-shadow mx-4 sm:mx-0"
       >
         <div className="flex items-center justify-center w-12 h-12 text-[#2D6A4F]/40">
           <Search size={20} className={isFocused ? 'text-[#52B788]' : ''} />
@@ -295,14 +295,14 @@ function TrendyFaqItem({
       >
         <button
           onClick={onToggle}
-          className="w-full flex items-center gap-5 px-6 py-6 text-left"
+          className="w-full flex items-center gap-3 sm:gap-5 px-4 sm:px-6 py-4 sm:py-6 text-left"
         >
           <div
             className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${isOpen ? 'bg-[#1B4332] text-white' : 'bg-[#f4f9f6] text-[#52B788]'}`}
           >
             <Hash size={14} className={isOpen ? 'opacity-100' : 'opacity-40'} />
           </div>
-          <span className={`flex-1 text-[16px] font-bold ${isOpen ? 'text-[#1B4332]' : 'text-[#1A2B27]'}`}>
+          <span className={`flex-1 text-[14px] sm:text-[16px] font-bold ${isOpen ? 'text-[#1B4332]' : 'text-[#1A2B27]'}`}>
             {item.q}
           </span>
           <motion.div
@@ -321,8 +321,8 @@ function TrendyFaqItem({
               exit={{ height: 0, opacity: 0 }}
               transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
             >
-              <div className="px-8 pb-8 pt-2 pl-24 relative">
-                <div className="absolute left-[38px] top-0 bottom-8 w-[2px] bg-gradient-to-b from-[#52B788]/30 to-transparent rounded-full" />
+              <div className="px-6 sm:px-8 pb-6 sm:pb-8 pt-2 pl-16 sm:pl-24 relative">
+                <div className="absolute left-[32px] sm:left-[38px] top-0 bottom-8 w-[2px] bg-gradient-to-b from-[#52B788]/30 to-transparent rounded-full" />
                 <p className="text-[15px] leading-relaxed text-[#5C6B68] font-medium whitespace-pre-wrap">
                   {item.a}
                 </p>
@@ -364,14 +364,14 @@ function ModernInquiryForm({ onSuccess }: { onSuccess: () => void }) {
   return (
     <motion.div
       variants={cardVariants}
-      className="max-w-2xl mx-auto bg-white rounded-[44px] p-10 sm:p-14 border border-black/[0.04] shadow-2xl relative overflow-hidden"
+      className="max-w-2xl mx-auto bg-white rounded-[32px] sm:rounded-[44px] p-6 sm:p-14 border border-black/[0.04] shadow-2xl relative overflow-hidden"
     >
       <div className="absolute top-0 right-0 p-12 text-[#52B788]/5 pointer-events-none">
         <Send size={180} />
       </div>
 
       <div className="relative z-10">
-        <h2 className="text-3xl font-black text-[#1A2B27] mb-12 flex items-center gap-4">
+        <h2 className="text-2xl sm:text-3xl font-black text-[#1A2B27] mb-8 sm:mb-12 flex items-center gap-3 sm:gap-4">
           <div className="w-14 h-14 bg-[#1B4332] rounded-[22px] shadow-lg flex items-center justify-center text-white">
             <Plus size={32} />
           </div>
@@ -387,7 +387,7 @@ function ModernInquiryForm({ onSuccess }: { onSuccess: () => void }) {
                   key={cat}
                   type="button"
                   onClick={() => setFormData((prev) => ({ ...prev, category: cat }))}
-                  className={`px-6 py-3.5 rounded-2xl text-[14px] font-black transition-all ${formData.category === cat ? 'bg-[#1B4332] text-white shadow-xl scale-105' : 'bg-[#f4f9f6] text-[#5C6B68]/60 hover:bg-[#eaf4ee]'}`}
+                  className={`px-4 sm:px-6 py-2.5 sm:py-3.5 rounded-xl sm:rounded-2xl text-[13px] sm:text-[14px] font-black transition-all ${formData.category === cat ? 'bg-[#1B4332] text-white shadow-xl scale-105' : 'bg-[#f4f9f6] text-[#5C6B68]/60 hover:bg-[#eaf4ee]'}`}
                 >
                   {cat}
                 </button>
@@ -402,7 +402,7 @@ function ModernInquiryForm({ onSuccess }: { onSuccess: () => void }) {
               value={formData.title}
               onChange={(e) => setFormData((prev) => ({ ...prev, title: e.target.value }))}
               placeholder="제목을 입력해 주세요"
-              className="w-full bg-[#f8faf9] border border-black/[0.04] rounded-[24px] p-5.5 text-[17px] font-bold text-[#1A2B27] outline-none focus:border-[#52B788]/50 focus:bg-white transition-all shadow-inner"
+              className="w-full bg-[#f8faf9] border border-black/[0.04] rounded-[20px] sm:rounded-[24px] p-4 sm:p-5.5 text-[15px] sm:text-[17px] font-bold text-[#1A2B27] outline-none focus:border-[#52B788]/50 focus:bg-white transition-all shadow-inner"
             />
           </div>
 
@@ -413,7 +413,7 @@ function ModernInquiryForm({ onSuccess }: { onSuccess: () => void }) {
               onChange={(e) => setFormData((prev) => ({ ...prev, content: e.target.value }))}
               placeholder="최소 10자 이상 입력해 주세요"
               rows={8}
-              className="w-full bg-[#f8faf9] border border-black/[0.04] rounded-[30px] p-7 text-[17px] font-bold text-[#1A2B27] outline-none focus:border-[#52B788]/50 focus:bg-white transition-all shadow-inner resize-none"
+              className="w-full bg-[#f8faf9] border border-black/[0.04] rounded-[24px] sm:rounded-[30px] p-5 sm:p-7 text-[15px] sm:text-[17px] font-bold text-[#1A2B27] outline-none focus:border-[#52B788]/50 focus:bg-white transition-all shadow-inner resize-none"
             />
             <div className="flex justify-between items-center px-2 text-[12px] font-bold">
               <span className={formData.content.length < 10 ? 'text-red-400' : 'text-[#52B788]'}>{formData.content.length}자</span>
@@ -463,13 +463,13 @@ function ModernHistory() {
           <motion.div
             key={inq.id}
             variants={listItemVariants}
-            className="bg-white border border-black/[0.04] rounded-[36px] p-10 hover:shadow-2xl hover:border-emerald-500/10 transition-all group"
+            className="bg-white border border-black/[0.04] rounded-[24px] sm:rounded-[36px] p-6 sm:p-10 hover:shadow-2xl hover:border-emerald-500/10 transition-all group"
           >
             <div className="flex justify-between items-start mb-6">
               <span className={`px-5 py-2 rounded-xl text-[11px] font-black uppercase tracking-wider ${inq.status === '답변 완료' ? 'bg-[#52B788]/10 text-[#2D6A4F]' : 'bg-[#E8A838]/10 text-[#B5810F]'}`}>{inq.status}</span>
               <span className="text-[13px] font-bold text-[#5C6B68]/30">{inq.createdAt}</span>
             </div>
-            <h3 className="text-[22px] font-black text-[#1A2B27] mb-4 group-hover:text-[#52B788] transition-colors">{inq.title}</h3>
+            <h3 className="text-[18px] sm:text-[22px] font-black text-[#1A2B27] mb-4 group-hover:text-[#52B788] transition-colors">{inq.title}</h3>
             <p className="text-[16px] text-[#5C6B68]/70 line-clamp-2 leading-relaxed font-medium">{inq.content}</p>
             {inq.answer && (
               <div className="mt-10 pt-8 border-t border-black/[0.03] flex items-start gap-6">
@@ -512,7 +512,7 @@ export function SupportPage({ openAuth }: { openAuth: (mode: 'login' | 'signup',
 
   const handleTabChange = (k: SupportTab) => {
     if (k !== 'faq') {
-      const token = localStorage.getItem('accessToken');
+      const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken');
       if (!token) {
         openAuth?.('login', () => { setActiveTab(k); setSearchParams({ tab: k }); });
         return;
@@ -527,7 +527,7 @@ export function SupportPage({ openAuth }: { openAuth: (mode: 'login' | 'signup',
       <Navbar openAuth={openAuth} />
 
       {/* Hero Section */}
-      <section className="relative pt-[180px] pb-[80px] px-6 overflow-hidden bg-[#F8FAF9]">
+      <section className="relative pt-[120px] sm:pt-[180px] pb-[60px] sm:pb-[80px] px-4 sm:px-6 overflow-hidden bg-[#F8FAF9]">
         <div className="absolute top-[-10%] left-[-10%] w-[45%] h-[45%] bg-[#52B788] blur-[140px] rounded-full opacity-[0.1]" />
         <div className="absolute bottom-[-10%] right-[-10%] w-[45%] h-[45%] bg-[#E8A838] blur-[140px] rounded-full opacity-[0.08]" />
 
@@ -537,7 +537,7 @@ export function SupportPage({ openAuth }: { openAuth: (mode: 'login' | 'signup',
             <span className="text-[12px] font-black text-[#1B4332] uppercase tracking-[0.25em]">Customer Support</span>
           </motion.div>
 
-          <motion.h1 initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }} className="text-6xl md:text-8xl font-black mb-12 leading-[0.95] tracking-tighter text-[#1A2B27]">
+          <motion.h1 initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }} className="text-4xl sm:text-6xl md:text-8xl font-black mb-8 sm:mb-12 leading-[1.1] sm:leading-[0.95] tracking-tighter text-[#1A2B27]">
             우리가 무엇을<br /><span className="text-transparent bg-clip-text bg-gradient-to-r from-[#1B4332] via-[#2D6A4F] to-[#52B788]">도와드릴까요?</span>
           </motion.h1>
 
@@ -548,7 +548,7 @@ export function SupportPage({ openAuth }: { openAuth: (mode: 'login' | 'signup',
 
       {/* Main Content Area */}
       <main className="relative z-10 bg-white">
-        <div className="max-w-[1240px] mx-auto px-6 pt-[60px] pb-[120px] flex flex-col lg:flex-row gap-16">
+        <div className="max-w-[1240px] mx-auto px-4 sm:px-6 pt-[40px] sm:pt-[60px] pb-[80px] sm:pb-[120px] flex flex-col lg:flex-row gap-8 sm:gap-16">
           <aside className="w-full lg:w-[260px] shrink-0">
             <div className="sticky top-[120px] space-y-12">
               <div className="flex flex-col gap-2.5">
@@ -560,7 +560,7 @@ export function SupportPage({ openAuth }: { openAuth: (mode: 'login' | 'signup',
                   <button
                     key={tab.id}
                     onClick={() => handleTabChange(tab.id)}
-                    className={`flex items-center justify-between group px-6 py-5 rounded-[22px] transition-all duration-300 relative overflow-hidden ${activeTab === tab.id ? 'bg-[#1B4332] text-white shadow-2xl scale-[1.03]' : 'bg-[#f4f9f6] hover:bg-[#eaf4ee] text-[#5C6B68]'}`}
+                    className={`flex items-center justify-between group px-4 sm:px-6 py-4 sm:py-5 rounded-[18px] sm:rounded-[22px] transition-all duration-300 relative overflow-hidden ${activeTab === tab.id ? 'bg-[#1B4332] text-white shadow-2xl scale-[1.03]' : 'bg-[#f4f9f6] hover:bg-[#eaf4ee] text-[#5C6B68]'}`}
                   >
                     <div className="flex items-center gap-4 relative z-10">
                       <span className={activeTab === tab.id ? 'text-[#52B788]' : 'text-[#5C6B68]/40 group-hover:text-[#52B788]'}>{tab.icon}</span>

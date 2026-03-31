@@ -1,11 +1,17 @@
-import { motion, useScroll, useTransform, useMotionValueEvent } from 'framer-motion';
-import { Link, useNavigate } from 'react-router-dom';
-import { Bell, User, LogOut } from 'lucide-react';
+import { motion, useScroll, useTransform, useMotionValueEvent, AnimatePresence } from 'framer-motion';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Bell, User, LogOut, Menu, X, Map, Trophy, HelpCircle, Crown, Home } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { AnimatedUnderlink } from './AnimatedUnderlink';
 import { useAuth } from '../context/AuthContext';
 import { useNotification } from '../context/NotificationContext';
 import { NotificationPanel } from './NotificationPanel';
+
+const NAV_LINKS = [
+  { label: '지도', path: '/map', icon: Map, variant: 0 },
+  { label: '랭킹', path: '/ranking', icon: Trophy, variant: 1 },
+  { label: 'FAQ', path: '/support', icon: HelpCircle, variant: 0 },
+];
 
 export function Navbar({ openAuth }: { openAuth: (mode: 'login' | 'signup') => void }) {
   const { scrollY } = useScroll();
@@ -14,7 +20,9 @@ export function Navbar({ openAuth }: { openAuth: (mode: 'login' | 'signup') => v
   const { user, logout, isAuthenticated } = useAuth();
   const { unreadCount, fetchNotifications } = useNotification();
   const [notifOpen, setNotifOpen] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
 
   useMotionValueEvent(scrollY, 'change', (latest) => {
     const previous = scrollY.getPrevious() ?? 0;
@@ -32,8 +40,24 @@ export function Navbar({ openAuth }: { openAuth: (mode: 'login' | 'signup') => v
     }
   }, [isAuthenticated, fetchNotifications]);
 
+  // 페이지 이동 시 드로어 닫기
+  useEffect(() => {
+    setDrawerOpen(false);
+  }, [location.pathname]);
+
+  // 드로어 열릴 때 body 스크롤 잠금
+  useEffect(() => {
+    if (drawerOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => { document.body.style.overflow = ''; };
+  }, [drawerOpen]);
+
   const handleLogout = () => {
     logout();
+    setDrawerOpen(false);
     navigate('/main');
   };
 
@@ -42,6 +66,8 @@ export function Navbar({ openAuth }: { openAuth: (mode: 'login' | 'signup') => v
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
+
+  const isActivePath = (path: string) => location.pathname === path;
 
   return (
     <>
@@ -55,7 +81,7 @@ export function Navbar({ openAuth }: { openAuth: (mode: 'login' | 'signup') => v
           width: '100%',
           display: 'flex',
           justifyContent: 'center',
-          padding: '0 24px',
+          padding: '0 16px',
           pointerEvents: 'none',
         }}
       >
@@ -73,9 +99,9 @@ export function Navbar({ openAuth }: { openAuth: (mode: 'login' | 'signup') => v
             alignItems: 'center',
             background: '#1A2B27',
             borderRadius: '100px',
-            padding: '12px 20px 12px 32px',
+            padding: '12px 16px 12px 24px',
             boxShadow: '0 8px 32px rgba(0,0,0,0.25)',
-            gap: '20px',
+            gap: '16px',
           }}
         >
           {/* 로고 */}
@@ -95,16 +121,12 @@ export function Navbar({ openAuth }: { openAuth: (mode: 'login' | 'signup') => v
             Day<span style={{ color: '#E8A838' }}>.</span>Poo
           </Link>
 
-          {/* 구분선 */}
-          <div style={{ width: '1px', height: '16px', background: 'rgba(255,255,255,0.15)' }} />
+          {/* 구분선 - 데스크톱 */}
+          <div className="hidden md:block" style={{ width: '1px', height: '16px', background: 'rgba(255,255,255,0.15)' }} />
 
-          {/* 지도, 랭킹 */}
+          {/* 네비 링크 - 데스크톱 */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }} className="hidden md:flex">
-            {[
-              { label: '지도', path: '/map', variant: 0 },
-              { label: '랭킹', path: '/ranking', variant: 1 },
-              { label: 'FAQ', path: '/support', variant: 0 },
-            ].map((link) => (
+            {NAV_LINKS.map((link) => (
               <AnimatedUnderlink
                 key={link.path}
                 to={link.path}
@@ -115,14 +137,12 @@ export function Navbar({ openAuth }: { openAuth: (mode: 'login' | 'signup') => v
             ))}
           </div>
 
-          {/* 구분선 */}
+          {/* 구분선 - 데스크톱 */}
           <div className="hidden md:block" style={{ width: '1px', height: '16px', background: 'rgba(255,255,255,0.15)' }} />
 
-          {/* 우측 — 로그인 상태 분기 */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-
+          {/* 우측 — 데스크톱 인증 버튼 */}
+          <div className="hidden md:flex" style={{ alignItems: 'center', gap: '12px' }}>
             {isAuthenticated ? (
-              /* 로그인 상태 */
               <>
                 <Link
                   to="/mypage"
@@ -142,7 +162,6 @@ export function Navbar({ openAuth }: { openAuth: (mode: 'login' | 'signup') => v
                 </button>
               </>
             ) : (
-              /* 비로그인 상태 */
               <>
                 <button
                   onClick={() => openAuth('login')}
@@ -160,31 +179,209 @@ export function Navbar({ openAuth }: { openAuth: (mode: 'login' | 'signup') => v
                 </button>
               </>
             )}
-
-            {/* 알림 벨 (우측 끝으로 이동 - 로그인 상태에서만 표시) */}
-            {isAuthenticated && (
-              <motion.button
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-                onClick={() => setNotifOpen(!notifOpen)}
-                className="relative p-2 rounded-full transition-colors hover:bg-white/10"
-                style={{ color: 'rgba(255,255,255,0.6)', marginLeft: '4px', background: 'none', border: 'none' }}
-                title="알림"
-              >
-                <Bell size={18} />
-                {unreadCount > 0 && (
-                  <motion.span
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    className="absolute top-1 right-1 w-2.5 h-2.5 rounded-full"
-                    style={{ backgroundColor: '#E85D5D', border: '1.5px solid #1A2B27' }}
-                  />
-                )}
-              </motion.button>
-            )}
           </div>
+
+          {/* 알림 벨 (로그인 상태에서만 표시) */}
+          {isAuthenticated && (
+            <motion.button
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              onClick={() => setNotifOpen(!notifOpen)}
+              className="relative p-2 rounded-full transition-colors hover:bg-white/10 hidden md:flex items-center justify-center"
+              style={{ color: 'rgba(255,255,255,0.6)', background: 'none', border: 'none' }}
+              title="알림"
+            >
+              <Bell size={18} />
+              {unreadCount > 0 && (
+                <motion.span
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  className="absolute top-1 right-1 w-2.5 h-2.5 rounded-full"
+                  style={{ backgroundColor: '#E85D5D', border: '1.5px solid #1A2B27' }}
+                />
+              )}
+            </motion.button>
+          )}
+
+          {/* 햄버거 메뉴 - 모바일 */}
+          <button
+            onClick={() => setDrawerOpen(true)}
+            className="md:hidden flex items-center justify-center p-2 rounded-full transition-colors hover:bg-white/10"
+            style={{ color: 'rgba(255,255,255,0.7)', background: 'none', border: 'none' }}
+          >
+            <Menu size={20} />
+          </button>
         </motion.nav>
       </div>
+
+      {/* ── 모바일 사이드 드로어 ── */}
+      <AnimatePresence>
+        {drawerOpen && (
+          <>
+            {/* 백드롭 */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.25 }}
+              onClick={() => setDrawerOpen(false)}
+              className="fixed inset-0 z-[150] bg-black/50 backdrop-blur-sm md:hidden"
+            />
+
+            {/* 드로어 패널 */}
+            <motion.div
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: 'spring', damping: 28, stiffness: 300 }}
+              className="fixed top-0 right-0 z-[151] w-[280px] h-full flex flex-col md:hidden"
+              style={{
+                background: 'linear-gradient(180deg, #1A2B27 0%, #0F1D19 100%)',
+                boxShadow: '-8px 0 40px rgba(0,0,0,0.3)',
+              }}
+            >
+              {/* 드로어 헤더 */}
+              <div className="flex items-center justify-between px-6 pt-6 pb-4">
+                <span
+                  style={{
+                    fontFamily: 'SchoolSafetyNotification, sans-serif',
+                    fontSize: '20px',
+                    color: '#fff',
+                    fontWeight: 700,
+                  }}
+                >
+                  Day<span style={{ color: '#E8A838' }}>.</span>Poo
+                </span>
+                <button
+                  onClick={() => setDrawerOpen(false)}
+                  className="w-9 h-9 rounded-full flex items-center justify-center transition-colors hover:bg-white/10"
+                  style={{ color: 'rgba(255,255,255,0.5)', background: 'none', border: 'none' }}
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              {/* 구분선 */}
+              <div className="mx-6 h-px bg-white/10" />
+
+              {/* 네비 링크 */}
+              <div className="flex-1 overflow-y-auto px-4 py-6 space-y-1">
+                <Link
+                  to="/main"
+                  onClick={() => setDrawerOpen(false)}
+                  className={`flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all ${
+                    isActivePath('/main')
+                      ? 'bg-white/10 text-white'
+                      : 'text-white/60 hover:bg-white/5 hover:text-white/80'
+                  }`}
+                >
+                  <Home size={20} />
+                  <span className="text-[15px] font-bold">홈</span>
+                </Link>
+
+                {NAV_LINKS.map((link) => {
+                  const Icon = link.icon;
+                  return (
+                    <Link
+                      key={link.path}
+                      to={link.path}
+                      onClick={() => setDrawerOpen(false)}
+                      className={`flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all ${
+                        isActivePath(link.path)
+                          ? 'bg-white/10 text-white'
+                          : 'text-white/60 hover:bg-white/5 hover:text-white/80'
+                      }`}
+                    >
+                      <Icon size={20} />
+                      <span className="text-[15px] font-bold">{link.label}</span>
+                      {isActivePath(link.path) && (
+                        <div className="ml-auto w-1.5 h-1.5 rounded-full bg-[#E8A838]" />
+                      )}
+                    </Link>
+                  );
+                })}
+
+                {isAuthenticated && (
+                  <Link
+                    to="/mypage"
+                    onClick={() => setDrawerOpen(false)}
+                    className={`flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all ${
+                      isActivePath('/mypage')
+                        ? 'bg-white/10 text-white'
+                        : 'text-white/60 hover:bg-white/5 hover:text-white/80'
+                    }`}
+                  >
+                    <User size={20} />
+                    <span className="text-[15px] font-bold">마이페이지</span>
+                    {isActivePath('/mypage') && (
+                      <div className="ml-auto w-1.5 h-1.5 rounded-full bg-[#E8A838]" />
+                    )}
+                  </Link>
+                )}
+
+                <Link
+                  to="/premium"
+                  onClick={() => setDrawerOpen(false)}
+                  className={`flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all ${
+                    isActivePath('/premium')
+                      ? 'bg-white/10 text-white'
+                      : 'text-white/60 hover:bg-white/5 hover:text-white/80'
+                  }`}
+                >
+                  <Crown size={20} />
+                  <span className="text-[15px] font-bold">프리미엄</span>
+                </Link>
+              </div>
+
+              {/* 하단 인증 영역 */}
+              <div className="px-4 pb-8">
+                <div className="mx-2 h-px bg-white/10 mb-6" />
+                {isAuthenticated ? (
+                  <div className="space-y-3">
+                    <div className="px-4 py-2">
+                      <p className="text-[11px] font-bold text-white/30 uppercase tracking-widest mb-1">로그인 중</p>
+                      <p className="text-sm font-bold text-white/80 truncate">{user?.nickname || user?.email}</p>
+                    </div>
+                    <button
+                      onClick={handleLogout}
+                      className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-white/40 hover:bg-white/5 hover:text-white/60 transition-all"
+                      style={{ background: 'none', border: 'none' }}
+                    >
+                      <LogOut size={18} />
+                      <span className="text-sm font-bold">로그아웃</span>
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <button
+                      onClick={() => { setDrawerOpen(false); openAuth('login'); }}
+                      className="w-full py-3 rounded-2xl text-sm font-bold transition-all"
+                      style={{
+                        background: 'rgba(255,255,255,0.08)',
+                        color: 'rgba(255,255,255,0.8)',
+                        border: '1px solid rgba(255,255,255,0.1)',
+                      }}
+                    >
+                      로그인
+                    </button>
+                    <button
+                      onClick={() => { setDrawerOpen(false); openAuth('signup'); }}
+                      className="w-full py-3 rounded-2xl text-sm font-bold transition-all"
+                      style={{
+                        background: '#E8A838',
+                        color: '#1A2B27',
+                        border: 'none',
+                      }}
+                    >
+                      회원가입
+                    </button>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
       <NotificationPanel isOpen={notifOpen} onClose={() => setNotifOpen(false)} />
     </>

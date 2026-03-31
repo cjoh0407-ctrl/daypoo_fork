@@ -151,11 +151,13 @@ public class ToiletReviewService {
           log.info("Generated AI summary for toilet {} ({})", toilet.getId(), toilet.getName());
         }
       } catch (Exception e) {
-        log.error("Failed to generate AI summary for toilet {}: {}", toilet.getId(), e.getMessage());
+        log.error(
+            "Failed to generate AI summary for toilet {}: {}", toilet.getId(), e.getMessage());
       }
     }
 
-    log.info("Bulk AI summary generation complete: {}/{} succeeded", successCount.get(), toilets.size());
+    log.info(
+        "Bulk AI summary generation complete: {}/{} succeeded", successCount.get(), toilets.size());
     return successCount.get();
   }
 

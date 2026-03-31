@@ -42,7 +42,8 @@ public class PublicDataSyncService {
   private static final String REDIS_GEO_KEY = "daypoo:toilets:geo";
   private static final int BATCH_SIZE = 100;
   private static final int MAX_CONCURRENT_REQUESTS = 10;
-  private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+  private static final DateTimeFormatter DATE_TIME_FORMATTER =
+      DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
   // Status tracking fields
   private volatile String syncStatus = "IDLE";
@@ -52,15 +53,14 @@ public class PublicDataSyncService {
   private volatile String startedAt = null;
   private volatile String completedAt = null;
   private volatile String errorMessage = null;
-  
+
   private record ExistingToiletInfo(
       String name,
       String address,
       String locationWkt,
       String openHours,
       boolean is24h,
-      boolean isUnisex
-  ) {}
+      boolean isUnisex) {}
 
   public PublicDataSyncService(
       ToiletRepository toiletRepository,
@@ -78,16 +78,17 @@ public class PublicDataSyncService {
     this.webClient = WebClient.builder().baseUrl(apiUrl).build();
   }
 
-  /**
-   * 매일 새벽 3시에 공공데이터 전체 동기화를 실행합니다. 서버 시작 시에는 toilet 데이터가 없는 경우에만 소규모 동기화를 수행합니다.
-   */
+  /** 매일 새벽 3시에 공공데이터 전체 동기화를 실행합니다. 서버 시작 시에는 toilet 데이터가 없는 경우에만 소규모 동기화를 수행합니다. */
   @org.springframework.scheduling.annotation.Scheduled(cron = "0 0 3 * * *")
   public void scheduledSync() {
     log.info("🕒 [Scheduled] Starting daily public data sync...");
     try {
       int[] result = syncAllToilets(1, 550);
-      log.info("✅ [Scheduled] Daily sync completed. Total: {}, Inserted: {}, Updated: {}",
-          result[0], result[1], result[2]);
+      log.info(
+          "✅ [Scheduled] Daily sync completed. Total: {}, Inserted: {}, Updated: {}",
+          result[0],
+          result[1],
+          result[2]);
     } catch (Exception e) {
       log.error("❌ [Scheduled] Daily sync failed: {}", e.getMessage());
     }
@@ -123,7 +124,8 @@ public class PublicDataSyncService {
                   () -> {
                     try {
                       semaphore.acquire();
-                      int[] result = syncToiletDataWithInQuery(currentPage, BATCH_SIZE, transactionTemplate);
+                      int[] result =
+                          syncToiletDataWithInQuery(currentPage, BATCH_SIZE, transactionTemplate);
                       totalCount.addAndGet(result[0]);
                       totalInserted.addAndGet(result[1]);
                       totalUpdated.addAndGet(result[2]);
@@ -148,9 +150,12 @@ public class PublicDataSyncService {
           totalUpdated.get());
     }
 
-    log.info("🏁 Sync Finished. Total: {}, Inserted: {}, Updated: {}",
-        totalCount.get(), totalInserted.get(), totalUpdated.get());
-    return new int[] { totalCount.get(), totalInserted.get(), totalUpdated.get() };
+    log.info(
+        "🏁 Sync Finished. Total: {}, Inserted: {}, Updated: {}",
+        totalCount.get(),
+        totalInserted.get(),
+        totalUpdated.get());
+    return new int[] {totalCount.get(), totalInserted.get(), totalUpdated.get()};
   }
 
   /** 상태 조회 메서드 */
@@ -185,8 +190,11 @@ public class PublicDataSyncService {
       updatedCount = result[2];
       syncStatus = "COMPLETED";
       completedAt = LocalDateTime.now().format(DATE_TIME_FORMATTER);
-      log.info("✅ Background sync finished. Total: {}, Inserted: {}, Updated: {}",
-          result[0], result[1], result[2]);
+      log.info(
+          "✅ Background sync finished. Total: {}, Inserted: {}, Updated: {}",
+          result[0],
+          result[1],
+          result[2]);
     } catch (Exception e) {
       log.error("❌ Background sync failed: {}", e.getMessage());
       syncStatus = "FAILED";
@@ -207,12 +215,10 @@ public class PublicDataSyncService {
     String responseBody = fetchResponseBody(pageNo, numOfRows);
     JsonNode rootNode = objectMapper.readTree(responseBody);
     JsonNode bodyNode = rootNode.path("response").path("body");
-    if (bodyNode.isMissingNode())
-      return new int[] { 0, 0, 0 };
+    if (bodyNode.isMissingNode()) return new int[] {0, 0, 0};
 
     JsonNode itemsNode = bodyNode.path("items").path("item");
-    if (!itemsNode.isArray() || itemsNode.isEmpty())
-      return new int[] { 0, 0, 0 };
+    if (!itemsNode.isArray() || itemsNode.isEmpty()) return new int[] {0, 0, 0};
 
     List<JsonNode> itemList = new ArrayList<>();
     for (JsonNode item : itemsNode) {
@@ -223,33 +229,36 @@ public class PublicDataSyncService {
     }
 
     List<Toilet> toiletsToSave = convertToToiletEntities(itemList);
-    if (toiletsToSave.isEmpty()) return new int[] { 0, 0, 0 };
+    if (toiletsToSave.isEmpty()) return new int[] {0, 0, 0};
 
     // upsert 전에 기존 데이터 상세 조회하여 실제 변경 여부 확인
-    List<String> mngNos = toiletsToSave.stream()
-        .map(Toilet::getMngNo)
-        .collect(java.util.stream.Collectors.toList());
-    String inClause = mngNos.stream()
-        .map(m -> "'" + m.replace("'", "''") + "'")
-        .collect(java.util.stream.Collectors.joining(","));
-    
-    Map<String, ExistingToiletInfo> existingMap = jdbcTemplate.query(
-        "SELECT mng_no, name, address, ST_AsText(location) as location_wkt, open_hours, is_24h, is_unisex FROM toilets WHERE mng_no IN (" + inClause + ")",
-        (rs) -> {
-          Map<String, ExistingToiletInfo> map = new HashMap<>();
-          while (rs.next()) {
-            map.put(rs.getString("mng_no"), new ExistingToiletInfo(
-                rs.getString("name"),
-                rs.getString("address"),
-                rs.getString("location_wkt"),
-                rs.getString("open_hours"),
-                rs.getBoolean("is_24h"),
-                rs.getBoolean("is_unisex")
-            ));
-          }
-          return map;
-        }
-    );
+    List<String> mngNos =
+        toiletsToSave.stream().map(Toilet::getMngNo).collect(java.util.stream.Collectors.toList());
+    String inClause =
+        mngNos.stream()
+            .map(m -> "'" + m.replace("'", "''") + "'")
+            .collect(java.util.stream.Collectors.joining(","));
+
+    Map<String, ExistingToiletInfo> existingMap =
+        jdbcTemplate.query(
+            "SELECT mng_no, name, address, ST_AsText(location) as location_wkt, open_hours, is_24h, is_unisex FROM toilets WHERE mng_no IN ("
+                + inClause
+                + ")",
+            (rs) -> {
+              Map<String, ExistingToiletInfo> map = new HashMap<>();
+              while (rs.next()) {
+                map.put(
+                    rs.getString("mng_no"),
+                    new ExistingToiletInfo(
+                        rs.getString("name"),
+                        rs.getString("address"),
+                        rs.getString("location_wkt"),
+                        rs.getString("open_hours"),
+                        rs.getBoolean("is_24h"),
+                        rs.getBoolean("is_unisex")));
+              }
+              return map;
+            });
     if (existingMap == null) existingMap = new HashMap<>();
 
     int inserted = 0;
@@ -262,16 +271,19 @@ public class PublicDataSyncService {
         inserted++;
         changedToilets.add(apiToilet);
       } else {
-        String apiWkt = apiToilet.getLocation() != null ? normalizeWkt(apiToilet.getLocation().toText()) : null;
+        String apiWkt =
+            apiToilet.getLocation() != null ? normalizeWkt(apiToilet.getLocation().toText()) : null;
         String dbWkt = normalizeWkt(existing.locationWkt());
 
-        boolean isChanged = !Objects.equals(normalize(apiToilet.getName()), normalize(existing.name()))
-            || !Objects.equals(normalize(apiToilet.getAddress()), normalize(existing.address()))
-            || !Objects.equals(apiWkt, dbWkt)
-            || !Objects.equals(normalize(apiToilet.getOpenHours()), normalize(existing.openHours()))
-            || apiToilet.is24h() != existing.is24h()
-            || apiToilet.isUnisex() != existing.isUnisex();
-        
+        boolean isChanged =
+            !Objects.equals(normalize(apiToilet.getName()), normalize(existing.name()))
+                || !Objects.equals(normalize(apiToilet.getAddress()), normalize(existing.address()))
+                || !Objects.equals(apiWkt, dbWkt)
+                || !Objects.equals(
+                    normalize(apiToilet.getOpenHours()), normalize(existing.openHours()))
+                || apiToilet.is24h() != existing.is24h()
+                || apiToilet.isUnisex() != existing.isUnisex();
+
         if (isChanged) {
           updated++;
           changedToilets.add(apiToilet);
@@ -280,26 +292,28 @@ public class PublicDataSyncService {
     }
 
     if (!changedToilets.isEmpty()) {
-      transactionTemplate.execute(status -> {
-        bulkInsertToilets(changedToilets);
-        return null;
-      });
+      transactionTemplate.execute(
+          status -> {
+            bulkInsertToilets(changedToilets);
+            return null;
+          });
       addToRedisGeoBulk(changedToilets);
     }
-    return new int[] { toiletsToSave.size(), inserted, updated };
+    return new int[] {toiletsToSave.size(), inserted, updated};
   }
 
   private String fetchResponseBody(int pageNo, int numOfRows) {
     return webClient
         .get()
         .uri(
-            uriBuilder -> uriBuilder
-                .path("")
-                .queryParam("serviceKey", apiKey)
-                .queryParam("pageNo", pageNo)
-                .queryParam("numOfRows", numOfRows)
-                .queryParam("returnType", "json")
-                .build())
+            uriBuilder ->
+                uriBuilder
+                    .path("")
+                    .queryParam("serviceKey", apiKey)
+                    .queryParam("pageNo", pageNo)
+                    .queryParam("numOfRows", numOfRows)
+                    .queryParam("returnType", "json")
+                    .build())
         .retrieve()
         .bodyToMono(String.class)
         .retryWhen(Retry.backoff(2, Duration.ofSeconds(1)).maxBackoff(Duration.ofSeconds(5)))
@@ -311,14 +325,14 @@ public class PublicDataSyncService {
     Set<String> processedMngNos = new HashSet<>();
     for (JsonNode item : itemList) {
       String mngNo = item.path("MNG_NO").asText("");
-      if (mngNo.isEmpty() || processedMngNos.contains(mngNo))
-        continue;
+      if (mngNo.isEmpty() || processedMngNos.contains(mngNo)) continue;
 
       double lat = item.path("WGS84_LAT").asDouble(0.0);
       double lon = item.path("WGS84_LOT").asDouble(0.0);
-      Point location = (lat >= 33.0 && lat <= 39.0 && lon >= 124.0 && lon <= 132.0)
-          ? geometryUtil.createPoint(lon, lat)
-          : null;
+      Point location =
+          (lat >= 33.0 && lat <= 39.0 && lon >= 124.0 && lon <= 132.0)
+              ? geometryUtil.createPoint(lon, lat)
+              : null;
 
       toiletsToSave.add(
           Toilet.builder()
@@ -341,19 +355,20 @@ public class PublicDataSyncService {
 
   private void bulkInsertToilets(List<Toilet> toilets) {
     // 3. Multi-row Insert/Update (Upsert) 최적화
-    String sql = "INSERT INTO toilets (name, mng_no, location, address, open_hours, is_24h, is_unisex, created_at, updated_at) "
-        + "VALUES (?, ?, ST_GeomFromText(?, 4326), ?, ?, ?, ?, NOW(), NOW()) "
-        + "ON CONFLICT (mng_no) DO UPDATE SET "
-        + "  name        = EXCLUDED.name, "
-        + "  location    = EXCLUDED.location, "
-        + "  address     = EXCLUDED.address, "
-        + "  open_hours  = EXCLUDED.open_hours, "
-        + "  is_24h      = EXCLUDED.is_24h, "
-        + "  is_unisex   = EXCLUDED.is_unisex, "
-        + "  updated_at  = NOW() "
-        + "  WHERE (toilets.name != EXCLUDED.name OR toilets.address != EXCLUDED.address "
-        + "  OR toilets.location IS DISTINCT FROM EXCLUDED.location OR toilets.open_hours != EXCLUDED.open_hours "
-        + "  OR toilets.is_24h != EXCLUDED.is_24h OR toilets.is_unisex != EXCLUDED.is_unisex)";
+    String sql =
+        "INSERT INTO toilets (name, mng_no, location, address, open_hours, is_24h, is_unisex, created_at, updated_at) "
+            + "VALUES (?, ?, ST_GeomFromText(?, 4326), ?, ?, ?, ?, NOW(), NOW()) "
+            + "ON CONFLICT (mng_no) DO UPDATE SET "
+            + "  name        = EXCLUDED.name, "
+            + "  location    = EXCLUDED.location, "
+            + "  address     = EXCLUDED.address, "
+            + "  open_hours  = EXCLUDED.open_hours, "
+            + "  is_24h      = EXCLUDED.is_24h, "
+            + "  is_unisex   = EXCLUDED.is_unisex, "
+            + "  updated_at  = NOW() "
+            + "  WHERE (toilets.name != EXCLUDED.name OR toilets.address != EXCLUDED.address "
+            + "  OR toilets.location IS DISTINCT FROM EXCLUDED.location OR toilets.open_hours != EXCLUDED.open_hours "
+            + "  OR toilets.is_24h != EXCLUDED.is_24h OR toilets.is_unisex != EXCLUDED.is_unisex)";
 
     jdbcTemplate.batchUpdate(
         sql,

@@ -90,7 +90,7 @@ export function ToiletPopup({
   };
 
   const handleOpenReviewModal = () => {
-    const isLogged = !!localStorage.getItem('accessToken');
+    const isLogged = !!(localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken'));
     if (!isLogged) {
       openAuth('login');
       return;
@@ -138,7 +138,7 @@ export function ToiletPopup({
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: 8, scale: 0.97 }}
           transition={{ type: 'spring', stiffness: 300, damping: 28 }}
-          className="relative z-50 w-96"
+          className="relative z-50 w-[calc(100vw-32px)] max-w-96"
           style={{
             background: '#fff',
             borderRadius: '20px',

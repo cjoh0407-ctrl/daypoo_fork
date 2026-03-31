@@ -40,7 +40,7 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
     user,
     userRole: user?.role,
     hasUser: !!user,
-    accessToken: !!localStorage.getItem('accessToken')
+    accessToken: !!(localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken'))
   });
 
   if (loading) {
@@ -59,7 +59,7 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
   if (!isAdmin) {
     console.error('[AdminRoute] ❌ Access denied. Redirecting to /main.', {
       userRole: user?.role,
-      hasToken: !!localStorage.getItem('accessToken')
+      hasToken: !!(localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken'))
     });
     return <Navigate to="/main" replace />;
   }

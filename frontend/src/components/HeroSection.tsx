@@ -64,7 +64,7 @@ export function HeroSection({ onCtaClick, openAuth }: HeroSectionProps) {
 
   return (
     <>
-      <section ref={ref} className="relative min-h-screen flex items-center justify-center bg-[#111E18] overflow-hidden px-8 py-32">
+      <section ref={ref} className="relative min-h-screen flex items-center justify-center bg-[#111E18] overflow-hidden px-4 sm:px-8 py-20 sm:py-32">
         {/* Dynamic Background Noise */}
         <div className="absolute inset-0 opacity-[0.15] mix-blend-color-dodge pointer-events-none">
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-emerald-400/20 blur-[150px] rounded-full" />
@@ -85,7 +85,7 @@ export function HeroSection({ onCtaClick, openAuth }: HeroSectionProps) {
                 <span className="text-emerald-300 text-[10px] font-black uppercase tracking-widest">실시간 건강 엔진 작동 중</span>
               </div>
 
-              <h1 className="text-6xl lg:text-[100px] font-black leading-[0.9] text-white tracking-tighter">
+              <h1 className="text-4xl sm:text-6xl lg:text-[100px] font-black leading-[0.9] text-white tracking-tighter">
                 건강은 <br />
                 <span className="text-emerald-400">데이터</span>로 말합니다.
               </h1>
@@ -122,7 +122,7 @@ export function HeroSection({ onCtaClick, openAuth }: HeroSectionProps) {
               initial={{ opacity: 0, scale: 0.9, rotate: 2 }}
               animate={{ opacity: 1, scale: 1, rotate: 0 }}
               transition={{ duration: 0.8, delay: 0.2 }}
-              className="relative p-8 rounded-[40px] bg-slate-900/40 backdrop-blur-3xl border border-white/10 shadow-3xl shadow-emerald-500/5 space-y-8"
+              className="relative p-5 sm:p-8 rounded-[28px] sm:rounded-[40px] bg-slate-900/40 backdrop-blur-3xl border border-white/10 shadow-3xl shadow-emerald-500/5 space-y-6 sm:space-y-8"
             >
               <div className="grid grid-cols-2 gap-4">
                 <div className="p-4 rounded-3xl bg-emerald-500/10 border border-emerald-500/10 text-center space-y-2">

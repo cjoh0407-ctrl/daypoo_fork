@@ -54,7 +54,7 @@ export function ReportCard({ openAuth }: { openAuth: (mode: 'login' | 'signup') 
   const y2 = useTransform(scrollYProgress, [0, 1], [50, -50]);
 
   const handleReportAction = () => {
-    const token = localStorage.getItem('accessToken');
+    const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken');
     if (token) {
       navigate('/mypage');
     } else {
@@ -66,7 +66,7 @@ export function ReportCard({ openAuth }: { openAuth: (mode: 'login' | 'signup') 
     <section
       ref={sectionRef}
       id="health-section"
-      className="relative pt-40 pb-64 px-6 overflow-hidden"
+      className="relative pt-20 sm:pt-40 pb-32 sm:pb-64 px-4 sm:px-6 overflow-hidden"
       style={{ backgroundColor: '#eef5f0' }}
     >
       {/* 배경 그라데이션 블롭 */}
@@ -153,7 +153,7 @@ export function ReportCard({ openAuth }: { openAuth: (mode: 'login' | 'signup') 
 
           {/* 글래스 카드 */}
           <div
-            className="relative p-8 md:p-10 rounded-[40px] overflow-hidden will-change-transform"
+            className="relative p-5 sm:p-8 md:p-10 rounded-[24px] sm:rounded-[40px] overflow-hidden will-change-transform"
             style={{
               background: 'rgba(248, 250, 249, 0.7)',
               backdropFilter: 'blur(16px) saturate(160%)',
@@ -172,12 +172,12 @@ export function ReportCard({ openAuth }: { openAuth: (mode: 'login' | 'signup') 
             />
 
             <div className="relative z-10">
-              <div className="flex items-center justify-between mb-8">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6 sm:mb-8">
                 <div>
                   <p className="text-sm font-semibold" style={{ color: 'var(--text-sec)' }}>
                     2026년 3월 3주차
                   </p>
-                  <h3 className="text-2xl font-bold mt-1" style={{ color: 'var(--text-main)' }}>
+                  <h3 className="text-xl sm:text-2xl font-bold mt-1" style={{ color: 'var(--text-main)' }}>
                     이번 주 쾌변 리포트
                   </h3>
                 </div>
@@ -196,10 +196,10 @@ export function ReportCard({ openAuth }: { openAuth: (mode: 'login' | 'signup') 
                 </motion.span>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-12 gap-10 items-center">
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-6 sm:gap-10 items-center">
                 {/* Pie Chart */}
                 <div className="col-span-12 md:col-span-5 flex flex-col items-center justify-center">
-                  <div className="w-full max-w-[320px] aspect-square relative mx-auto">
+                  <div className="w-full max-w-[140px] sm:max-w-[220px] md:max-w-[320px] aspect-square relative mx-auto">
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
                         <Pie
@@ -221,7 +221,7 @@ export function ReportCard({ openAuth }: { openAuth: (mode: 'login' | 'signup') 
                           initial={{ scale: 0 }}
                           whileInView={{ scale: 1 }}
                           transition={{ type: "spring", delay: 0.5, stiffness: 100 }}
-                          className="text-7xl font-black leading-none"
+                          className="text-5xl sm:text-7xl font-black leading-none"
                           style={{ color: 'var(--text-main)', letterSpacing: '-0.05em' }}
                         >
                           85
@@ -271,7 +271,7 @@ export function ReportCard({ openAuth }: { openAuth: (mode: 'login' | 'signup') 
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: 0.4 }}
-                className="mt-8 p-6 rounded-3xl flex items-center gap-4"
+                className="mt-6 sm:mt-8 p-4 sm:p-6 rounded-2xl sm:rounded-3xl flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4"
                 style={{
                   background: 'linear-gradient(135deg, rgba(232,168,56,0.12), rgba(45,106,79,0.08))',
                   border: '1px solid rgba(232,168,56,0.2)',

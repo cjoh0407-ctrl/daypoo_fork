@@ -134,7 +134,7 @@ export function MapSection() {
   }, [toilets, clearMarkers]);
 
   return (
-    <section className="px-6 md:px-12 pt-40 pb-56 relative overflow-hidden" style={{ background: '#F8FAF9' }}>
+    <section className="px-4 sm:px-6 md:px-12 pt-20 sm:pt-40 pb-32 sm:pb-56 relative overflow-hidden" style={{ background: '#F8FAF9' }}>
       {/* 배경 장식 원 */}
       <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-[#1B4332]/[0.02] rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl pointer-events-none" />
       
@@ -151,7 +151,7 @@ export function MapSection() {
               <MapPin size={14} className="text-[#1B4332]" />
               <span className="text-[10px] font-black uppercase tracking-widest text-[#1B4332]">Local Explorer</span>
             </div>
-            <h2 className="text-4xl md:text-6xl font-black text-[#1A2B27] tracking-tight leading-[1.1]">
+            <h2 className="text-3xl sm:text-4xl md:text-6xl font-black text-[#1A2B27] tracking-tight leading-[1.1]">
               내 주변 <span className="text-[#1B4332]">화장실 지도</span>
             </h2>
             <p className="text-lg md:text-xl text-[#1A2B27]/50 max-w-2xl mx-auto leading-relaxed">
@@ -307,7 +307,7 @@ export function MapSection() {
                           setSelectedToilet(toilet);
                           mapInstance.current?.setCenter(new window.kakao.maps.LatLng(toilet.lat, toilet.lng));
                         }}
-                        className="group p-4 rounded-2xl cursor-pointer transition-all border border-transparent"
+                        className={`group p-4 rounded-2xl cursor-pointer transition-all border border-transparent ${i >= 3 ? 'hidden md:block' : ''}`}
                         style={{
                           backgroundColor: selectedToilet?.id === toilet.id ? '#1B4332' : 'white',
                           boxShadow: selectedToilet?.id === toilet.id ? '0 8px 20px rgba(27,67,50,0.15)' : '0 4px 12px rgba(0,0,0,0.03)',

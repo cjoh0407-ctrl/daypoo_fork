@@ -5,7 +5,7 @@ import { Footer } from '../components/Footer';
 import { WaveDivider } from '../components/WaveDivider';
 import { Crown, TrendingUp, TrendingDown, Minus, ShoppingBag, X, MapPin, Star, Trophy, Activity } from 'lucide-react';
 import { useRankings } from '../hooks/useRankings';
-import { generateRankingAvatar, generateItemAvatar } from '../utils/avatar';
+import { generateRankingAvatar, generateItemAvatar, parseDicebearUrl } from '../utils/avatar';
 
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -301,9 +301,9 @@ const FlipGlassCard = ({
     onMouseLeave={onHoverEnd}
     onClick={() => onSelect(user)}
     className="relative cursor-pointer group"
-    style={{ 
-      width: isFirst ? '190px' : '160px', 
-      height: isFirst ? '260px' : '220px',
+    style={{
+      width: isFirst ? 'min(190px, 45vw)' : 'min(160px, 40vw)',
+      height: isFirst ? 'min(260px, 62vw)' : 'min(220px, 55vw)',
       perspective: '1200px',
       zIndex: isHovered ? 50 : isFirst ? 20 : 10 
     }}
@@ -438,7 +438,7 @@ function Podium({ users, onSelect }: { users: RankUser[]; onSelect: (u: RankUser
   };
 
   return (
-    <div className="relative flex items-center justify-center gap-10 lg:gap-16 mt-8 pt-24 pb-16 px-4">
+    <div className="relative flex flex-col sm:flex-row items-center justify-center gap-6 sm:gap-10 lg:gap-16 mt-8 pt-12 sm:pt-24 pb-16 px-4">
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] pointer-events-none" style={{ zIndex: 0 }}>
         <motion.div
           animate={{ scale: [1, 1.15, 1], opacity: [0.2, 0.3, 0.2] }}
@@ -597,10 +597,10 @@ function MyRankBar({ data }: { data: any }) {
         <div className="text-center min-w-[100px]">
           <span className="block text-emerald-300/50 text-xs font-bold uppercase tracking-widest mb-2">나의 현재 순위</span>
           <div className="relative">
-            <span className="text-6xl font-black text-[#E8A838] leading-none tracking-tighter">
+            <span className="text-4xl sm:text-6xl font-black text-[#E8A838] leading-none tracking-tighter">
               {data.rank === '-' ? '-' : data.rank}
             </span>
-            {data.rank !== '-' && <span className="text-xl font-bold text-[#E8A838] ml-0.5">위</span>}
+            {data.rank !== '-' && <span className="text-lg sm:text-xl font-bold text-[#E8A838] ml-0.5">위</span>}
           </div>
         </div>
         
@@ -608,7 +608,7 @@ function MyRankBar({ data }: { data: any }) {
 
         <div className="flex-1">
           <div className="flex items-center gap-4 mb-2.5">
-            <span className="text-2xl font-black text-white">{data.nick}</span>
+            <span className="text-xl sm:text-2xl font-black text-white">{data.nick}</span>
             <div className="px-3 py-1 rounded-lg bg-emerald-500/10 text-emerald-300 text-[11px] font-bold border border-emerald-500/20">
               Lv.{data.lv}
             </div>
@@ -652,7 +652,10 @@ export function RankingPage({ openAuth }: { openAuth: (mode: 'login' | 'signup')
           rank: Number(r.rank || 0),
           emoji: Number(r.rank) === 1 ? '💎' : Number(r.rank) === 2 ? '🦊' : '🐸',
           avatarUrl: (() => {
-            const avatarItem = (r.equippedItems || []).find((item) => item.type === 'AVATAR');
+            const avatarItem: any = (r.equippedItems || []).find((item) => item.type === 'AVATAR');
+            if (avatarItem && (avatarItem.imageUrl || avatarItem.icon)) {
+              return parseDicebearUrl(avatarItem.imageUrl || avatarItem.icon, r.userId, 'AVATAR');
+            }
             return avatarItem ? generateItemAvatar(r.userId, 'AVATAR') : generateRankingAvatar(r.userId, Number(r.rank || 0));
           })(),
           nick: r.nickname || '익명',
@@ -668,7 +671,9 @@ export function RankingPage({ openAuth }: { openAuth: (mode: 'login' | 'signup')
             name: item.name || '아이템',
             type: item.type || '장식'
           })),
-          effectEmoji: (r.equippedItems || []).find((item) => item.type === 'EFFECT')?.icon,
+          effectEmoji: (r.equippedItems || []).find((item) => item.type === 'EFFECT') 
+            ? ((r.equippedItems || []).find((item) => item.type === 'EFFECT') as any).imageUrl || ((r.equippedItems || []).find((item) => item.type === 'EFFECT') as any).icon
+            : undefined,
         }))
     : [];
 
@@ -722,7 +727,7 @@ export function RankingPage({ openAuth }: { openAuth: (mode: 'login' | 'signup')
             }}
           />
 
-          <section className="relative z-10 pt-32 pb-40 px-6">
+          <section className="relative z-10 pt-28 sm:pt-32 pb-24 sm:pb-40 px-4 sm:px-6">
             <div className="max-w-4xl mx-auto">
               <motion.div
                 initial={{ opacity: 0, y: 24 }}
@@ -760,7 +765,7 @@ export function RankingPage({ openAuth }: { openAuth: (mode: 'login' | 'signup')
                   <button
                     key={t.key}
                     onClick={() => setTab(t.key)}
-                    className="flex-1 py-3 rounded-xl text-sm font-bold transition-all relative"
+                    className="flex-1 py-3 rounded-xl text-xs sm:text-sm font-bold transition-all relative"
                     style={{ color: tab === t.key ? '#fff' : 'rgba(0,0,0,0.4)' }}
                   >
                     {tab === t.key && (
@@ -835,8 +840,8 @@ export function RankingPage({ openAuth }: { openAuth: (mode: 'login' | 'signup')
                     className="rounded-3xl py-4 px-6 text-center"
                     style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.05)', boxShadow: '0 8px 24px rgba(27,67,50,0.04)' }}
                   >
-                    <p className="font-black text-4xl" style={{ color: '#E8A838', letterSpacing: '-0.04em' }}>
-                      {s.value}<span className="text-base font-bold ml-0.5">{s.unit}</span>
+                    <p className="font-black text-2xl sm:text-4xl" style={{ color: '#E8A838', letterSpacing: '-0.04em' }}>
+                      {s.value}<span className="text-sm sm:text-base font-bold ml-0.5">{s.unit}</span>
                     </p>
                     <p className="text-sm mt-1.5 font-bold" style={{ color: 'rgba(0,0,0,0.4)' }}>{s.label}</p>
                   </motion.div>

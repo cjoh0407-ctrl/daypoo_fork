@@ -24,8 +24,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -57,31 +57,35 @@ public class ReportService {
   public HealthReportResponse generateReport(User user, ReportType type) {
     boolean isPremium = user.hasPlan(SubscriptionPlan.PREMIUM);
 
-    String cacheKey = REPORT_CACHE_KEY_PREFIX
-        + type.name()
-        + ":"
-        + user.getId()
-        + ":"
-        + (isPremium ? "PREM" : "BASIC")
-        + ":"
-        + LocalDateTime.now().toLocalDate();
+    String cacheKey =
+        REPORT_CACHE_KEY_PREFIX
+            + type.name()
+            + ":"
+            + user.getId()
+            + ":"
+            + (isPremium ? "PREM" : "BASIC")
+            + ":"
+            + LocalDateTime.now().toLocalDate();
 
     // 0. 최신 기록 시간 확인
     Optional<PooRecord> lastRecord = recordRepository.findFirstByUserOrderByCreatedAtDesc(user);
-    LocalDateTime latestRecordTime = lastRecord.map(PooRecord::getCreatedAt).orElse(LocalDateTime.MIN);
-    log.info("Checking DAILY report for user {}. Latest record at: {}", user.getId(), latestRecordTime);
+    LocalDateTime latestRecordTime =
+        lastRecord.map(PooRecord::getCreatedAt).orElse(LocalDateTime.MIN);
+    log.info(
+        "Checking DAILY report for user {}. Latest record at: {}", user.getId(), latestRecordTime);
 
     // 1. 캐시 확인 (새 기록이 없는 경우에만 사용)
     String cachedReport = redisTemplate.opsForValue().get(cacheKey);
     if (cachedReport != null) {
       try {
-        HealthReportResponse response = objectMapper.readValue(cachedReport, HealthReportResponse.class);
+        HealthReportResponse response =
+            objectMapper.readValue(cachedReport, HealthReportResponse.class);
         LocalDateTime analyzedAt = LocalDateTime.parse(response.analyzedAt());
 
         // 재생성 조건 판단
         boolean shouldRegenerate = false;
         String reason = "";
-        
+
         if (type == ReportType.DAILY) {
           // 오늘 리포트: 최신 기록이 있으면 실시간 갱신
           shouldRegenerate = analyzedAt.isBefore(latestRecordTime);
@@ -92,13 +96,18 @@ public class ReportService {
           if (shouldRegenerate) reason = "Date changed (once a day renewal)";
         }
 
-        // 프리미엄 유저인데 캐시에 정밀 분석 결과가 없거나(legacy), 특화 키워드가 없는 경우 강제 재생성 유도 (DAILY만 적용 - WEEKLY/MONTHLY는 하루 한 번 갱신으로 충분)
-        if (type == ReportType.DAILY && isPremium && (response.premiumSolution() == null
-            || (!response.premiumSolution().contains("핀포인트")
-                && !response.premiumSolution().contains("전략")
-                && !response.premiumSolution().contains("정밀")
-                && !response.premiumSolution().contains("진단")))) {
-          log.info("Premium user {} logic check: forcing re-generation due to missing premium keywords.", user.getId());
+        // 프리미엄 유저인데 캐시에 정밀 분석 결과가 없거나(legacy), 특화 키워드가 없는 경우 강제 재생성 유도 (DAILY만 적용 - WEEKLY/MONTHLY는
+        // 하루 한 번 갱신으로 충분)
+        if (type == ReportType.DAILY
+            && isPremium
+            && (response.premiumSolution() == null
+                || (!response.premiumSolution().contains("핀포인트")
+                    && !response.premiumSolution().contains("전략")
+                    && !response.premiumSolution().contains("정밀")
+                    && !response.premiumSolution().contains("진단")))) {
+          log.info(
+              "Premium user {} logic check: forcing re-generation due to missing premium keywords.",
+              user.getId());
           shouldRegenerate = true;
           reason = "Missing or legacy premium keywords";
         }
@@ -109,7 +118,8 @@ public class ReportService {
         }
         log.info("Force re-generation for user {} [{}]: {}.", user.getId(), type, reason);
       } catch (Exception e) {
-        log.warn("Failed to parse cached report or date for user {}: {}", user.getId(), e.getMessage());
+        log.warn(
+            "Failed to parse cached report or date for user {}: {}", user.getId(), e.getMessage());
       }
     }
 
@@ -119,8 +129,9 @@ public class ReportService {
     LocalDateTime todayStart = endTime.toLocalDate().atStartOfDay();
     LocalDateTime tomorrowStart = todayStart.plusDays(1);
 
-    var snapshot = snapshotRepository.findFirstByUserAndReportTypeAndCreatedAtBetweenOrderByCreatedAtDesc(
-        user, type, todayStart, tomorrowStart);
+    var snapshot =
+        snapshotRepository.findFirstByUserAndReportTypeAndCreatedAtBetweenOrderByCreatedAtDesc(
+            user, type, todayStart, tomorrowStart);
 
     if (snapshot.isPresent()) {
       HealthReportSnapshot s = snapshot.get();
@@ -128,46 +139,54 @@ public class ReportService {
       // DB 스냅샷 검증
       boolean shouldRegenerateFromSnapshot = false;
       String snapshotReason = "";
-      
+
       if (type == ReportType.DAILY) {
         // 오늘 리포트: 최신 기록이 있으면 재생성
         shouldRegenerateFromSnapshot = s.getCreatedAt().isBefore(latestRecordTime);
         if (shouldRegenerateFromSnapshot) snapshotReason = "New records after snapshot";
       } else {
         // 7일/30일 리포트: 하루 한 번 (날짜가 바뀔 때) 재생성
-        shouldRegenerateFromSnapshot = s.getCreatedAt().toLocalDate().isBefore(LocalDateTime.now().toLocalDate());
+        shouldRegenerateFromSnapshot =
+            s.getCreatedAt().toLocalDate().isBefore(LocalDateTime.now().toLocalDate());
         if (shouldRegenerateFromSnapshot) snapshotReason = "Snapshot date changed";
       }
 
       // 프리미엄 회원인데 기존 스냅샷에 정밀 분석 결과가 없는 경우 강제 재생성 (DAILY만 적용)
-      if (type == ReportType.DAILY && isPremium && (s.getPremiumSolution() == null
-          || (!s.getPremiumSolution().contains("핀포인트")
-              && !s.getPremiumSolution().contains("전략")
-              && !s.getPremiumSolution().contains("정밀")
-              && !s.getPremiumSolution().contains("진단")))) {
+      if (type == ReportType.DAILY
+          && isPremium
+          && (s.getPremiumSolution() == null
+              || (!s.getPremiumSolution().contains("핀포인트")
+                  && !s.getPremiumSolution().contains("전략")
+                  && !s.getPremiumSolution().contains("정밀")
+                  && !s.getPremiumSolution().contains("진단")))) {
         shouldRegenerateFromSnapshot = true;
         snapshotReason = "Missing premium keywords in snapshot";
       }
 
       if (shouldRegenerateFromSnapshot) {
-        log.info("Snapshot for {} is outdated or legacy [{}], forcing re-generation for user {}", type, snapshotReason, user.getId());
+        log.info(
+            "Snapshot for {} is outdated or legacy [{}], forcing re-generation for user {}",
+            type,
+            snapshotReason,
+            user.getId());
       } else if (s.getMostFrequentBristol() != null) {
         log.info("Returning DB snapshot {} report for user {}", type, user.getId());
 
         List<Integer> weeklyScores = null;
         if (s.getWeeklyHealthScores() != null && !s.getWeeklyHealthScores().isBlank()) {
-          weeklyScores = Arrays.stream(s.getWeeklyHealthScores().split(","))
-              .map(Integer::parseInt)
-              .collect(Collectors.toList());
+          weeklyScores =
+              Arrays.stream(s.getWeeklyHealthScores().split(","))
+                  .map(Integer::parseInt)
+                  .collect(Collectors.toList());
         }
 
         Map<Integer, Integer> bristolDist = null;
         if (s.getBristolDistribution() != null) {
           try {
-            bristolDist = objectMapper.readValue(
-                s.getBristolDistribution(),
-                new com.fasterxml.jackson.core.type.TypeReference<Map<Integer, Integer>>() {
-                });
+            bristolDist =
+                objectMapper.readValue(
+                    s.getBristolDistribution(),
+                    new com.fasterxml.jackson.core.type.TypeReference<Map<Integer, Integer>>() {});
           } catch (JsonProcessingException e) {
             log.warn("Failed to parse bristol distribution from snapshot", e);
           }
@@ -207,7 +226,8 @@ public class ReportService {
     }
 
     // 4. 기록 조회
-    List<PooRecord> records = recordRepository.findAllByUserAndCreatedAtAfterOrderByCreatedAtDesc(user, startTime);
+    List<PooRecord> records =
+        recordRepository.findAllByUserAndCreatedAtAfterOrderByCreatedAtDesc(user, startTime);
 
     if (records.isEmpty()) {
       throw new IllegalStateException("분석할 배변 기록이 없습니다. 먼저 배변 활동을 기록해 주세요.");
@@ -216,17 +236,20 @@ public class ReportService {
     log.info("User {} - isPremium: {}", user.getId(), isPremium);
 
     // 5. AI 서비스 요청 데이터 구성
-    List<AiReportRequest.PooRecordData> recordDataList = records.stream()
-        .map(
-            r -> new AiReportRequest.PooRecordData(
-                r.getBristolScale(),
-                r.getColor(),
-                r.getConditionTags(),
-                r.getDietTags(),
-                r.getCreatedAt().toString()))
-        .collect(Collectors.toList());
+    List<AiReportRequest.PooRecordData> recordDataList =
+        records.stream()
+            .map(
+                r ->
+                    new AiReportRequest.PooRecordData(
+                        r.getBristolScale(),
+                        r.getColor(),
+                        r.getConditionTags(),
+                        r.getDietTags(),
+                        r.getCreatedAt().toString()))
+            .collect(Collectors.toList());
 
-    AiReportRequest requestDto = new AiReportRequest(user.getId().toString(), type.name(), recordDataList, isPremium);
+    AiReportRequest requestDto =
+        new AiReportRequest(user.getId().toString(), type.name(), recordDataList, isPremium);
 
     // 6. AI 호출 및 결과 수신 (캐시/스냅샷 미스 → OpenAI 실제 호출)
     log.warn("⚠️ CACHE/SNAPSHOT MISS → CALLING OpenAI for user {} [{}]", user.getId(), type);
@@ -243,71 +266,81 @@ public class ReportService {
           user.getId(),
           weeklySummaries);
 
-      weeklyHealthScores = weeklySummaries.stream()
-          .map(s -> s.recordCount() == 0 ? 0 : 50 + s.healthyRatio() / 2)
-          .collect(Collectors.toList());
+      weeklyHealthScores =
+          weeklySummaries.stream()
+              .map(s -> s.recordCount() == 0 ? 0 : 50 + s.healthyRatio() / 2)
+              .collect(Collectors.toList());
 
       improvementTrend = computeImprovementTrend(weeklyHealthScores);
       bristolDistribution = computeBristolDistribution(records);
       avgDailyRecordCount = computeAvgDailyRecordCount(records, startTime);
 
-      AiMonthlyReportRequest monthlyRequest = new AiMonthlyReportRequest(
-          user.getId().toString(), type.name(), weeklySummaries, isPremium);
+      AiMonthlyReportRequest monthlyRequest =
+          new AiMonthlyReportRequest(
+              user.getId().toString(), type.name(), weeklySummaries, isPremium);
       aiResponse = aiClient.analyzeMonthlyReport(monthlyRequest);
     } else {
       aiResponse = aiClient.analyzeHealthReport(requestDto);
     }
 
     // 7. 통계 계산 (공통)
-    Integer mostFrequentBristol = computeMostFrequent(
+    Integer mostFrequentBristol =
+        computeMostFrequent(
+            records.stream()
+                .map(PooRecord::getBristolScale)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList()));
+    String mostFrequentCondition =
+        computeMostFrequentTag(
+            records.stream()
+                .flatMap(
+                    r ->
+                        r.getConditionTags() != null
+                            ? Arrays.stream(r.getConditionTags().split(","))
+                            : Stream.empty())
+                .collect(Collectors.toList()));
+    String mostFrequentDiet =
+        computeMostFrequentTag(
+            records.stream()
+                .flatMap(
+                    r ->
+                        r.getDietTags() != null
+                            ? Arrays.stream(r.getDietTags().split(","))
+                            : Stream.empty())
+                .collect(Collectors.toList()));
+    long healthyCount =
         records.stream()
-            .map(PooRecord::getBristolScale)
-            .filter(Objects::nonNull)
-            .collect(Collectors.toList()));
-    String mostFrequentCondition = computeMostFrequentTag(
-        records.stream()
-            .flatMap(
-                r -> r.getConditionTags() != null
-                    ? Arrays.stream(r.getConditionTags().split(","))
-                    : Stream.empty())
-            .collect(Collectors.toList()));
-    String mostFrequentDiet = computeMostFrequentTag(
-        records.stream()
-            .flatMap(
-                r -> r.getDietTags() != null
-                    ? Arrays.stream(r.getDietTags().split(","))
-                    : Stream.empty())
-            .collect(Collectors.toList()));
-    long healthyCount = records.stream()
-        .filter(
-            r -> r.getBristolScale() != null
-                && r.getBristolScale() >= 3
-                && r.getBristolScale() <= 4)
-        .count();
+            .filter(
+                r ->
+                    r.getBristolScale() != null
+                        && r.getBristolScale() >= 3
+                        && r.getBristolScale() <= 4)
+            .count();
     Integer healthyRatio = records.isEmpty() ? null : (int) (healthyCount * 100 / records.size());
 
     // 8. 최종 리포트 구성 (AI 응답 + 계산된 통계 + MONTHLY 필드)
-    HealthReportResponse response = HealthReportResponse.builder()
-        .reportType(aiResponse.reportType())
-        .healthScore(aiResponse.healthScore())
-        .summary(aiResponse.summary())
-        .solution(aiResponse.solution())
-        .premiumSolution(aiResponse.premiumSolution())
-        .insights(aiResponse.insights())
-        .recordCount(records.size())
-        .periodStart(startTime)
-        .periodEnd(endTime)
-        .analyzedAt(LocalDateTime.now().toString())
-        .mostFrequentBristol(mostFrequentBristol)
-        .mostFrequentCondition(mostFrequentCondition)
-        .mostFrequentDiet(mostFrequentDiet)
-        .healthyRatio(healthyRatio)
-        // MONTHLY 필드
-        .weeklyHealthScores(weeklyHealthScores)
-        .improvementTrend(improvementTrend)
-        .bristolDistribution(bristolDistribution)
-        .avgDailyRecordCount(avgDailyRecordCount)
-        .build();
+    HealthReportResponse response =
+        HealthReportResponse.builder()
+            .reportType(aiResponse.reportType())
+            .healthScore(aiResponse.healthScore())
+            .summary(aiResponse.summary())
+            .solution(aiResponse.solution())
+            .premiumSolution(aiResponse.premiumSolution())
+            .insights(aiResponse.insights())
+            .recordCount(records.size())
+            .periodStart(startTime)
+            .periodEnd(endTime)
+            .analyzedAt(LocalDateTime.now().toString())
+            .mostFrequentBristol(mostFrequentBristol)
+            .mostFrequentCondition(mostFrequentCondition)
+            .mostFrequentDiet(mostFrequentDiet)
+            .healthyRatio(healthyRatio)
+            // MONTHLY 필드
+            .weeklyHealthScores(weeklyHealthScores)
+            .improvementTrend(improvementTrend)
+            .bristolDistribution(bristolDistribution)
+            .avgDailyRecordCount(avgDailyRecordCount)
+            .build();
 
     // 7. DB 영구 저장 (Snapshot)
     saveSnapshot(user, type, response);
@@ -365,11 +398,12 @@ public class ReportService {
 
   private void saveSnapshot(User user, ReportType type, HealthReportResponse response) {
     try {
-      String weeklyScoresStr = response.weeklyHealthScores() != null
-          ? response.weeklyHealthScores().stream()
-              .map(v -> v == null ? "0" : String.valueOf(v))
-              .collect(Collectors.joining(","))
-          : null;
+      String weeklyScoresStr =
+          response.weeklyHealthScores() != null
+              ? response.weeklyHealthScores().stream()
+                  .map(v -> v == null ? "0" : String.valueOf(v))
+                  .collect(Collectors.joining(","))
+              : null;
 
       String bristolDistJson = null;
       if (response.bristolDistribution() != null) {
@@ -415,47 +449,56 @@ public class ReportService {
     List<WeeklySummaryData> summaries = new ArrayList<>();
     for (int week = 0; week < 4; week++) {
       LocalDateTime weekStart = startTime.plusWeeks(week);
-      LocalDateTime weekEnd = (week == 3) ? LocalDateTime.now().plusMinutes(1) : startTime.plusWeeks(week + 1);
-      List<PooRecord> weekRecords = records.stream()
-          .filter(
-              r -> !r.getCreatedAt().isBefore(weekStart) && r.getCreatedAt().isBefore(weekEnd))
-          .collect(Collectors.toList());
+      LocalDateTime weekEnd =
+          (week == 3) ? LocalDateTime.now().plusMinutes(1) : startTime.plusWeeks(week + 1);
+      List<PooRecord> weekRecords =
+          records.stream()
+              .filter(
+                  r -> !r.getCreatedAt().isBefore(weekStart) && r.getCreatedAt().isBefore(weekEnd))
+              .collect(Collectors.toList());
 
       if (weekRecords.isEmpty()) {
         summaries.add(new WeeklySummaryData(week + 1, 0, 0.0, 0, "", ""));
         continue;
       }
 
-      double avgBristol = weekRecords.stream()
-          .filter(r -> r.getBristolScale() != null)
-          .mapToInt(PooRecord::getBristolScale)
-          .average()
-          .orElse(0.0);
+      double avgBristol =
+          weekRecords.stream()
+              .filter(r -> r.getBristolScale() != null)
+              .mapToInt(PooRecord::getBristolScale)
+              .average()
+              .orElse(0.0);
 
-      long healthyCount = weekRecords.stream()
-          .filter(
-              r -> r.getBristolScale() != null
-                  && r.getBristolScale() >= 3
-                  && r.getBristolScale() <= 4)
-          .count();
+      long healthyCount =
+          weekRecords.stream()
+              .filter(
+                  r ->
+                      r.getBristolScale() != null
+                          && r.getBristolScale() >= 3
+                          && r.getBristolScale() <= 4)
+              .count();
       int healthyRatio = (int) (healthyCount * 100 / weekRecords.size());
 
-      String topDiet = computeTopTags(
-          weekRecords.stream()
-              .flatMap(
-                  r -> r.getDietTags() != null
-                      ? Arrays.stream(r.getDietTags().split(","))
-                      : Stream.empty())
-              .collect(Collectors.toList()),
-          3);
-      String topCondition = computeTopTags(
-          weekRecords.stream()
-              .flatMap(
-                  r -> r.getConditionTags() != null
-                      ? Arrays.stream(r.getConditionTags().split(","))
-                      : Stream.empty())
-              .collect(Collectors.toList()),
-          3);
+      String topDiet =
+          computeTopTags(
+              weekRecords.stream()
+                  .flatMap(
+                      r ->
+                          r.getDietTags() != null
+                              ? Arrays.stream(r.getDietTags().split(","))
+                              : Stream.empty())
+                  .collect(Collectors.toList()),
+              3);
+      String topCondition =
+          computeTopTags(
+              weekRecords.stream()
+                  .flatMap(
+                      r ->
+                          r.getConditionTags() != null
+                              ? Arrays.stream(r.getConditionTags().split(","))
+                              : Stream.empty())
+                  .collect(Collectors.toList()),
+              3);
 
       summaries.add(
           new WeeklySummaryData(
@@ -470,16 +513,13 @@ public class ReportService {
   }
 
   private String computeImprovementTrend(List<Integer> scores) {
-    if (scores == null || scores.size() < 4)
-      return "STABLE";
+    if (scores == null || scores.size() < 4) return "STABLE";
     // 앞 2주 평균 vs 뒤 2주 평균
     double firstHalf = (getScore(scores, 0) + getScore(scores, 1)) / 2.0;
     double secondHalf = (getScore(scores, 2) + getScore(scores, 3)) / 2.0;
 
-    if (secondHalf - firstHalf > 5)
-      return "IMPROVING";
-    if (firstHalf - secondHalf > 5)
-      return "DECLINING";
+    if (secondHalf - firstHalf > 5) return "IMPROVING";
+    if (firstHalf - secondHalf > 5) return "DECLINING";
     return "STABLE";
   }
 
@@ -500,15 +540,13 @@ public class ReportService {
 
   private Double computeAvgDailyRecordCount(List<PooRecord> records, LocalDateTime startTime) {
     long days = ChronoUnit.DAYS.between(startTime, LocalDateTime.now());
-    if (days <= 0)
-      days = 1;
+    if (days <= 0) days = 1;
     double avg = (double) records.size() / days;
     return Math.round(avg * 10) / 10.0;
   }
 
   private String computeTopTags(List<String> tags, int limit) {
-    if (tags == null || tags.isEmpty())
-      return "";
+    if (tags == null || tags.isEmpty()) return "";
     return tags.stream()
         .filter(Objects::nonNull)
         .filter(s -> !s.isBlank())
@@ -522,8 +560,7 @@ public class ReportService {
   }
 
   private <T> T computeMostFrequent(List<T> items) {
-    if (items == null || items.isEmpty())
-      return null;
+    if (items == null || items.isEmpty()) return null;
     return items.stream()
         .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))
         .entrySet()

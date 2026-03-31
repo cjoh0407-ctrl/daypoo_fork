@@ -123,7 +123,7 @@ public class ShopService {
   /** 전체 칭호 목록 및 유저 보유 여부 조회 (업적 동기화 포함) */
   @Transactional(readOnly = true)
   public List<TitleResponse> getAllTitles(User user) {
-    // [Manual Acquisition] 업적 검사는 frontend에서 progress 비교로 수행하며, 
+    // [Manual Acquisition] 업적 검사는 frontend에서 progress 비교로 수행하며,
     // 실제 부여는 acquireTitle 엔드포인트를 통해 명시적으로 수행됨
     List<Title> allTitles = titleRepository.findAll();
 

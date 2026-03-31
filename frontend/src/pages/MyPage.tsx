@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence, useInView } from 'framer-motion';
-import { generateProfileAvatar, generateItemAvatar } from '../utils/avatar';
+import { generateProfileAvatar, generateItemAvatar, parseDicebearUrl } from '../utils/avatar';
 import { Navbar } from '../components/Navbar';
 import {
   ShoppingBag,
@@ -50,6 +50,7 @@ interface AvatarItem {
   name: string;
   type: '헤드' | '이펙트' | '마커';
   rawType?: string; // 원본 타입 (AVATAR, EFFECT 등)
+  imageUrl?: string; // DiceBear 또는 URL 이미지
   owned: boolean;
   price?: number;
   inventoryId?: string; // 인벤토리 ID (장착/해제 API 호출 시 필요)
@@ -669,13 +670,13 @@ function HeroBanner({
         />
       </div>
 
-      <div className="relative z-10 max-w-4xl mx-auto px-6 pt-40 pb-12">
-        <div className="flex items-end justify-between gap-6">
+      <div className="relative z-10 max-w-4xl mx-auto px-3 sm:px-6 pt-24 sm:pt-40 pb-8 sm:pb-12">
+        <div className="flex items-end justify-between gap-3 sm:gap-6">
           <motion.div
             variants={stagger}
             initial="hidden"
             animate="show"
-            className="flex items-end gap-6"
+            className="flex items-end gap-3 sm:gap-6 min-w-0"
           >
             {/* 아바타 */}
             <motion.div variants={fadeUp(0)} className="relative flex-shrink-0">
@@ -691,17 +692,17 @@ function HeroBanner({
                 <div
                   className="relative z-10 flex items-center justify-center rounded-[36px] transition-all duration-300 group-hover:shadow-2xl overflow-hidden"
                   style={{
-                    width: '110px',
-                    height: '110px',
+                    width: 'min(110px, 22vw)',
+                    height: 'min(110px, 22vw)',
                     background: '#ffffff',
                     border: '2px solid rgba(26,43,39,0.08)',
-                    fontSize: '56px',
+                    fontSize: 'min(56px, 12vw)',
                     boxShadow: '0 16px 48px rgba(27,67,50,0.12)',
                   }}
                 >
                   {equippedItem?.id ? (
                     <img
-                      src={generateItemAvatar(equippedItem.id, equippedItem.rawType || 'AVATAR')}
+                      src={parseDicebearUrl(equippedItem.imageUrl || equippedItem.emoji, equippedItem.id, equippedItem.rawType || 'AVATAR')}
                       alt={equippedItem.name}
                       className="w-full h-full object-cover"
                     />
@@ -771,7 +772,7 @@ function HeroBanner({
                     <>
                       <div
                         className="relative overflow-hidden rounded-full"
-                        style={{ width: '160px', height: '6px', background: 'rgba(26,43,39,0.08)' }}
+                        style={{ width: 'min(160px, 30vw)', height: '6px', background: 'rgba(26,43,39,0.08)' }}
                       >
                         <motion.div
                           initial={{ width: 0 }}
@@ -884,7 +885,7 @@ const TABS: { key: TabKey; label: string; icon: React.ReactNode }[] = [
 function TabBar({ active, onChange }: { active: TabKey; onChange: (k: TabKey) => void }) {
   return (
     <div
-      className="flex gap-4 px-10 py-5 mx-auto"
+      className="flex gap-2 sm:gap-4 px-3 sm:px-10 py-3 sm:py-5 mx-auto overflow-x-auto scrollbar-hide"
       style={{
         maxWidth: '896px',
         background: 'transparent',
@@ -895,7 +896,7 @@ function TabBar({ active, onChange }: { active: TabKey; onChange: (k: TabKey) =>
         <button
           key={t.key}
           onClick={() => onChange(t.key)}
-          className="relative flex-1 flex items-center justify-center gap-3 py-4 rounded-[24px] text-base font-black transition-all"
+          className="relative flex-1 flex items-center justify-center gap-1.5 sm:gap-3 py-3 sm:py-4 rounded-[18px] sm:rounded-[24px] text-sm sm:text-base font-black transition-all whitespace-nowrap min-w-0"
           style={{ color: active === t.key ? '#E8A838' : 'rgba(26,43,39,0.35)' }}
         >
           {active === t.key && (
@@ -987,6 +988,7 @@ function HomeTab({
   }));
 
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [chargeAmount, setChargeAmount] = useState<number | ''>(5000);
   const [currentPage, setCurrentPage] = useState(0);
   const itemsPerPage = 12;
 
@@ -997,12 +999,16 @@ function HomeTab({
 
   // 토스 페이먼츠 결제창 호출
   const handleTossPayment = async () => {
+    if (chargeAmount === '' || chargeAmount < 100) {
+      alert('충전 금액은 100원 이상이어야 합니다.');
+      return;
+    }
     try {
       const tossPayments = await loadTossPayments(import.meta.env.VITE_TOSS_CLIENT_KEY);
       await tossPayments.requestPayment('카드', {
-        amount: 5000,
+        amount: chargeAmount,
         orderId: `POOPMAP_${Math.random().toString(36).substring(2, 11)}`,
-        orderName: '포인트 5,000P 충전',
+        orderName: `포인트 ${chargeAmount.toLocaleString()}P 충전`,
         successUrl: window.location.origin + '/payment/success',
         failUrl: window.location.origin + '/mypage',
       });
@@ -1117,17 +1123,17 @@ function HomeTab({
       {/* ★ 아바타 커스터마이징 섹션 (심리스 듀얼 패널 대시보드) */}
       <motion.div
         variants={fadeUp(0)}
-        className="bg-white rounded-[40px] border border-gray-100 shadow-sm overflow-hidden flex flex-col min-h-[500px]"
+        className="bg-white rounded-[24px] sm:rounded-[40px] border border-gray-100 shadow-sm overflow-hidden flex flex-col min-h-[400px] sm:min-h-[500px]"
       >
         {/* 인벤토리 메인 영역 */}
         <div className="flex-1 flex flex-col">
-          <div className="flex items-center justify-between px-10 pt-10 pb-8">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-0 px-4 sm:px-10 pt-6 sm:pt-10 pb-4 sm:pb-8">
           <div>
-            <p className="text-sm font-black text-gray-400 uppercase tracking-widest mb-1.5">
+            <p className="text-xs sm:text-sm font-black text-gray-400 uppercase tracking-widest mb-1.5">
               Avatar Customizing
             </p>
-            <div className="flex items-center gap-4">
-              <span className="text-3xl font-black text-[#1A2B27] tracking-tight">
+            <div className="flex items-center gap-2 sm:gap-4">
+              <span className="text-xl sm:text-3xl font-black text-[#1A2B27] tracking-tight">
                 {shopTab === 'inventory' ? '보유 아이템' : '프리미엄 상점'}
               </span>
               {shopTab === 'shop' && (
@@ -1146,7 +1152,7 @@ function HomeTab({
               )}
             </div>
           </div>
-          <div className="flex rounded-[24px] p-2 bg-gray-50 border border-gray-100 shadow-sm">
+          <div className="flex rounded-[16px] sm:rounded-[24px] p-1.5 sm:p-2 bg-gray-50 border border-gray-100 shadow-sm">
             {(['inventory', 'shop'] as const).map((t) => (
               <button
                 key={t}
@@ -1154,7 +1160,7 @@ function HomeTab({
                   setShopTab(t);
                   setPreview(null);
                 }}
-                className="relative px-8 py-3.5 rounded-[18px] text-base font-black transition-all"
+                className="relative px-4 sm:px-8 py-2.5 sm:py-3.5 rounded-[12px] sm:rounded-[18px] text-sm sm:text-base font-black transition-all"
                 style={{ color: shopTab === t ? '#ffffff' : 'rgba(26,43,39,0.4)' }}
               >
                 {shopTab === t && (
@@ -1181,7 +1187,7 @@ function HomeTab({
           </div>
         </div>
 
-        <div className="px-6 pb-6">
+        <div className="px-3 sm:px-6 pb-4 sm:pb-6">
           <AnimatePresence mode="wait">
             <motion.div
               key={shopTab}
@@ -1226,7 +1232,7 @@ function HomeTab({
                                 </span>
                               ) : (
                                 <img
-                                  src={generateItemAvatar(item.id, avatarType)}
+                                  src={parseDicebearUrl(item.imageUrl || item.emoji, item.id, avatarType)}
                                   alt={item.name}
                                   className="w-full h-full object-cover transition-transform group-hover:scale-110 duration-500"
                                 />
@@ -1306,7 +1312,7 @@ function HomeTab({
                 {preview.rawType === 'EFFECT' ? (
                   <span className="text-3xl select-none">{preview.emoji || '✨'}</span>
                 ) : (
-                  <img src={generateItemAvatar(preview.id, preview.rawType || 'AVATAR')} className="w-full h-full object-cover p-2 transition-transform group-hover:scale-110" />
+                  <img src={parseDicebearUrl(preview.imageUrl || preview.emoji, preview.id, preview.rawType || 'AVATAR')} className="w-full h-full object-cover p-2 transition-transform group-hover:scale-110" />
                 )}
                 <div className="absolute inset-0 bg-emerald-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
               </div>
@@ -1348,23 +1354,23 @@ function HomeTab({
       {/* 데일리 AI 분석 섹션 (API 연동) */}
       <motion.div
         variants={fadeUp(0.12)}
-        className="bg-white rounded-[40px] p-10 border border-gray-100 shadow-sm"
+        className="bg-white rounded-[24px] sm:rounded-[40px] p-5 sm:p-10 border border-gray-100 shadow-sm"
       >
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-amber-50 flex items-center justify-center text-amber-500 shadow-inner">
-              <Brain size={28} />
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 sm:gap-0 mb-6 sm:mb-8">
+          <div className="flex items-center gap-3 sm:gap-4">
+            <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl bg-amber-50 flex items-center justify-center text-amber-500 shadow-inner flex-shrink-0">
+              <Brain className="w-5 h-5 sm:w-7 sm:h-7" />
             </div>
             <div>
-              <h3 className="text-2xl font-black text-[#1A2B27] tracking-tight">
+              <h3 className="text-lg sm:text-2xl font-black text-[#1A2B27] tracking-tight">
                 오늘의 건강 지표
               </h3>
-              <p className="text-xs font-black text-gray-400 uppercase tracking-widest mt-1">
+              <p className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest mt-1">
                 AI Analyst Doctor Poo
               </p>
             </div>
           </div>
-          <div className="bg-emerald-50 px-5 py-2.5 rounded-2xl border border-emerald-100">
+          <div className="bg-emerald-50 px-4 sm:px-5 py-2 sm:py-2.5 rounded-2xl border border-emerald-100 self-start sm:self-auto">
             {loadingHealth ? (
               <p className="text-2xl font-black text-emerald-400 animate-pulse">...</p>
             ) : (
@@ -1377,7 +1383,7 @@ function HomeTab({
         </div>
 
         {healthReport?.insights && healthReport.insights.length >= 3 ? (
-          <div className="grid grid-cols-3 gap-5 mb-10">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-5 mb-6 sm:mb-10">
             {healthReport.insights.slice(0, 3).map((insight: string, i: number) => {
               const icons = [<TrendingUp size={22} />, <Check size={22} />, <Activity size={22} />];
               const colors = ['#52b788', '#E8A838', '#2D6A4F'];
@@ -1400,7 +1406,7 @@ function HomeTab({
             })}
           </div>
         ) : (
-          <div className="grid grid-cols-3 gap-5 mb-10">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-5 mb-6 sm:mb-10">
             {[
               {
                 label: '활동성',
@@ -1435,8 +1441,8 @@ function HomeTab({
           </div>
         )}
 
-        <div className="relative p-8 rounded-[36px] overflow-hidden bg-emerald-50/50 border border-emerald-100 shadow-inner">
-          <Sparkles size={24} className="absolute top-7 right-8 text-emerald-300 opacity-60" />
+        <div className="relative p-5 sm:p-8 rounded-[20px] sm:rounded-[36px] overflow-hidden bg-emerald-50/50 border border-emerald-100 shadow-inner">
+          <Sparkles size={24} className="absolute top-5 sm:top-7 right-5 sm:right-8 text-emerald-300 opacity-60" />
           <p className="text-[13px] font-black text-emerald-600 mb-3 flex items-center gap-2.5">
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-sm" /> 심층 AI
             분석 가이드
@@ -1460,7 +1466,7 @@ function HomeTab({
       {/* 포인트 충전 모달 (사이즈 업) */}
       <AnimatePresence>
         {showPaymentModal && (
-          <div className="fixed inset-0 z-[1000] flex items-center justify-center p-8">
+          <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 sm:p-8">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -1472,7 +1478,7 @@ function HomeTab({
               initial={{ opacity: 0, scale: 0.95, y: 30 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative w-full max-w-md bg-white rounded-[48px] overflow-hidden shadow-3xl p-12 text-center border border-white"
+              className="relative w-full max-w-md bg-white rounded-[32px] sm:rounded-[48px] overflow-hidden shadow-3xl p-6 sm:p-12 text-center border border-white"
             >
               <button
                 onClick={() => setShowPaymentModal(false)}
@@ -1487,17 +1493,30 @@ function HomeTab({
               <h3 className="text-3xl font-black text-[#1B4332] mb-4 tracking-tight">
                 포인트가 부족해요!
               </h3>
-              <p className="text-gray-500 font-bold text-lg leading-relaxed mb-10">
+              <p className="text-gray-500 font-bold text-lg leading-relaxed mb-6">
                 아이템을 구매하기 위한 포인트가 부족합니다.
                 <br />
-                토스페이로 포인트를 충전하시겠습니까?
+                원하시는 충전 금액을 입력하고 결제를 진행해보세요.
               </p>
+              
+              <div className="mb-8 relative max-w-[240px] mx-auto">
+                <input 
+                  type="number"
+                  min="1000"
+                  step="1000"
+                  value={chargeAmount}
+                  onChange={(e) => setChargeAmount(e.target.value === '' ? '' : Number(e.target.value))}
+                  className="w-full text-center text-4xl font-black py-2 border-b-4 border-emerald-500 focus:outline-none focus:border-amber-400 bg-transparent transition-colors text-[#1B4332] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                />
+                <span className="absolute right-2 bottom-3 text-xl font-bold text-gray-400">원</span>
+              </div>
+
               <div className="flex flex-col gap-4">
                 <button
                   onClick={handleTossPayment}
                   className="w-full py-5 bg-[#1B4332] text-white font-black text-xl rounded-2xl shadow-2xl hover:scale-[1.02] active:scale-[0.98] transition-all"
                 >
-                  결제창 열기
+                  {chargeAmount === '' ? '0' : chargeAmount.toLocaleString()}원 결제하기
                 </button>
                 <button
                   onClick={() => setShowPaymentModal(false)}
@@ -1598,9 +1617,9 @@ function CollectionTab({
       {/* 컬렉션 현황 대시보드 (사이즈 업) */}
       <motion.div
         variants={fadeUp(0)}
-        className="rounded-[40px] p-12 bg-white border border-gray-100 shadow-sm relative overflow-hidden"
+        className="rounded-[24px] sm:rounded-[40px] p-6 sm:p-12 bg-white border border-gray-100 shadow-sm relative overflow-hidden"
       >
-        <div className="absolute top-0 right-0 p-12 opacity-5">
+        <div className="absolute top-0 right-0 p-8 sm:p-12 opacity-5">
           <Trophy size={180} />
         </div>
         <div className="relative z-10">
@@ -1611,20 +1630,20 @@ function CollectionTab({
             나의 명예로운 자취
           </h2>
 
-          <div className="grid grid-cols-2 gap-5 mb-6">
-            <div className="p-6 rounded-[28px] bg-gray-50 border border-gray-100 shadow-inner">
-              <p className="text-xs font-bold text-gray-400 mb-2 uppercase tracking-wide">
+          <div className="grid grid-cols-2 gap-3 sm:gap-5 mb-6">
+            <div className="p-4 sm:p-6 rounded-[20px] sm:rounded-[28px] bg-gray-50 border border-gray-100 shadow-inner">
+              <p className="text-[10px] sm:text-xs font-bold text-gray-400 mb-1 sm:mb-2 uppercase tracking-wide">
                 보유한 칭호
               </p>
-              <p className="text-3xl font-black text-[#1B4332]">
-                {earnedCount} <span className="text-lg text-gray-300">/ {titles.length}</span>
+              <p className="text-xl sm:text-3xl font-black text-[#1B4332]">
+                {earnedCount} <span className="text-sm sm:text-lg text-gray-300">/ {titles.length}</span>
               </p>
             </div>
-            <div className="p-6 rounded-[28px] bg-gray-50 border border-gray-100 shadow-inner">
-              <p className="text-xs font-bold text-gray-400 mb-2 uppercase tracking-wide">
+            <div className="p-4 sm:p-6 rounded-[20px] sm:rounded-[28px] bg-gray-50 border border-gray-100 shadow-inner">
+              <p className="text-[10px] sm:text-xs font-bold text-gray-400 mb-1 sm:mb-2 uppercase tracking-wide">
                 수집 랭크
               </p>
-              <p className="text-3xl font-black text-[#E8A838]">TOP 4%</p>
+              <p className="text-xl sm:text-3xl font-black text-[#E8A838]">TOP 4%</p>
             </div>
           </div>
 
@@ -1652,9 +1671,9 @@ function CollectionTab({
       {/* ★ DepthDeck 칭호 도감 (사이즈 업) */}
       <motion.div
         variants={fadeUp(0.12)}
-        className="rounded-[40px] overflow-hidden bg-white border border-gray-100 shadow-sm"
+        className="rounded-[24px] sm:rounded-[40px] overflow-hidden bg-white border border-gray-100 shadow-sm"
       >
-        <div className="px-10 pt-10 pb-6">
+        <div className="px-4 sm:px-10 pt-6 sm:pt-10 pb-4 sm:pb-6">
           <div className="flex items-center justify-between mb-2">
             <p className="text-sm font-black text-gray-400 uppercase tracking-widest">
               Achieved Titles
@@ -1679,7 +1698,7 @@ function CollectionTab({
         </div>
 
         {/* 칭호 상세 정보 및 진행도 표시 */}
-        <div className="px-10 py-8 bg-gray-50/50 border-t border-gray-100">
+        <div className="px-4 sm:px-10 py-6 sm:py-8 bg-gray-50/50 border-t border-gray-100">
           {selectedPreview ? (
             <div className="space-y-6">
               <div className="text-center">
@@ -1886,7 +1905,7 @@ function ReportTab({ records = [], reportCacheRef }: { records?: any[]; reportCa
       className="flex flex-col gap-8"
     >
       {/* 서브 탭 내비게이션 (AI 가이드 연동) */}
-      <div className="flex p-2 bg-gray-100 rounded-[24px] w-fit mx-auto mb-4 border border-gray-200 shadow-inner">
+      <div className="flex p-1.5 sm:p-2 bg-gray-100 rounded-[16px] sm:rounded-[24px] w-full sm:w-fit mx-auto mb-4 border border-gray-200 shadow-inner overflow-x-auto scrollbar-hide">
         {[
           { key: 'daily', label: '오늘 가이드', free: true },
           { key: 'weekly', label: '7일 리포트', free: false },
@@ -1895,7 +1914,7 @@ function ReportTab({ records = [], reportCacheRef }: { records?: any[]; reportCa
           <button
             key={t.key}
             onClick={() => setActiveSubTab(t.key as any)}
-            className={`px-8 py-3.5 rounded-[18px] text-sm font-black transition-all flex items-center gap-2.5 ${
+            className={`flex-1 sm:flex-none px-4 sm:px-8 py-2.5 sm:py-3.5 rounded-[12px] sm:rounded-[18px] text-xs sm:text-sm font-black transition-all flex items-center justify-center gap-1.5 sm:gap-2.5 whitespace-nowrap ${
               activeSubTab === t.key
                 ? 'bg-white text-[#1B4332] shadow-md border border-gray-100'
                 : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50/50'
@@ -1947,16 +1966,16 @@ function ReportTab({ records = [], reportCacheRef }: { records?: any[]; reportCa
               </motion.div>
             )}
 
-            <div className="rounded-[40px] p-12 bg-white border border-gray-100 shadow-sm">
-              <div className="flex items-center gap-5 mb-10">
-                <div className="w-16 h-16 rounded-[24px] bg-emerald-50 flex items-center justify-center text-emerald-600 shadow-inner">
-                  <Activity size={32} />
+            <div className="rounded-[24px] sm:rounded-[40px] p-5 sm:p-12 bg-white border border-gray-100 shadow-sm">
+              <div className="flex items-center gap-3 sm:gap-5 mb-6 sm:mb-10">
+                <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-[16px] sm:rounded-[24px] bg-emerald-50 flex items-center justify-center text-emerald-600 shadow-inner flex-shrink-0">
+                  <Activity className="w-6 h-6 sm:w-8 sm:h-8" />
                 </div>
                 <div>
-                  <h3 className="text-2xl font-black text-[#1A2B27] tracking-tight">
+                  <h3 className="text-lg sm:text-2xl font-black text-[#1A2B27] tracking-tight">
                     오늘의 쾌변 가이드
                   </h3>
-                  <p className="text-sm font-black text-gray-400 uppercase tracking-[0.15em] mt-1">
+                  <p className="text-[10px] sm:text-sm font-black text-gray-400 uppercase tracking-[0.15em] mt-1">
                     Free Analyst • Live Update
                   </p>
                 </div>
@@ -1971,12 +1990,12 @@ function ReportTab({ records = [], reportCacheRef }: { records?: any[]; reportCa
                 </div>
               ) : (
                 <>
-                  <div className="grid grid-cols-2 gap-5 mb-8">
-                    <div className="p-8 rounded-[36px] bg-gray-50 border border-gray-100 shadow-inner">
-                      <p className="text-[11px] font-black text-gray-400 uppercase tracking-widest mb-2.5">
+                  <div className="grid grid-cols-2 gap-3 sm:gap-5 mb-6 sm:mb-8">
+                    <div className="p-4 sm:p-8 rounded-[20px] sm:rounded-[36px] bg-gray-50 border border-gray-100 shadow-inner">
+                      <p className="text-[10px] sm:text-[11px] font-black text-gray-400 uppercase tracking-widest mb-1.5 sm:mb-2.5">
                         현재 장 상태
                       </p>
-                      <p className="text-2xl font-black text-[#1B4332] flex items-center gap-2.5">
+                      <p className="text-lg sm:text-2xl font-black text-[#1B4332] flex items-center gap-1.5 sm:gap-2.5">
                         {reportData?.healthScore > 80
                           ? '아주 좋음'
                           : reportData?.healthScore > 60
@@ -1985,17 +2004,17 @@ function ReportTab({ records = [], reportCacheRef }: { records?: any[]; reportCa
                         <Sparkles size={22} className="text-amber-400" />
                       </p>
                     </div>
-                    <div className="p-8 rounded-[36px] bg-gray-50 border border-gray-100 shadow-inner">
-                      <p className="text-[11px] font-black text-gray-400 uppercase tracking-widest mb-2.5">
+                    <div className="p-4 sm:p-8 rounded-[20px] sm:rounded-[36px] bg-gray-50 border border-gray-100 shadow-inner">
+                      <p className="text-[10px] sm:text-[11px] font-black text-gray-400 uppercase tracking-widest mb-1.5 sm:mb-2.5">
                         건강 점수
                       </p>
-                      <p className="text-3xl font-black text-amber-500">
+                      <p className="text-2xl sm:text-3xl font-black text-amber-500">
                         {reportData?.healthScore || 0}
                       </p>
                     </div>
                   </div>
 
-                  <div className="p-10 rounded-[40px] bg-emerald-950 text-white relative overflow-hidden shadow-2xl">
+                  <div className="p-5 sm:p-10 rounded-[24px] sm:rounded-[40px] bg-emerald-950 text-white relative overflow-hidden shadow-2xl">
                     <div className="absolute top-0 right-0 p-8 opacity-10">
                       <Sparkles size={80} />
                     </div>
@@ -2039,16 +2058,16 @@ function ReportTab({ records = [], reportCacheRef }: { records?: any[]; reportCa
               className={`space-y-6 transition-all duration-500 ${!isPro ? 'blur-[12px] pointer-events-none' : ''}`}
             >
               {isFetchLoading ? (
-                <div className="rounded-[40px] p-12 bg-white border border-gray-100 shadow-sm flex items-center justify-center py-32">
+                <div className="rounded-[24px] sm:rounded-[40px] p-6 sm:p-12 bg-white border border-gray-100 shadow-sm flex items-center justify-center py-20 sm:py-32">
                   <div className="text-center">
                     <div className="w-20 h-20 border-4 border-amber-200 border-t-amber-600 rounded-full animate-spin mx-auto mb-4" />
                     <p className="text-gray-400 font-bold text-lg">AI 정밀 분석 중...</p>
                   </div>
                 </div>
               ) : (
-                <div className="rounded-[40px] p-12 bg-white border border-gray-100 shadow-sm">
-                  <div className="flex items-center justify-between mb-10">
-                    <h3 className="text-sm font-black text-gray-400 uppercase tracking-[0.2em]">
+                <div className="rounded-[24px] sm:rounded-[40px] p-5 sm:p-12 bg-white border border-gray-100 shadow-sm">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-0 mb-6 sm:mb-10">
+                    <h3 className="text-xs sm:text-sm font-black text-gray-400 uppercase tracking-[0.2em]">
                       {activeSubTab === 'weekly'
                         ? '7일 정밀 분석 리포트'
                         : '30일 건강 트렌드 리포트'}
@@ -2110,7 +2129,7 @@ function ReportTab({ records = [], reportCacheRef }: { records?: any[]; reportCa
                     </p>
                   )}
 
-                  <div className="grid grid-cols-4 gap-4 mb-10">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-10">
                     {[
                       {
                         label: '최다 식단',
@@ -2152,7 +2171,7 @@ function ReportTab({ records = [], reportCacheRef }: { records?: any[]; reportCa
                   </div>
 
                   <div className="space-y-6">
-                    <div className="p-8 rounded-[40px] bg-emerald-50 border border-emerald-100 shadow-inner">
+                    <div className="p-5 sm:p-8 rounded-[24px] sm:rounded-[40px] bg-emerald-50 border border-emerald-100 shadow-inner">
                       <div className="flex items-center gap-3 mb-4">
                         <Brain size={20} className="text-emerald-700" />
                         <p className="text-lg font-black text-emerald-800">
@@ -2193,7 +2212,7 @@ function ReportTab({ records = [], reportCacheRef }: { records?: any[]; reportCa
 
                   {/* MONTHLY 전용 추가 트렌드 섹션 */}
                   {activeSubTab === 'monthly' && reportData && (
-                    <div className="mt-8 p-8 rounded-[40px] bg-gray-50 border border-gray-100 shadow-inner">
+                    <div className="mt-6 sm:mt-8 p-5 sm:p-8 rounded-[24px] sm:rounded-[40px] bg-gray-50 border border-gray-100 shadow-inner">
                       <div className="flex items-center justify-between mb-8">
                         <h4 className="text-lg font-black text-[#1A2B27]">30일 심층 트렌드</h4>
                         <div className="flex items-center gap-2">
@@ -2299,11 +2318,11 @@ function ReportTab({ records = [], reportCacheRef }: { records?: any[]; reportCa
 
             {/* 잠금 오버레이 (비PRO 회원 전용) */}
             {!isPro && (
-              <div className="absolute inset-0 z-10 flex items-center justify-center p-8">
+              <div className="absolute inset-0 z-10 flex items-center justify-center p-4 sm:p-8">
                 <motion.div
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  className="w-full max-w-md bg-white/95 backdrop-blur-xl p-14 rounded-[56px] shadow-[0_32px_80px_rgba(0,0,0,0.15)] border border-white text-center"
+                  className="w-full max-w-md bg-white/95 backdrop-blur-xl p-8 sm:p-14 rounded-[32px] sm:rounded-[56px] shadow-[0_32px_80px_rgba(0,0,0,0.15)] border border-white text-center"
                 >
                   <div className="w-20 h-20 bg-amber-100 rounded-[32px] flex items-center justify-center mx-auto mb-6 shadow-inner transform rotate-6 hover:rotate-0 transition-transform duration-500">
                     <Lock size={36} className="text-amber-500" />
@@ -2784,9 +2803,9 @@ function SettingsTab({
         <motion.div
           key={idx}
           variants={fadeUp(idx * 0.1)}
-          className="bg-white rounded-[40px] border border-gray-100 shadow-sm overflow-hidden p-4"
+          className="bg-white rounded-[24px] sm:rounded-[40px] border border-gray-100 shadow-sm overflow-hidden p-2 sm:p-4"
         >
-          <div className="px-10 pt-10 pb-6">
+          <div className="px-4 sm:px-10 pt-6 sm:pt-10 pb-4 sm:pb-6">
             <p className="text-xs font-black text-emerald-600 uppercase tracking-[0.25em] mb-2">
               {section.title}
             </p>
@@ -3201,7 +3220,7 @@ export function MyPage({ openAuth }: { openAuth: (mode: 'login' | 'signup') => v
         records={records}
       />
       <TabBar active={activeTab} onChange={handleTabChange} />
-      <div className="max-w-4xl mx-auto px-6 py-8 pb-40 overflow-hidden">
+      <div className="max-w-4xl mx-auto px-3 sm:px-6 py-6 sm:py-8 pb-20 sm:pb-40 overflow-hidden">
         <AnimatePresence mode="wait" custom={tabDir}>
           <motion.div
             key={activeTab}

@@ -31,7 +31,8 @@ public class AdminController {
       return ResponseEntity.status(409).body(java.util.Map.of("message", "이미 동기화가 진행 중입니다."));
     }
     syncService.syncAllToiletsAsync(startPage, endPage);
-    return ResponseEntity.accepted().body(java.util.Map.of("message", "동기화가 시작되었습니다. 잠시 후 상태를 확인해주세요."));
+    return ResponseEntity.accepted()
+        .body(java.util.Map.of("message", "동기화가 시작되었습니다. 잠시 후 상태를 확인해주세요."));
   }
 
   @Operation(summary = "공공데이터 동기화 상태 조회", description = "비동기로 진행 중인 화장실 동기화 작업의 현재 상태를 반환합니다.")

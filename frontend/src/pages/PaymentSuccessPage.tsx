@@ -95,7 +95,7 @@ export function PaymentSuccessPage() {
       <motion.div
         initial={{ opacity: 0, scale: 0.9, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
-        className="w-full max-w-md bg-white rounded-[40px] shadow-2xl p-10 text-center"
+        className="w-full max-w-md bg-white rounded-[32px] sm:rounded-[40px] shadow-2xl p-6 sm:p-10 text-center"
       >
         {loading ? (
           <div className="py-12 flex flex-col items-center">

@@ -75,7 +75,7 @@ export function SplashPage() {
                   transition={{ duration: 0.7, ease: 'easeOut' }}
                 >
                   <motion.h1
-                    className="text-[80px] leading-none text-white drop-shadow-sm md:text-[144px]"
+                    className="text-[56px] sm:text-[80px] leading-none text-white drop-shadow-sm md:text-[144px]"
                     style={{
                       fontFamily: 'SchoolSafetyNotification, system-ui',
                       fontWeight: 700,
@@ -102,7 +102,7 @@ export function SplashPage() {
 
               <motion.p
                 variants={fadeUp}
-                className="mt-4 text-xl md:text-2xl text-white/70"
+                className="mt-4 text-lg sm:text-xl md:text-2xl text-white/70"
               >
                 당신의 흔적이 건강이 됩니다
               </motion.p>

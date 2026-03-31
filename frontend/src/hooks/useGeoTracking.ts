@@ -34,7 +34,7 @@ export function useGeoTracking(
         setPosition(newPos);
         setGranted(true);
         
-        const isLogged = !!localStorage.getItem('accessToken');
+        const isLogged = !!(localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken'));
         if (!isLogged) return;
 
         toiletsRef.current.forEach((toilet) => {

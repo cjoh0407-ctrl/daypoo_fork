@@ -34,7 +34,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import WaveButtonComponent from '../components/WaveButton';
-import { generateItemAvatar } from '../utils/avatar';
+import { generateItemAvatar, parseDicebearUrl } from '../utils/avatar';
 import {
   AreaChart,
   Area,
@@ -726,23 +726,7 @@ const UsersView = () => {
             총 {totalElements.toLocaleString()}명의 사용자
           </p>
         </div>
-        <div className="flex gap-2">
-          <form onSubmit={handleSearch} className="flex gap-2">
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="이메일 또는 닉네임 검색"
-              className="px-4 py-2.5 rounded-2xl border bg-white/80 backdrop-blur-sm text-sm font-bold text-[#1A2B27] focus:ring-2 ring-[#1B4332]/20 outline-none"
-            />
-            <button
-              type="submit"
-              className="px-5 py-2.5 rounded-2xl bg-[#1B4332] text-white font-black text-xs shadow-lg"
-            >
-              <Search size={16} />
-            </button>
-          </form>
-        </div>
+        {/* 검색바 제거됨 */}
       </div>
 
       {loading ? (
@@ -1309,15 +1293,7 @@ const ToiletsView = () => {
               >
                 {syncing ? '동기화 중...' : '공공데이터 동기화'}
               </WaveButtonComponent>
-              <button
-                onClick={() => alert('전체 화장실 목록 기능은 준비 중입니다.')}
-                className="px-6 py-3 rounded-2xl border-2 bg-white/90 backdrop-blur-md border-black/10 text-xs font-black text-black/60 hover:bg-white hover:border-[#1B4332]/30 hover:text-[#1B4332] transition-all shadow-xl"
-              >
-                <span className="flex items-center gap-2">
-                  <MapPin size={14} />
-                  전체 목록
-                </span>
-              </button>
+              {/* 전체목록 버튼 제거됨 */}
               <button
                 onClick={async () => {
                   if (!confirm('리뷰 5개 이상 & AI 요약 미생성 화장실에 대해 일괄 생성합니다. 진행할까요?')) return;
@@ -2357,7 +2333,7 @@ const StoreView = ({ setActiveTab }: { setActiveTab: (tab: AdminTab) => void }) 
                         <span className="text-7xl select-none">{item.imageUrl}</span>
                       ) : (
                         <img
-                          src={generateItemAvatar(item.id, item.type)}
+                          src={parseDicebearUrl(item.imageUrl, item.id, item.type)}
                           alt={item.name}
                           className="w-full h-full object-cover"
                         />
@@ -2640,8 +2616,10 @@ const AddItemView = ({ setActiveTab }: { setActiveTab: (tab: AdminTab) => void }
   const [itemName, setItemName] = useState('');
   const [itemDescription, setItemDescription] = useState('');
   const [itemType, setItemType] = useState<ItemType>('AVATAR');
-  const [itemPrice, setItemPrice] = useState<number>(0);
+  const [itemPrice, setItemPrice] = useState<number | ''>('');
   const [itemImageUrl, setItemImageUrl] = useState('');
+  const [dicebearStyle, setDicebearStyle] = useState('funEmoji');
+  const [dicebearSeed, setDicebearSeed] = useState('golden-crown');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async () => {
@@ -2654,7 +2632,7 @@ const AddItemView = ({ setActiveTab }: { setActiveTab: (tab: AdminTab) => void }
       alert('아이템 설명을 입력해주세요.');
       return;
     }
-    if (itemPrice < 0) {
+    if (itemPrice === '' || itemPrice < 0) {
       alert('가격은 0 이상이어야 합니다.');
       return;
     }
@@ -2666,14 +2644,14 @@ const AddItemView = ({ setActiveTab }: { setActiveTab: (tab: AdminTab) => void }
         description: itemDescription,
         type: itemType,
         price: itemPrice,
-        imageUrl: itemImageUrl || null,
+        imageUrl: itemType === 'AVATAR' ? `dicebear:${dicebearStyle}:${dicebearSeed}` : (itemImageUrl || null),
       });
       alert('아이템이 등록되었습니다.');
       // 폼 초기화
       setItemName('');
       setItemDescription('');
       setItemType('AVATAR');
-      setItemPrice(0);
+      setItemPrice('');
       setItemImageUrl('');
       // Store 탭으로 이동
       setActiveTab('store');
@@ -2713,17 +2691,35 @@ const AddItemView = ({ setActiveTab }: { setActiveTab: (tab: AdminTab) => void }
                 />
               </>
             ) : (
-              <>
-                <ShoppingBag size={48} className="text-black/10 mb-4" />
-                <p className="text-xs font-black text-black/30 mb-3">이미지 URL (선택)</p>
-                <input
-                  type="text"
-                  value={itemImageUrl}
-                  onChange={(e) => setItemImageUrl(e.target.value)}
-                  className="w-full bg-white border border-black/10 px-4 py-2 rounded-xl text-xs font-bold text-black placeholder:text-black/40"
-                  placeholder="https://..."
-                />
-              </>
+              <div className="flex flex-col items-center justify-center w-full h-full p-4">
+                <img src={parseDicebearUrl(`dicebear:${dicebearStyle}:${dicebearSeed}`, 1, 'AVATAR')} alt="preview" className="w-32 h-32 mb-4" />
+                <button
+                  onClick={() => setDicebearSeed(Math.random().toString(36).substring(7))}
+                  className="px-4 py-2 bg-[#E8A838]/10 text-[#E8A838] rounded-xl font-bold flex items-center gap-2 mb-4 hover:bg-[#E8A838]/20 transition-colors text-xs"
+                >
+                  <Sparkles size={16} /> 랜덤 생성
+                </button>
+                <div className="w-full space-y-2">
+                  <select
+                    value={dicebearStyle}
+                    onChange={(e) => setDicebearStyle(e.target.value)}
+                    className="w-full bg-white border border-black/10 px-4 py-2 rounded-xl text-xs font-bold text-black"
+                  >
+                    <option value="funEmoji">funEmoji (기본)</option>
+                    <option value="avataaars">avataaars (사람)</option>
+                    <option value="bottts">bottts (로봇)</option>
+                    <option value="lorelei">lorelei (만화)</option>
+                    <option value="pixelArt">pixelArt (픽셀)</option>
+                  </select>
+                  <input
+                    type="text"
+                    value={dicebearSeed}
+                    onChange={(e) => setDicebearSeed(e.target.value)}
+                    className="w-full bg-white border border-black/10 px-4 py-2 rounded-xl text-xs font-bold text-black placeholder:text-black/40"
+                    placeholder="시드 단어 입력..."
+                  />
+                </div>
+              </div>
             )}
           </GlassCard>
         </div>
@@ -2750,8 +2746,8 @@ const AddItemView = ({ setActiveTab }: { setActiveTab: (tab: AdminTab) => void }
                   <input
                     type="number"
                     value={itemPrice}
-                    onChange={(e) => setItemPrice(Number(e.target.value))}
-                    className="w-full bg-black/[0.02] border border-black/5 px-5 py-4 rounded-2xl text-sm font-bold text-black placeholder:text-black/40"
+                    onChange={(e) => setItemPrice(e.target.value === '' ? '' : Number(e.target.value))}
+                    className="w-full bg-black/[0.02] border border-black/5 px-5 py-4 rounded-2xl text-sm font-bold text-black placeholder:text-black/40 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                     placeholder="5000"
                     min="0"
                   />

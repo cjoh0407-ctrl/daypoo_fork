@@ -15,7 +15,7 @@ export const NotificationSubscriber: React.FC = () => {
   const timeoutRef = useRef<any>(null);
 
   const connectSSE = useCallback(async () => {
-    const accessToken = localStorage.getItem('accessToken');
+    const accessToken = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken');
     if (!accessToken || !user) return;
 
     // 기존 연결 정리

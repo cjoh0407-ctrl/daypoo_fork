@@ -16,7 +16,7 @@ function PageHeader() {
       <motion.nav
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex items-center bg-[#1A2B27] rounded-full px-8 py-3 shadow-2xl gap-5"
+        className="flex items-center bg-[#1A2B27] rounded-full px-6 sm:px-8 py-2.5 sm:py-3 shadow-2xl gap-3 sm:gap-5"
         style={{ border: '1px solid rgba(255,255,255,0.1)' }}
       >
         <Link
@@ -298,7 +298,7 @@ function EmailForgot() {
     try {
       // GET /api/v1/auth/find-id?nickname=xxx
       const res = await api.get(`/auth/find-id?nickname=${encodeURIComponent(nickname)}`);
-      setFoundEmail(res.data || res); // 서버에 따라 res.data 혹은 res 자체가 문자열일 수 있음
+      setFoundEmail((res as any)?.data || (res as any)); // 서버에 따라 res.data 혹은 res 자체가 문자열일 수 있음
       setStep('done');
     } catch (err: any) {
       setErrors({ nickname: err.response?.data?.message || '등록된 정보를 찾을 수 없습니다.' });
@@ -398,7 +398,7 @@ export function ForgotPage() {
       <motion.div initial={{ opacity: 0, y: 28 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.65 }}
         className="relative z-10 w-full max-w-[540px]">
         <PageHeader />
-        <div className="rounded-[28px] p-8 bg-white border border-[#d4e8db] shadow-xl">
+        <div className="rounded-[24px] sm:rounded-[28px] p-6 sm:p-8 bg-white border border-[#d4e8db] shadow-xl">
           <div className="flex rounded-2xl p-1 mb-5 bg-[#f4faf6] border border-[#d4e8db]">
             {[
               { key: 'email' as ForgotMode,    label: '이메일 찾기', icon: <Mail size={15} /> },

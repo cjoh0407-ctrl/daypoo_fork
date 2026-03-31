@@ -34,7 +34,7 @@ export function MapPage({ openAuth }: { openAuth: (mode: 'login' | 'signup') => 
     return new Set(Object.keys(visitCounts).filter((id) => visitCounts[id] > 0));
   }, [visitCounts]);
 
-  const { refreshUser } = useAuth();
+  const { refreshUser, isAuthenticated } = useAuth();
 
   // 데이터 훅
   const { toilets, toggleFavorite, markVisited, refetch } = useToilets({
@@ -56,7 +56,7 @@ export function MapPage({ openAuth }: { openAuth: (mode: 'login' | 'signup') => 
   // ── 방문 횟수 데이터 가져오기 ──────────────────────────────
   useEffect(() => {
     const fetchVisitCounts = async () => {
-      const token = localStorage.getItem('accessToken');
+      const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken');
       if (!token) {
         setVisitCounts({});
         return;
@@ -75,7 +75,7 @@ export function MapPage({ openAuth }: { openAuth: (mode: 'login' | 'signup') => 
   // ── 즐겨찾기 목록 가져오기 ──────────────────────────────
   useEffect(() => {
     const fetchFavorites = async () => {
-      const token = localStorage.getItem('accessToken');
+      const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken');
       if (!token) return; // 비로그인 상태면 기존 상태 유지 (sync useEffect 트리거 방지)
       try {
         const data = await api.get<number[]>('/favorites');
@@ -106,7 +106,7 @@ export function MapPage({ openAuth }: { openAuth: (mode: 'login' | 'signup') => 
 
   const handleFavoriteToggle = useCallback(
     async (id: string) => {
-      if (!localStorage.getItem('accessToken')) {
+      if (!isAuthenticated) {
         openAuth('login');
         return;
       }
@@ -165,12 +165,11 @@ export function MapPage({ openAuth }: { openAuth: (mode: 'login' | 'signup') => 
         alert('즐겨찾기 처리에 실패했습니다.');
       }
     },
-    [favoriteIds, openAuth],
+    [favoriteIds, openAuth, isAuthenticated],
   );
 
   const handleVisitRequest = useCallback(async () => {
-    const isLogged = !!localStorage.getItem('accessToken');
-    if (!isLogged) {
+    if (!isAuthenticated) {
       if (selectedToilet)
         sessionStorage.setItem('lastSelectedToilet', JSON.stringify(selectedToilet));
       handleSelectToilet(null);
@@ -199,7 +198,7 @@ export function MapPage({ openAuth }: { openAuth: (mode: 'login' | 'signup') => 
 
     setTargetForVisit(selectedToilet);
     handleSelectToilet(null);
-  }, [selectedToilet, openAuth, pos, handleSelectToilet]);
+  }, [selectedToilet, openAuth, pos, handleSelectToilet, isAuthenticated]);
 
   const handleVisitComplete = useCallback(
     async (recordData: any) => {
@@ -324,10 +323,9 @@ export function MapPage({ openAuth }: { openAuth: (mode: 'login' | 'signup') => 
 
         <AnimatePresence>
           {selectedToilet && pos && (
-            <div className="absolute inset-0 z-[1001] pointer-events-none">
+            <div className="absolute inset-0 z-[1001] pointer-events-none flex items-end sm:items-center justify-center">
               <div
-                className="absolute pointer-events-auto"
-                style={{ left: '50%', top: '50%', transform: 'translate(-50%, -50%)' }}
+                className="pointer-events-auto w-full sm:w-auto p-4 sm:p-0"
               >
                 <ToiletPopup
                   toilet={selectedToilet}

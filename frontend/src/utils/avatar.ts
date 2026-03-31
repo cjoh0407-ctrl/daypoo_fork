@@ -36,7 +36,7 @@ export const generateAvatar = (
   style: AvatarStyle = 'funEmoji',
   size: number = 128
 ): string => {
-  const avatar = createAvatar(AVATAR_STYLES[style], {
+  const avatar = createAvatar(AVATAR_STYLES[style] as any, {
     seed: `daypoo-${seed}`,
     size,
   });
@@ -102,4 +102,38 @@ export const generateItemAvatar = (
                               itemType === 'EFFECT' ? 'pixelArt' :
                               'bottts';
   return generateAvatar(itemId, style, 200);
+};
+
+/**
+ * imageUrl 값을 파싱하여 실제 표시할 이미지 또는 특수 아바타 이미지를 반환
+ * - 'dicebear:{style}:{seed}' 형태면 해당 명세대로 아바타 생성 (seed 그대로 사용)
+ * - 일반 URL 또는 이모지면 원본 반환
+ * - 없으면 fallbackId 기반으로 자동 생성
+ */
+export const parseDicebearUrl = (
+  imageUrl: string | null | undefined,
+  fallbackId: string | number,
+  fallbackType: string = 'AVATAR',
+  size: number = 200
+): string => {
+  if (imageUrl && imageUrl.startsWith('dicebear:')) {
+    const parts = imageUrl.split(':');
+    if (parts.length >= 3) {
+      const styleStr = parts[1] as AvatarStyle;
+      const seed = parts.slice(2).join(':');
+      const validStyle = AVATAR_STYLES[styleStr] ? styleStr : 'funEmoji';
+      // 자체 커스텀 시드이므로 daypoo- 접두사 없이 그대로 생성
+      const avatar = createAvatar(AVATAR_STYLES[validStyle] as any, {
+        seed: seed,
+        size,
+      });
+      return avatar.toDataUri();
+    }
+  }
+  
+  if (imageUrl && imageUrl.trim() !== '') {
+    return imageUrl; // URL or Emoji
+  }
+
+  return generateItemAvatar(fallbackId, fallbackType);
 };

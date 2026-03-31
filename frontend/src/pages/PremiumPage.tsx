@@ -131,7 +131,7 @@ export function PremiumPage({ openAuth }: { openAuth: (mode: 'login' | 'signup')
     <div className="min-h-screen bg-[#f8faf9]">
       <Navbar openAuth={openAuth} />
 
-      <div className="max-w-5xl mx-auto px-6 pt-32 pb-20">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-24 sm:pt-32 pb-12 sm:pb-20">
         {/* 헤더 */}
         <div className="text-center mb-16">
           <motion.div
@@ -165,7 +165,7 @@ export function PremiumPage({ openAuth }: { openAuth: (mode: 'login' | 'signup')
         </div>
 
         {/* 플랜 카드 디자인 */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-20">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 sm:gap-8 mb-12 sm:mb-20">
           {PLANS.map((plan, idx) => (
             <motion.div
               key={plan.id}
@@ -173,7 +173,7 @@ export function PremiumPage({ openAuth }: { openAuth: (mode: 'login' | 'signup')
               animate={{ opacity: 1, scale: 1, y: 0 }}
               transition={{ delay: 0.3 + idx * 0.1 }}
               onClick={() => setSelectedPlan(plan.id)}
-              className={`relative flex flex-col p-8 rounded-[40px] cursor-pointer transition-all duration-300 ${
+              className={`relative flex flex-col p-6 sm:p-8 rounded-[32px] sm:rounded-[40px] cursor-pointer transition-all duration-300 ${
                 selectedPlan === plan.id 
                 ? 'bg-white shadow-2xl scale-105 ring-4 ring-emerald-100 z-10' 
                 : 'bg-white/60 hover:bg-white border border-gray-100 grayscale-[0.3]'
@@ -229,7 +229,7 @@ export function PremiumPage({ openAuth }: { openAuth: (mode: 'login' | 'signup')
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.7 }}
-          className="max-w-5xl mx-auto p-12 md:p-14 rounded-[56px] bg-[#1B4332] text-white shadow-3xl overflow-hidden relative"
+          className="max-w-5xl mx-auto p-6 sm:p-12 md:p-14 rounded-[32px] sm:rounded-[56px] bg-[#1B4332] text-white shadow-3xl overflow-hidden relative"
         >
           {/* 장식용 배경 */}
           <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-700/30 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
@@ -242,6 +242,14 @@ export function PremiumPage({ openAuth }: { openAuth: (mode: 'login' | 'signup')
               </h3>
               <p className="text-emerald-100/70 font-medium mb-0">
                 선택하신 {selectedPlan} 플랜으로 한 달간 모든 혜택을 누릴 수 있습니다.<br />
+                {selectedPlan !== 'BASIC' && (
+                  <>
+                    <span className="text-amber-300 font-bold">
+                      신청 시 {PLANS.find(p => p.id === selectedPlan)?.price}이 결제됩니다.
+                    </span>
+                    <br />
+                  </>
+                )}
                 언제든 해지가 가능하며 첫 결제 시 포인트 보너스를 드려요.
               </p>
             </div>
@@ -269,7 +277,7 @@ export function PremiumPage({ openAuth }: { openAuth: (mode: 'login' | 'signup')
                       : 'bg-amber-400 text-emerald-950 hover:bg-amber-300'
                     }`}
                   >
-                    결제하기 <ArrowRight size={20} />
+                    {selectedPlan !== 'BASIC' ? `${PLANS.find(p => p.id === selectedPlan)?.price} 결제하기` : '결제하기'} <ArrowRight size={20} />
                   </motion.button>
                   <p className="text-[10px] text-emerald-300 font-bold tracking-tight">
                     * Toss Payments로 안전하게 결제됩니다.
