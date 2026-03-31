@@ -2571,49 +2571,6 @@ const SystemView = () => {
       console.error('로그 조회 실패:', error);
       setLogs([]);
     }
-        {
-          id: 1,
-          timestamp: new Date().toISOString(),
-          action: '회원가입',
-          type: 'USER',
-          description: '새로운 사용자가 가입했습니다.',
-          username: 'user123',
-        },
-        {
-          id: 2,
-          timestamp: new Date(Date.now() - 300000).toISOString(),
-          action: '리뷰 작성',
-          type: 'REVIEW',
-          description: '강남역 화장실에 새로운 리뷰가 등록되었습니다.',
-          username: 'poopmaster',
-        },
-        {
-          id: 3,
-          timestamp: new Date(Date.now() - 600000).toISOString(),
-          action: '화장실 등록',
-          type: 'TOILET',
-          description: '신규 화장실이 지도에 추가되었습니다.',
-          username: 'admin',
-        },
-        {
-          id: 4,
-          timestamp: new Date(Date.now() - 900000).toISOString(),
-          action: '아이템 구매',
-          type: 'SHOP',
-          description: '황금 왕관 아이템이 구매되었습니다.',
-          username: 'richuser',
-        },
-        {
-          id: 5,
-          timestamp: new Date(Date.now() - 1200000).toISOString(),
-          action: 'API 오류',
-          type: 'ERROR',
-          description: '데이터베이스 연결 타임아웃 발생',
-        },
-      ];
-      setLogs(mockLogs);
-      setTotalLogPages(1);
-    }
   };
 
   const updateSettings = async (newSettings: Partial<SystemSettings>) => {
