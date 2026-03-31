@@ -53,7 +53,7 @@ public class HealthReportService {
             .collect(Collectors.toList());
 
     AiReportRequest request =
-        new AiReportRequest(user.getId().toString(), "WEEKLY", recordDataList);
+        new AiReportRequest(user.getId().toString(), "WEEKLY", recordDataList, false);
 
     // AI 서비스 호출
     log.info("Requesting weekly AI report for user: {}", user.getEmail());

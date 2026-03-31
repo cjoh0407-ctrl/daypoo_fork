@@ -5,7 +5,7 @@ import { Footer } from '../components/Footer';
 import { WaveDivider } from '../components/WaveDivider';
 import { Crown, TrendingUp, TrendingDown, Minus, ShoppingBag, X, MapPin, Star, Trophy, Activity } from 'lucide-react';
 import { useRankings } from '../hooks/useRankings';
-import { generateRankingAvatar } from '../utils/avatar';
+import { generateRankingAvatar, generateItemAvatar } from '../utils/avatar';
 
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -28,6 +28,63 @@ interface RankUser {
   scoreLabel: string;
   change: number;
   items: { icon: string; name: string; type: string }[];
+  effectEmoji?: string;
+}
+
+// ── 이펙트 오라 ─────────────────────────────────────────────────────
+const EFFECT_AURA_COLORS: Record<string, string> = {
+  '✨': 'rgba(250, 204, 21, 0.4)',
+  '🌟': 'rgba(234, 179, 8, 0.45)',
+  '💫': 'rgba(168, 85, 247, 0.4)',
+  '🔥': 'rgba(239, 68, 68, 0.45)',
+  '❄️': 'rgba(96, 165, 250, 0.4)',
+  '🌊': 'rgba(34, 211, 238, 0.4)',
+  '🧻': 'rgba(209, 213, 219, 0.35)',
+  '💥': 'rgba(249, 115, 22, 0.45)',
+};
+
+function RankAvatarEffect({ emoji, size = 96 }: { emoji: string; size?: number }) {
+  const particles = Array.from({ length: 4 }, (_, i) => i);
+  const auraColor = EFFECT_AURA_COLORS[emoji] || 'rgba(250, 204, 21, 0.4)';
+  const auraSize = size + 20;
+  return (
+    <div className="absolute inset-0 pointer-events-none z-30" style={{ overflow: 'visible' }}>
+      <motion.div
+        className="absolute rounded-full"
+        style={{
+          width: auraSize,
+          height: auraSize,
+          left: '50%',
+          top: '50%',
+          marginLeft: -auraSize / 2,
+          marginTop: -auraSize / 2,
+          background: `radial-gradient(circle, ${auraColor} 0%, transparent 70%)`,
+        }}
+        animate={{ scale: [1, 1.12, 1], opacity: [0.5, 0.9, 0.5] }}
+        transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
+      />
+      {particles.map((i) => {
+        const angle = (i / 4) * 360;
+        const radius = size / 2 + 12;
+        return (
+          <motion.span
+            key={i}
+            className="absolute"
+            style={{ left: '50%', top: '50%', marginLeft: '-8px', marginTop: '-8px', fontSize: '12px' }}
+            animate={{
+              x: [0, Math.cos((angle * Math.PI) / 180) * radius],
+              y: [0, Math.sin((angle * Math.PI) / 180) * radius],
+              opacity: [0, 1, 0],
+              scale: [0.3, 1, 0.3],
+            }}
+            transition={{ duration: 2.2, delay: i * 0.5, repeat: Infinity, ease: 'easeInOut' }}
+          >
+            {emoji}
+          </motion.span>
+        );
+      })}
+    </div>
+  );
 }
 
 // ── 애니메이션 보더 ───────────────────────────────────────────────────
@@ -116,6 +173,7 @@ function ItemPopup({ user, onClose, openAuth }: { user: RankUser; onClose: () =>
                 className="w-24 h-24 rounded-full flex items-center justify-center text-5xl mb-4 shadow-xl relative"
                 style={{ background: '#fff', border: `3.5px solid ${user.titleColor}20` }}
               >
+                {user.effectEmoji && <RankAvatarEffect emoji={user.effectEmoji} size={96} />}
                 <ConicGlow color={user.titleColor} thickness={4} borderRadius="50%" />
                 <div className="absolute inset-[4px] rounded-full bg-white flex items-center justify-center z-10 overflow-hidden">
                   {user.avatarUrl ? (
@@ -280,7 +338,8 @@ const FlipGlassCard = ({
         <div className="absolute inset-0 bg-gradient-to-br from-white/30 to-transparent" />
         
         <div className="relative mb-5 mt-4">
-          <div className="w-20 h-20 rounded-full flex items-center justify-center relative overflow-hidden text-4xl bg-white shadow-2xl">
+          <div className="w-20 h-20 rounded-full flex items-center justify-center relative text-4xl bg-white shadow-2xl">
+            {user.effectEmoji && <RankAvatarEffect emoji={user.effectEmoji} size={80} />}
             <ConicGlow color={user.titleColor} thickness={4} borderRadius="50%" />
             <div className="absolute inset-[4px] rounded-full bg-white flex items-center justify-center z-10 overflow-hidden">
               {user.avatarUrl ? (
@@ -472,17 +531,27 @@ function RankItem({
       </span>
 
       <div
-        className="w-12 h-12 rounded-full flex items-center justify-center text-2xl flex-shrink-0 overflow-hidden"
+        className="w-12 h-12 rounded-full flex items-center justify-center text-2xl flex-shrink-0 relative"
         style={{
           background: '#f4f9f6',
           border: `2px solid ${user.titleColor}20`,
         }}
       >
-        {user.avatarUrl ? (
-          <img src={user.avatarUrl} alt={user.nick} className="w-full h-full object-cover" />
-        ) : (
-          user.emoji
+        {user.effectEmoji && (
+          <motion.div
+            className="absolute inset-[-4px] rounded-full pointer-events-none z-0"
+            style={{ background: `radial-gradient(circle, ${EFFECT_AURA_COLORS[user.effectEmoji] || 'rgba(250,204,21,0.4)'} 0%, transparent 70%)` }}
+            animate={{ scale: [1, 1.15, 1], opacity: [0.5, 0.8, 0.5] }}
+            transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
+          />
         )}
+        <div className="w-full h-full rounded-full overflow-hidden relative z-10 flex items-center justify-center">
+          {user.avatarUrl ? (
+            <img src={user.avatarUrl} alt={user.nick} className="w-full h-full object-cover" />
+          ) : (
+            user.emoji
+          )}
+        </div>
       </div>
 
       <div className="flex-1 min-w-0 flex flex-col justify-center">
@@ -582,12 +651,15 @@ export function RankingPage({ openAuth }: { openAuth: (mode: 'login' | 'signup')
         .map((r) => ({
           rank: Number(r.rank || 0),
           emoji: Number(r.rank) === 1 ? '💎' : Number(r.rank) === 2 ? '🦊' : '🐸',
-          avatarUrl: generateRankingAvatar(r.userId, Number(r.rank || 0)),
+          avatarUrl: (() => {
+            const avatarItem = (r.equippedItems || []).find((item) => item.type === 'AVATAR');
+            return avatarItem ? generateItemAvatar(r.userId, 'AVATAR') : generateRankingAvatar(r.userId, Number(r.rank || 0));
+          })(),
           nick: r.nickname || '익명',
           title: r.titleName || '새내기 쾌변러',
           titleColor: Number(r.rank) === 1 ? '#E8A838' : Number(r.rank) === 2 ? '#B0B8B4' : Number(r.rank) === 3 ? '#CD7C4A' : '#52b788',
           titleBg: Number(r.rank) === 1 ? 'rgba(232,168,56,0.12)' : Number(r.rank) === 2 ? 'rgba(176,184,180,0.12)' : Number(r.rank) === 3 ? 'rgba(205,124,74,0.12)' : 'rgba(82,183,136,0.1)',
-          level: Number(r.level || 0), // 신규 매핑
+          level: Number(r.level || 0),
           score: Number(r.score || 0),
           scoreLabel: '점',
           change: 0,
@@ -596,6 +668,7 @@ export function RankingPage({ openAuth }: { openAuth: (mode: 'login' | 'signup')
             name: item.name || '아이템',
             type: item.type || '장식'
           })),
+          effectEmoji: (r.equippedItems || []).find((item) => item.type === 'EFFECT')?.icon,
         }))
     : [];
 
@@ -787,7 +860,7 @@ export function RankingPage({ openAuth }: { openAuth: (mode: 'login' | 'signup')
                   TOP 10
                 </h2>
                 <span className="text-base" style={{ color: 'rgba(0,0,0,0.3)' }}>
-                  매일 자정 업데이트
+                  실시간 반영
                 </span>
               </div>
 

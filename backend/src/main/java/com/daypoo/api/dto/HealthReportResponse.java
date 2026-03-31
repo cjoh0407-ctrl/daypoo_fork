@@ -11,6 +11,7 @@ public record HealthReportResponse(
     int healthScore,
     String summary,
     String solution,
+    String premiumSolution,
     List<String> insights,
     int recordCount,
     LocalDateTime periodStart,

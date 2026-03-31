@@ -31,6 +31,7 @@ import {
   Home,
   Trash2,
   Database,
+  Sparkles,
 } from 'lucide-react';
 import WaveButtonComponent from '../components/WaveButton';
 import { generateItemAvatar } from '../utils/avatar';
@@ -72,6 +73,7 @@ import {
   AdminTitleCreateRequest,
   AdminTitleUpdateRequest,
   AchievementType,
+  SyncStatusResponse,
 } from '../types/admin';
 
 // ── Shared Constants & Types ──────────────────────────────────────────
@@ -1046,7 +1048,7 @@ const RecentToiletsPanel = () => {
     const fetchRecentToilets = async () => {
       try {
         const response = await api.get<PageResponse<AdminToiletListResponse>>(
-          '/admin/toilets?page=0&size=5',
+          '/admin/toilets?page=0&size=5&sort=id,desc',
         );
         setRecentToilets(response.content);
       } catch (error) {
@@ -1131,8 +1133,27 @@ const ToiletsView = () => {
   const markersRef = useRef<any[]>([]);
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [selectedToilet, setSelectedToilet] = useState<ToiletData | null>(null);
+  const [toiletReviews, setToiletReviews] = useState<any[]>([]);
+  const [reviewSummary, setReviewSummary] = useState<any>(null);
+  const [loadingDetail, setLoadingDetail] = useState(false);
   const [mapScale, setMapScale] = useState(3);
-  const [mapCenter, setMapCenter] = useState({ lat: 37.5172, lng: 127.0473 }); // 강남구청 중심 소폭 조절
+  const [mapCenter, setMapCenter] = useState({ lat: 37.5172, lng: 127.0473 });
+
+  // 화장실 선택 시 리뷰 요약 가져오기
+  useEffect(() => {
+    if (!selectedToilet) return;
+    setLoadingDetail(true);
+    api.get(`/toilets/${selectedToilet.id}/reviews/summary`)
+      .then((res: any) => {
+        setReviewSummary(res);
+        setToiletReviews(Array.isArray(res?.recentReviews) ? res.recentReviews : []);
+      })
+      .catch(() => {
+        setReviewSummary(null);
+        setToiletReviews([]);
+      })
+      .finally(() => setLoadingDetail(false));
+  }, [selectedToilet?.id]); // 강남구청 중심 소폭 조절
   const [syncing, setSyncing] = useState(false);
   const [syncResult, setSyncResult] = useState<string | null>(null);
 
@@ -1154,12 +1175,12 @@ const ToiletsView = () => {
   const startPolling = () => {
     pollingRef.current = setInterval(async () => {
       try {
-        const status = await api.get('/admin/sync-toilets/status');
+        const status = await api.get<SyncStatusResponse>('/admin/sync-toilets/status');
         if (status.status === 'COMPLETED') {
           clearInterval(pollingRef.current!);
           pollingRef.current = null;
           setSyncing(false);
-          setSyncResult(`동기화 완료! 신규 등록: ${status.totalCount}건`);
+          setSyncResult(`동기화 완료! 총 ${status.totalCount}건 처리 (신규 ${status.insertedCount ?? 0}건 / 업데이트 ${status.updatedCount ?? 0}건)`);
           refetch();
         } else if (status.status === 'FAILED') {
           clearInterval(pollingRef.current!);
@@ -1180,9 +1201,9 @@ const ToiletsView = () => {
     if (syncing) return;
 
     const confirmed = confirm(
-      '공공데이터 API로부터 전국 화장실 데이터를 가져옵니다.\n' +
-        '범위: 1~500 페이지 (약 5,000개 이상)\n' +
-        '소요 시간: 1~3분\n\n' +
+      '공공데이터 API로부터 전국 화장실 데이터를 동기화합니다.\n' +
+        '범위: 1~550 페이지 (약 53,000건 upsert)\n' +
+        '소요 시간: 약 10~15분\n\n' +
         '진행하시겠습니까?',
     );
 
@@ -1191,7 +1212,7 @@ const ToiletsView = () => {
     setSyncing(true);
     setSyncResult(null);
     try {
-      await api.post('/admin/sync-toilets?startPage=1&endPage=500');
+      await api.post('/admin/sync-toilets?startPage=1&endPage=550');
       // 202 응답 받으면 폴링 시작
       startPolling();
     } catch (error: any) {
@@ -1271,7 +1292,7 @@ const ToiletsView = () => {
             <div id="map" ref={mapContainerRef} className="w-full h-full" />
 
             {/* Top Action Buttons */}
-            <div className="absolute top-6 left-1/2 transform -translate-x-1/2 flex gap-3 z-10">
+            <div className="absolute top-6 left-1/2 transform -translate-x-1/2 flex gap-3 z-10 whitespace-nowrap">
               <WaveButtonComponent
                 onClick={handleSyncToilets}
                 disabled={syncing}
@@ -1295,6 +1316,23 @@ const ToiletsView = () => {
                 <span className="flex items-center gap-2">
                   <MapPin size={14} />
                   전체 목록
+                </span>
+              </button>
+              <button
+                onClick={async () => {
+                  if (!confirm('리뷰 5개 이상 & AI 요약 미생성 화장실에 대해 일괄 생성합니다. 진행할까요?')) return;
+                  try {
+                    const res: any = await api.post('/admin/toilets/ai-summaries/generate');
+                    alert(`AI 요약 ${res?.generated ?? 0}건 생성 완료`);
+                  } catch {
+                    alert('AI 요약 일괄 생성 실패');
+                  }
+                }}
+                className="px-6 py-3 rounded-2xl border-2 bg-white/90 backdrop-blur-md border-black/10 text-xs font-black text-black/60 hover:bg-white hover:border-emerald-500/30 hover:text-emerald-700 transition-all shadow-xl"
+              >
+                <span className="flex items-center gap-2">
+                  <Sparkles size={14} />
+                  AI 요약 일괄 생성
                 </span>
               </button>
             </div>
@@ -1401,7 +1439,7 @@ const ToiletsView = () => {
                           <div className="flex gap-0.5 text-[#E8A838]">
                             <Star size={14} fill="currentColor" />
                             <span className="text-xs font-black ml-1 text-[#1A2B27]">
-                              {selectedToilet.rating || 0}
+                              {reviewSummary?.avgRating?.toFixed(1) ?? selectedToilet.rating ?? 0}
                             </span>
                           </div>
                           <span className="text-[10px] text-black/20 font-black uppercase italic tracking-widest">
@@ -1410,19 +1448,14 @@ const ToiletsView = () => {
                         </div>
                       </div>
                     </div>
-                    <div className="flex gap-2">
-                      <button className="px-4 py-2 rounded-xl bg-[#1B4332] text-white text-xs font-black shadow-lg shadow-green-900/20">
-                        수정
-                      </button>
-                      <button
-                        onClick={() => setSelectedToilet(null)}
-                        className="p-2 rounded-xl hover:bg-black/5"
-                      >
-                        <X size={18} />
-                      </button>
-                    </div>
+                    <button
+                      onClick={() => setSelectedToilet(null)}
+                      className="p-2 rounded-xl hover:bg-black/5"
+                    >
+                      <X size={18} />
+                    </button>
                   </div>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                     <div className="p-4 rounded-2xl bg-black/[0.02] border">
                       <p className="text-[10px] font-black text-black/30 mb-1">개방 시간</p>
                       <p className="text-xs font-black text-[#1A2B27]">
@@ -1430,19 +1463,56 @@ const ToiletsView = () => {
                       </p>
                     </div>
                     <div className="p-4 rounded-2xl bg-black/[0.02] border">
-                      <p className="text-[10px] font-black text-black/30 mb-1">방문 횟수</p>
+                      <p className="text-[10px] font-black text-black/30 mb-1">리뷰 수</p>
                       <p className="text-xs font-black text-[#1A2B27]">
-                        {(selectedToilet.reviewCount || 0) * 12}회 (추산)
+                        {reviewSummary?.reviewCount ?? selectedToilet.reviewCount ?? 0}건
+                      </p>
+                    </div>
+                    <div className="p-4 rounded-2xl bg-black/[0.02] border">
+                      <p className="text-[10px] font-black text-black/30 mb-1">평균 평점</p>
+                      <p className="text-xs font-black text-[#E8A838]">
+                        ★ {reviewSummary?.avgRating?.toFixed(1) || selectedToilet.rating || '-'}
                       </p>
                     </div>
                     <div className="p-4 rounded-2xl bg-black/[0.02] border">
                       <p className="text-[10px] font-black text-black/30 mb-1">상태</p>
-                      <p className="text-xs font-black text-green-500 italic">Operating Normal</p>
+                      <p className="text-xs font-black text-green-500 italic">정상 운영</p>
                     </div>
-                    <div className="p-4 rounded-2xl bg-black/[0.02] border">
-                      <p className="text-[10px] font-black text-black/30 mb-1">신고 지수</p>
-                      <p className="text-xs font-black text-red-500">가중치 0.02</p>
+                  </div>
+
+                  {/* AI 리뷰 요약 */}
+                  {reviewSummary?.aiSummary && (
+                    <div className="mb-6 p-4 rounded-2xl bg-emerald-50/50 border border-emerald-100">
+                      <p className="text-[10px] font-black text-emerald-600 mb-1 uppercase">AI 리뷰 요약</p>
+                      <p className="text-xs font-bold text-[#1A2B27]">{reviewSummary.aiSummary}</p>
                     </div>
+                  )}
+
+                  {/* 최근 리뷰 */}
+                  <div>
+                    <p className="text-[10px] font-black text-black/30 mb-3 uppercase">최근 리뷰</p>
+                    {loadingDetail ? (
+                      <p className="text-xs text-black/40 font-bold py-4 text-center">불러오는 중...</p>
+                    ) : toiletReviews.length > 0 ? (
+                      <div className="space-y-2">
+                        {toiletReviews.slice(0, 5).map((review: any, i: number) => (
+                          <div key={i} className="p-3 rounded-xl bg-black/[0.02] border flex items-start gap-3">
+                            <div className="flex-shrink-0 text-[#E8A838] text-xs font-black">★ {review.rating}</div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs font-bold text-[#1A2B27] truncate">{review.comment || '댓글 없음'}</p>
+                              <div className="flex items-center gap-2 mt-1">
+                                <span className="text-[10px] text-black/40 font-bold">{review.nickname || '익명'}</span>
+                                {review.emojiTags && (
+                                  <span className="text-[10px] text-black/30">{review.emojiTags}</span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-xs text-black/30 font-bold py-4 text-center">리뷰가 없습니다</p>
+                    )}
                   </div>
                 </GlassCard>
               </motion.div>
@@ -1995,24 +2065,28 @@ const StoreView = ({ setActiveTab }: { setActiveTab: (tab: AdminTab) => void }) 
           type: 'EFFECT',
           price: 0,
           description: '[이펙트] ✨ 몸 주변에서 빛나는 황금빛 기운',
+          imageUrl: '✨',
         },
         {
           name: '별빛 오라',
           type: 'EFFECT',
           price: 500,
           description: '[이펙트] 🌟 밤하늘의 별을 담은 오라',
+          imageUrl: '🌟',
         },
         {
           name: '다이아 마커',
           type: 'EFFECT',
           price: 1200,
           description: '[마커] 💎 지도 위에서 빛나는 다이아몬드',
+          imageUrl: '💎',
         },
         {
           name: '무지개 마커',
           type: 'EFFECT',
           price: 2500,
           description: '[마커] 🌈 화려한 무지개 색상의 이동 경로',
+          imageUrl: '🌈',
         },
       ];
 
@@ -2021,7 +2095,7 @@ const StoreView = ({ setActiveTab }: { setActiveTab: (tab: AdminTab) => void }) 
       for (const item of allItems) {
         await api.post('/admin/shop/items', {
           ...item,
-          imageUrl: null,
+          imageUrl: item.imageUrl || null,
         });
       }
 
@@ -2092,7 +2166,7 @@ const StoreView = ({ setActiveTab }: { setActiveTab: (tab: AdminTab) => void }) 
           type: 'EFFECT',
           price: Math.floor(Math.random() * 30) * 100 + 1000,
           description: `[이펙트] ${item.desc}`,
-          imageUrl: null, // DiceBear 사용
+          imageUrl: item.emoji, // 이모지를 imageUrl에 저장 (프론트 파티클 표현용)
         });
       });
 
@@ -2279,11 +2353,15 @@ const StoreView = ({ setActiveTab }: { setActiveTab: (tab: AdminTab) => void }) 
                       style={{ background: color }}
                     />
                     <div className="w-full h-full flex items-center justify-center transition-transform group-hover:scale-105 duration-500">
-                      <img
-                        src={generateItemAvatar(item.id, item.type)}
-                        alt={item.name}
-                        className="w-full h-full object-cover"
-                      />
+                      {item.type === 'EFFECT' && item.imageUrl ? (
+                        <span className="text-7xl select-none">{item.imageUrl}</span>
+                      ) : (
+                        <img
+                          src={generateItemAvatar(item.id, item.type)}
+                          alt={item.name}
+                          className="w-full h-full object-cover"
+                        />
+                      )}
                     </div>
                     <div className="absolute top-3 right-3 flex gap-1">
                       <span className="text-[9px] font-black px-1.5 py-0.5 rounded-md bg-white/90 border text-black/40">
@@ -2621,15 +2699,32 @@ const AddItemView = ({ setActiveTab }: { setActiveTab: (tab: AdminTab) => void }
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         <div className="md:col-span-1">
           <GlassCard className="aspect-square flex flex-col items-center justify-center border-2 border-dashed border-black/10 bg-black/[0.01]">
-            <ShoppingBag size={48} className="text-black/10 mb-4" />
-            <p className="text-xs font-black text-black/30 mb-3">이미지 URL (선택)</p>
-            <input
-              type="text"
-              value={itemImageUrl}
-              onChange={(e) => setItemImageUrl(e.target.value)}
-              className="w-full bg-white border border-black/10 px-4 py-2 rounded-xl text-xs font-bold text-black placeholder:text-black/40"
-              placeholder="https://..."
-            />
+            {itemType === 'EFFECT' ? (
+              <>
+                <span className="text-7xl mb-4 select-none">{itemImageUrl || '✨'}</span>
+                <p className="text-xs font-black text-black/30 mb-3">이펙트 이모지 *</p>
+                <input
+                  type="text"
+                  value={itemImageUrl}
+                  onChange={(e) => setItemImageUrl(e.target.value)}
+                  className="w-full bg-white border border-black/10 px-4 py-2 rounded-xl text-center text-2xl placeholder:text-black/40"
+                  placeholder="🔥"
+                  maxLength={2}
+                />
+              </>
+            ) : (
+              <>
+                <ShoppingBag size={48} className="text-black/10 mb-4" />
+                <p className="text-xs font-black text-black/30 mb-3">이미지 URL (선택)</p>
+                <input
+                  type="text"
+                  value={itemImageUrl}
+                  onChange={(e) => setItemImageUrl(e.target.value)}
+                  className="w-full bg-white border border-black/10 px-4 py-2 rounded-xl text-xs font-bold text-black placeholder:text-black/40"
+                  placeholder="https://..."
+                />
+              </>
+            )}
           </GlassCard>
         </div>
         <div className="md:col-span-2 space-y-6">
@@ -3414,7 +3509,7 @@ export function AdminPage() {
                 type="text"
                 value={globalSearch}
                 onChange={(e) => setGlobalSearch(e.target.value)}
-                placeholder="통합 검색 (유저/신고/상점)"
+                placeholder="통합 검색 (유저/화장실/상점)"
                 className="bg-transparent border-none outline-none text-xs font-bold w-56 text-black placeholder:text-black/30"
               />
             </div>

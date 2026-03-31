@@ -35,6 +35,8 @@ import {
 import { loadTossPayments } from '@tosspayments/payment-sdk';
 import { api } from '../services/apiClient';
 import { useAuth } from '../context/AuthContext';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { MyPageSkeleton } from '../components/LoadingSkeleton';
 import WaveButtonComponent from '../components/WaveButton';
 import { UserResponse } from '../types/api';
@@ -544,13 +546,107 @@ function DepthDeckCarousel({ cards, onSelect, cardWidth = 160, cardHeight = 200 
 }
 
 // ── 히어로 배너 ───────────────────────────────────────────────────────
+const EFFECT_AURA_COLORS: Record<string, string> = {
+  '✨': 'rgba(250, 204, 21, 0.4)',
+  '🌟': 'rgba(234, 179, 8, 0.45)',
+  '💫': 'rgba(168, 85, 247, 0.4)',
+  '🔥': 'rgba(239, 68, 68, 0.45)',
+  '❄️': 'rgba(96, 165, 250, 0.4)',
+  '🌊': 'rgba(34, 211, 238, 0.4)',
+  '🧻': 'rgba(209, 213, 219, 0.35)',
+  '💥': 'rgba(249, 115, 22, 0.45)',
+};
+
+function AvatarEffect({ emoji, size = 110 }: { emoji: string; size?: number }) {
+  const particles = Array.from({ length: 6 }, (_, i) => i);
+  const auraColor = EFFECT_AURA_COLORS[emoji] || 'rgba(250, 204, 21, 0.4)';
+  const auraSize = size + 28;
+
+  return (
+    <div className="absolute inset-0 pointer-events-none z-20" style={{ overflow: 'visible' }}>
+      {/* 오라 글로우 링 */}
+      <motion.div
+        className="absolute rounded-full"
+        style={{
+          width: auraSize,
+          height: auraSize,
+          left: '50%',
+          top: '50%',
+          marginLeft: -auraSize / 2,
+          marginTop: -auraSize / 2,
+          background: `radial-gradient(circle, ${auraColor} 0%, transparent 70%)`,
+        }}
+        animate={{
+          scale: [1, 1.15, 1],
+          opacity: [0.6, 1, 0.6],
+        }}
+        transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
+      />
+      {/* 외곽 펄스 링 */}
+      <motion.div
+        className="absolute rounded-full border-2"
+        style={{
+          width: auraSize + 8,
+          height: auraSize + 8,
+          left: '50%',
+          top: '50%',
+          marginLeft: -(auraSize + 8) / 2,
+          marginTop: -(auraSize + 8) / 2,
+          borderColor: auraColor,
+        }}
+        animate={{
+          scale: [1, 1.2, 1],
+          opacity: [0.3, 0.6, 0.3],
+        }}
+        transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+      />
+      {/* 이모지 파티클 */}
+      {particles.map((i) => {
+        const angle = (i / 6) * 360;
+        const delay = i * 0.4;
+        const duration = 2.5 + Math.random();
+        const radius = size / 2 + 18;
+        return (
+          <motion.span
+            key={i}
+            className="absolute"
+            style={{
+              left: '50%',
+              top: '50%',
+              marginLeft: '-10px',
+              marginTop: '-10px',
+              fontSize: '14px',
+            }}
+            animate={{
+              x: [0, Math.cos((angle * Math.PI) / 180) * (radius - 8), Math.cos((angle * Math.PI) / 180) * radius],
+              y: [0, Math.sin((angle * Math.PI) / 180) * (radius - 8), Math.sin((angle * Math.PI) / 180) * radius],
+              opacity: [0, 1, 0],
+              scale: [0.3, 1, 0.4],
+            }}
+            transition={{
+              duration,
+              delay,
+              repeat: Infinity,
+              ease: 'easeInOut',
+            }}
+          >
+            {emoji}
+          </motion.span>
+        );
+      })}
+    </div>
+  );
+}
+
 function HeroBanner({
   equippedItem,
+  equippedEffect,
   onAvatarClick,
   user,
   records = [],
 }: {
   equippedItem: AvatarItem | null;
+  equippedEffect: AvatarItem | null;
   onAvatarClick: () => void;
   user: UserResponse | null;
   records?: any[];
@@ -583,6 +679,9 @@ function HeroBanner({
           >
             {/* 아바타 */}
             <motion.div variants={fadeUp(0)} className="relative flex-shrink-0">
+              {equippedEffect?.emoji && (
+                <AvatarEffect emoji={equippedEffect.emoji} />
+              )}
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
@@ -941,11 +1040,16 @@ function HomeTab({
       try {
         await api.post(`/shop/inventory/${preview.inventoryId}/toggle`);
 
+        // AVATAR 타입이면 프로필 아바타 즉시 반영
+        if (preview.rawType === 'AVATAR') {
+          setEquipped(preview);
+        }
+
         // 서버 데이터 다시 가져오기 (isEquipped 상태 동기화)
-        await fetchShopData();
-        
+        fetchShopData();
+
         // 유저 정보 전역 상태 다시 가져오기 (상단 아바타 캐시/상태 갱신)
-        await refreshUser();
+        refreshUser();
 
         setSaved(true);
         setTimeout(() => setSaved(false), 2000);
@@ -1116,11 +1220,17 @@ function HomeTab({
                                 className="w-12 h-12 rounded-full blur-2xl opacity-20 absolute"
                                 style={{ background: color }}
                               />
-                              <img
-                                src={generateItemAvatar(item.id, avatarType)}
-                                alt={item.name}
-                                className="w-full h-full object-cover transition-transform group-hover:scale-110 duration-500"
-                              />
+                              {avatarType === 'EFFECT' ? (
+                                <span className="text-6xl transition-transform group-hover:scale-110 duration-500 select-none">
+                                  {item.emoji || '✨'}
+                                </span>
+                              ) : (
+                                <img
+                                  src={generateItemAvatar(item.id, avatarType)}
+                                  alt={item.name}
+                                  className="w-full h-full object-cover transition-transform group-hover:scale-110 duration-500"
+                                />
+                              )}
                               {isOwned && (
                                 <div className="absolute top-2 right-2 w-7 h-7 rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-lg">
                                   <Check size={14} strokeWidth={3} />
@@ -1192,8 +1302,12 @@ function HomeTab({
               className="flex items-center gap-5 p-4 rounded-[32px] border border-white/40 shadow-[0_30px_90px_rgba(0,0,0,0.2)] backdrop-blur-2xl"
               style={{ background: 'rgba(255,255,255,0.92)' }}
             >
-              <div className="w-14 h-14 rounded-2xl bg-emerald-50 flex-shrink-0 relative overflow-hidden group">
-                <img src={generateItemAvatar(preview.id, preview.rawType || 'AVATAR')} className="w-full h-full object-cover p-2 transition-transform group-hover:scale-110" />
+              <div className="w-14 h-14 rounded-2xl bg-emerald-50 flex-shrink-0 relative overflow-hidden group flex items-center justify-center">
+                {preview.rawType === 'EFFECT' ? (
+                  <span className="text-3xl select-none">{preview.emoji || '✨'}</span>
+                ) : (
+                  <img src={generateItemAvatar(preview.id, preview.rawType || 'AVATAR')} className="w-full h-full object-cover p-2 transition-transform group-hover:scale-110" />
+                )}
                 <div className="absolute inset-0 bg-emerald-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
               </div>
               
@@ -1611,7 +1725,7 @@ function CollectionTab({
                         selectedPreview.achievementThreshold -
                         (selectedPreview.currentProgress || 0);
                       if (remainVal <= 0)
-                        return '업적 조건을 모두 달성했습니다! 곧 획득 예정입니다.';
+                        return '축하합니다! 업적을 달성했습니다. 지금 바로 획득하세요!';
                       return `${remainVal}번 더 남았습니다! 힘내세요!`;
                     })()}
                   </p>
@@ -1632,16 +1746,16 @@ function CollectionTab({
                       if (selectedPreview.earned) {
                         handleEquipTitle();
                       } else {
-                        // 칭호 조건은 만족했으나 아직 DB에 없을 때 (리프레시 유도)
+                        // [Manual Acquisition] 새로 추가된 획득 API 호출
                         setSaving(true);
                         try {
-                          await api.get('/shop/titles'); // 백엔드 동기화 트리거
-                          alert('칭호 동기화 완료! 잠시 후 다시 확인해주세요.');
+                          await api.post(`/shop/titles/${selectedPreview.id}/acquire`);
+                          alert('축하합니다! 칭호를 획득했습니다. ✨');
                           setSelectedPreview(null);
                           // 전체 목록 다시 불러오기
                           if (onRefresh) onRefresh();
                         } catch (e) {
-                          alert('동기화에 실패했습니다.');
+                          alert('칭호 획득에 실패했습니다. 다시 시도해주세요.');
                         } finally {
                           setSaving(false);
                         }
@@ -1691,7 +1805,7 @@ function CollectionTab({
 }
 
 // ── 리포트 탭 ─────────────────────────────────────────────────────────
-function ReportTab({ records = [] }: { records?: any[] }) {
+function ReportTab({ records = [], reportCacheRef }: { records?: any[]; reportCacheRef: React.MutableRefObject<Record<string, any>> }) {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [reportOpen, setReportOpen] = useState(false);
@@ -1731,12 +1845,19 @@ function ReportTab({ records = [] }: { records?: any[] }) {
   const [activeSubTab, setActiveSubTab] = useState<'daily' | 'weekly' | 'monthly'>('daily');
   const [reportData, setReportData] = useState<any>(null);
   const [isFetchLoading, setIsFetchLoading] = useState(false);
+  const [showPremiumModal, setShowPremiumModal] = useState(false);
 
   const fetchReport = useCallback(async (type: string) => {
-    setReportData(null); // 탭 전환 시 즉시 초기화 (stale data 방지)
+    // 이미 불러온 데이터가 있으면 즉시 표시 (DAILY는 항상 새로 요청)
+    if (type !== 'daily' && reportCacheRef.current[type]) {
+      setReportData(reportCacheRef.current[type]);
+      return;
+    }
+    setReportData(null);
     setIsFetchLoading(true);
     try {
       const res = await api.get(`/reports/${type.toUpperCase()}`);
+      reportCacheRef.current[type] = res;
       setReportData(res);
     } catch (err: any) {
       console.error('리포트 조회 실패:', err);
@@ -1892,6 +2013,14 @@ function ReportTab({ records = [] }: { records?: any[] }) {
                         💡 {reportData.solution}
                       </p>
                     )}
+                    {reportData?.premiumSolution && (
+                      <button
+                        onClick={() => setShowPremiumModal(true)}
+                        className="mt-6 w-full py-4 bg-amber-400 text-emerald-950 font-black rounded-2xl flex items-center justify-center gap-2 shadow-lg shadow-amber-400/20 hover:bg-amber-300 transition-all uppercase tracking-widest text-sm"
+                      >
+                        <Crown size={18} /> 프리미엄 정밀 분석 보기
+                      </button>
+                    )}
                   </div>
                 </>
               )}
@@ -2044,6 +2173,21 @@ function ReportTab({ records = [] }: { records?: any[] }) {
                           <p className="text-gray-400 italic">분석된 인사이트가 없습니다.</p>
                         )}
                       </div>
+                      {reportData?.solution && (
+                        <div className="mt-6 pt-6 border-t border-emerald-100">
+                          <p className="text-emerald-700 text-lg italic font-bold">
+                            💡 {reportData.solution}
+                          </p>
+                        </div>
+                      )}
+                      {reportData?.premiumSolution && (
+                        <button
+                          onClick={() => setShowPremiumModal(true)}
+                          className="mt-8 w-full py-5 bg-gradient-to-r from-amber-400 to-amber-500 text-amber-950 font-black rounded-[24px] flex items-center justify-center gap-3 shadow-xl shadow-amber-500/10 hover:shadow-amber-500/20 hover:-translate-y-1 transition-all uppercase tracking-[0.15em] text-sm"
+                        >
+                          <Crown size={20} /> 프리미엄 정밀 분석 보기
+                        </button>
+                      )}
                     </div>
                   </div>
 
@@ -2322,22 +2466,114 @@ function ReportTab({ records = [] }: { records?: any[] }) {
                   </>
                 )}
                 <div className="flex gap-2.5">
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.97 }}
-                    onClick={() => setReportOpen(false)}
-                    className="flex-1 py-4 rounded-2xl font-black text-sm"
-                    style={{ background: '#1B4332', color: '#fff' }}
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.97 }}
+                      onClick={() => setReportOpen(false)}
+                      className="flex-1 py-4 rounded-2xl font-black text-sm"
+                      style={{ background: '#1B4332', color: '#fff' }}
+                    >
+                      닫기
+                    </motion.button>
+                  </div>
+                </div>
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>
+
+        {/* 프리미엄 전용 정밀 분석 모달 */}
+        <AnimatePresence>
+          {showPremiumModal && (
+            <div className="fixed inset-0 z-[1000] flex items-center justify-center p-6 md:p-12">
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setShowPremiumModal(false)}
+                className="absolute inset-0 bg-black/70 backdrop-blur-xl"
+              />
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9, y: 40 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                className="relative w-full max-w-4xl bg-white rounded-[40px] shadow-3xl overflow-hidden flex flex-col max-h-[90dvh] border border-white/20"
+              >
+                <div className="sticky top-0 z-10 px-10 py-8 bg-gradient-to-r from-amber-50 to-amber-100/50 border-b border-amber-100 flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-2xl bg-amber-400 flex items-center justify-center shadow-lg shadow-amber-500/20">
+                      <Crown size={24} className="text-amber-950" />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-black text-[#1A2B27] tracking-tight">AI 맞춤 프리미엄 솔루션</h3>
+                      <p className="text-[11px] font-black text-amber-600 uppercase tracking-widest mt-0.5">Premium Precision Analysis</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setShowPremiumModal(false)}
+                    className="w-12 h-12 rounded-full bg-white/80 flex items-center justify-center text-gray-400 hover:text-gray-600 transition-colors shadow-sm"
+                  >
+                    <X size={24} />
+                  </button>
+                </div>
+
+                <div className="flex-1 overflow-y-auto p-10 space-y-8 custom-scrollbar text-left font-['Pretendard']">
+                  <div className="rounded-[32px] bg-emerald-50/50 border border-emerald-100 p-8 shadow-inner">
+                    <div className="flex items-center gap-2 mb-4">
+                      <Sparkles size={18} className="text-emerald-500" />
+                      <span className="text-sm font-black text-emerald-700 uppercase tracking-widest">General Advisory</span>
+                    </div>
+                    <p className="text-lg font-bold text-emerald-900 leading-relaxed italic">
+                      "{reportData?.solution}"
+                    </p>
+                  </div>
+
+                  <div className="space-y-6">
+                    <div className="flex items-center gap-2 px-2">
+                      <Activity size={20} className="text-amber-500" />
+                      <span className="text-sm font-black text-gray-400 uppercase tracking-widest">Detailed Clinical Insight</span>
+                    </div>
+                    <div className="bg-gray-50/50 rounded-[32px] border border-gray-100 p-8 shadow-sm overflow-x-auto custom-scrollbar">
+                      <div className="prose prose-emerald max-w-none text-gray-700 font-medium leading-extra-relaxed text-sm md:text-base prose-headings:font-black prose-headings:text-[#1A2B27] prose-p:text-gray-600 prose-li:text-gray-600 prose-strong:text-emerald-700 prose-table:break-keep">
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                          {reportData?.premiumSolution || "정밀 분석 결과를 불러오는 중입니다..."}
+                        </ReactMarkdown>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="p-8 rounded-[32px] bg-[#1A2B27] text-white flex items-center justify-between gap-6 shadow-2xl">
+                    <div>
+                      <p className="text-amber-400 font-black text-sm mb-1">PREMIUM Membership Benefit</p>
+                      <p className="text-white/60 text-xs font-bold leading-relaxed">
+                        이 분석은 오직 프리미엄 회원에게만 <br />제공되는 전문적인 건강 가이드입니다.
+                      </p>
+                    </div>
+                    <div className="w-14 h-14 rounded-2xl bg-white/10 flex items-center justify-center shrink-0 border border-white/5">
+                      <CheckCircle2 className="text-amber-400" size={28} />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-8 bg-gray-50 border-t border-gray-100 flex gap-3">
+                  <button
+                    onClick={() => setShowPremiumModal(false)}
+                    className="flex-1 py-4 bg-white border border-gray-200 text-gray-400 font-black rounded-2xl hover:bg-gray-100 transition-all shadow-sm"
                   >
                     닫기
-                  </motion.button>
+                  </button>
+                  <button
+                    onClick={() => setShowPremiumModal(false)}
+                    className="flex-1 py-4 bg-[#1B4332] text-white font-black rounded-2xl shadow-xl shadow-emerald-900/10 hover:shadow-emerald-900/30 transition-all"
+                  >
+                    확인 완료
+                  </button>
                 </div>
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
-    </motion.div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+      </motion.div>
   );
 }
 
@@ -2803,9 +3039,11 @@ export function MyPage({ openAuth }: { openAuth: (mode: 'login' | 'signup') => v
   const [records, setRecords] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState<TabKey>('home');
   const [prevTab, setPrevTab] = useState<TabKey>('home');
+  const reportCacheRef = useRef<Record<string, any>>({});
   const [avatarItems, setAvatarItems] = useState<AvatarItem[]>([]);
   const [titles, setTitles] = useState<any[]>([]);
   const [equipped, setEquipped] = useState<AvatarItem | null>(null);
+  const [equippedEffect, setEquippedEffect] = useState<AvatarItem | null>(null);
 
   const fetchRecords = useCallback(async () => {
     try {
@@ -2883,14 +3121,13 @@ export function MyPage({ openAuth }: { openAuth: (mode: 'login' | 'signup') => v
       setAvatarItems(mappedItems);
       setTitles(mappedTitles);
 
-      // isEquipped가 true인 아이템 찾기
-      const equip = mappedItems.find((i) => i.isEquipped === true);
-      if (equip) {
-        setEquipped(equip);
-      } else {
-        // 장착된 아이템이 없으면 null로 초기화
-        setEquipped(null);
-      }
+      // 장착된 AVATAR 타입 아이템 찾기 (프로필 아바타 표시용)
+      const equip = mappedItems.find((i) => i.isEquipped === true && i.rawType === 'AVATAR');
+      setEquipped(equip || null);
+
+      // 장착된 EFFECT 타입 아이템 찾기 (아바타 주변 이펙트 표시용)
+      const effect = mappedItems.find((i) => i.isEquipped === true && i.rawType === 'EFFECT');
+      setEquippedEffect(effect || null);
     } catch (err) {
       console.error('마이페이지 연동 실패 (Critical):', err);
     }
@@ -2958,6 +3195,7 @@ export function MyPage({ openAuth }: { openAuth: (mode: 'login' | 'signup') => v
       <Navbar openAuth={openAuth} />
       <HeroBanner
         equippedItem={equipped}
+        equippedEffect={equippedEffect}
         onAvatarClick={() => handleTabChange('home')}
         user={user}
         records={records}
@@ -2997,7 +3235,7 @@ export function MyPage({ openAuth }: { openAuth: (mode: 'login' | 'signup') => v
                 onRefreshUser={refreshUser}
               />
             )}
-            {activeTab === 'report' && <ReportTab records={records} />}
+            {activeTab === 'report' && <ReportTab records={records} reportCacheRef={reportCacheRef} />}
             {activeTab === 'settings' && (
               <SettingsTab
                 user={user}

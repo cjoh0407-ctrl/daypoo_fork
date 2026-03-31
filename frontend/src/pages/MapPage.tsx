@@ -8,6 +8,7 @@ import { useGeoTracking } from '../hooks/useGeoTracking';
 import { ToiletData } from '../types/toilet';
 import { VisitModal } from '../components/map/VisitModal';
 import { api } from '../services/apiClient';
+import { useAuth } from '../context/AuthContext';
 import { MapView, MapViewHandle } from '../components/map/MapView';
 import { ToiletSearchBar } from '../components/map/ToiletSearchBar';
 import { calculateDistance } from '../utils/distance';
@@ -32,6 +33,8 @@ export function MapPage({ openAuth }: { openAuth: (mode: 'login' | 'signup') => 
   const visitedIds = useMemo(() => {
     return new Set(Object.keys(visitCounts).filter((id) => visitCounts[id] > 0));
   }, [visitCounts]);
+
+  const { refreshUser } = useAuth();
 
   // 데이터 훅
   const { toilets, toggleFavorite, markVisited, refetch } = useToilets({
@@ -224,6 +227,7 @@ export function MapPage({ openAuth }: { openAuth: (mode: 'login' | 'signup') => 
         }
 
         await api.post('/records', payload);
+        await refreshUser();
         markVisited(String(recordData.toiletId));
         setVisitCounts((prev) => ({
           ...prev,

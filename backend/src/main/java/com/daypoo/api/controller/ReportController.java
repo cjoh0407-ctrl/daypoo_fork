@@ -35,29 +35,38 @@ public class ReportController {
     return ResponseEntity.ok(reportService.generateReport(user, type));
   }
 
-  /** 리포트 히스토리 조회 (PRO/PREMIUM 전용 권장) */
+  /** 리포트 히스토리 조회 (PRO/PREMIUM 전용) */
   @Operation(summary = "리포트 히스토리 조회", description = "사용자의 과거 AI 건강 리포트 내역을 조회합니다.")
   @GetMapping("/history")
   public ResponseEntity<List<HealthReportHistoryResponse>> getReportHistory(
       @AuthenticationPrincipal String email) {
     User user = userService.getByEmail(email);
+    if (!user.isPro()) {
+      throw new IllegalStateException("PRO 멤버십 전용 기능입니다.");
+    }
     return ResponseEntity.ok(reportService.getReportHistory(user));
   }
 
-  /** 건강 점수 트렌드 조회 (PRO/PREMIUM 전용 권장) */
+  /** 건강 점수 트렌드 조회 (PRO/PREMIUM 전용) */
   @Operation(summary = "건강 점수 트렌드 조회", description = "최근 생성된 리포트들의 건강 점수 추이를 조회합니다.")
   @GetMapping("/trend")
   public ResponseEntity<List<Integer>> getHealthTrend(@AuthenticationPrincipal String email) {
     User user = userService.getByEmail(email);
+    if (!user.isPro()) {
+      throw new IllegalStateException("PRO 멤버십 전용 기능입니다.");
+    }
     return ResponseEntity.ok(reportService.getHealthTrend(user));
   }
 
-  /** 방문 패턴 데이터 조회 (PRO/PREMIUM 전용 권장) */
+  /** 방문 패턴 데이터 조회 (PRO/PREMIUM 전용) */
   @Operation(summary = "방문 패턴 데이터 조회", description = "사용자의 화장실 방문 및 인증 로그 히스토리를 조회합니다.")
   @GetMapping("/patterns")
   public ResponseEntity<List<VisitLogResponse>> getVisitPatterns(
       @AuthenticationPrincipal String email) {
     User user = userService.getByEmail(email);
+    if (!user.isPro()) {
+      throw new IllegalStateException("PRO 멤버십 전용 기능입니다.");
+    }
     return ResponseEntity.ok(reportService.getVisitPatterns(user));
   }
 }

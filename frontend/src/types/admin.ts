@@ -158,3 +158,14 @@ export interface AdminStatsResponse {
   todayInquiries: number;
   weeklyTrend: DailyStat[];
 }
+
+// ========== System/Sync Management ==========
+export interface SyncStatusResponse {
+  status: 'IDLE' | 'RUNNING' | 'COMPLETED' | 'FAILED';
+  totalCount: number | null;
+  insertedCount: number | null;
+  updatedCount: number | null;
+  startedAt: string | null;
+  completedAt: string | null;
+  errorMessage: string | null;
+}

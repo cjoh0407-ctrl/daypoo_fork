@@ -19,9 +19,6 @@ public interface ToiletReviewRepository extends JpaRepository<ToiletReview, Long
 
   long countByToiletId(Long toiletId);
 
-  @Query("SELECT COUNT(r.id), AVG(r.rating) FROM ToiletReview r WHERE r.toilet.id = :toiletId")
-  Object[] getReviewStatsByToiletId(@Param("toiletId") Long toiletId);
-
   @Query("SELECT AVG(r.rating) FROM ToiletReview r WHERE r.toilet.id = :toiletId")
   Double calculateAvgRatingByToiletId(@Param("toiletId") Long toiletId);
 

@@ -6,6 +6,7 @@ import com.daypoo.api.entity.PooRecord;
 import com.daypoo.api.entity.User;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -15,6 +16,8 @@ import org.springframework.data.repository.query.Param;
 public interface PooRecordRepository extends JpaRepository<PooRecord, Long> {
   List<PooRecord> findAllByUserAndCreatedAtAfterOrderByCreatedAtDesc(
       User user, LocalDateTime dateTime);
+
+  Optional<PooRecord> findFirstByUserOrderByCreatedAtDesc(User user);
 
   @Query(
       value = "SELECT p FROM PooRecord p JOIN FETCH p.toilet WHERE p.user = :user",

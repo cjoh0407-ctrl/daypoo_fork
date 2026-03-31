@@ -68,6 +68,14 @@ public class ShopController {
     return ResponseEntity.ok().build();
   }
 
+  @PostMapping("/titles/{titleId}/acquire")
+  public ResponseEntity<Void> acquireTitle(
+      @AuthenticationPrincipal String email, @PathVariable Long titleId) {
+    User user = userService.getByEmail(email);
+    shopService.acquireTitle(user, titleId);
+    return ResponseEntity.ok().build();
+  }
+
   /** 칭호 해제 */
   @DeleteMapping("/titles/equip")
   public ResponseEntity<Void> unequipTitle(@AuthenticationPrincipal String email) {
