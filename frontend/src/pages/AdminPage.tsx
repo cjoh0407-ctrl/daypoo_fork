@@ -2380,7 +2380,7 @@ const StoreView = ({ setActiveTab }: { setActiveTab: (tab: AdminTab) => void }) 
                       style={{ background: color }}
                     />
                     <div className="w-full h-full flex items-center justify-center transition-transform group-hover:scale-105 duration-500">
-                      {item.imageUrl && (isEmoji(item.imageUrl) || (!item.imageUrl.includes(':') && !item.imageUrl.startsWith('http'))) ? (
+                      {item.imageUrl && (isEmoji(item.imageUrl) || (!item.imageUrl.includes(':') && !item.imageUrl.startsWith('http') && !item.imageUrl.startsWith('/'))) ? (
                         <span className="text-6xl select-none leading-none">{item.imageUrl}</span>
                       ) : (
                         <img

@@ -1,4 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import { Bell, X, Trash2, Info, Trophy, MessageSquare, Sparkles, CheckCheck } from 'lucide-react';
 import { useNotification } from '../context/NotificationContext';
 import { useState } from 'react';
@@ -6,25 +7,43 @@ import { useState } from 'react';
 type FilterType = 'all' | 'unread';
 
 export function NotificationPanel({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
+  const navigate = useNavigate();
   const {
     notifications,
     markAllAsRead,
+    markAsRead,
     deleteNotification,
     showToast,
     setNotifications,
+    unreadCount,
   } = useNotification();
 
   const [filter, setFilter] = useState<FilterType>('all');
   const [showDevTools, setShowDevTools] = useState(import.meta.env.DEV); // 개발환경에서는 기본으로 표시
   const [clickCount, setClickCount] = useState(0);
 
-  const filteredNotifications = filter === 'unread'
-    ? notifications.filter(n => !n.isRead)
-    : notifications;
+  // 알림 클릭 핸들러
+  const handleNotificationClick = async (n: any) => {
+    // 1. 읽음 처리
+    if (!n.isRead) {
+      await markAsRead(n.id);
+    }
+    
+    // 2. 리다이렉트 (redirectUrl이 있는 경우)
+    if (n.redirectUrl) {
+      onClose(); // 패널 닫기
+      navigate(n.redirectUrl);
+    }
+    };
 
-  const unreadCount = notifications.filter(n => !n.isRead).length;
+    const filteredNotifications = useMemo(() => {
+    return filter === 'unread'
+      ? notifications.filter(n => !n.isRead)
+      : notifications;
+    }, [notifications, filter]);
 
-  const handleMarkAllRead = () => {
+    const getTimeAgo = (dateStr: string) => {
+
     markAllAsRead();
   };
 
@@ -191,6 +210,7 @@ export function NotificationPanel({ isOpen, onClose }: { isOpen: boolean; onClos
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, x: 100, scale: 0.9 }}
                         transition={{ delay: index * 0.05 }}
+                        onClick={() => handleNotificationClick(n)}
                         className={`relative group p-4 rounded-2xl transition-all cursor-pointer ${
                           n.isRead
                             ? 'bg-white/50 backdrop-blur-sm'

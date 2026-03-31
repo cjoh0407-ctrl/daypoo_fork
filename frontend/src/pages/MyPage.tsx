@@ -666,7 +666,7 @@ function HeroBanner({
                   }}
                 >
                   {equippedItem?.id ? (
-                    equippedItem.imageUrl && (isEmoji(equippedItem.imageUrl) || (!equippedItem.imageUrl.includes(':') && !equippedItem.imageUrl.startsWith('http'))) ? (
+                    equippedItem.imageUrl && (isEmoji(equippedItem.imageUrl) || (!equippedItem.imageUrl.includes(':') && !equippedItem.imageUrl.startsWith('http') && !equippedItem.imageUrl.startsWith('/'))) ? (
                       <span className="text-5xl select-none leading-none">{equippedItem.imageUrl}</span>
                     ) : (
                       <img
@@ -917,29 +917,15 @@ function HomeTab({
   const ref = useRef(null);
   const inView = useInView(ref, { once: true, margin: '-40px' });
 
-  // AI 건강 지표 데이터
-  const [healthReport, setHealthReport] = useState<any>(null);
-  const [loadingHealth, setLoadingHealth] = useState(false);
-
-  // 홈 탭 로드 시 DAILY 리포트 가져오기
-  useEffect(() => {
-    const fetchDailyReport = async () => {
-      setLoadingHealth(true);
-      try {
-        const res = await api.get('/reports/DAILY');
-        setHealthReport(res);
-      } catch (err) {
-        console.warn('일간 건강 리포트 조회 실패:', err);
-      } finally {
-        setLoadingHealth(false);
-      }
-    };
-    fetchDailyReport();
-  }, []);
-
   const items =
     shopTab === 'inventory'
-      ? (avatarItems || []).filter((i) => i.owned)
+      ? (avatarItems || [])
+          .filter((i) => i.owned)
+          .sort((a, b) => {
+            if (a.isEquipped && !b.isEquipped) return -1;
+            if (!a.isEquipped && b.isEquipped) return 1;
+            return 0;
+          })
       : (avatarItems || []).filter((i) => !i.owned);
 
   // DepthDeck 카드 데이터 변환
@@ -1217,7 +1203,16 @@ function HomeTab({
                               <div className="flex items-center justify-between">
                                 <span className="text-[10px] font-bold text-gray-400 uppercase">{item.type}</span>
                                 <span className="font-black text-sm" style={{ color }}>
-                                  {isOwned ? '보유중' : `${item.price?.toLocaleString()}P`}
+                                  {item.isEquipped ? (
+                                    <span className="flex items-center gap-1 text-emerald-600">
+                                      <CheckCircle2 size={12} strokeWidth={3} />
+                                      장착중
+                                    </span>
+                                  ) : isOwned ? (
+                                    '보유중'
+                                  ) : (
+                                    `${item.price?.toLocaleString()}P`
+                                  )}
                                 </span>
                               </div>
                             </div>
@@ -1324,116 +1319,7 @@ function HomeTab({
         )}
       </AnimatePresence>
 
-      {/* 데일리 AI 분석 섹션 (API 연동) */}
-      <motion.div
-        variants={fadeUp(0.12)}
-        className="bg-white rounded-[24px] sm:rounded-[40px] p-5 sm:p-10 border border-gray-100 shadow-sm"
-      >
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 sm:gap-0 mb-6 sm:mb-8">
-          <div className="flex items-center gap-3 sm:gap-4">
-            <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl bg-amber-50 flex items-center justify-center text-amber-500 shadow-inner flex-shrink-0">
-              <Brain className="w-5 h-5 sm:w-7 sm:h-7" />
-            </div>
-            <div>
-              <h3 className="text-lg sm:text-2xl font-black text-[#1A2B27] tracking-tight">
-                오늘의 장 건강 분석
-              </h3>
-              <p className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest mt-1">
-                AI Poo Analyst Doctor Poo
-              </p>
-            </div>
-          </div>
-          <div className="bg-emerald-50 px-4 sm:px-5 py-2 sm:py-2.5 rounded-2xl border border-emerald-100 self-start sm:self-auto">
-            {loadingHealth ? (
-              <p className="text-2xl font-black text-emerald-400 animate-pulse">...</p>
-            ) : (
-              <p className="text-4xl font-black text-emerald-600 leading-none">
-                {healthReport?.healthScore || 0}
-                <span className="text-lg ml-1 font-bold">점</span>
-              </p>
-            )}
-          </div>
-        </div>
-
-              {healthReport?.insights && Array.isArray(healthReport.insights) && healthReport.insights.length >= 3 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-5 mb-6 sm:mb-10">
-            {healthReport.insights.slice(0, 3).map((insight: string, i: number) => {
-              const icons = [<TrendingUp size={22} />, <Check size={22} />, <Activity size={22} />];
-              const colors = ['#52b788', '#E8A838', '#2D6A4F'];
-              return (
-                <div
-                  key={i}
-                  className="flex flex-col items-center py-6 rounded-[32px] bg-gray-50 border border-gray-100 transition-all hover:bg-white hover:border-emerald-100 hover:shadow-2xl group"
-                >
-                  <div
-                    className="mb-3 transform group-hover:scale-110 transition-transform"
-                    style={{ color: colors[i] }}
-                  >
-                    {icons[i]}
-                  </div>
-                  <span className="text-sm font-black text-[#1A2B27] text-center px-2">
-                    {insight}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-5 mb-6 sm:mb-10">
-            {[
-              {
-                label: '활동성',
-                value: '분석 중',
-                icon: <TrendingUp size={22} />,
-                color: '#52b788',
-              },
-              { label: '식단 균형', value: '분석 중', icon: <Check size={22} />, color: '#E8A838' },
-              {
-                label: '장 컨디션',
-                value: '분석 중',
-                icon: <Activity size={22} />,
-                color: '#2D6A4F',
-              },
-            ].map((s, i) => (
-              <div
-                key={i}
-                className="flex flex-col items-center py-6 rounded-[32px] bg-gray-50 border border-gray-100 transition-all hover:bg-white hover:border-emerald-100 hover:shadow-2xl group"
-              >
-                <div
-                  className="mb-3 transform group-hover:scale-110 transition-transform"
-                  style={{ color: s.color }}
-                >
-                  {s.icon}
-                </div>
-                <span className="text-lg font-black text-[#1A2B27]">{s.value}</span>
-                <span className="text-xs font-black text-gray-300 mt-1.5 uppercase tracking-wide">
-                  {s.label}
-                </span>
-              </div>
-            ))}
-          </div>
-        )}
-
-        <div className="relative p-5 sm:p-8 rounded-[20px] sm:rounded-[36px] overflow-hidden bg-emerald-50/50 border border-emerald-100 shadow-inner">
-          <Sparkles size={24} className="absolute top-5 sm:top-7 right-5 sm:right-8 text-emerald-300 opacity-60" />
-          <p className="text-[13px] font-black text-emerald-600 mb-3 flex items-center gap-2.5">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-sm" /> 인공지능 쾌변 솔루션 가이드
-          </p>
-          {loadingHealth ? (
-            <p className="text-lg font-bold text-gray-400 animate-pulse">AI 분석 중...</p>
-          ) : (
-            <p className="text-xl font-bold leading-relaxed text-[#1A2B27]/80 tracking-tight">
-              "{healthReport?.summary || '화장실 기록을 남기고 AI 분석을 받아보세요! 💩'}"
-              {healthReport?.solution && (
-                <>
-                  <br />
-                  <span className="text-emerald-600">💡 {healthReport.solution}</span>
-                </>
-              )}
-            </p>
-          )}
-        </div>
-      </motion.div>
+      {/* 포인트 충전 모달 (사이즈 업) */}
 
       {/* 포인트 충전 모달 (사이즈 업) */}
       <AnimatePresence>

@@ -19,6 +19,7 @@ export interface Notification {
   content: string;
   isRead: boolean;
   createdAt: string;
+  redirectUrl?: string;
 }
 
 interface NotificationContextType {
@@ -27,6 +28,7 @@ interface NotificationContextType {
   showToast: (title: string, message: string, type?: ToastType, icon?: string) => void;
   fetchNotifications: () => Promise<void>;
   markAllAsRead: () => Promise<void>;
+  markAsRead: (id: number) => Promise<void>;
   deleteNotification: (id: number) => Promise<void>;
   setNotifications: React.Dispatch<React.SetStateAction<Notification[]>>;
 }
@@ -73,9 +75,19 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       await api.post('/notifications/mark-all-read', {});
       setNotifications(prev => Array.isArray(prev) ? prev.map(n => ({ ...n, isRead: true })) : []);
     } catch (err) {
-      console.error('알림 읽음 처리 실패:', err);
-      // 낙관적 업데이트 실패 시 원래대로 돌릴 수 있지만 간단히 로컬만 변경으로도 대응
+      console.error('알림 전체 읽음 처리 실패:', err);
       setNotifications(prev => Array.isArray(prev) ? prev.map(n => ({ ...n, isRead: true })) : []);
+    }
+  }, []);
+
+  const markAsRead = useCallback(async (id: number) => {
+    try {
+      await api.patch(`/notifications/${id}/read`, {});
+      setNotifications(prev => Array.isArray(prev) ? prev.map(n => n.id === id ? { ...n, isRead: true } : n) : []);
+    } catch (err) {
+      console.error('알림 개별 읽음 처리 실패:', err);
+      // 실패 시에도 사용자 경험을 위해 로컬 상태만이라도 업데이트
+      setNotifications(prev => Array.isArray(prev) ? prev.map(n => n.id === id ? { ...n, isRead: true } : n) : []);
     }
   }, []);
 
@@ -96,6 +108,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       showToast, 
       fetchNotifications, 
       markAllAsRead, 
+      markAsRead,
       deleteNotification,
       setNotifications 
     }}>
