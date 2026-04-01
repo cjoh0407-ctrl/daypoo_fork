@@ -77,14 +77,11 @@ export const useAvatar = (
   return generateAvatar(seed, style, size);
 };
 
-/**
- * 랭킹 페이지용 아바타 (장착 아바타가 있으면 반영, 없으면 시스템 기본값)
- */
 export const generateRankingAvatar = (userId: string | number, rank: number, equippedAvatarUrl?: string | null): string => {
   if (equippedAvatarUrl) {
     return parseDicebearUrl(equippedAvatarUrl, userId, 'AVATAR', 128);
   }
-  return DEFAULT_AVATAR_URL;
+  return generateAvatar(userId, 'funEmoji', 128);
 };
 
 /**
@@ -94,7 +91,7 @@ export const generateProfileAvatar = (userId: string | number, equippedAvatarUrl
   if (equippedAvatarUrl) {
     return parseDicebearUrl(equippedAvatarUrl, userId, 'AVATAR', 256);
   }
-  return DEFAULT_AVATAR_URL;
+  return generateAvatar(userId, 'funEmoji', 256);
 };
 
 /**

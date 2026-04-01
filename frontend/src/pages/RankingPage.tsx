@@ -681,9 +681,7 @@ export function RankingPage({ openAuth }: { openAuth: (mode: 'login' | 'signup')
             name: item.name || '아이템',
             type: item.type || '장식'
           })),
-          effectEmoji: (r.equippedItems || []).find((item) => item.type === 'EFFECT') 
-            ? ((r.equippedItems || []).find((item) => item.type === 'EFFECT') as any).imageUrl || ((r.equippedItems || []).find((item) => item.type === 'EFFECT') as any).icon
-            : undefined,
+          effectEmoji: (r.equippedItems || []).find((item) => item.type === 'EFFECT')?.icon ?? undefined,
         }))
     : [];
 

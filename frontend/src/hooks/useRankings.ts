@@ -2,9 +2,10 @@ import { useState, useCallback, useEffect } from 'react';
 import { api } from '../services/apiClient';
 
 interface EquippedItemResponse {
-  icon: string | null;  // item.imageUrl (null일 수 있음)
+  icon: string;          // 백엔드에서 null 방지 처리됨 (imageUrl이 없으면 dicebear seed 자동 생성)
   name: string;
   type: 'AVATAR' | 'EFFECT';
+  iconType: 'URL' | 'DICEBEAR' | 'EMOJI';  // 추가
 }
 
 interface UserRankResponse {
