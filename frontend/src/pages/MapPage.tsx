@@ -239,6 +239,8 @@ export function MapPage({ openAuth }: { openAuth: (mode: 'login' | 'signup') => 
       } catch (e: any) {
         const code = e.code || 'UNKNOWN';
         switch (code) {
+          case 'R007':
+            throw e; // VisitModal에서 카메라 복귀 처리
           case 'STAY_TIME_NOT_MET':
             alert('⏳ 아직 1분이 지나지 않았습니다. 잠시 후 다시 시도해주세요!');
             break;

@@ -12,7 +12,7 @@ import { AiAnalysisResponse } from '../../types/api';
 interface VisitModalProps {
   toilet: ToiletData;
   onClose: () => void;
-  onComplete: (record: any) => void;
+  onComplete: (record: any) => Promise<void>;
   checkInTime: number | null;
 }
 
@@ -100,7 +100,7 @@ export function VisitModal({ toilet, onClose, onComplete, checkInTime }: VisitMo
     // AI 분석은 제출 시 백엔드에서 자동 수행됨 (Fast-Track 방식)
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     // 체류 시간 검증 (항상 필요)
     if (!canComplete) {
       alert(`⌛ 최소 ${remainingSeconds}초 더 체류가 필요합니다.`);
@@ -109,15 +109,23 @@ export function VisitModal({ toilet, onClose, onComplete, checkInTime }: VisitMo
 
     // Step 0에서 사진이 있으면 바로 완료 가능 (AI가 백그라운드에서 자동 분석)
     if (step === 0 && capturedImage) {
-      onComplete({
-        toiletId: toilet.id,
-        bristolType: null,  // AI가 자동 분석
-        color: null,        // AI가 자동 분석
-        conditionTags: [],  // Fast-Track: 생략
-        foodTags: [],       // Fast-Track: 생략
-        imageBase64: capturedImage,
-        createdAt: new Date().toISOString(),
-      });
+      try {
+        await onComplete({
+          toiletId: toilet.id,
+          bristolType: null,
+          color: null,
+          conditionTags: [],
+          foodTags: [],
+          imageBase64: capturedImage,
+          createdAt: new Date().toISOString(),
+        });
+      } catch (e: any) {
+        if (e.code === 'R007') {
+          alert('똥 사진이 아닌 것 같아요!\n변기 안의 변을 다시 촬영해주세요. 💩');
+          setCapturedImage(null);
+          await startCamera();
+        }
+      }
       return;
     }
 
@@ -125,15 +133,24 @@ export function VisitModal({ toilet, onClose, onComplete, checkInTime }: VisitMo
     if (step < 3) {
       setStep(step + 1);
     } else {
-      onComplete({
-        toiletId: toilet.id,
-        bristolType: bristolType!,
-        color: color!,
-        conditionTags: conditions,
-        foodTags: foods,
-        imageBase64: capturedImage,
-        createdAt: new Date().toISOString(),
-      });
+      try {
+        await onComplete({
+          toiletId: toilet.id,
+          bristolType: bristolType!,
+          color: color!,
+          conditionTags: conditions,
+          foodTags: foods,
+          imageBase64: capturedImage,
+          createdAt: new Date().toISOString(),
+        });
+      } catch (e: any) {
+        if (e.code === 'R007') {
+          alert('똥 사진이 아닌 것 같아요!\n변기 안의 변을 다시 촬영해주세요. 💩');
+          setCapturedImage(null);
+          setStep(0);
+          await startCamera();
+        }
+      }
     }
   };
 
