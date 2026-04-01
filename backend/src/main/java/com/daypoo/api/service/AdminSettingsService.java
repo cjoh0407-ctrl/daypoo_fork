@@ -22,7 +22,7 @@ public class AdminSettingsService {
         if (systemSettingsRepository.count() == 0) {
             log.info("Initializing system settings...");
             SystemSettings defaultSettings = SystemSettings.builder()
-                    .noticeMessage("대똥여지도(DayPoo)에 오신 것을 환영합니다!")
+                    .noticeMessage("Day Poo에 오신 것을 환영합니다!")
                     .noticeEnabled(false)
                     .maintenanceMode(false)
                     .signupEnabled(true)

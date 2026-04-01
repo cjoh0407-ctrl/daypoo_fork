@@ -48,7 +48,7 @@ public class ApiApplication {
             try {
               emailService.sendEmail(
                   mailUser,
-                  "[대똥여지도] 자가 진단 메일",
+                  "[Day Poo] 자가 진단 메일",
                   "백엔드 서버가 시작되었습니다.\n\n발송 시각: " + java.time.LocalDateTime.now());
               log.info("✅ Self-check mail sent successfully.");
             } catch (Exception e) {

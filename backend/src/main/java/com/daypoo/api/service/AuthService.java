@@ -249,9 +249,9 @@ public class AuthService {
     user.updatePassword(passwordEncoder.encode(tempPassword));
 
     // 3. 이메일 발송
-    String subject = "[대똥여지도] 임시 비밀번호 안내";
+    String subject = "[Day Poo] 임시 비밀번호 안내";
     String text = String.format(
-        "안녕하세요, 대똥여지도(DayPoo)입니다.\n\n"
+        "안녕하세요, Day Poo입니다.\n\n"
             + "요청하신 임시 비밀번호를 안내해 드립니다.\n"
             + "임시 비밀번호: %s\n\n"
             + "로그인 후 반드시 비밀번호를 변경해 주세요.",
