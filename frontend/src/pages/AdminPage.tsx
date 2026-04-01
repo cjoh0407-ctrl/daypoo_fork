@@ -499,67 +499,115 @@ const DashboardView = ({
             </div>
 
             <div className="h-[440px] w-full relative">
-              {/* Floating Value Indicator */}
-              <motion.div 
-                key={chartRange}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                className="absolute left-6 top-0 z-20 flex flex-col gap-1 pointer-events-none"
-              >
-                <span className="text-[10px] font-black text-emerald-600/60 uppercase tracking-[0.4em]">Current Growth Velocity</span>
-                <span className="text-7xl font-black text-black tracking-[calc(-0.06em)] tabular-nums">
-                  {trendData.length > 0 ? trendData[trendData.length - 1].users.toLocaleString() : 0}
-                </span>
-              </motion.div>
+              {/* 💎 Dynamic monitor overlay for current value */}
+              <div className="absolute left-0 top-0 z-20 pointer-events-none w-full h-full">
+                <div className="relative w-full h-full">
+                  {/* Digital Meter Plate */}
+                  <div className="absolute left-6 top-0 flex flex-col">
+                    <div className="flex items-center gap-3 mb-2">
+                       <div className="w-1 h-3 bg-[#E8A838] rounded-full" />
+                       <span className="text-[10px] font-black text-emerald-600/60 uppercase tracking-[0.4em]">Propulsion Velocity</span>
+                    </div>
+                    <div className="flex items-baseline gap-4">
+                      <span className="text-8xl font-black text-black tracking-[calc(-0.06em)] tabular-nums flex items-center">
+                        {trendData.length > 0 ? trendData[trendData.length - 1].users.toLocaleString() : 0}
+                        <span className="text-[16px] font-black text-black/20 ml-2 tracking-widest">UV / PAGE</span>
+                      </span>
+                    </div>
+                    <div className="flex gap-2 mt-4">
+                      {[1, 2, 3, 4, 5].map(i => (
+                        <div key={i} className={`h-1.5 w-1.5 rounded-full ${i <= 3 ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-black/5'}`} />
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Aesthetic grid deco */}
+                  <div className="absolute right-0 bottom-20 w-32 h-64 border-r border-b border-black/[0.03] flex flex-col justify-end p-4">
+                    <div className="text-[9px] font-black text-black/10 uppercase origin-bottom-right -rotate-90 whitespace-nowrap tracking-[0.6em]">
+                      ENGINE_CORE_RENDER_ACTIVE
+                    </div>
+                  </div>
+                </div>
+              </div>
 
               <ResponsiveContainer width="100%" height="100%">
-                <ComposedChart data={trendData} margin={{ top: 100, right: 30, left: -20, bottom: 0 }}>
+                <ComposedChart data={trendData} margin={{ top: 120, right: 30, left: -20, bottom: 0 }}>
                   <defs>
                     <filter id="neonGlow" x="-20%" y="-20%" width="140%" height="140%">
-                      <feGaussianBlur stdDeviation="6" result="blur" />
+                      <feGaussianBlur stdDeviation="8" result="blur" />
                       <feComposite in="SourceGraphic" in2="blur" operator="over" />
                     </filter>
                     <linearGradient id="mainGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#1B4332" stopOpacity={0.15} />
+                      <stop offset="0%" stopColor="#1B4332" stopOpacity={0.2} />
+                      <stop offset="60%" stopColor="#1B4332" stopOpacity={0.05} />
                       <stop offset="100%" stopColor="#1B4332" stopOpacity={0} />
                     </linearGradient>
                     <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#E8A838" stopOpacity={0.4} />
-                      <stop offset="100%" stopColor="#E8A838" stopOpacity={0.1} />
+                      <stop offset="0%" stopColor="#E8A838" stopOpacity={0.5} />
+                      <stop offset="100%" stopColor="#E8A838" stopOpacity={0.05} />
                     </linearGradient>
+                    <pattern id="diagonalHatch" patternUnits="userSpaceOnUse" width="4" height="4">
+                      <path d="M-1,1 l2,-2 M0,4 l4,-4 M3,5 l2,-2" stroke="rgba(0,0,0,0.02)" strokeWidth="0.5" />
+                    </pattern>
                   </defs>
-                  <CartesianGrid strokeDasharray="10 10" vertical={false} stroke="rgba(0,0,0,0.03)" />
+                  
+                  {/* Decorative background area */}
+                  <rect width="100%" height="100%" fill="url(#diagonalHatch)" pointerEvents="none" />
+                  
+                  <CartesianGrid 
+                    strokeDasharray="4 8" 
+                    vertical={true} 
+                    stroke="rgba(0,0,0,0.03)" 
+                    verticalFill="rgba(0,0,0,0.005)" 
+                  />
+                  
                   <XAxis
                     dataKey="name"
                     axisLine={false}
                     tickLine={false}
-                    tick={{ fontSize: 11, fontWeight: 900, fill: 'rgba(0,0,0,0.2)' }}
+                    tick={{ fontSize: 10, fontWeight: 900, fill: 'rgba(0,0,0,0.2)' }}
                     dy={25}
+                    padding={{ left: 50, right: 50 }}
                   />
-                  <YAxis
-                    hide
-                  />
+                  <YAxis hide domain={[0, 'auto']} />
                   <Tooltip
                     content={<CustomTooltip />}
-                    cursor={{ fill: 'rgba(0,0,0,0.02)', radius: [10, 10, 0, 0] }}
+                    cursor={{ stroke: 'rgba(0,0,0,0.05)', strokeWidth: 1, strokeDasharray: '5 5' }}
                   />
                   <Bar
                     dataKey="sales"
-                    name="유료 결제"
+                    name="성장 포인트"
                     fill="url(#barGradient)"
-                    radius={[12, 12, 0, 0]}
-                    barSize={20}
+                    radius={[8, 8, 0, 0]}
+                    barSize={12}
+                    animationDuration={2000}
                   />
                   <Area
                     type="monotone"
                     dataKey="users"
-                    name="신규 방문"
+                    name="Propulsion UV"
                     stroke="#1B4332"
-                    strokeWidth={6}
+                    strokeWidth={8}
                     fill="url(#mainGradient)"
-                    animationDuration={2500}
+                    animationDuration={3000}
                     style={{ filter: 'url(#neonGlow)' }}
-                    activeDot={{ r: 10, strokeWidth: 0, fill: "#000" }}
+                    dot={(props: any) => {
+                       const { cx, cy, index } = props;
+                       const isLast = index === trendData.length - 1;
+                       if (isLast) {
+                         return (
+                           <g key="last-dot">
+                             <circle cx={cx} cy={cy} r={12} fill="#1B4332" fillOpacity={0.1}>
+                               <animate attributeName="r" from="12" to="18" dur="1.5s" repeatCount="Infinity" />
+                               <animate attributeName="opacity" from="0.3" to="0" dur="1.5s" repeatCount="Infinity" />
+                             </circle>
+                             <circle cx={cx} cy={cy} r={5} fill="#1B4332" stroke="white" strokeWidth={3} shadow="0 4px 10px rgba(0,0,0,0.2)" />
+                           </g>
+                         );
+                       }
+                       return <circle key={index} cx={cx} cy={cy} r={4} fill="#1B4332" stroke="white" strokeWidth={2} />;
+                    }}
+                    activeDot={{ r: 8, strokeWidth: 0, fill: "#000" }}
                   />
                 </ComposedChart>
               </ResponsiveContainer>
@@ -2599,86 +2647,88 @@ const StoreView = ({ setActiveTab }: { setActiveTab: (tab: AdminTab) => void }) 
             {(items || []).map((item) => {
               const color = getItemTypeColor(item.type);
               return (
-                <GlassCard key={item.id} className="group cursor-pointer">
-                  <div className="w-full aspect-square rounded-[24px] mb-4 bg-black/[0.02] flex items-center justify-center relative overflow-hidden">
-                    <div
-                      className="w-16 h-16 rounded-full blur-3xl opacity-20 absolute"
-                      style={{ background: color }}
-                    />
-                    <div className="w-full h-full flex items-center justify-center transition-transform group-hover:scale-105 duration-500">
-                      {item.imageUrl && (isEmoji(item.imageUrl) || (!item.imageUrl.includes(':') && !item.imageUrl.startsWith('http') && !item.imageUrl.startsWith('/'))) ? (
-                        <span className="text-6xl select-none leading-none">{item.imageUrl}</span>
-                      ) : (
-                        <img
-                          src={parseDicebearUrl(item.imageUrl, item.id, item.type)}
-                          alt={item.name}
-                          className="w-full h-full object-cover"
-                        />
-                      )}
-                    </div>
-                    <div className="absolute top-3 right-3 flex gap-1">
-                      <span className="text-[9px] font-black px-1.5 py-0.5 rounded-md bg-white/90 border text-black/40">
-                        {getItemTypeLabel(item.type)}
-                      </span>
-                    </div>
-                    <div className="absolute top-3 left-3 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDeleteItem(item.id, item.name);
-                        }}
-                        className="p-1.5 rounded-lg bg-red-500 text-white hover:bg-red-600 transition-colors shadow-lg"
-                      >
-                        <Trash2 size={14} />
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setEditingItem(item);
-                          setActiveTab('edit-item');
-                        }}
-                        className="p-1.5 rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition-colors shadow-lg"
-                      >
-                        <Pencil size={14} />
-                      </button>
-                    </div>
-                  </div>
-                  <h5 className="font-black text-sm mb-1 text-black">{item.name}</h5>
-                  <p className="text-xs text-black/50 mb-2 line-clamp-2 font-bold">
-                    {item.description}
-                  </p>
-                  {item.discountPrice != null ? (
-                    <div className="mb-4">
-                      <p className="text-xs text-black/40 line-through font-bold">
-                        {item.price.toLocaleString()} P
-                      </p>
-                      <div className="flex items-center gap-2">
-                        <p className="font-black text-lg" style={{ color }}>
-                          {item.discountPrice.toLocaleString()} P
-                        </p>
-                        <span className="text-[10px] font-black px-1.5 py-0.5 rounded-md bg-red-100 text-red-500">
-                          -{Math.round((1 - item.discountPrice / item.price) * 100)}%
+                <GlassCard key={item.id} className="group cursor-pointer !p-0 overflow-hidden border-none shadow-sm hover:shadow-xl transition-all duration-500">
+                  <div className="p-4 flex flex-col h-full">
+                    {/* Item Image Container */}
+                    <div className="w-full aspect-square rounded-[32px] mb-4 bg-[#F7F8F8] flex items-center justify-center relative overflow-hidden group-hover:bg-[#f0f2f2] transition-colors duration-500">
+                      <div
+                        className="w-24 h-24 rounded-full blur-3xl opacity-10 absolute"
+                        style={{ background: color }}
+                      />
+                      <div className="w-[70%] h-[70%] flex items-center justify-center transition-transform group-hover:scale-110 duration-700 ease-[0.16, 1, 0.3, 1]">
+                        {item.imageUrl && (isEmoji(item.imageUrl) || (!item.imageUrl.includes(':') && !item.imageUrl.startsWith('http') && !item.imageUrl.startsWith('/'))) ? (
+                          <span className="text-7xl select-none leading-none drop-shadow-sm">{item.imageUrl}</span>
+                        ) : (
+                          <img
+                            src={parseDicebearUrl(item.imageUrl, item.id, item.type)}
+                            alt={item.name}
+                            className="w-full h-full object-contain filter drop-shadow-md"
+                          />
+                        )}
+                      </div>
+                      <div className="absolute top-3 right-3 flex gap-1">
+                        <span className="text-[9px] font-black px-1.5 py-0.5 rounded-md bg-white/90 border text-black/40">
+                          {getItemTypeLabel(item.type)}
                         </span>
                       </div>
+                      <div className="absolute top-3 left-3 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteItem(item.id, item.name);
+                          }}
+                          className="p-1.5 rounded-lg bg-red-500 text-white hover:bg-red-600 transition-colors shadow-lg"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setEditingItem(item);
+                            setActiveTab('edit-item');
+                          }}
+                          className="p-1.5 rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition-colors shadow-lg"
+                        >
+                          <Pencil size={14} />
+                        </button>
+                      </div>
                     </div>
-                  ) : (
-                    <p className="font-black text-lg mb-4" style={{ color }}>
-                      {(item.price || 0).toLocaleString()} P
-                    </p>
-                  )}
-                  <div
-                    className="flex items-center justify-between border-t pt-4"
-                    style={{ borderColor: COLORS.border }}
-                  >
-                    <span className="text-[9px] font-black text-black/40 uppercase tracking-widest">
-                      {item.createdAt 
-                        ? new Date(item.createdAt).toLocaleDateString('ko-KR', {
-                            month: 'short',
-                            day: 'numeric',
-                          })
-                        : 'NO DATE'}
-                    </span>
-                    <span className="text-[10px] font-black italic text-green-500">판매중</span>
+
+                    {/* Item Description & Price */}
+                    <div className="px-1 flex flex-col flex-1">
+                      <h5 className="font-black text-[15px] mb-1.5 text-black tracking-tight group-hover:text-[#1B4332] transition-colors leading-tight">{item.name}</h5>
+                      <p className="text-[11px] text-black/40 mb-3 line-clamp-2 font-bold leading-relaxed">
+                        {item.description}
+                      </p>
+                      <div className="mt-auto pt-3 border-t border-black/5 flex items-end justify-between">
+                        <div className="flex flex-col">
+                          <span className="text-[9px] font-black text-black/20 uppercase tracking-widest mb-1">Price Unit</span>
+                          {item.discountPrice != null ? (
+                            <div className="flex flex-col">
+                              <p className="text-[10px] text-black/20 line-through font-bold mb-0">
+                                {item.price.toLocaleString()} P
+                              </p>
+                              <div className="flex items-center gap-2">
+                                <p className="font-black text-lg text-emerald-600">
+                                  {item.discountPrice.toLocaleString()} P
+                                </p>
+                                <span className="text-[10px] font-black px-1.5 py-0.5 rounded-md bg-red-100 text-red-500">
+                                  -{Math.round((1 - item.discountPrice / item.price) * 100)}%
+                                </span>
+                              </div>
+                            </div>
+                          ) : (
+                            <p className="font-black text-lg text-black">
+                              {(item.price || 0).toLocaleString()} P
+                            </p>
+                          )}
+                        </div>
+                        <div className="flex flex-col items-end">
+                            <span className="text-[9px] font-black text-black/20 uppercase tracking-widest mb-1">Status</span>
+                            <span className="text-[10px] font-black italic text-green-500">판매중</span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </GlassCard>
               );
@@ -4191,3 +4241,5 @@ export function AdminPage() {
     </div>
   );
 }
+e x p o r t   d e f a u l t   A d m i n P a g e ;  
+ 
