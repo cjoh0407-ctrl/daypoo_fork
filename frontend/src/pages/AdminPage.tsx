@@ -42,6 +42,7 @@ import {
   UserPlus,
   BrainCircuit,
   MessageCircle,
+  PieChart as PieChartIcon,
 } from 'lucide-react';
 import WaveButtonComponent from '../components/WaveButton';
 import { generateItemAvatar, parseDicebearUrl, AvatarStyle } from '../utils/avatar';
@@ -220,28 +221,41 @@ const StatWidget = ({ title, value, trend, isUp, icon: Icon, color, progress = 0
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     return (
-      <div
-        className="p-4 rounded-2xl shadow-2xl border bg-white/90 backdrop-blur-md"
-        style={{ borderColor: COLORS.border }}
+      <motion.div
+        initial={{ opacity: 0, y: 10, scale: 0.95 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        className="p-5 rounded-[24px] shadow-[0_20px_50px_rgba(0,0,0,0.2)] border border-white/50 bg-white/40 backdrop-blur-2xl"
       >
-        <p
-          className="text-[11px] font-black uppercase tracking-wider mb-2"
-          style={{ color: COLORS.textSecondary }}
-        >
-          {label}
-        </p>
-        {payload.map((entry: any, index: number) => (
-          <div key={index} className="flex items-center justify-between gap-6 mb-1">
-            <span className="text-xs font-bold flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full" style={{ background: entry.color }} />
-              {entry.name}
-            </span>
-            <span className="text-sm font-black" style={{ color: COLORS.textPrimary }}>
-              {entry.value.toLocaleString()}
-            </span>
-          </div>
-        ))}
-      </div>
+        <div className="flex items-center gap-2 mb-4">
+          <div className="w-1.5 h-4 bg-[#1B4332] rounded-full" />
+          <p className="text-[12px] font-black text-black/40 uppercase tracking-[0.2em]">
+            {label} Analysis
+          </p>
+        </div>
+        <div className="space-y-3">
+          {payload.map((entry: any, index: number) => (
+            <div key={index} className="flex flex-col gap-0.5">
+              <div className="flex items-center justify-between gap-10">
+                <span className="text-[11px] font-black text-black/60 flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full shadow-sm" style={{ background: entry.color }} />
+                  {entry.name}
+                </span>
+                <span className="text-sm font-black text-black tracking-tight">
+                  {entry.value.toLocaleString()}
+                </span>
+              </div>
+              <div className="h-1 w-full bg-black/5 rounded-full overflow-hidden mt-1">
+                <motion.div 
+                  initial={{ width: 0 }}
+                  animate={{ width: `${Math.min(100, (entry.value / 10000) * 100)}%` }}
+                  className="h-full rounded-full"
+                  style={{ background: entry.color }}
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+      </motion.div>
     );
   }
   return null;
@@ -342,7 +356,34 @@ const DashboardView = ({
     );
 
   return (
-    <div className="space-y-6 pb-20">
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.8, ease: "easeOut" }}
+      className="space-y-8 pb-20"
+    >
+      {/* 🔮 Dashboard Header Info */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-2">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <div className="relative">
+              <div className="w-2.5 h-2.5 bg-emerald-500 rounded-full animate-ping absolute inset-0" />
+              <div className="w-2.5 h-2.5 bg-emerald-500 rounded-full relative z-10" />
+            </div>
+            <span className="text-[10px] font-black text-emerald-600 uppercase tracking-[0.2em]">
+              System Engine Active
+            </span>
+          </div>
+          <h2 className="text-4xl font-black text-black tracking-tighter">
+            Next-Gen <span className="text-[#1B4332]">Dashboard</span>
+          </h2>
+        </div>
+        <div className="flex flex-col items-start md:items-end opacity-40">
+          <span className="text-[10px] font-black uppercase tracking-widest">Global Status Node</span>
+          <span className="text-xs font-bold">{new Date().toLocaleString('ko-KR', { hour12: true, month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' })}</span>
+        </div>
+      </div>
+
       {/* 🍱 Bento Grid: Top Section (KPIs) */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <div className="md:col-span-2 lg:col-span-1" onClick={() => setActiveTab('users')}>
@@ -396,131 +437,186 @@ const DashboardView = ({
       {/* 📊 Bento Grid: Main Analytics Section */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Main Growth Chart */}
-        <GlassCard className="lg:col-span-8 group">
-          <div className="flex items-center justify-between mb-8">
-            <div>
-              <h3 className="text-xl font-black text-black">핵심 성장 지표</h3>
-              <p className="text-xs font-bold text-black/40 uppercase tracking-widest mt-1">
-                Growth & Revenue Analytics
-              </p>
+        <GlassCard className="lg:col-span-8 group relative overflow-hidden">
+          {/* Subtle Grid Background */}
+          <div className="absolute inset-0 bg-[radial-gradient(#000_1px,transparent_1px)] [background-size:24px_24px] opacity-[0.03] pointer-events-none" />
+          
+          <div className="relative z-10">
+            <div className="flex items-center justify-between mb-10">
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <div className="p-1.5 rounded-lg bg-[#E8A838]/10 text-[#E8A838]">
+                    <TrendingUp size={16} />
+                  </div>
+                  <h3 className="text-xl font-black text-black tracking-tight">핵심 성장 지표</h3>
+                </div>
+                <p className="text-[10px] font-black text-black/30 uppercase tracking-[0.3em] ml-9">
+                  Metrics & Growth Velocity
+                </p>
+              </div>
+              <div className="flex p-1 bg-black/5 rounded-2xl">
+                {['7D', '30D'].map((range) => (
+                  <button 
+                    key={range}
+                    onClick={() => setChartRange(range as any)}
+                    className={`px-5 py-2 rounded-xl text-[11px] font-black transition-all ${chartRange === range ? 'bg-white text-black shadow-[0_4px_12px_rgba(0,0,0,0.1)] scale-105' : 'text-black/30 hover:text-black/60'}`}
+                  >
+                    {range}
+                  </button>
+                ))}
+              </div>
             </div>
-            <div className="flex gap-2">
-              <button 
-                onClick={() => setChartRange('7D')}
-                className={`px-3 py-1.5 rounded-lg text-[10px] font-black transition-all ${chartRange === '7D' ? 'bg-black text-white shadow-lg' : 'bg-black/5 text-black/40 hover:bg-black/10'}`}
-              >
-                7D
-              </button>
-              <button 
-                onClick={() => setChartRange('30D')}
-                className={`px-3 py-1.5 rounded-lg text-[10px] font-black transition-all ${chartRange === '30D' ? 'bg-black text-white shadow-lg' : 'bg-black/5 text-black/40 hover:bg-black/10'}`}
-              >
-                30D
-              </button>
+
+            <div className="h-[420px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={trendData} margin={{ top: 20, right: 20, left: -20, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="colorUsers" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor={COLORS.primary} stopOpacity={0.4} />
+                      <stop offset="60%" stopColor={COLORS.primary} stopOpacity={0.1} />
+                      <stop offset="100%" stopColor={COLORS.primary} stopOpacity={0} />
+                    </linearGradient>
+                    <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor={COLORS.accent} stopOpacity={0.4} />
+                      <stop offset="60%" stopColor={COLORS.accent} stopOpacity={0.1} />
+                      <stop offset="100%" stopColor={COLORS.accent} stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="6 6" vertical={false} stroke="rgba(0,0,0,0.05)" />
+                  <XAxis
+                    dataKey="name"
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fontSize: 11, fontWeight: 900, fill: 'rgba(0,0,0,0.3)' }}
+                    dy={15}
+                  />
+                  <YAxis
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fontSize: 11, fontWeight: 900, fill: 'rgba(0,0,0,0.3)' }}
+                  />
+                  <Tooltip
+                    content={<CustomTooltip />}
+                    cursor={{ stroke: 'rgba(27,67,50,0.1)', strokeWidth: 20, strokeLinecap: 'round' }}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="users"
+                    name="신규 방문"
+                    stroke={COLORS.primary}
+                    strokeWidth={5}
+                    strokeLinecap="round"
+                    fill="url(#colorUsers)"
+                    fillOpacity={1}
+                    animationDuration={3000}
+                    activeDot={{ r: 8, strokeWidth: 4, stroke: "#fff", fill: COLORS.primary, shadow: "0 4px 10px rgba(0,0,0,0.3)" }}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="sales"
+                    name="유료 결제"
+                    stroke={COLORS.accent}
+                    strokeWidth={5}
+                    strokeLinecap="round"
+                    fill="url(#colorSales)"
+                    fillOpacity={1}
+                    animationDuration={3000}
+                    activeDot={{ r: 8, strokeWidth: 4, stroke: "#fff", fill: COLORS.accent, shadow: "0 4px 10px rgba(0,0,0,0.3)" }}
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
             </div>
-          </div>
-          <div className="h-[380px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={trendData} margin={{ top: 20, right: 20, left: -20, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="colorUsers" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor={COLORS.primary} stopOpacity={0.2} />
-                    <stop offset="95%" stopColor={COLORS.primary} stopOpacity={0} />
-                  </linearGradient>
-                  <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor={COLORS.accent} stopOpacity={0.25} />
-                    <stop offset="95%" stopColor={COLORS.accent} stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(0,0,0,0.03)" />
-                <XAxis
-                  dataKey="name"
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fontSize: 10, fontWeight: 900, fill: 'rgba(0,0,0,0.2)' }}
-                  dy={10}
-                />
-                <YAxis
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fontSize: 10, fontWeight: 900, fill: 'rgba(0,0,0,0.2)' }}
-                />
-                <Tooltip
-                  content={<CustomTooltip />}
-                  cursor={{ stroke: 'rgba(0,0,0,0.05)', strokeWidth: 2 }}
-                />
-                <Area
-                  type="monotone"
-                  dataKey="users"
-                  name="신규 방문"
-                  stroke={COLORS.primary}
-                  strokeWidth={4}
-                  fill="url(#colorUsers)"
-                  animationDuration={2500}
-                  activeDot={{ r: 6, strokeWidth: 0, fill: COLORS.primary }}
-                />
-                <Area
-                  type="monotone"
-                  dataKey="sales"
-                  name="유료 결제"
-                  stroke={COLORS.accent}
-                  strokeWidth={4}
-                  fill="url(#colorSales)"
-                  animationDuration={2500}
-                  activeDot={{ r: 6, strokeWidth: 0, fill: COLORS.accent }}
-                />
-              </AreaChart>
-            </ResponsiveContainer>
+            
+            <div className="flex items-center gap-10 mt-6 ml-8">
+              <div className="flex items-center gap-3">
+                <div className="w-3 h-3 rounded-full bg-[#1B4332] shadow-[0_0_10px_rgba(27,67,50,0.5)]" />
+                <span className="text-[11px] font-black text-black/50 uppercase tracking-widest">New Traffic</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="w-3 h-3 rounded-full bg-[#E8A838] shadow-[0_0_10px_rgba(232,168,56,0.5)]" />
+                <span className="text-[11px] font-black text-black/50 uppercase tracking-widest">Revenue Growth</span>
+              </div>
+            </div>
           </div>
         </GlassCard>
 
         {/* Membership Segment & Service Health */}
         <div className="lg:col-span-4 space-y-6">
-          <GlassCard className="h-fit">
-            <h3 className="text-lg font-black text-black mb-1">사용자 분포</h3>
-            <p className="text-[10px] font-black text-black/30 uppercase tracking-widest mb-6">
-              User Segments
-            </p>
-            <div className="h-[200px] w-full relative">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={pieData}
-                    innerRadius={65}
-                    outerRadius={85}
-                    paddingAngle={10}
-                    dataKey="value"
-                    stroke="none"
-                  >
-                    {pieData.map((entry, index) => (
-                      <Cell key={index} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
-              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                <span className="text-[10px] font-black text-black/30 uppercase">Total</span>
-                <span className="text-2xl font-black text-black">
-                  {(totalUsersCount / 1000).toFixed(1)}K
-                </span>
-              </div>
-            </div>
-            <div className="mt-6 grid grid-cols-1 gap-2">
-              {pieData.map((item) => (
-                <div
-                  key={item.name}
-                  className="flex items-center justify-between p-2.5 rounded-xl hover:bg-black/5 transition-colors"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-2.5 h-2.5 rounded-full" style={{ background: item.color }} />
-                    <span className="text-xs font-black text-black/60">{item.name}</span>
-                  </div>
-                  <span className="text-xs font-black text-black">
-                    {totalUsersCount > 0 ? ((item.value / totalUsersCount) * 100).toFixed(0) : 0}%
-                  </span>
+          <GlassCard className="h-fit group relative overflow-hidden">
+            {/* Dynamic Orbit Background Effect */}
+            <div className="absolute -right-10 -top-10 w-40 h-40 bg-[#1B4332]/5 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-1000" />
+            
+            <div className="relative z-10">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="p-2 rounded-xl bg-black/5">
+                  <PieChartIcon size={20} className="text-black/60" />
                 </div>
-              ))}
+                <div>
+                  <h3 className="text-[17px] font-black text-black">사용자 분포</h3>
+                  <div className="flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    <span className="text-[9px] font-black text-black/30 uppercase tracking-widest">Real-time Map</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="h-[240px] w-full relative">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={pieData}
+                      innerRadius={75}
+                      outerRadius={95}
+                      paddingAngle={8}
+                      dataKey="value"
+                      stroke="none"
+                      animationBegin={200}
+                      animationDuration={2000}
+                    >
+                      {pieData.map((entry, index) => (
+                        <Cell key={index} fill={entry.color} style={{ filter: `drop-shadow(0 4px 8px ${entry.color}30)` }} />
+                      ))}
+                    </Pie>
+                    <Tooltip content={<CustomTooltip />} />
+                  </PieChart>
+                </ResponsiveContainer>
+                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                  <span className="text-[11px] font-black text-black/20 uppercase tracking-[0.2em] mb-1">Total Hub</span>
+                  <span className="text-3xl font-black text-black tracking-tight scale-110">
+                    {totalUsersCount.toLocaleString()}
+                  </span>
+                  <div className="mt-1 flex items-center gap-1 text-emerald-600">
+                    <TrendingUp size={10} />
+                    <span className="text-[9px] font-black">+2.4%</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-8 space-y-2">
+                {pieData.map((item, idx) => (
+                  <motion.div
+                    key={item.name}
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.5 + idx * 0.1 }}
+                    className="flex items-center justify-between p-3.5 rounded-[20px] bg-black/[0.03] border border-transparent hover:border-black/5 hover:bg-white transition-all shadow-sm group/item"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="w-3.5 h-3.5 rounded-full shadow-lg" style={{ background: item.color }} />
+                      <div className="flex flex-col">
+                        <span className="text-[13px] font-black text-black/80">{item.name}</span>
+                        <span className="text-[9px] font-bold text-black/30 uppercase tracking-widest">Active Segment</span>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-[14px] font-black text-black">
+                        {totalUsersCount > 0 ? ((item.value / totalUsersCount) * 100).toFixed(1) : 0}%
+                      </div>
+                      <div className="text-[9px] font-bold text-black/20">{item.value.toLocaleString()} Users</div>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
             </div>
           </GlassCard>
 
@@ -642,7 +738,7 @@ const DashboardView = ({
           </div>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 };
 
