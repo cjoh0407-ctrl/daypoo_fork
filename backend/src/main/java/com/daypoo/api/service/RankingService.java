@@ -215,11 +215,16 @@ public class RankingService {
         titleRepository.findAllById(titleIds).stream()
             .collect(Collectors.toMap(Title::getId, Title::getName));
 
-    // Batch-fetch equipped items for all top rankers
+    // Batch-fetch equipped items for all top rankers and current user
+    List<User> usersForInventory = new ArrayList<>(users);
+    if (myUser != null && !userMap.containsKey(myUser.getId())) {
+      usersForInventory.add(myUser);
+    }
+
     java.util.Map<Long, List<EquippedItemResponse>> equippedItemsMap =
-        users.isEmpty()
+        usersForInventory.isEmpty()
             ? java.util.Map.of()
-            : inventoryRepository.findEquippedByUserIn(users).stream()
+            : inventoryRepository.findEquippedByUserIn(usersForInventory).stream()
                 .collect(
                     Collectors.groupingBy(
                         inv -> inv.getUser().getId(),

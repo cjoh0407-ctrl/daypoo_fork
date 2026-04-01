@@ -1,5 +1,22 @@
 # Backend & AI Service Modification History
 
+## [2026-04-01 10:25:00] 랭킹 페이지 내 랭킹 섹션 아바타 표시 오류 수정
+
+### 작업 내용 요약
+- **결함 원인 파악**: `RankingService.getRankingFromRedis()`에서 인벤토리 아이템을 Top 10 유저만 대상으로 배치 조회하여, 로그인 유저가 Top 10 밖일 경우 장착 아이템 정보가 누락되는 현상 확인.
+- **로직 개선**: 인벤토리 조회 대상 리스트에 로그인 유저를 조건부로 추가하여 Top 10 여부와 상관없이 내 랭킹 정보에 아바타가 정상 표시되도록 수정.
+
+### 상세 변경 내역
+- `RankingService.java` 내 `getRankingFromRedis()` 메서드 수정
+- `usersForInventory` 리스트를 신설하여 Top 10 유저들과 로그인 유저(`myUser`)를 합침
+- `inventoryRepository.findEquippedByUserIn(usersForInventory)`를 호출하여 배치 조회 범위 확장
+
+### 결과/영향
+- 랭킹 페이지 하단의 '내 랭킹' 섹션에서 사용자가 장착한 아바타가 항상 올바르게 표시됨.
+
+[✅ 규칙을 잘 수행했습니다.]
+
+
 ## [2026-03-31 17:15:00] 신규 회원 기본 아바타 지급 로직 복구
 
 ### 작업 내용 요약
