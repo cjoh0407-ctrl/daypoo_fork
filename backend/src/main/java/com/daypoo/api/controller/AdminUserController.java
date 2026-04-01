@@ -4,6 +4,7 @@ import com.daypoo.api.dto.AdminRoleUpdateRequest;
 import com.daypoo.api.dto.AdminUserDetailResponse;
 import com.daypoo.api.dto.AdminUserListResponse;
 import com.daypoo.api.entity.enums.Role;
+import com.daypoo.api.entity.enums.SubscriptionPlan;
 import com.daypoo.api.service.AdminManagementService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -28,7 +29,7 @@ public class AdminUserController {
   public ResponseEntity<Page<AdminUserListResponse>> getUsers(
       @RequestParam(required = false) String search,
       @RequestParam(required = false) Role role,
-      @RequestParam(required = false) com.daypoo.api.entity.enums.SubscriptionPlan plan,
+      @RequestParam(required = false) SubscriptionPlan plan,
       @PageableDefault(size = 20) Pageable pageable) {
     return ResponseEntity.ok(adminManagementService.getUsers(search, role, plan, pageable));
   }

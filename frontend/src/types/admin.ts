@@ -43,6 +43,7 @@ export interface AdminUserListResponse {
   email: string;
   nickname: string;
   role: Role;
+  plan: 'BASIC' | 'PRO' | 'PREMIUM';
   level: number;
   points: number;
   recordCount: number;
@@ -54,6 +55,7 @@ export interface AdminUserDetailResponse {
   email: string;
   nickname: string;
   role: Role;
+  plan: 'BASIC' | 'PRO' | 'PREMIUM';
   level: number;
   exp: number;
   points: number;

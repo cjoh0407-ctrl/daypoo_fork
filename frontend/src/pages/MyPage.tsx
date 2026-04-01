@@ -1774,12 +1774,21 @@ function ReportTab({ records = [], reportCacheRef }: { records?: any[]; reportCa
 
 
   const fetchReport = useCallback(async (type: string) => {
+    // 탭 전환 시 데이터 초기화 및 로딩 가림 방지
+    setReportData(null);
+
+    // 일반회원은 weekly/monthly AI 분석 호출 자체를 막음
+    if (!isPro && type !== 'daily') {
+      setIsFetchLoading(false);
+      return;
+    }
+
     // 이미 불러온 데이터가 있으면 즉시 표시 (DAILY는 항상 새로 요청)
     if (type !== 'daily' && reportCacheRef.current[type]) {
       setReportData(reportCacheRef.current[type]);
       return;
     }
-    setReportData(null);
+
     setIsFetchLoading(true);
     try {
       const res = await api.get(`/reports/${type.toUpperCase()}`);
@@ -1794,7 +1803,7 @@ function ReportTab({ records = [], reportCacheRef }: { records?: any[]; reportCa
     } finally {
       setIsFetchLoading(false);
     }
-  }, []);
+  }, [isPro]);
 
   useEffect(() => {
     fetchReport(activeSubTab);
@@ -1812,7 +1821,7 @@ function ReportTab({ records = [], reportCacheRef }: { records?: any[]; reportCa
       className="flex flex-col gap-8"
     >
       {/* 서브 탭 내비게이션 (AI 가이드 연동) */}
-      <div className="flex p-1.5 sm:p-2 bg-gray-100 rounded-[16px] sm:rounded-[24px] w-full sm:w-fit mx-auto mb-4 border border-gray-200 shadow-inner overflow-x-auto scrollbar-hide">
+      <div className="flex p-1.5 sm:p-2 bg-gray-100 rounded-[16px] sm:rounded-[24px] w-full sm:w-fit mx-auto mb-4 mt-3 border border-gray-200 shadow-inner overflow-x-auto scrollbar-hide">
         {[
           { key: 'daily', label: '오늘 가이드', free: true },
           { key: 'weekly', label: '7일 리포트', free: false },
@@ -1958,13 +1967,11 @@ function ReportTab({ records = [], reportCacheRef }: { records?: any[]; reportCa
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -15 }}
-            className="relative"
+            className="relative min-h-[600px] sm:min-h-[800px]"
           >
-            {/* 정밀 분석 UI (비PRO 회원의 경우 블러 처리) */}
-            <div
-              className={`space-y-6 transition-all duration-500 ${!isPro ? 'blur-[12px] pointer-events-none' : ''}`}
-            >
-              {isFetchLoading ? (
+            {/* 정밀 분석 UI (비PRO 회원은 블러 처리 및 클릭 방지) */}
+            <div className={`space-y-6 ${!isPro ? 'blur-[8px] opacity-40 pointer-events-none select-none' : ''}`}>
+              {isPro && isFetchLoading ? (
                 <div className="rounded-[24px] sm:rounded-[40px] p-6 sm:p-12 bg-white border border-gray-100 shadow-sm flex items-center justify-center py-20 sm:py-32">
                   <div className="text-center">
                     <div className="w-20 h-20 border-4 border-amber-200 border-t-amber-600 rounded-full animate-spin mx-auto mb-4" />
@@ -2086,7 +2093,7 @@ function ReportTab({ records = [], reportCacheRef }: { records?: any[]; reportCa
                         </p>
                       </div>
                       <div className="space-y-4">
-                        {reportData?.insights?.map((insight: string, i: number) => (
+                        {(reportData?.insights || []).map((insight: string, i: number) => (
                           <p
                             key={i}
                             className="text-base text-emerald-900/70 font-bold leading-relaxed flex items-start gap-2"
@@ -2095,9 +2102,6 @@ function ReportTab({ records = [], reportCacheRef }: { records?: any[]; reportCa
                             {insight}
                           </p>
                         ))}
-                        {!reportData?.insights?.length && (
-                          <p className="text-gray-400 italic">분석된 인사이트가 없습니다.</p>
-                        )}
                       </div>
                       {reportData?.solution && (
                         <div className="mt-6 pt-6 border-t border-emerald-100">
@@ -2117,17 +2121,17 @@ function ReportTab({ records = [], reportCacheRef }: { records?: any[]; reportCa
                     </div>
                   </div>
 
-                  {/* MONTHLY 전용 추가 트렌드 섹션 */}
-                  {activeSubTab === 'monthly' && reportData && (
+                  {/* MONTHLY 전용 추가 트렌드 섹션 (데이터가 있을 때만 혹은 블러 처리용) */}
+                  {(activeSubTab === 'monthly' || !isPro) && (
                     <div className="mt-6 sm:mt-8 p-5 sm:p-8 rounded-[24px] sm:rounded-[40px] bg-gray-50 border border-gray-100 shadow-inner">
                       <div className="flex items-center justify-between mb-8">
                         <h4 className="text-lg font-black text-[#1A2B27]">30일 심층 트렌드</h4>
                         <div className="flex items-center gap-2">
-                          {reportData.improvementTrend === 'IMPROVING' ? (
+                          {reportData?.improvementTrend === 'IMPROVING' ? (
                             <span className="px-3 py-1.5 rounded-full bg-emerald-100 text-emerald-600 text-xs font-black flex items-center gap-1">
                               <TrendingUp size={14} /> 개선 중
                             </span>
-                          ) : reportData.improvementTrend === 'DECLINING' ? (
+                          ) : reportData?.improvementTrend === 'DECLINING' ? (
                             <span className="px-3 py-1.5 rounded-full bg-amber-100 text-amber-600 text-xs font-black flex items-center gap-1">
                               <TrendingDown size={14} /> 주의 필요
                             </span>
@@ -2146,7 +2150,7 @@ function ReportTab({ records = [], reportCacheRef }: { records?: any[]; reportCa
                             주차별 건강 점수 추이
                           </p>
                           <div className="flex items-end justify-between h-40 px-4 border-b border-gray-200 pb-2 gap-4 overflow-visible">
-                            {(reportData.weeklyHealthScores || [0, 0, 0, 0]).map(
+                            {(reportData?.weeklyHealthScores || [0, 0, 0, 0]).map(
                               (score: number, i: number) => (
                                 <div
                                   key={i}
@@ -2183,11 +2187,11 @@ function ReportTab({ records = [], reportCacheRef }: { records?: any[]; reportCa
                             브리스톨 척도 분포
                           </p>
                           <div className="h-4 w-full bg-gray-100 rounded-full overflow-hidden flex shadow-inner">
-                            {Object.entries(reportData.bristolDistribution || {}).map(
+                            {Object.entries(reportData?.bristolDistribution || {}).map(
                               ([key, val]: [string, any]) => {
                                 const k = parseInt(key);
                                 const total = Object.values(
-                                  reportData.bristolDistribution || {},
+                                  reportData?.bristolDistribution || {},
                                 ).reduce((a: any, b: any) => a + b, 0) as number;
                                 const percentage = (val / (total || 1)) * 100;
                                 const isHealthy = k === 3 || k === 4;
@@ -2212,7 +2216,7 @@ function ReportTab({ records = [], reportCacheRef }: { records?: any[]; reportCa
                           <p className="mt-4 text-sm font-black text-[#1A2B27]">
                             일평균 배변:{' '}
                             <span className="text-emerald-600">
-                              {reportData.avgDailyRecordCount || 0}회
+                              {reportData?.avgDailyRecordCount || 0}회
                             </span>
                           </p>
                         </div>
@@ -2231,18 +2235,24 @@ function ReportTab({ records = [], reportCacheRef }: { records?: any[]; reportCa
                   animate={{ opacity: 1, scale: 1 }}
                   className="w-full max-w-md bg-white/95 backdrop-blur-xl p-8 sm:p-14 rounded-[32px] sm:rounded-[56px] shadow-[0_32px_80px_rgba(0,0,0,0.15)] border border-white text-center"
                 >
-                  <div className="w-20 h-20 bg-amber-100 rounded-[32px] flex items-center justify-center mx-auto mb-6 shadow-inner transform rotate-6 hover:rotate-0 transition-transform duration-500">
+                  <motion.div
+                    className="w-20 h-20 bg-amber-100 rounded-[32px] flex items-center justify-center mx-auto mb-6 shadow-inner"
+                    animate={{ rotate: [0, -15, 15, -10, 10, -5, 5, 0] }}
+                    transition={{ duration: 0.8, repeat: Infinity, repeatDelay: 2, ease: 'easeInOut' }}
+                  >
                     <Lock size={36} className="text-amber-500" />
-                  </div>
+                  </motion.div>
                   <h3 className="text-2xl font-black text-[#1A2B27] mb-3 tracking-tight">
                     정밀 분석 리포트 잠금
                   </h3>
                   <p className="text-gray-500 font-bold text-base mb-10 leading-relaxed">
-                    7일간의 누적 기록을 바탕으로 산출되는 <br />
+                    {activeSubTab === 'weekly' ? '7일간의' : '30일간의'} 누적 기록을 바탕으로 산출되는 <br />
                     <span className="text-emerald-700">장 건강 점수</span>와{' '}
                     <span className="text-emerald-700">AI 푸의 맞춤 가이드</span>는<br />
-                    <span className="text-[#1B4332] font-black">PRO 멤버십</span> 회원에게만
-                    제공됩니다.
+                    <span className="text-[#1B4332] font-black">
+                      {activeSubTab === 'weekly' ? 'PRO' : 'PREMIUM'} 멤버십
+                    </span>{' '}
+                    회원에게만 제공됩니다.
                   </p>
                   <motion.button
                     whileHover={{ scale: 1.02 }}
@@ -2250,7 +2260,8 @@ function ReportTab({ records = [], reportCacheRef }: { records?: any[]; reportCa
                     onClick={() => navigate('/premium')}
                     className="w-full py-6 bg-[#1B4332] text-white font-black rounded-[28px] shadow-2xl shadow-emerald-900/40 flex items-center justify-center gap-3 text-lg"
                   >
-                    PRO 멤버십 가입하고 확인하기 <ArrowRight size={22} />
+                    {activeSubTab === 'weekly' ? 'PRO' : 'PREMIUM'} 멤버십 가입하고 확인하기{' '}
+                    <ArrowRight size={22} />
                   </motion.button>
                 </motion.div>
               </div>

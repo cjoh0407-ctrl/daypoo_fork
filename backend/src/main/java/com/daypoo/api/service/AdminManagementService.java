@@ -8,6 +8,7 @@ import com.daypoo.api.entity.enums.InquiryType;
 import com.daypoo.api.entity.enums.ItemType;
 import com.daypoo.api.entity.enums.NotificationType;
 import com.daypoo.api.entity.enums.Role;
+import com.daypoo.api.entity.enums.SubscriptionPlan;
 import com.daypoo.api.global.exception.BusinessException;
 import com.daypoo.api.global.exception.ErrorCode;
 import com.daypoo.api.repository.*;
@@ -42,7 +43,7 @@ public class AdminManagementService {
 
   @Transactional(readOnly = true)
   public Page<AdminUserListResponse> getUsers(
-      String search, Role role, com.daypoo.api.entity.enums.SubscriptionPlan plan, Pageable pageable) {
+      String search, Role role, SubscriptionPlan plan, Pageable pageable) {
     Specification<User> spec = (root, query, cb) -> {
       List<jakarta.persistence.criteria.Predicate> predicates = new ArrayList<>();
 
@@ -93,6 +94,7 @@ public class AdminManagementService {
                 .email(user.getEmail())
                 .nickname(user.getNickname())
                 .role(user.getRole())
+                .plan(user.getActiveSubscription() != null ? user.getActiveSubscription().getPlan() : SubscriptionPlan.BASIC)
                 .level(user.getLevel())
                 .points(user.getPoints())
                 .recordCount((int) pooRecordRepository.countByUserId(user.getId()))
@@ -114,6 +116,7 @@ public class AdminManagementService {
         .email(user.getEmail())
         .nickname(user.getNickname())
         .role(user.getRole())
+        .plan(user.getActiveSubscription() != null ? user.getActiveSubscription().getPlan() : SubscriptionPlan.BASIC)
         .level(user.getLevel())
         .exp(user.getExp())
         .points(user.getPoints())

@@ -136,7 +136,7 @@ function ItemPopup({ user, onClose, openAuth }: { user: RankUser; onClose: () =>
       openAuth('login');
       return;
     }
-    navigate('/mypage?tab=collection&sub=shop');
+    navigate('/mypage?tab=home&sub=shop');
   };
 
   return (
