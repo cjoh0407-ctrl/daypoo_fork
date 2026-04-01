@@ -174,6 +174,15 @@ public class RankingService {
     }
   }
 
+  private String extractAvatarUrl(List<EquippedItemResponse> items) {
+    return items.stream()
+        .filter(item -> "AVATAR".equals(item.type()))
+        .map(EquippedItemResponse::icon)
+        .filter(Objects::nonNull)
+        .findFirst()
+        .orElse(null);
+  }
+
   private RankingResponse getRankingFromRedis(String key, User myUser) {
     Set<ZSetOperations.TypedTuple<String>> topRankersRaw =
         redisTemplate.opsForZSet().reverseRangeWithScores(key, 0, 9);
@@ -230,7 +239,7 @@ public class RankingService {
                         inv -> inv.getUser().getId(),
                         Collectors.mapping(
                             inv ->
-                                new EquippedItemResponse(
+                                EquippedItemResponse.of(
                                     inv.getItem().getImageUrl(),
                                     inv.getItem().getName(),
                                     inv.getItem().getType().name()),
@@ -250,12 +259,7 @@ public class RankingService {
                       : null;
 
                   List<EquippedItemResponse> equippedItems = equippedItemsMap.getOrDefault(userId, List.of());
-                  String equippedAvatarUrl = equippedItems.stream()
-                      .filter(item -> "AVATAR".equals(item.type()))
-                      .map(EquippedItemResponse::icon)
-                      .filter(Objects::nonNull)
-                      .findFirst()
-                      .orElse(null);
+                  String equippedAvatarUrl = extractAvatarUrl(equippedItems);
 
                   return UserRankResponse.builder()
                       .userId(userId)
@@ -281,12 +285,7 @@ public class RankingService {
             : null;
 
         List<EquippedItemResponse> myEquippedItems = equippedItemsMap.getOrDefault(myUser.getId(), List.of());
-        String myEquippedAvatarUrl = myEquippedItems.stream()
-            .filter(item -> "AVATAR".equals(item.type()))
-            .map(EquippedItemResponse::icon)
-            .filter(Objects::nonNull)
-            .findFirst()
-            .orElse(null);
+        String myEquippedAvatarUrl = extractAvatarUrl(myEquippedItems);
 
         myRank =
             UserRankResponse.builder()
