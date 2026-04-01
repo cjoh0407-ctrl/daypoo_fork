@@ -2263,7 +2263,13 @@ const CsView = ({
 };
 
 // ── Screen: Store & Items Management ──────────────────────────────────
-const StoreView = ({ setActiveTab }: { setActiveTab: (tab: AdminTab) => void }) => {
+const StoreView = ({
+  setActiveTab,
+  setEditingItem,
+}: {
+  setActiveTab: (tab: AdminTab) => void;
+  setEditingItem: (item: ItemResponse) => void;
+}) => {
   const [items, setItems] = useState<ItemResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<ItemType | 'ALL'>('ALL');
@@ -4207,7 +4213,9 @@ export function AdminPage() {
               {activeTab === 'users' && <UsersView />}
               {activeTab === 'toilets' && <ToiletsView />}
               {activeTab === 'cs' && <CsView stats={stats} onStatsRefresh={fetchStats} />}
-              {activeTab === 'store' && <StoreView setActiveTab={setActiveTab} />}
+              {activeTab === 'store' && (
+                <StoreView setActiveTab={setActiveTab} setEditingItem={setEditingItem} />
+              )}
               {activeTab === 'titles' && (
                 <TitleManagementView
                   setActiveTab={setActiveTab}
