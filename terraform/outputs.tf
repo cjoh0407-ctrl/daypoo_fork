@@ -12,3 +12,8 @@ output "rds_endpoint" {
   description = "DB_HOST 시크릿에 등록할 값입니다."
   value       = aws_db_instance.postgres.address
 }
+
+output "opensearch_endpoint" {
+  description = "OPENSEARCH_URL 시크릿에 등록할 값입니다. (https:// 포함하여 등록)"
+  value       = "https://${aws_opensearch_domain.main.endpoint}"
+}

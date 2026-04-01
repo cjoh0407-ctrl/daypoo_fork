@@ -9,9 +9,6 @@ variable "openai_api_key" {
   type        = string
   sensitive   = true
 }
-  type        = string
-  default     = "ap-northeast-2"
-}
 
 variable "project_name" {
   description = "Project name"

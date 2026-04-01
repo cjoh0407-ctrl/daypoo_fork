@@ -1,0 +1,195 @@
+package com.daypoo.api.service;
+
+import com.daypoo.api.entity.Toilet;
+import com.daypoo.api.repository.ToiletRepository;
+import com.daypoo.api.util.ChosungUtils;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.List;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.client.WebClient;
+
+@Slf4j
+@Service
+@RequiredArgsConstructor
+public class ToiletIndexingService {
+
+  private static final String INDEX_NAME = "toilets";
+  private static final int PAGE_SIZE = 200;
+
+  private final ToiletRepository toiletRepository;
+  private final WebClient.Builder webClientBuilder;
+  private final ObjectMapper objectMapper;
+
+  @Value("${opensearch.url}")
+  private String opensearchUrl;
+
+  /** 앱 시작 시 인덱스가 비어 있으면 전체 데이터를 백그라운드로 인덱싱 */
+  @Async
+  @EventListener(ApplicationReadyEvent.class)
+  public void indexOnStartup() {
+    try {
+      ensureIndexExists();
+      long count = getIndexedCount();
+      if (count == 0) {
+        log.info("[OpenSearch] 인덱스가 비어 있어 전체 화장실 데이터를 인덱싱합니다...");
+        indexAll();
+      } else {
+        log.info("[OpenSearch] 기존 인덱스에 {}개 문서 존재 - 인덱싱 스킵", count);
+      }
+    } catch (Exception e) {
+      log.warn("[OpenSearch] 시작 시 인덱싱 실패 (검색 기능 비활성화): {}", e.getMessage());
+    }
+  }
+
+  /** DB의 모든 화장실을 OpenSearch에 bulk 인덱싱 */
+  public void indexAll() {
+    int page = 0;
+    int total = 0;
+    Page<Toilet> result;
+    do {
+      result = toiletRepository.findAll(PageRequest.of(page, PAGE_SIZE));
+      List<Toilet> toilets = result.getContent();
+      if (!toilets.isEmpty()) {
+        bulkIndex(toilets);
+        total += toilets.size();
+        log.info("[OpenSearch] 인덱싱 진행 중... {}개 완료", total);
+      }
+      page++;
+    } while (result.hasNext());
+    log.info("[OpenSearch] 전체 인덱싱 완료 - 총 {}개", total);
+  }
+
+  /** 화장실 목록을 OpenSearch에 bulk 인덱싱 */
+  public void bulkIndex(List<Toilet> toilets) {
+    StringBuilder body = new StringBuilder();
+    for (Toilet t : toilets) {
+      if (t.getLocation() == null) continue;
+      body.append("{\"index\":{\"_index\":\"")
+          .append(INDEX_NAME)
+          .append("\",\"_id\":\"")
+          .append(t.getId())
+          .append("\"}}\n");
+      body.append(buildDocument(t)).append("\n");
+    }
+    if (body.isEmpty()) return;
+
+    try {
+      webClientBuilder
+          .build()
+          .post()
+          .uri(opensearchUrl + "/_bulk")
+          .header("Content-Type", "application/x-ndjson")
+          .bodyValue(body.toString())
+          .retrieve()
+          .bodyToMono(String.class)
+          .block();
+    } catch (Exception e) {
+      log.warn("[OpenSearch] bulk 인덱싱 실패: {}", e.getMessage());
+    }
+  }
+
+  // ── private helpers ──────────────────────────────────────────────────────
+
+  private void ensureIndexExists() {
+    WebClient client = webClientBuilder.build();
+    try {
+      // HEAD 요청으로 인덱스 존재 여부 확인
+      client
+          .head()
+          .uri(opensearchUrl + "/" + INDEX_NAME)
+          .retrieve()
+          .toBodilessEntity()
+          .block();
+    } catch (Exception e) {
+      // 404 → 인덱스 없음 → 생성
+      createIndex(client);
+    }
+  }
+
+  private void createIndex(WebClient client) {
+    String mapping =
+        """
+        {
+          "settings": {
+            "analysis": {
+              "analyzer": {
+                "korean": {"type": "nori"}
+              }
+            }
+          },
+          "mappings": {
+            "properties": {
+              "id":             {"type": "long"},
+              "name":           {"type": "text", "analyzer": "nori"},
+              "nameChosung":    {"type": "keyword"},
+              "address":        {"type": "text", "analyzer": "nori"},
+              "addressChosung": {"type": "keyword"},
+              "latitude":       {"type": "double"},
+              "longitude":      {"type": "double"}
+            }
+          }
+        }
+        """;
+    try {
+      client
+          .put()
+          .uri(opensearchUrl + "/" + INDEX_NAME)
+          .header("Content-Type", "application/json")
+          .bodyValue(mapping)
+          .retrieve()
+          .bodyToMono(String.class)
+          .block();
+      log.info("[OpenSearch] 인덱스 '{}' 생성 완료", INDEX_NAME);
+    } catch (Exception e) {
+      log.warn("[OpenSearch] 인덱스 생성 실패: {}", e.getMessage());
+    }
+  }
+
+  private long getIndexedCount() {
+    try {
+      String response =
+          webClientBuilder
+              .build()
+              .get()
+              .uri(opensearchUrl + "/" + INDEX_NAME + "/_count")
+              .retrieve()
+              .bodyToMono(String.class)
+              .block();
+      JsonNode node = objectMapper.readTree(response);
+      return node.path("count").asLong(0);
+    } catch (Exception e) {
+      return 0;
+    }
+  }
+
+  private String buildDocument(Toilet t) {
+    try {
+      String name = t.getName() != null ? t.getName() : "";
+      String address = t.getAddress() != null ? t.getAddress() : "";
+      return objectMapper.writeValueAsString(
+          new java.util.LinkedHashMap<>() {
+            {
+              put("id", t.getId());
+              put("name", name);
+              put("nameChosung", ChosungUtils.extractChosung(name));
+              put("address", address);
+              put("addressChosung", ChosungUtils.extractChosung(address));
+              put("latitude", t.getLocation().getY());
+              put("longitude", t.getLocation().getX());
+            }
+          });
+    } catch (Exception e) {
+      log.warn("[OpenSearch] 문서 직렬화 실패 id={}: {}", t.getId(), e.getMessage());
+      return "{}";
+    }
+  }
+}

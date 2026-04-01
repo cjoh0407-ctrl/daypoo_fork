@@ -126,6 +126,7 @@ jobs:
             printf "TOSS_SECRET_KEY=%s\n" "${{ secrets.TOSS_SECRET_KEY }}" >> .env
             printf "VITE_TOSS_CLIENT_KEY=%s\n" "${{ secrets.VITE_TOSS_CLIENT_KEY }}" >> .env
             printf "VITE_KAKAO_MAP_KEY=%s\n" "${{ secrets.VITE_KAKAO_MAP_KEY }}" >> .env
+            printf "OPENSEARCH_URL=%s\n" "${{ secrets.OPENSEARCH_URL }}" >> .env
             
             docker compose -f docker-compose.prod.yml pull
             docker compose -f docker-compose.prod.yml down --remove-orphans

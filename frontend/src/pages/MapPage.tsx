@@ -23,6 +23,8 @@ export function MapPage({ openAuth }: { openAuth: (mode: 'login' | 'signup') => 
   const [targetForVisit, setTargetForVisit] = useState<ToiletData | null>(null);
   const [filter, setFilter] = useState<FilterMode>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<ToiletData[]>([]);
+  const [searchLoading, setSearchLoading] = useState(false);
   const [bounds, setBounds] = useState<any>(null);
   const [mapLevel, setMapLevel] = useState(4);
   const [checkInTime, setCheckInTime] = useState<number | null>(null);
@@ -87,6 +89,42 @@ export function MapPage({ openAuth }: { openAuth: (mode: 'login' | 'signup') => 
     };
     fetchFavorites();
   }, []);
+
+  // ── OpenSearch 텍스트 검색 (디바운스 300ms) ──────────────────
+  useEffect(() => {
+    const trimmed = searchQuery.trim();
+    if (trimmed === '') {
+      setSearchResults([]);
+      return;
+    }
+    setSearchLoading(true);
+    const timer = setTimeout(async () => {
+      try {
+        const data = await api.get<any[]>(`/toilets/search?q=${encodeURIComponent(trimmed)}&size=20`);
+        const results: ToiletData[] = (data || []).map((item: any) => ({
+          id: String(item.id),
+          name: item.name || '이름없음',
+          roadAddress: item.address || '',
+          lat: item.latitude,
+          lng: item.longitude,
+          isOpen24h: false,
+          isMixedGender: false,
+          hasDiaperTable: false,
+          hasEmergencyBell: false,
+          hasCCTV: false,
+          isVisited: visitedIds.has(String(item.id)),
+          isFavorite: favoriteIds.has(String(item.id)),
+        }));
+        setSearchResults(results);
+      } catch (e) {
+        console.warn('검색 실패:', e);
+        setSearchResults([]);
+      } finally {
+        setSearchLoading(false);
+      }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery, visitedIds, favoriteIds]);
 
   // ── 비즈니스 로직 ──────────────────────────────────────────
 
@@ -262,21 +300,18 @@ export function MapPage({ openAuth }: { openAuth: (mode: 'login' | 'signup') => 
     visitCount: visitCounts[t.id] || 0,
   }));
 
-  const filteredToilets = toiletsWithVisitCount.filter((t) => {
-    const matchesFilter =
-      filter === 'all'
-        ? true
-        : filter === 'favorite'
-          ? t.isFavorite
-          : filter === 'visited'
-            ? t.isVisited
-            : true;
-    const matchesSearch =
-      searchQuery.trim() === '' ||
-      t.name.includes(searchQuery) ||
-      (t.roadAddress && t.roadAddress.includes(searchQuery));
-    return matchesFilter && matchesSearch;
-  });
+  // 검색어가 있으면 ES 결과 사용, 없으면 지도 반경 내 화장실에 필터만 적용
+  const filteredToilets = searchQuery.trim() !== ''
+    ? searchResults
+    : toiletsWithVisitCount.filter((t) =>
+        filter === 'all'
+          ? true
+          : filter === 'favorite'
+            ? t.isFavorite
+            : filter === 'visited'
+              ? t.isVisited
+              : true,
+      );
 
   if (!pos) {
     return (
@@ -318,7 +353,7 @@ export function MapPage({ openAuth }: { openAuth: (mode: 'login' | 'signup') => 
 
         {/* 검색 결과 목록 */}
         <AnimatePresence>
-          {searchQuery.trim() !== '' && filteredToilets.length > 0 && (
+          {searchQuery.trim() !== '' && (searchLoading || filteredToilets.length > 0) && (
             <motion.div
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -332,7 +367,7 @@ export function MapPage({ openAuth }: { openAuth: (mode: 'login' | 'signup') => 
               >
                 <div className="p-4 border-b border-gray-100">
                   <p className="text-sm font-bold text-[#1B4332]">
-                    검색 결과 {filteredToilets.length}개
+                    {searchLoading ? '검색 중...' : `검색 결과 ${filteredToilets.length}개`}
                   </p>
                 </div>
                 <div className="overflow-y-auto" style={{ maxHeight: '340px' }}>

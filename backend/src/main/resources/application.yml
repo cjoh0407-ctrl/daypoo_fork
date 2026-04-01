@@ -109,6 +109,9 @@ ai-service:
 toss:
   secret-key: ${TOSS_SECRET_KEY}
 
+opensearch:
+  url: ${OPENSEARCH_URL:http://localhost:9200}
+
 logging:
   level:
     root: INFO
