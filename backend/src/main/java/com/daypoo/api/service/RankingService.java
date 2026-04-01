@@ -248,6 +248,7 @@ public class RankingService {
                   String equippedAvatarUrl = equippedItems.stream()
                       .filter(item -> "AVATAR".equals(item.type()))
                       .map(EquippedItemResponse::icon)
+                      .filter(Objects::nonNull)
                       .findFirst()
                       .orElse(null);
 
@@ -278,6 +279,7 @@ public class RankingService {
         String myEquippedAvatarUrl = myEquippedItems.stream()
             .filter(item -> "AVATAR".equals(item.type()))
             .map(EquippedItemResponse::icon)
+            .filter(Objects::nonNull)
             .findFirst()
             .orElse(null);
 
