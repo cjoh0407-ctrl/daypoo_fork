@@ -1774,6 +1774,9 @@ function ReportTab({ records = [], reportCacheRef }: { records?: any[]; reportCa
 
 
   const fetchReport = useCallback(async (type: string) => {
+    // 일반회원은 weekly/monthly AI 분석 호출 자체를 막음
+    if (!isPro && type !== 'daily') return;
+
     // 이미 불러온 데이터가 있으면 즉시 표시 (DAILY는 항상 새로 요청)
     if (type !== 'daily' && reportCacheRef.current[type]) {
       setReportData(reportCacheRef.current[type]);
@@ -1794,7 +1797,7 @@ function ReportTab({ records = [], reportCacheRef }: { records?: any[]; reportCa
     } finally {
       setIsFetchLoading(false);
     }
-  }, []);
+  }, [isPro]);
 
   useEffect(() => {
     fetchReport(activeSubTab);
@@ -2231,14 +2234,18 @@ function ReportTab({ records = [], reportCacheRef }: { records?: any[]; reportCa
                   animate={{ opacity: 1, scale: 1 }}
                   className="w-full max-w-md bg-white/95 backdrop-blur-xl p-8 sm:p-14 rounded-[32px] sm:rounded-[56px] shadow-[0_32px_80px_rgba(0,0,0,0.15)] border border-white text-center"
                 >
-                  <div className="w-20 h-20 bg-amber-100 rounded-[32px] flex items-center justify-center mx-auto mb-6 shadow-inner transform rotate-6 hover:rotate-0 transition-transform duration-500">
+                  <motion.div
+                    className="w-20 h-20 bg-amber-100 rounded-[32px] flex items-center justify-center mx-auto mb-6 shadow-inner"
+                    animate={{ rotate: [0, -15, 15, -10, 10, -5, 5, 0] }}
+                    transition={{ duration: 0.8, repeat: Infinity, repeatDelay: 2, ease: 'easeInOut' }}
+                  >
                     <Lock size={36} className="text-amber-500" />
-                  </div>
+                  </motion.div>
                   <h3 className="text-2xl font-black text-[#1A2B27] mb-3 tracking-tight">
                     정밀 분석 리포트 잠금
                   </h3>
                   <p className="text-gray-500 font-bold text-base mb-10 leading-relaxed">
-                    7일간의 누적 기록을 바탕으로 산출되는 <br />
+                    30일간의 누적 기록을 바탕으로 산출되는 <br />
                     <span className="text-emerald-700">장 건강 점수</span>와{' '}
                     <span className="text-emerald-700">AI 푸의 맞춤 가이드</span>는<br />
                     <span className="text-[#1B4332] font-black">PRO 멤버십</span> 회원에게만
