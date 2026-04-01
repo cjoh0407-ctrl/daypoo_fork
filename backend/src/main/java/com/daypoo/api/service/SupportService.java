@@ -75,6 +75,27 @@ public class SupportService {
     systemLogService.info("Support", "Inquiry deleted by user: " + inquiryId);
   }
 
+  /** 문의 수정 (사용자 본인 확인) */
+  public void updateInquiry(User user, Long inquiryId, InquiryRequest request) {
+    Inquiry inquiry =
+        inquiryRepository
+            .findById(inquiryId)
+            .orElseThrow(() -> new BusinessException(ErrorCode.ADMIN_INQUIRY_NOT_FOUND));
+
+    if (!inquiry.getUser().getId().equals(user.getId())) {
+      throw new BusinessException(ErrorCode.HANDLE_ACCESS_DENIED);
+    }
+
+    if (inquiry.getAnswer() != null) {
+      throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE); // 답변된 문의는 수정 불가
+    }
+
+    inquiry.update(request.title(), request.content(), InquiryType.fromLabel(request.category()));
+
+    inquiryRepository.save(inquiry);
+    systemLogService.info("Support", "Inquiry updated by user: " + inquiryId);
+  }
+
   /** 카테고리별 FAQ 조회 */
   @Transactional(readOnly = true)
   public List<FaqResponse> getFaqs(String category) {

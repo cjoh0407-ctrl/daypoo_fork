@@ -44,6 +44,17 @@ public class SupportController {
     return ResponseEntity.ok().build();
   }
 
+  /** 내 문의 수정 */
+  @PutMapping("/inquiries/{id}")
+  public ResponseEntity<Void> updateInquiry(
+      @AuthenticationPrincipal String email,
+      @PathVariable("id") Long id,
+      @RequestBody InquiryRequest request) {
+    User user = userService.getByEmail(email);
+    supportService.updateInquiry(user, id, request);
+    return ResponseEntity.ok().build();
+  }
+
   /** FAQ 조회 */
   @GetMapping("/faqs")
   public ResponseEntity<List<FaqResponse>> getFaqs(

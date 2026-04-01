@@ -56,4 +56,10 @@ public class Inquiry extends BaseTimeEntity {
     this.answer = answer;
     this.status = InquiryStatus.COMPLETED;
   }
+
+  public void update(String title, String content, InquiryType type) {
+    this.title = title;
+    this.content = content;
+    this.type = type;
+  }
 }
