@@ -41,17 +41,46 @@ public class AdminManagementService {
   // --- 유저 관리 ---
 
   @Transactional(readOnly = true)
-  public Page<AdminUserListResponse> getUsers(String search, Role role, Pageable pageable) {
+  public Page<AdminUserListResponse> getUsers(
+      String search, Role role, com.daypoo.api.entity.enums.SubscriptionPlan plan, Pageable pageable) {
     Specification<User> spec = (root, query, cb) -> {
       List<jakarta.persistence.criteria.Predicate> predicates = new ArrayList<>();
+
+      // 1. 키워드 검색 (이메일 또는 닉네임)
       if (search != null && !search.isBlank()) {
         predicates.add(
             cb.or(
                 cb.like(root.get("email"), "%" + search + "%"),
                 cb.like(root.get("nickname"), "%" + search + "%")));
       }
+
+      // 2. 역할 필터
       if (role != null) {
         predicates.add(cb.equal(root.get("role"), role));
+      }
+
+      // 3. 구독 플랜 필터
+      if (plan != null) {
+        if (plan == com.daypoo.api.entity.enums.SubscriptionPlan.BASIC) {
+          // '미구독(BASIC)' 유저: 활성화(ACTIVE)된 PRO나 PREMIUM 구독이 없는 경우
+          jakarta.persistence.criteria.Subquery<Long> subquery = query.subquery(Long.class);
+          jakarta.persistence.criteria.Root<Subscription> subRoot = subquery.from(Subscription.class);
+          subquery.select(cb.literal(1L));
+          subquery.where(
+              cb.equal(subRoot.get("user"), root),
+              cb.equal(subRoot.get("status"), com.daypoo.api.entity.enums.SubscriptionStatus.ACTIVE),
+              cb.greaterThan(subRoot.get("endDate"), java.time.LocalDateTime.now()),
+              subRoot.get("plan").in(
+                  com.daypoo.api.entity.enums.SubscriptionPlan.PRO,
+                  com.daypoo.api.entity.enums.SubscriptionPlan.PREMIUM));
+          predicates.add(cb.not(cb.exists(subquery)));
+        } else {
+          // 특정 활성 유료 구독(PRO 또는 PREMIUM)이 있는 유저
+          jakarta.persistence.criteria.Join<User, Subscription> subJoin = root.join("subscriptions");
+          predicates.add(cb.equal(subJoin.get("plan"), plan));
+          predicates.add(cb.equal(subJoin.get("status"), com.daypoo.api.entity.enums.SubscriptionStatus.ACTIVE));
+          predicates.add(cb.greaterThan(subJoin.get("endDate"), java.time.LocalDateTime.now()));
+        }
       }
       return cb.and(predicates.toArray(new jakarta.persistence.criteria.Predicate[0]));
     };

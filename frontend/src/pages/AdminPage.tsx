@@ -658,6 +658,9 @@ const UsersView = () => {
   const [selectedUser, setSelectedUser] = useState<AdminUserListResponse | null>(null);
   const [userDetail, setUserDetail] = useState<AdminUserDetailResponse | null>(null);
   const [loadingDetail, setLoadingDetail] = useState(false);
+  const [roleFilter, setRoleFilter] = useState('');
+  const [planFilter, setPlanFilter] = useState('');
+  const [searchInput, setSearchInput] = useState('');
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -667,6 +670,8 @@ const UsersView = () => {
         size: '20',
       });
       if (search) params.append('search', search);
+      if (roleFilter) params.append('role', roleFilter);
+      if (planFilter) params.append('plan', planFilter);
 
       const response = await api.get<PageResponse<AdminUserListResponse>>(`/admin/users?${params}`);
       setUsers(response.content);
@@ -679,9 +684,18 @@ const UsersView = () => {
     }
   };
 
+  // Search Debounce Logic
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setSearch(searchInput);
+      setPage(0);
+    }, 500);
+    return () => clearTimeout(handler);
+  }, [searchInput]);
+
   useEffect(() => {
     fetchUsers();
-  }, [page, search]);
+  }, [page, search, roleFilter, planFilter]);
 
   const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -753,16 +767,73 @@ const UsersView = () => {
     return role === 'ROLE_ADMIN' ? 'ADMIN' : 'USER';
   };
 
+  const getPlanBadge = (plan: 'BASIC' | 'PRO' | 'PREMIUM') => {
+    switch (plan) {
+      case 'PRO':
+        return <span className="bg-amber-100 text-amber-600 px-1.5 py-0.5 rounded-md text-[9px] font-black uppercase">PRO</span>;
+      case 'PREMIUM':
+        return <span className="bg-emerald-100 text-emerald-600 px-1.5 py-0.5 rounded-md text-[9px] font-black uppercase">PREMIUM</span>;
+      default:
+        return <span className="bg-black/5 text-black/40 px-1.5 py-0.5 rounded-md text-[9px] font-black uppercase">BASIC</span>;
+    }
+  };
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
           <h3 className="text-2xl font-black text-black">유저 데이터 센터</h3>
           <p className="text-sm text-black/60 font-bold">
             총 {totalElements.toLocaleString()}명의 사용자
           </p>
         </div>
-        {/* 검색바 제거됨 */}
+
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Search Input */}
+          <div className="relative min-w-[280px]">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-black/20" size={18} />
+            <input
+              type="text"
+              placeholder="이메일 또는 닉네임으로 검색"
+              className="w-full pl-12 pr-4 py-3 rounded-2xl border border-black/5 bg-white/50 backdrop-blur-xl focus:outline-none focus:border-[#1B4332]/30 transition-all font-bold text-sm"
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+            />
+          </div>
+
+          {/* Role Filter */}
+          <div className="relative">
+            <select
+              value={roleFilter}
+              onChange={(e) => {
+                setRoleFilter(e.target.value);
+                setPage(0);
+              }}
+              className="px-4 py-3 rounded-2xl border border-black/5 bg-white/50 backdrop-blur-xl focus:outline-none focus:border-[#1B4332]/30 transition-all font-black text-sm appearance-none cursor-pointer"
+            >
+              <option value="">역할: 전체</option>
+              <option value="ROLE_USER">일반 유저</option>
+              <option value="ROLE_ADMIN">관리자</option>
+            </select>
+          </div>
+
+          {/* Plan Filter */}
+          <div className="relative">
+            <select
+              value={planFilter}
+              onChange={(e) => {
+                setPlanFilter(e.target.value);
+                setPage(0);
+              }}
+              className="px-4 py-3 rounded-2xl border border-black/5 bg-white/50 backdrop-blur-xl focus:outline-none focus:border-[#1B4332]/30 transition-all font-black text-sm appearance-none cursor-pointer"
+            >
+              <option value="">플랜: 전체</option>
+              <option value="BASIC">BASIC (미구독)</option>
+              <option value="PRO">PRO</option>
+              <option value="PREMIUM">PREMIUM</option>
+            </select>
+          </div>
+        </div>
       </div>
 
       {loading ? (
@@ -784,6 +855,9 @@ const UsersView = () => {
                     </th>
                     <th className="px-8 py-5 text-[11px] font-black uppercase tracking-widest text-black/40">
                       가입일
+                    </th>
+                    <th className="px-8 py-5 text-[11px] font-black uppercase tracking-widest text-black/40">
+                      구독 정보
                     </th>
                     <th className="px-8 py-5 text-[11px] font-black uppercase tracking-widest text-black/40">
                       레벨
@@ -832,6 +906,9 @@ const UsersView = () => {
                       </td>
                       <td className="px-8 py-5 text-sm font-bold text-black/60">
                         {formatDate(u.createdAt)}
+                      </td>
+                      <td className="px-8 py-5">
+                        {getPlanBadge(u.plan)}
                       </td>
                       <td className="px-8 py-5 font-black text-[#2D6A4F]">Lv.{u.level}</td>
                       <td className="px-8 py-5 font-black text-[#E8A838]">
@@ -968,6 +1045,14 @@ const UsersView = () => {
                       <p className="text-sm font-bold text-black/80">
                         {userDetail.totalPaymentAmount?.toLocaleString() || 0}원
                       </p>
+                    </div>
+                    <div className="bg-black/[0.02] rounded-2xl p-4">
+                      <p className="text-xs font-black uppercase tracking-widest text-black/40 mb-2">
+                        구독 플랜
+                      </p>
+                      <div>
+                        {getPlanBadge(userDetail.plan)}
+                      </div>
                     </div>
                     <div className="bg-black/[0.02] rounded-2xl p-4">
                       <p className="text-xs font-black uppercase tracking-widest text-black/40 mb-2">

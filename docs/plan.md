@@ -1,42 +1,46 @@
-# 람다봇(main.py) API 규격 정합성 개선 계획
+# 관리자 페이지 유저 검색 기능 개선 계획 (최종 상세안)
 
 ## 1. 개요
-현재 배포된 람다봇(`main.py`)이 백엔드의 최신 API 규격과 일치하지 않아 404 Not Found 및 400 Bad Request 에러로 인해 정상 작동하지 않고 있습니다. 이를 최신 API 명세에 맞춰 전면 수정하는 계획을 수립합니다.
+관리자 페이지의 유저 관리 섹션에서 **이메일 및 닉네임**을 활용한 검색과 **역할 및 구독 상태** 필터링 기능을 구현하여 유저 관리의 편의성을 높입니다.
 
-## 2. 주요 수정 사항 및 계획
+## 2. 주요 요구 사항 및 제약 사항
 
-### **[작업 1] 화장실 조회 로직 수정 (Toilets API)**
-- **대상:** `main.py` 내 화장실 조회 호출 부분
-- **수정 내용:**
-    - 호출 경로 변경: `/toilets/nearby` → `/toilets`
-    - 파라미터명 변경: `lat` → `latitude`, `lng` → `longitude`
-    - 반환 데이터 구조 확인: 백엔드가 `List<ToiletResponse>`를 직접 반환하므로 이에 맞춰 파라싱 로직 단순화.
-- **목적:** 존재하지 않는 경로 호출 문제를 해결하고 정확한 위치 기반 화장실 데이터를 획득합니다.
+### A. 검색 기능 (Search)
+- **대상 필드**: `이메일(email)`, `닉네임(nickname)`
+  - 유저 ID(PK) 검색 및 기타 필드는 검색 대상에서 제외합니다.
+- **방식**: 입력된 키워드가 이메일 또는 닉네임에 포함된 경우(Partial Match)를 검색.
+- **구현**: 프론트엔드에서 500ms의 Debounce를 적용하여 불필요한 API 호출을 방지합니다.
 
-### **[작업 2] 배변 기록 생성 로직 수정 (Poo Records API)**
-- **대상:** `main.py` 내 `POST /records` 호출 부분
-- **수정 내용:**
-    - **필수 필드 추가:** `toiletId`, `latitude`, `longitude` 필드를 생성 요청 본문에 반드시 포함 (작업 1에서 얻은 데이터 활용).
-    - **필드명 및 타입 매핑:**
-        - `shape` (기존) → `bristolScale` (Integer 타입으로 매핑)
-        - `color` (유지)
-        - `smellLevel` 등 (기존) → `conditionTags` (List<String> 타입으로 매핑)
-- **목적:** 백엔드의 필수 유효성 검증(@NotNull) 통과 및 데이터 정합성을 확보합니다.
+### B. 필터 기능 (Filter)
+- **역할(Role) 필터**: 
+  - `전체`, `관리자(ROLE_ADMIN)`, `일반 사용자(ROLE_USER)`
+- **구독 상태(Subscription) 필터**: 
+  - `전체`, `미구독(BASIC)`, `프로(PRO)`, `프리미엄(PREMIUM)`
+- **제외 사항**: 가입일 범위 필터(Signup Date Range)는 구현 범위에서 제외합니다.
 
-### **[작업 3] 화장실 리뷰 작성 로직 수정 (Reviews API)**
-- **대상:** `main.py` 내 리뷰 생성 호출 부분
-- **수정 내용:**
-    - 호출 경로 변경: `/reviews/toilets/{id}` → `/toilets/{id}/reviews` (계층적 구조로 변경)
-    - 데이터 타입 변경: `emojiTags` 필드를 문자열(`"clean,tissue"`)에서 문자열 리스트(`["clean", "tissue"]`)로 변경.
-- **목적:** 리소스 경로 불일치 및 데이터 타입 오류를 해결합니다.
+## 3. 기술적 상세 구현 계획
 
-## 3. 수정 대상 파일
-- `/Users/changjun/Desktop/project/daypoo_fork/terraform/bot_lambda/main.py`
+### 🛠 백엔드 (API & Service)
+- **대상 파일**:
+  - `AdminUserController.java`: `getUsers` API에 `SubscriptionPlan` 필터 파라미터 추가.
+  - `AdminManagementService.java`: `getUsers` 메서드의 `Specification` 고도화.
+- **상세 로직**:
+  - `Subscription` 엔터티를 `Join`하여 현재 활성 상태인 구독 플랜(ACTIVE)이 있는지 확인하고, 선택된 플랜(`BASIC`, `PRO`, `PREMIUM`)에 해당하는 유저만 필터링하도록 쿼리 구현.
 
-## 4. 검증 계획
-1.  **로컬 실행 테스트:** 수정된 `main.py`를 로컬에서 직접 실행하여 운영 API 서버로부터 200 OK 응답을 받는지 확인.
-2.  **데이터베이스 확인:** 봇이 생성한 `bot_N@daypoo.com` 유저의 활동 기록이 DB에 정상적으로 인서트 되었는지 확인.
-3.  **랭킹 페이지 확인:** 랭킹 점수가 실시간으로 반영되어 순위가 변동되는지 가시적으로 확인.
+### 🎨 프론트엔드 (UI/UX)
+- **대상 파일**: `AdminPage.tsx` 내 `UsersView` 컴포넌트
+- **UI 구현**:
+  - 현재 주석 처리된 검색바 UI(`Lucide-Search` 아이콘 포함)를 복구.
+  - 역할 필터를 위한 `select` UI 추가.
+  - 구독 상태 필터를 위한 `select` UI 추가.
+- **동작 방식**: 
+  - 상단에 배치된 검색 및 필터 UI 값이 변경될 때마다 `fetchUsers`가 호출되면서 신규 파라미터를 API로 전달.
+
+## 4. 검증 시나리오 (Acceptance Criteria)
+1. **이메일/닉네임 검색**: 한 글자 이상의 검색어 입력 시 해당 정보가 포함된 유저만 리스트에 노출되는가?
+2. **역할 필터**: '관리자' 선택 시 관리자 권한을 가진 유저만 필터링되는가?
+3. **구독 필터**: '프로' 선택 시 PRO 구독 플랜을 가진 유저만 필터링되는가?
+4. **검색 연동**: 필터를 설정한 상태에서 검색어 입력 시 두 조건이 모두 적용(AND 조건)되는가?
 
 ---
 [✅ 규칙을 잘 수행했습니다.]
