@@ -2002,7 +2002,7 @@ const StoreView = ({ setActiveTab }: { setActiveTab: (tab: AdminTab) => void }) 
     try {
       const params = new URLSearchParams({
         page: page.toString(),
-        size: '12',
+        size: '15',
       });
       if (filter !== 'ALL') params.append('type', filter);
 

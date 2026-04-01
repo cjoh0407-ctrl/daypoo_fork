@@ -945,7 +945,7 @@ function HomeTab({
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [chargeAmount, setChargeAmount] = useState<number | ''>(5000);
   const [currentPage, setCurrentPage] = useState(0);
-  const itemsPerPage = 12;
+  const itemsPerPage = 15;
 
   // shopTab 변경 시 페이지 리셋
   useEffect(() => {
