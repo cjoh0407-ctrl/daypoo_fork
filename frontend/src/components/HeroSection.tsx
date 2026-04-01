@@ -1,5 +1,5 @@
-import { motion, useAnimation, useInView } from 'framer-motion';
-import { useRef, useEffect, useState } from 'react';
+import { motion } from 'framer-motion';
+import { useEffect, useState } from 'react';
 import { Activity, MapPin, Sparkles, TrendingUp, Zap } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import WaveButton from './WaveButton';
@@ -9,6 +9,27 @@ import { BlobStatsSection } from './BlobStatsSection';
 import { WaveDivider } from './WaveDivider';
 import { useToilets } from '../hooks/useToilets';
 
+// Data Analysis Pipeline — lane positions (% from top)
+const FLOW_LANES = [20, 48, 76];
+
+// Particles flowing through each lane
+const FLOW_DOTS = [
+  { lane: 0, speed: 3.2, delay: 0,   size: 5 },
+  { lane: 1, speed: 2.4, delay: 0.4, size: 7 },
+  { lane: 2, speed: 3.6, delay: 0.9, size: 5 },
+  { lane: 0, speed: 2.8, delay: 1.6, size: 4 },
+  { lane: 1, speed: 2.6, delay: 2.1, size: 6 },
+  { lane: 2, speed: 3.0, delay: 2.7, size: 4 },
+  { lane: 1, speed: 2.2, delay: 3.4, size: 5 },
+];
+
+// Floating status labels
+const PIPELINE_LABELS = [
+  { text: '기록 수집',  x: '6%',  y: '6%',  delay: 0.3 },
+  { text: 'AI 분석 중', x: '42%', y: '84%', delay: 2.0 },
+  { text: '패턴 감지',  x: '78%', y: '6%',  delay: 3.8 },
+];
+
 interface HeroSectionProps {
   onCtaClick: () => void;
   openAuth: (mode: 'login' | 'signup') => void;
@@ -17,10 +38,7 @@ interface HeroSectionProps {
 export function HeroSection({ onCtaClick, openAuth }: HeroSectionProps) {
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
-  const controls = useAnimation();
-  const ref = useRef(null);
-  const inView = useInView(ref);
-  
+
   // Real-time Data States
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [locationName, setLocationName] = useState('위치 확인 중...');
@@ -36,10 +54,6 @@ export function HeroSection({ onCtaClick, openAuth }: HeroSectionProps) {
     lng: userLocation?.lng || 126.9784,
     radius: 1500
   });
-
-  useEffect(() => {
-    if (inView) controls.start("visible");
-  }, [controls, inView]);
 
   useEffect(() => {
     // Get Location for Nearby Toilets
@@ -68,7 +82,7 @@ export function HeroSection({ onCtaClick, openAuth }: HeroSectionProps) {
 
   return (
     <>
-      <section ref={ref} className="relative min-h-screen flex items-center justify-center bg-[#111E18] overflow-hidden px-4 sm:px-8 pt-32 pb-20 sm:pt-32 sm:pb-32">
+      <section className="relative min-h-screen flex items-center justify-center bg-[#111E18] overflow-hidden px-4 sm:px-8 pt-32 pb-20 sm:pt-32 sm:pb-32">
         {/* Dynamic Background Noise */}
         <div className="absolute inset-0 opacity-[0.15] mix-blend-color-dodge pointer-events-none">
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-emerald-400/20 blur-[150px] rounded-full" />
@@ -84,17 +98,18 @@ export function HeroSection({ onCtaClick, openAuth }: HeroSectionProps) {
               transition={{ duration: 0.8 }}
               className="space-y-6"
             >
-              <div className="flex items-center gap-3 px-4 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 w-max">
-                <Zap size={14} className="text-emerald-400" />
-                <span className="text-emerald-300 text-[10px] font-black uppercase tracking-widest">실시간 건강 엔진 작동 중</span>
+              <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 w-max">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                <Zap size={11} className="text-emerald-400" />
+                <span className="text-emerald-300 text-xs font-semibold uppercase tracking-wider">실시간 건강 엔진 작동 중</span>
               </div>
 
-              <h1 className="text-4xl sm:text-6xl lg:text-[85px] font-black leading-[0.95] text-white tracking-tighter">
+              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-[1.1] text-white tracking-tight">
                 건강은 <br />
                 <span className="text-emerald-400">데이터</span>로 말합니다.
               </h1>
 
-              <p className="text-lg md:text-xl text-slate-400 font-bold leading-relaxed max-w-xl opacity-80">
+              <p className="text-base sm:text-lg text-slate-400 font-normal leading-relaxed max-w-lg">
                 단순한 지도가 아닙니다. <br />
                 사용자의 기록과 AI 분석이 결합된 <br className="hidden md:block" />
                 차세대 라이프스타일 헬스케어 시스템.
@@ -107,19 +122,19 @@ export function HeroSection({ onCtaClick, openAuth }: HeroSectionProps) {
               transition={{ delay: 0.4 }}
               className="flex flex-col sm:flex-row gap-6 pt-4"
             >
-              <WaveButton onClick={onCtaClick} variant="primary" className="px-10 py-5 text-lg font-bold">
+              <WaveButton onClick={onCtaClick} variant="primary" className="px-7 py-3.5 text-[15px] font-semibold">
                 우리 동네 순위 확인하기
               </WaveButton>
-              <WaveButton 
+              <WaveButton
                 onClick={() => {
                   if (isAuthenticated) {
                     navigate('/mypage');
                   } else {
                     openAuth('signup');
                   }
-                }} 
-                variant="accent" 
-                className="px-10 py-5 text-lg font-bold shadow-lg shadow-amber-500/20"
+                }}
+                variant="accent"
+                className="px-7 py-3.5 text-[15px] font-semibold shadow-lg shadow-amber-500/20"
               >
                 무료 리포트 시작하기
               </WaveButton>
@@ -134,97 +149,146 @@ export function HeroSection({ onCtaClick, openAuth }: HeroSectionProps) {
               transition={{ duration: 0.8, delay: 0.2 }}
               className="relative p-5 sm:p-8 rounded-[28px] sm:rounded-[40px] bg-slate-900/40 backdrop-blur-3xl border border-white/10 shadow-3xl shadow-emerald-500/5 space-y-6 sm:space-y-8"
             >
-              <div className="grid grid-cols-2 gap-4">
-                <div className="p-4 rounded-3xl bg-emerald-500/10 border border-emerald-500/10 text-center space-y-2">
-                  <div className="text-emerald-400 text-2xl font-black">{stats.todayReports.toLocaleString()}</div>
-                  <div className="text-[10px] text-emerald-300/60 font-medium uppercase tracking-widest">오늘의 리포트</div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/10 text-center space-y-1.5">
+                  <div className="text-emerald-400 text-xl font-bold tabular-nums">{stats.todayReports.toLocaleString()}</div>
+                  <div className="text-[11px] text-emerald-300/60 font-medium uppercase tracking-wider">오늘의 리포트</div>
                 </div>
-                <div className="p-4 rounded-3xl bg-slate-800/30 border border-white/5 text-center space-y-2">
-                  <div className="text-white text-2xl font-black">{stats.accuracy}%</div>
-                  <div className="text-[10px] text-white/40 font-medium uppercase tracking-widest">분석 정확도</div>
+                <div className="p-4 rounded-2xl bg-slate-800/30 border border-white/5 text-center space-y-1.5">
+                  <div className="text-white text-xl font-bold tabular-nums">{stats.accuracy}%</div>
+                  <div className="text-[11px] text-white/40 font-medium uppercase tracking-wider">분석 정확도</div>
                 </div>
               </div>
 
               <div className="space-y-4">
                 <div className="flex justify-between items-center text-xs">
                   <span className="text-slate-400 font-medium flex items-center gap-2"><Activity size={12} /> 실시간 데이터 분석 엔진</span>
-                  <span className="text-emerald-400 font-black animate-pulse flex items-center gap-1.5">
+                  <span className="text-emerald-400 font-semibold animate-pulse flex items-center gap-1.5">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" /> LIVE
                   </span>
                 </div>
                 
-                {/* Refined Signal Waveform Animation — Hyper Dynamic */}
-                <div className="h-24 w-full relative overflow-hidden bg-slate-800/40 rounded-3xl border border-white/5 flex items-center justify-center">
-                  <svg className="absolute inset-0 w-full h-full" preserveAspectRatio="none">
-                    <motion.path
-                      d="M0 48 Q 15 15, 30 48 T 60 48 T 90 48 T 120 48 T 150 48 T 180 48 T 210 48 T 240 48 T 270 48 T 300 48 T 330 48 T 360 48 T 390 48 T 420 48"
-                      fill="none"
-                      stroke="url(#wave-gradient)"
-                      strokeWidth="2.5"
-                      strokeLinecap="round"
-                      animate={{ 
-                        pathOffset: [0, 1] 
-                      }}
-                      transition={{ 
-                        duration: 1.8, 
-                        repeat: Infinity, 
-                        ease: "linear" 
+                {/* Data Analysis Pipeline Visualization */}
+                <div
+                  className="h-28 w-full relative overflow-hidden rounded-2xl border border-emerald-500/[0.08]"
+                  style={{ background: '#060d0a' }}
+                >
+                  {/* Dot-grid background */}
+                  <div
+                    className="absolute inset-0 opacity-[0.035] pointer-events-none"
+                    style={{ backgroundImage: 'radial-gradient(circle, #34d399 1px, transparent 1px)', backgroundSize: '16px 16px' }}
+                  />
+
+                  {/* Data flow lanes */}
+                  {FLOW_LANES.map((y, i) => (
+                    <div
+                      key={i}
+                      className="absolute left-0 right-0 h-px"
+                      style={{
+                        top: `${y}%`,
+                        background: 'linear-gradient(to right, transparent 3%, rgba(52,211,153,0.12) 15%, rgba(52,211,153,0.12) 85%, transparent 97%)',
                       }}
                     />
-                    <motion.path
-                      d="M0 48 Q 15 15, 30 48 T 60 48 T 90 48 T 120 48 T 150 48 T 180 48 T 210 48 T 240 48 T 270 48 T 300 48 T 330 48 T 360 48 T 390 48 T 420 48"
-                      fill="none"
-                      stroke="url(#wave-gradient-glow)"
-                      strokeWidth="6"
-                      strokeLinecap="round"
-                      animate={{ 
-                        pathOffset: [0, 1],
-                        opacity: [0.1, 0.3, 0.1]
+                  ))}
+
+                  {/* Central processing hub */}
+                  <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
+                    {/* Outer ring pulse */}
+                    <motion.div
+                      className="absolute inset-0 rounded-xl"
+                      animate={{
+                        scale: [1, 1.8, 1],
+                        opacity: [0.3, 0, 0.3],
                       }}
-                      transition={{ 
-                        duration: 1.8, 
-                        repeat: Infinity, 
-                        ease: "linear" 
-                      }}
-                      className="blur-md"
+                      transition={{ duration: 2.5, repeat: Infinity, ease: 'easeOut' }}
+                      style={{ background: 'rgba(52,211,153,0.15)', width: 36, height: 36, margin: 'auto', inset: 0, position: 'absolute' }}
                     />
-                    <defs>
-                      <linearGradient id="wave-gradient" x1="0" y1="0" x2="1" y2="0">
-                        <stop offset="0%" stopColor="#10b981" stopOpacity="0" />
-                        <stop offset="10%" stopColor="#10b981" stopOpacity="0.2" />
-                        <stop offset="50%" stopColor="#34d399" stopOpacity="1" />
-                        <stop offset="90%" stopColor="#10b981" stopOpacity="0.2" />
-                        <stop offset="100%" stopColor="#10b981" stopOpacity="0" />
-                      </linearGradient>
-                      <linearGradient id="wave-gradient-glow" x1="0" y1="0" x2="1" y2="0">
-                        <stop offset="0%" stopColor="#34d399" stopOpacity="0" />
-                        <stop offset="50%" stopColor="#34d399" stopOpacity="0.6" />
-                        <stop offset="100%" stopColor="#34d399" stopOpacity="0" />
-                      </linearGradient>
-                    </defs>
-                  </svg>
-                  
-                  {/* Floating Data Particles */}
-                  <div className="absolute inset-0 flex items-center justify-around pointer-events-none px-4">
-                    {[1, 2, 3, 4, 5].map((_, i) => (
+                    {/* Hub body */}
+                    <motion.div
+                      className="relative w-9 h-9 rounded-xl border border-emerald-400/20 flex items-center justify-center"
+                      style={{ background: 'radial-gradient(circle, rgba(52,211,153,0.12) 0%, transparent 70%)' }}
+                      animate={{
+                        borderColor: ['rgba(52,211,153,0.15)', 'rgba(52,211,153,0.45)', 'rgba(52,211,153,0.15)'],
+                      }}
+                      transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
+                    >
                       <motion.div
+                        className="w-2.5 h-2.5 rounded-md bg-emerald-400"
+                        animate={{ rotate: [0, 180, 360] }}
+                        transition={{ duration: 6, repeat: Infinity, ease: 'linear' }}
+                        style={{ boxShadow: '0 0 10px rgba(52,211,153,0.7), 0 0 20px rgba(52,211,153,0.3)' }}
+                      />
+                    </motion.div>
+                  </div>
+
+                  {/* Convergence lines — lanes to hub */}
+                  <svg className="absolute inset-0 w-full h-full pointer-events-none z-[5]" preserveAspectRatio="none">
+                    {FLOW_LANES.map((y, i) => (
+                      <line
                         key={i}
-                        animate={{ 
-                          y: [0, -10, 0],
-                          opacity: [0, 0.5, 0],
-                          scale: [0.5, 1, 0.5]
-                        }}
-                        transition={{ 
-                          duration: 2, 
-                          delay: i * 0.4, 
-                          repeat: Infinity 
-                        }}
-                        className="w-1 h-1 rounded-full bg-emerald-400"
+                        x1="42%" y1={`${y}%`}
+                        x2="50%" y2="50%"
+                        stroke="rgba(52,211,153,0.06)"
+                        strokeWidth="1"
+                        strokeDasharray="3 6"
                       />
                     ))}
-                  </div>
-                  
-                  <div className="absolute inset-0 bg-gradient-to-r from-slate-900/50 via-transparent to-slate-900/50 pointer-events-none" />
+                    {FLOW_LANES.map((y, i) => (
+                      <line
+                        key={`r-${i}`}
+                        x1="58%" y1="50%"
+                        x2="50%" y2={`${y}%`}
+                        stroke="rgba(52,211,153,0.06)"
+                        strokeWidth="1"
+                        strokeDasharray="3 6"
+                        transform="translate(16%, 0)"
+                      />
+                    ))}
+                  </svg>
+
+                  {/* Flowing data particles */}
+                  {FLOW_DOTS.map((dot, i) => (
+                    <motion.div
+                      key={i}
+                      className="absolute rounded-full z-20"
+                      style={{
+                        width: dot.size,
+                        height: dot.size,
+                        top: `${FLOW_LANES[dot.lane]}%`,
+                        marginTop: -(dot.size / 2),
+                        background: dot.lane === 1
+                          ? 'radial-gradient(circle, #a7f3d0 0%, #34d399 50%, transparent 100%)'
+                          : 'radial-gradient(circle, #6ee7b7 0%, #10b981 50%, transparent 100%)',
+                        boxShadow: dot.lane === 1
+                          ? '0 0 8px rgba(52,211,153,0.9), 0 0 16px rgba(52,211,153,0.4)'
+                          : '0 0 6px rgba(52,211,153,0.7), 0 0 12px rgba(52,211,153,0.2)',
+                      }}
+                      animate={{ left: ['-2%', '102%'] }}
+                      transition={{
+                        duration: dot.speed,
+                        delay: dot.delay,
+                        repeat: Infinity,
+                        ease: 'linear',
+                      }}
+                    />
+                  ))}
+
+                  {/* Floating status labels */}
+                  {PIPELINE_LABELS.map((label, i) => (
+                    <motion.span
+                      key={i}
+                      className="absolute text-[9px] font-medium tracking-wide text-emerald-400/60 pointer-events-none z-20"
+                      style={{ left: label.x, top: label.y }}
+                      animate={{ opacity: [0, 0, 0.7, 0.7, 0] }}
+                      transition={{ duration: 4.5, delay: label.delay, repeat: Infinity, times: [0, 0.08, 0.2, 0.75, 1] }}
+                    >
+                      {label.text}
+                    </motion.span>
+                  ))}
+
+                  {/* Edge fade masks */}
+                  <div className="absolute inset-y-0 left-0 w-8 bg-gradient-to-r from-[#060d0a] to-transparent z-30 pointer-events-none" />
+                  <div className="absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-[#060d0a] to-transparent z-30 pointer-events-none" />
                 </div>
               </div>
 
@@ -236,8 +300,8 @@ export function HeroSection({ onCtaClick, openAuth }: HeroSectionProps) {
                   <MapPin size={24} />
                 </div>
                 <div className="flex-1">
-                  <div className="text-sm font-bold text-white">{locationName}</div>
-                  <div className="text-[10px] text-slate-500 truncate">
+                  <div className="text-sm font-semibold text-white">{locationName}</div>
+                  <div className="text-[11px] text-slate-500 truncate">
                     {toiletsLoading ? "갱신 중..." : `현재 가장 깨끗한 화장실 ${toilets.length}곳 발견`}
                   </div>
                 </div>
@@ -269,8 +333,8 @@ export function HeroSection({ onCtaClick, openAuth }: HeroSectionProps) {
             viewport={{ once: true }}
             className="text-center mb-16"
           >
-            <p className="text-xs font-bold uppercase tracking-widest mb-3 text-emerald-600">HOW IT WORKS</p>
-            <h2 className="text-4xl md:text-6xl font-black text-slate-900 tracking-tight">
+            <p className="text-xs font-semibold uppercase tracking-wider mb-3 text-emerald-600">HOW IT WORKS</p>
+            <h2 className="text-3xl md:text-5xl font-extrabold text-slate-900 tracking-tight">
               3단계로 끝나는 <br />
               <span className="text-emerald-600">스마트 헬스케어</span>
             </h2>
