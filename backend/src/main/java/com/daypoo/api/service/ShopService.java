@@ -57,6 +57,7 @@ public class ShopService {
                     .description(item.getDescription())
                     .type(item.getType())
                     .price(item.getPrice())
+                    .discountPrice(item.getDiscountPrice())
                     .imageUrl(item.getImageUrl())
                     .owned(ownedItemIds.contains(item.getId()))
                     .build())

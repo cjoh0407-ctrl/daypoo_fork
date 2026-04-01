@@ -34,20 +34,25 @@ public class Item extends BaseTimeEntity {
   @Column(name = "image_url", length = 1024)
   private String imageUrl;
 
+  @Column(name = "discount_price")
+  private Long discountPrice;
+
   @Builder
-  public Item(String name, String description, ItemType type, long price, String imageUrl) {
+  public Item(String name, String description, ItemType type, long price, String imageUrl, Long discountPrice) {
     this.name = name;
     this.description = description;
     this.type = type;
     this.price = price;
     this.imageUrl = imageUrl;
+    this.discountPrice = discountPrice;
   }
 
-  public void update(String name, String description, ItemType type, long price, String imageUrl) {
+  public void update(String name, String description, ItemType type, long price, String imageUrl, Long discountPrice) {
     this.name = name;
     this.description = description;
     this.type = type;
     this.price = price;
     this.imageUrl = imageUrl;
+    this.discountPrice = discountPrice;
   }
 }

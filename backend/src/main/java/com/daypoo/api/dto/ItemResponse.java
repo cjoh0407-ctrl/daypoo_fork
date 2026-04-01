@@ -10,5 +10,6 @@ public record ItemResponse(
     String description,
     ItemType type,
     long price,
+    Long discountPrice,
     String imageUrl,
     boolean owned) {}

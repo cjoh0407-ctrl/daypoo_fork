@@ -9,4 +9,5 @@ public record AdminItemCreateRequest(
     @NotBlank(message = "설명은 필수 입력값입니다.") String description,
     ItemType type,
     @PositiveOrZero(message = "가격은 0 이상이어야 합니다.") long price,
-    String imageUrl) {}
+    String imageUrl,
+    @PositiveOrZero(message = "할인가는 0 이상이어야 합니다.") Long discountPrice) {}

@@ -299,6 +299,7 @@ public class AdminManagementService {
             .description(item.getDescription())
             .type(item.getType())
             .price(item.getPrice())
+            .discountPrice(item.getDiscountPrice())
             .imageUrl(item.getImageUrl())
             .build());
   }
@@ -311,6 +312,7 @@ public class AdminManagementService {
         .type(request.type())
         .price(request.price())
         .imageUrl(request.imageUrl())
+        .discountPrice(request.discountPrice())
         .build();
 
     Item saved = itemRepository.save(item);
@@ -320,6 +322,7 @@ public class AdminManagementService {
         .description(saved.getDescription())
         .type(saved.getType())
         .price(saved.getPrice())
+        .discountPrice(saved.getDiscountPrice())
         .imageUrl(saved.getImageUrl())
         .build();
   }
@@ -331,7 +334,8 @@ public class AdminManagementService {
         .orElseThrow(() -> new BusinessException(ErrorCode.ADMIN_ITEM_NOT_FOUND));
 
     item.update(
-        request.name(), request.description(), request.type(), request.price(), request.imageUrl());
+        request.name(), request.description(), request.type(), request.price(), request.imageUrl(),
+        request.discountPrice());
 
     return ItemResponse.builder()
         .id(item.getId())
@@ -339,6 +343,7 @@ public class AdminManagementService {
         .description(item.getDescription())
         .type(item.getType())
         .price(item.getPrice())
+        .discountPrice(item.getDiscountPrice())
         .imageUrl(item.getImageUrl())
         .build();
   }
