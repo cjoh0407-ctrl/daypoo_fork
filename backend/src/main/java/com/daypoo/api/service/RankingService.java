@@ -178,7 +178,6 @@ public class RankingService {
     return items.stream()
         .filter(item -> "AVATAR".equals(item.type()))
         .map(EquippedItemResponse::icon)
-        .filter(Objects::nonNull)
         .findFirst()
         .orElse(null);
   }
@@ -242,7 +241,8 @@ public class RankingService {
                                 EquippedItemResponse.of(
                                     inv.getItem().getImageUrl(),
                                     inv.getItem().getName(),
-                                    inv.getItem().getType().name()),
+                                    inv.getItem().getType().name(),
+                                    inv.getItem().getId()),
                             Collectors.toList())));
 
     List<UserRankResponse> topRankers =

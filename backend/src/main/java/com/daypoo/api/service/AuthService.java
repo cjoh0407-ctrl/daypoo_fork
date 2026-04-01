@@ -221,11 +221,29 @@ public class AuthService {
 
   @Transactional
   public TokenResponse login(LoginRequest request) {
+    log.debug("[Auth] login attempt: email={}", request.email());
+
     User user = userRepository
         .findByEmail(request.email())
-        .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+        .orElseThrow(() -> {
+          log.debug("[Auth] login failed - user not found: email={}", request.email());
+          return new BusinessException(ErrorCode.USER_NOT_FOUND);
+        });
 
-    if (!passwordEncoder.matches(request.password(), user.getPassword())) {
+    log.debug("[Auth] BCrypt.matches() 시작: email={}", request.email());
+    long bcryptStart = System.currentTimeMillis();
+    boolean passwordMatch;
+    try {
+      passwordMatch = passwordEncoder.matches(request.password(), user.getPassword());
+    } catch (Exception e) {
+      log.error("[Auth] BCrypt.matches() 예외 발생: email={}, error={}", request.email(), e.getMessage(), e);
+      throw new BusinessException(ErrorCode.INVALID_PASSWORD);
+    }
+    log.debug("[Auth] BCrypt.matches() 완료: email={}, matched={}, elapsed={}ms",
+        request.email(), passwordMatch, System.currentTimeMillis() - bcryptStart);
+
+    if (!passwordMatch) {
+      log.debug("[Auth] login failed - password mismatch: email={}", request.email());
       throw new BusinessException(ErrorCode.INVALID_PASSWORD);
     }
 

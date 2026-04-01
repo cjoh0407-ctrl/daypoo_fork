@@ -39,8 +39,25 @@ public class RateLimitAspect {
   private String resolveKey(ProceedingJoinPoint joinPoint, RateLimit rateLimit) {
     HttpServletRequest request =
         ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest();
-    String ip = request.getRemoteAddr();
+    String ip = resolveClientIp(request);
     String method = joinPoint.getSignature().toShortString();
     return ip + ":" + method;
+  }
+
+  /**
+   * CloudFront / Nginx 등 리버스 프록시 환경에서 실제 클라이언트 IP를 추출한다.
+   * X-Forwarded-For 헤더가 존재하면 첫 번째 값(원본 클라이언트 IP)을 사용하고,
+   * 없으면 RemoteAddr를 fallback으로 사용한다.
+   */
+  private String resolveClientIp(HttpServletRequest request) {
+    String forwarded = request.getHeader("X-Forwarded-For");
+    if (forwarded != null && !forwarded.isBlank()) {
+      return forwarded.split(",")[0].trim();
+    }
+    String realIp = request.getHeader("X-Real-IP");
+    if (realIp != null && !realIp.isBlank()) {
+      return realIp.trim();
+    }
+    return request.getRemoteAddr();
   }
 }

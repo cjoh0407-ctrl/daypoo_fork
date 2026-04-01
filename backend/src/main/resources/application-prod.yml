@@ -1,10 +1,14 @@
 spring:
   datasource:
     hikari:
-      # AWS 프리티어(t2.micro)의 제한된 메모리를 고려하여 최소화
-      maximum-pool-size: 5
-      minimum-idle: 2
+      # AWS 프리티어(t2.micro) 메모리(1GB) 및 PostgreSQL 기본 max_connections(100) 고려
+      # maximum-pool-size: 5 → 10 : 동시 요청 처리 여유 확보
+      # minimum-idle: 2 → 5  : 서버 재시작 직후 커넥션 획득 대기 없이 즉시 처리 가능하도록
+      # connection-timeout: 30000 → 5000 : 풀 고갈 시 30초 대기 대신 빠르게 실패 처리
+      maximum-pool-size: 10
+      minimum-idle: 5
       idle-timeout: 30000
+      connection-timeout: 5000
   
   jpa:
     hibernate:
@@ -25,3 +29,5 @@ logging:
   level:
     root: WARN
     com.daypoo: INFO
+    # 인증 지연/오류 원인 추적용. 안정화 이후 INFO로 되돌릴 것
+    com.daypoo.api.service.AuthService: DEBUG
