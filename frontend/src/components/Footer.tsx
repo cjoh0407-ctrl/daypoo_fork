@@ -15,7 +15,6 @@ const FOOTER_LINKS = [
     links: [
       { label: 'FAQ', to: '/support?tab=faq' },
       { label: '1:1 문의', to: '/support?tab=inquiry' },
-      { label: '공지사항', to: '/support' },
     ],
   },
   {
