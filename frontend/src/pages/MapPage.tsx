@@ -186,6 +186,8 @@ export function MapPage({ openAuth }: { openAuth: (mode: 'login' | 'signup') => 
         longitude: pos.lng,
       });
 
+      await refreshUser();
+
       if (res && typeof res.remainedSeconds === 'number') {
         setCheckInTime(Date.now() - (60 - res.remainedSeconds) * 1000);
       } else {
@@ -198,7 +200,7 @@ export function MapPage({ openAuth }: { openAuth: (mode: 'login' | 'signup') => 
 
     setTargetForVisit(selectedToilet);
     handleSelectToilet(null);
-  }, [selectedToilet, openAuth, pos, handleSelectToilet, isAuthenticated]);
+  }, [selectedToilet, openAuth, pos, handleSelectToilet, isAuthenticated, refreshUser]);
 
   const handleVisitComplete = useCallback(
     async (recordData: any) => {
@@ -249,7 +251,7 @@ export function MapPage({ openAuth }: { openAuth: (mode: 'login' | 'signup') => 
         }
       }
     },
-    [markVisited, pos],
+    [markVisited, pos, refreshUser],
   );
 
   // visitCount 병합

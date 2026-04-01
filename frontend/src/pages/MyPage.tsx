@@ -2462,7 +2462,7 @@ function SettingsTab({
   user: UserResponse | null;
   refreshUser: () => void;
   logout: () => Promise<void>;
-  deleteMe: (password: string) => Promise<void>;
+  deleteMe: () => Promise<void>;
 }) {
   const ref = useRef(null);
   const inView = useInView(ref, { once: true, margin: '-40px' });
@@ -2516,31 +2516,14 @@ function SettingsTab({
   };
 
   const handleWithdraw = async () => {
-    if (!inputValue.trim()) {
-      alert('비밀번호를 입력해주세요.');
-      return;
-    }
-    if (!confirm('정말로 탈퇴하시겠습니까? 관련 데이터가 모두 삭제되며 복구할 수 없습니다.'))
-      return;
-
     setIsSubmitting(true);
     try {
-      await deleteMe(inputValue);
+      await deleteMe();
       alert('회원 탈퇴가 완료되었습니다. 그동안 이용해주셔서 감사합니다.');
       setModalType(null);
     } catch (err: any) {
       console.error('회원 탈퇴 에러:', err);
-
-      // 에러 메시지 구분
-      if (err.message?.includes('서버 내부 오류')) {
-        alert(
-          '회원 탈퇴 처리 중 서버 오류가 발생했습니다.\n\n현재 회원 탈퇴 기능에 일시적인 문제가 있습니다.\n백엔드 팀에 문의해주세요.',
-        );
-      } else if (err.message?.includes('비밀번호')) {
-        alert('비밀번호가 일치하지 않습니다. 다시 확인해주세요.');
-      } else {
-        alert(err.message || '회원 탈퇴 처리에 실패했습니다.');
-      }
+      alert(err.message || '회원 탈퇴 처리에 실패했습니다.');
     } finally {
       setIsSubmitting(false);
     }
@@ -2864,16 +2847,18 @@ function SettingsTab({
                       ? '부르고 싶은 멋진 닉네임을 입력해주세요.'
                       : modalType === 'password'
                         ? '보안을 위해 강력한 비밀번호를 설정하세요.'
-                        : '탈퇴를 진행하시려면 본인 확인을 위해 현재 비밀번호를 입력해주세요.'}
+                        : '탈퇴 시 모든 데이터가 삭제되며 복구할 수 없습니다.'}
                   </p>
 
-                  <input
-                    type={modalType === 'nickname' ? 'text' : 'password'}
-                    value={inputValue}
-                    onChange={(e) => setInputValue(e.target.value)}
-                    placeholder={modalType === 'nickname' ? '닉네임 입력' : '비밀번호 입력'}
-                    className="w-full p-5 bg-gray-50 border border-gray-100 rounded-[20px] mb-8 outline-none focus:border-emerald-500/30 font-black text-lg text-[#1A2B27] placeholder:text-gray-400"
-                  />
+                  {modalType !== 'withdraw' && (
+                    <input
+                      type={modalType === 'nickname' ? 'text' : 'password'}
+                      value={inputValue}
+                      onChange={(e) => setInputValue(e.target.value)}
+                      placeholder={modalType === 'nickname' ? '닉네임 입력' : '비밀번호 입력'}
+                      className="w-full p-5 bg-gray-50 border border-gray-100 rounded-[20px] mb-8 outline-none focus:border-emerald-500/30 font-black text-lg text-[#1A2B27] placeholder:text-gray-400"
+                    />
+                  )}
 
                   <div className="flex gap-3">
                     <button
@@ -3072,20 +3057,151 @@ export function MyPage({ openAuth }: { openAuth: (mode: 'login' | 'signup') => v
   }
 
   if (!user) {
+    const features = [
+      { icon: <BarChart3 size={18} />, text: '나의 배변 통계 분석' },
+      { icon: <Trophy size={18} />, text: '랭킹 & 칭호 수집' },
+      { icon: <Crown size={18} />, text: '아바타 꾸미기' },
+      { icon: <Brain size={18} />, text: 'AI 건강 리포트' },
+    ];
     return (
-      <div
-        className="min-h-screen flex items-center justify-center"
-        style={{ background: '#f8faf9' }}
-      >
-        <div className="text-center">
-          <p className="text-xl text-gray-600 mb-4">로그인이 필요합니다</p>
-          <button
-            onClick={() => navigate('/')}
-            className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700"
-          >
-            홈으로 이동
-          </button>
+      <div className="min-h-screen relative overflow-hidden flex items-center justify-center" style={{ background: '#f0f7f4' }}>
+        {/* 배경 floating blobs */}
+        {[...Array(6)].map((_, i) => (
+          <motion.div
+            key={i}
+            className="absolute rounded-full opacity-20 blur-3xl pointer-events-none"
+            style={{
+              width: `${180 + i * 60}px`,
+              height: `${180 + i * 60}px`,
+              background: i % 2 === 0 ? '#52b788' : '#2D6A4F',
+              left: `${[10, 60, 80, 5, 45, 70][i]}%`,
+              top: `${[10, 5, 40, 65, 75, 20][i]}%`,
+            }}
+            animate={{
+              y: [0, -20, 0],
+              x: [0, 10, 0],
+              scale: [1, 1.1, 1],
+            }}
+            transition={{ duration: 5 + i * 1.2, repeat: Infinity, ease: 'easeInOut', delay: i * 0.8 }}
+          />
+        ))}
+
+        {/* 흐릿한 마이페이지 미리보기 */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          <div className="w-full h-full opacity-10 blur-sm scale-105" style={{ background: 'repeating-linear-gradient(0deg, #d8f3dc 0px, #d8f3dc 2px, transparent 2px, transparent 40px), repeating-linear-gradient(90deg, #d8f3dc 0px, #d8f3dc 2px, transparent 2px, transparent 40px)' }} />
         </div>
+
+        {/* 메인 카드 */}
+        <motion.div
+          initial={{ opacity: 0, y: 40, scale: 0.95 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+          className="relative z-10 w-full max-w-sm mx-4"
+        >
+          <div className="rounded-3xl overflow-hidden shadow-2xl" style={{ background: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(20px)', border: '1px solid rgba(82,183,136,0.2)' }}>
+            {/* 헤더 그라데이션 */}
+            <div className="relative h-32 flex items-center justify-center overflow-hidden" style={{ background: 'linear-gradient(135deg, #2D6A4F 0%, #52b788 100%)' }}>
+              <motion.div
+                className="absolute inset-0 opacity-30"
+                animate={{ backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'] }}
+                transition={{ duration: 8, repeat: Infinity }}
+                style={{ background: 'radial-gradient(circle at 30% 50%, #95d5b2 0%, transparent 60%), radial-gradient(circle at 70% 50%, #1b4332 0%, transparent 60%)' }}
+              />
+              {/* 자물쇠 아이콘 */}
+              <motion.div
+                initial={{ scale: 0, rotate: -20 }}
+                animate={{ scale: 1, rotate: 0 }}
+                transition={{ delay: 0.3, type: 'spring', stiffness: 200 }}
+                className="relative z-10 w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg"
+                style={{ background: 'rgba(255,255,255,0.2)', backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.3)' }}
+              >
+                <Lock size={28} color="white" strokeWidth={2} />
+              </motion.div>
+            </div>
+
+            {/* 콘텐츠 */}
+            <div className="px-6 py-6">
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4 }}
+                className="text-center mb-6"
+              >
+                <h2 className="text-xl font-bold text-gray-800 mb-1">마이페이지</h2>
+                <p className="text-sm text-gray-500">로그인하고 나만의 공간을 만들어보세요</p>
+              </motion.div>
+
+              {/* 기능 목록 */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.5 }}
+                className="grid grid-cols-2 gap-2 mb-6"
+              >
+                {features.map((f, i) => (
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.55 + i * 0.07 }}
+                    className="flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-medium"
+                    style={{ background: '#f0faf5', color: '#2D6A4F' }}
+                  >
+                    <span style={{ color: '#52b788' }}>{f.icon}</span>
+                    {f.text}
+                  </motion.div>
+                ))}
+              </motion.div>
+
+              {/* 버튼 */}
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.75 }}
+                className="flex flex-col gap-2.5"
+              >
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.97 }}
+                  onClick={() => openAuth('login')}
+                  className="w-full py-3.5 rounded-2xl text-white font-semibold text-sm flex items-center justify-center gap-2 shadow-lg"
+                  style={{ background: 'linear-gradient(135deg, #2D6A4F 0%, #52b788 100%)' }}
+                >
+                  <Sparkles size={16} />
+                  로그인하기
+                  <ArrowRight size={16} />
+                </motion.button>
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.97 }}
+                  onClick={() => navigate('/')}
+                  className="w-full py-3 rounded-2xl text-sm font-medium"
+                  style={{ background: '#f0faf5', color: '#52b788', border: '1px solid #d8f3dc' }}
+                >
+                  홈으로 돌아가기
+                </motion.button>
+              </motion.div>
+            </div>
+          </div>
+
+          {/* 하단 힌트 */}
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 1 }}
+            className="text-center text-xs mt-4"
+            style={{ color: 'rgba(45,106,79,0.5)' }}
+          >
+            계정이 없으신가요?{' '}
+            <button
+              onClick={() => openAuth('signup')}
+              className="font-semibold underline underline-offset-2"
+              style={{ color: '#2D6A4F' }}
+            >
+              회원가입
+            </button>
+          </motion.p>
+        </motion.div>
       </div>
     );
   }

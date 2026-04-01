@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { getDistance } from '../utils/geoUtils';
 import { ToiletData } from '../types/toilet';
 import { api } from '../services/apiClient';
+import { useAuth } from '../context/AuthContext';
 
 interface GeoPosition {
   lat: number;
@@ -20,6 +21,7 @@ export function useGeoTracking(
   const [granted, setGranted] = useState(false);
   const lastCheckInRef = useRef<Map<string, number>>(new Map());
   const toiletsRef = useRef(toilets);
+  const { refreshUser } = useAuth();
 
   useEffect(() => {
     toiletsRef.current = toilets;
@@ -53,7 +55,10 @@ export function useGeoTracking(
                 latitude: newPos.lat,
                 longitude: newPos.lng
               })
-              .then((res: any) => {
+              .then(async (res: any) => {
+                // 체크인 성공 후 유저 정보 갱신 (homeRegion 반영 가능성)
+                await refreshUser();
+                
                 // 서버에서 준 남은 시간 정보를 콜백으로 전달
                 if (onAutoCheckIn && res && typeof res.remainedSeconds === 'number') {
                   onAutoCheckIn(res.remainedSeconds);
@@ -81,7 +86,7 @@ export function useGeoTracking(
     );
 
     return () => navigator.geolocation.clearWatch(watchId);
-  }, [isEnabled, toilets]); // toilets 리스트가 갱신될 때마다 주변 확인
+  }, [isEnabled, toilets, refreshUser]); // refreshUser 추가
 
   return { position, granted };
 }

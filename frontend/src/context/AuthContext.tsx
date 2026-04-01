@@ -7,7 +7,7 @@ interface AuthContextType {
   loading: boolean;
   login: (accessToken: string, refreshToken: string, stayLoggedIn?: boolean) => Promise<void>;
   logout: () => Promise<void>;
-  deleteMe: (password: string) => Promise<void>;
+  deleteMe: () => Promise<void>;
   refreshUser: () => Promise<void>;
   isAuthenticated: boolean;
 }
@@ -119,9 +119,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, []);
 
-  const deleteMe = useCallback(async (password: string) => {
+  const deleteMe = useCallback(async () => {
     try {
-      await api.delete(`/auth/me?password=${encodeURIComponent(password)}`);
+      await api.delete('/auth/me');
       await logout();
     } catch (err: any) {
       console.error('Failed to delete account', err);

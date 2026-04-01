@@ -324,7 +324,7 @@ public class AuthService {
         .findByEmail(email)
         .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
-    if (!passwordEncoder.matches(password, user.getPassword())) {
+    if (user.getPassword() != null && !passwordEncoder.matches(password, user.getPassword())) {
       throw new BusinessException(ErrorCode.INVALID_PASSWORD);
     }
 

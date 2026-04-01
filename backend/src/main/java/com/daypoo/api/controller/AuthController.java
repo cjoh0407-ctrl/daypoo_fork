@@ -141,7 +141,8 @@ public class AuthController {
   @ApiResponse(responseCode = "400", description = "비밀번호 불일치")
   @DeleteMapping("/me")
   public ResponseEntity<String> withdraw(
-      Authentication authentication, @RequestParam String password) {
+      Authentication authentication,
+      @RequestParam(required = false) String password) {
     authService.withdraw(authentication.getName(), password);
     return ResponseEntity.ok("회원 탈퇴가 완료되었습니다.");
   }
