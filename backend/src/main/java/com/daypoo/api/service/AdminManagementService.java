@@ -238,7 +238,7 @@ public class AdminManagementService {
         NotificationType.SYSTEM,
         "1:1 문의 답변이 도착했습니다.",
         "'" + inquiry.getTitle() + "' 문의에 대한 답변이 등록되었습니다.",
-        "/support");
+        "/support?tab=myinquiry");
   }
 
   // --- 상점 아이템 관리 ---

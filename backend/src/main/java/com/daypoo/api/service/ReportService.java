@@ -368,7 +368,7 @@ public class ReportService {
         NotificationType.HEALTH,
         type.name() + " 건강 리포트가 도착했습니다!",
         "AI가 분석한 당신의 최신 건강 분석 리포트를 지금 바로 확인해보세요.",
-        "/reports/" + type.name().toLowerCase());
+        "/mypage?tab=report");
 
     return applyPremiumMasking(response, isPremium);
   }

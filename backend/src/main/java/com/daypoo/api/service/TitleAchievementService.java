@@ -79,6 +79,6 @@ public class TitleAchievementService {
     String notificationTitle = "새로운 칭호 획득!";
     String notificationContent = String.format("업적을 달성하여 [%s] 칭호를 획득했습니다!", title.getName());
     notificationService.send(
-        user, NotificationType.ACHIEVEMENT, notificationTitle, notificationContent, "/mypage");
+        user, NotificationType.ACHIEVEMENT, notificationTitle, notificationContent, "/mypage?tab=collection");
   }
 }
