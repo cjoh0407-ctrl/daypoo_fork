@@ -1,3 +1,13 @@
+## [2026-04-01 11:59:36] 백엔드 시작 장애 수정 및 배포 동기화 (Spring 6.2.x 호환성 및 UI 최적화)
+
+- **작업 내용:** 로컬에 남아있던 미커밋 핵심 변경사항을 전체 푸시하여 서버 정상화 및 상점 그리드 UI 표준화.
+- **상세 변경 내역:**
+    - **backend/src/main/java/com/daypoo/api/event/PooRecordEventListener.java:** @Transactional(propagation = Propagation.REQUIRES_NEW) 추가 (Spring 6.2.x 시작 불가 해결).
+    - **backend/src/main/java/com/daypoo/api/service/AuthService.java:** 소셜 로그인 유저 탈퇴 시 password null 체크 추가 (NPE 해결).
+    - **frontend/src/pages/MyPage.tsx & AdminPage.tsx:** 상점/인벤토리 그리드 레이아웃을 1줄 5개(페이지당 15개)로 표준화.
+    - **frontend/src/components/map/VisitModal.tsx & MapPage.tsx:** AI 분석 실패(R007) 관련 에러 핸들링 및 카메라 재시작 로직 반영.
+- **결과/영향:** 운영 서버(AWS EC2)의 백엔드 서비스 정상 기동(504 에러 해결 예상) 및 전체적인 서비스 안정성 확보.
+
 ## [2026-04-01 10:41:38] 랭킹 페이지 지역 인증 연동 수정 (AuthContext stale 상태 해결)
 
 - **작업 내용:** 방문 인증(PooRecord 생성) 및 체크인 후 유저 정보 즉시 갱신 로직 추가.
