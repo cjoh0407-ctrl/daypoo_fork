@@ -129,32 +129,17 @@ def lambda_handler(event, context):
         if not token:
             continue
             
-        # 3. Create Poo Record (70% Normal, 30% Abnormal)
-        is_normal = random.random() < 0.7
-        shape = random.choice(["BANANA", "SAUSAGE"]) if is_normal else random.choice(["WATER", "RABBIT", "SLUDGE", "STONE"])
-        color = random.choice(["BROWN", "GOLD", "DARK_BROWN", "GREEN"]) if is_normal else random.choice(["RED", "BLACK", "PALE", "YELLOW"])
-        amount = random.randint(1, 5)
-        smell = random.randint(1, 5)
+        # 3. Fetch toilets near Gangnam (latitude: 37.4979, longitude: 127.0276)
+        # We need a toiletId to create a Poo Record
+        toilet_id = None
+        toilet_lat = 37.4979
+        toilet_lng = 127.0276
         
         try:
-            do_request("POST", "/records", {
-                "shape": shape,
-                "color": color,
-                "amount": amount,
-                "smellLevel": smell,
-                "description": "자동 AI 배변 기록"
-            }, token)
-        except Exception as e:
-            print(f"Bot {bot_idx} poo record failed.")
+            lat = 37.4979 + (random.uniform(-0.02, 0.02))
+            lng = 127.0276 + (random.uniform(-0.02, 0.02))
+            toilets = do_request("GET", f"/toilets?latitude={lat}&longitude={lng}&radius=5000", token=token)
             
-        # 4. Toilet Review (100% chance for selected bots)
-        # Fetch toilets near Gangnam (lat: 37.4979, lng: 127.0276)
-        try:
-            lat = 37.4979 + (random.uniform(-0.05, 0.05))
-            lng = 127.0276 + (random.uniform(-0.05, 0.05))
-            toilets = do_request("GET", f"/toilets/nearby?lat={lat}&lng={lng}&radius=5000", token=token)
-            
-            # 엉뚱한 필드 구조 처리
             toilet_list = []
             if isinstance(toilets, list):
                 toilet_list = toilets
@@ -166,17 +151,49 @@ def lambda_handler(event, context):
             if toilet_list:
                 t = random.choice(toilet_list)
                 toilet_id = t.get('id')
-                if toilet_id:
-                    review_text = get_openai_review(bot_idx)
-                    do_request("POST", f"/reviews/toilets/{toilet_id}", {
-                        "rating": random.randint(1, 5), # rating matches general sentiment logically, but keep it simple random or skewed
-                        "emojiTags": "clean,tissue" if "깨끗" in review_text or "좋" in review_text else "dirty,smell",
-                        "comment": review_text
-                    }, token)
+                toilet_lat = t.get('latitude', lat)
+                toilet_lng = t.get('longitude', lng)
+        except Exception as e:
+            print(f"Bot {bot_idx} toilet fetch failed. Skipping activity.", e)
+            continue
+
+        if not toilet_id:
+            print(f"Bot {bot_idx} no toilets found nearby. Skipping activity.")
+            continue
+
+        # 4. Create Poo Record (70% Normal, 30% Abnormal)
+        is_normal = random.random() < 0.7
+        bristol_scale = random.randint(3, 4) if is_normal else random.choice([1, 2, 5, 6, 7])
+        color = random.choice(["BROWN", "GOLD", "DARK_BROWN", "GREEN"]) if is_normal else random.choice(["RED", "BLACK", "PALE", "YELLOW"])
+        condition_tags = ["GOOD", "NORMAL"] if is_normal else ["TIRED", "STRESS"]
+        diet_tags = ["VEGETABLE", "FRUIT"] if is_normal else ["INSTANT", "MEAT"]
+        
+        try:
+            do_request("POST", "/records", {
+                "toiletId": toilet_id,
+                "bristolScale": bristol_scale,
+                "color": color,
+                "conditionTags": condition_tags,
+                "dietTags": diet_tags,
+                "latitude": toilet_lat,
+                "longitude": toilet_lng
+            }, token)
+        except Exception as e:
+            print(f"Bot {bot_idx} poo record failed.", e)
+            
+        # 5. Toilet Review (100% chance for selected bots if pool is valid)
+        try:
+            review_text = get_openai_review(bot_idx)
+            tags = ["CLEAN", "TISSUE"] if "깨끗" in review_text or "좋" in review_text else ["DIRTY", "SMELL"]
+            do_request("POST", f"/toilets/{toilet_id}/reviews", {
+                "rating": random.randint(1, 5),
+                "emojiTags": tags,
+                "comment": review_text
+            }, token)
         except Exception as e:
             print(f"Bot {bot_idx} toilet review failed.", e)
             
-        # 5. CS Inquiry (1-2% ultra low chance)
+        # 6. CS Inquiry (1-2% ultra low chance)
         if random.random() < 0.015:
             try:
                 do_request("POST", "/support/inquiries", {

@@ -1,5 +1,16 @@
 # Backend & AI Service Modification History
 
+## [2026-04-01 15:45:00] 람다봇(Lambda Bot) API 규격 동기화 및 안정화
+- **작업 내용**: 배포 환경에서 작동하지 않던 람다봇(`main.py`)을 최신 백엔드 API 명세에 맞춰 전면 리팩토링.
+- **상세 변경 내역**:
+    - **API 경로 수정**: `/toilets/nearby` → `/api/v1/toilets`, `/reviews/toilets` → `/api/v1/toilets/{id}/reviews`.
+    - **파라미터 및 필드명 동기화**: `lat`/`lng` → `latitude`/`longitude`, `shape` → `bristolScale`, `smellLevel` → `conditionTags` 등.
+    - **로직 개선**: 배변 기록 생성 전 화장실 조회를 먼저 수행하여 필수값(`toiletId`) 및 좌표 정보를 확보하도록 순서 조정.
+    - **브랜치 생성**: `fix/lambda-bot-api-sync` 브랜치에서 작업 진행.
+- **결과/영향**: 배포 환경에서 람다봇이 정상적으로 30명의 유저 활동을 시뮬레이션할 수 있게 됨.
+
+---
+
 ## [2026-04-01 10:55:00] 백엔드 하드코딩된 서비스 명칭 수정 (대똥여지도 → Day Poo)
 
 ### 작업 내용 요약
