@@ -1,5 +1,13 @@
 # Frontend Modification History
 
+## [2026-04-01 18:27:00] HeroSection UI & Animation Refinement
+- **작업 내용**: 히어로 섹션 타이포그래피 비율 조정 및 파동 애니메이션 고도화
+- **상세 변경 내역**:
+  - `HeroSection.tsx`: `h1`, `p` 폰트 크기 및 비율 재조정 (더 크고 임팩트 있는 가로 비율 확보)
+  - `HeroSection.tsx`: 다층 구조(Multi-layered)의 유체 파동 애니메이션 도입으로 실시간 엔진 느낌 강화
+  - `HeroSection.tsx`: 디지털 펄스 파티클 및 글래스 마스크 오버레이 추가
+- **결과**: 전반적인 디자인 일관성 향상 및 프리미엄한 사용자 경험 제공
+
 ## [2026-04-01 18:05:00] Design Polish: Navbar & HeroSection UI/UX Refinement
 - **작업 내용**: 내비바 공간감 확보 및 히어로 섹션 타이포그래피/건강 엔진 애니메이션 고도화
 - **상세 변경 내역**:
