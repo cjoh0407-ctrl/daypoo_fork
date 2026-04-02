@@ -95,6 +95,17 @@ graph TB
 
 ---
 
+## 🏁 신규 참여자를 위한 가이드 (Onboarding)
+
+이 프로젝트에 처음 참여하시거나 환경 설정을 시작하시는 분들은 아래 **온보딩 가이드**를 반드시 먼저 확인해 주세요.
+
+- 📥 **[초기 설정 및 설치 가이드](./docs/onboarding/01_initial_setup_plan.md)**: 전체적인 환경 구축 및 필수 도구 설치 안내
+- 🍴 **[포크 및 워크플로우](./docs/onboarding/02_fork_workflow.md)**: 협업을 위한 브랜치 전략 및 커밋 규칙
+- ⚙️ **[상세 환경 설정 (Manual Config)](./docs/onboarding/04_work_me.md)**: `.env` 및 로컬 워크스페이스 상세 설정
+- 📜 **[개발 규칙 및 가이드](./docs/onboarding/05_rules_guide.md)**: 코딩 컨벤션 및 프로젝트 필수 규칙
+
+---
+
 ## 🚀 시작하기 (Quick Start)
 
 ### 1단계: 환경 설정
