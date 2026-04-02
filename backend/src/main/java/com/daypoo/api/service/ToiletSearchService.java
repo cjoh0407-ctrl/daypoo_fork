@@ -79,70 +79,80 @@ public class ToiletSearchService {
   private String buildQuery(String query, int size, Double latitude, Double longitude)
       throws Exception {
     boolean isChosung = ChosungUtils.isChosungOnly(query);
-    // 사용자 검색어도 공백/특수문자 제거 후 순수 초성만 추출
     String chosungQuery = ChosungUtils.extractChosung(query);
 
     List<Object> shouldClauses = new ArrayList<>();
 
     if (!isChosung) {
-      // 1. 일반 텍스트: nori 분석기로 이름/주소 검색 (이름 가중치 대폭 강화)
+      // 1. 일반 텍스트 검색
       shouldClauses.add(
           Map.of(
               "multi_match",
               Map.of(
-                  "query",
-                  query,
-                  "fields",
-                  List.of("name^10", "address"),
-                  "type",
-                  "best_fields",
-                  "minimum_should_match",
-                  "75%",
-                  "boost",
-                  5.0)));
-
-      // 2. 접두사 검색 (나비 -> 나비상가)
+                  "query", query,
+                  "fields", List.of("name^10", "address"),
+                  "type", "best_fields",
+                  "boost", 5.0)));
       shouldClauses.add(
           Map.of("match_phrase_prefix", Map.of("name", Map.of("query", query, "boost", 15.0))));
     }
 
-    // 3. 초성 100% 일치 (ㄴㅂㅅㄱ -> 나비상가) - 최상단 고정
+    // 2. 초성 검색 (가중치 조정)
     shouldClauses.add(
         Map.of("term", Map.of("nameChosung", Map.of("value", chosungQuery, "boost", 100.0))));
-
-    // 4. 초성 접두사 검색 (ㄴㅂ -> 나비상가) - 매우 높은 가중치
     shouldClauses.add(
         Map.of("prefix", Map.of("nameChosung", Map.of("value", chosungQuery, "boost", 50.0))));
-
-    // 5. 초성 중간 포함 검색 (ㄴㅂ -> 강남북동화장실) - 낮은 가중치
     shouldClauses.add(
         Map.of(
             "wildcard",
-            Map.of("nameChosung", Map.of("value", "*" + chosungQuery + "*", "boost", 1.0))));
-
-    // 5. 주소 초성 검색 (참고용)
+            Map.of("nameChosung", Map.of("value", "*" + chosungQuery + "*", "boost", 10.0))));
     shouldClauses.add(
         Map.of(
             "wildcard",
-            Map.of("addressChosung", Map.of("value", "*" + chosungQuery + "*", "boost", 0.5))));
+            Map.of("addressChosung", Map.of("value", "*" + chosungQuery + "*", "boost", 5.0))));
+
+    Map<String, Object> finalQuery;
+
+    if (latitude != null && longitude != null) {
+      // 거리와 일치도를 합산한 점수 모델 사용
+      finalQuery =
+          Map.of(
+              "function_score",
+              Map.of(
+                  "query", Map.of("bool", Map.of("should", shouldClauses, "minimum_should_match", 1)),
+                  "functions",
+                      List.of(
+                          Map.of(
+                              "gauss",
+                              Map.of(
+                                  "location",
+                                  Map.of(
+                                      "origin", Map.of("lat", latitude, "lon", longitude),
+                                      "offset", "500m",
+                                      "scale", "3km")),
+                              "weight", 2.0)),
+                  "score_mode", "multiply",
+                  "boost_mode", "multiply"));
+    } else {
+      finalQuery = Map.of("bool", Map.of("should", shouldClauses, "minimum_should_match", 1));
+    }
 
     java.util.LinkedHashMap<String, Object> queryBody = new java.util.LinkedHashMap<>();
-    queryBody.put(
-        "query", Map.of("bool", Map.of("should", shouldClauses, "minimum_should_match", 1)));
+    queryBody.put("query", finalQuery);
     queryBody.put("size", size);
 
-    // 화장실 검색 특성상 사용자와의 거리를 1순위로, 텍스트 일치도를 2순위로 정렬
+    // 점수(일치도+거리)를 1순위로, 그래도 같으면 더 가까운 순으로
     if (latitude != null && longitude != null) {
       queryBody.put(
           "sort",
           List.of(
+              Map.of("_score", "desc"),
               Map.of(
                   "_geo_distance",
                   Map.of(
                       "location", Map.of("lat", latitude, "lon", longitude),
                       "order", "asc",
-                      "unit", "m")),
-              Map.of("_score", "desc")));
+                      "unit", "m"))));
     }
 
     return objectMapper.writeValueAsString(queryBody);
