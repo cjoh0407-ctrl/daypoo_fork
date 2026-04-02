@@ -114,11 +114,13 @@ public class ToiletReviewService {
             .orElseThrow(() -> new BusinessException(ErrorCode.TOILET_NOT_FOUND));
 
     List<ToiletReviewResponse> recentReviews = getRecentReviews(toiletId);
+    long actualCount = toiletReviewRepository.countByToiletId(toiletId);
+    String aiSummary = actualCount >= 5 ? toilet.getAiSummary() : null;
 
     return ToiletReviewSummaryResponse.builder()
-        .aiSummary(toilet.getAiSummary())
+        .aiSummary(aiSummary)
         .avgRating(toilet.getAvgRating())
-        .reviewCount(toilet.getReviewCount())
+        .reviewCount((int) actualCount)
         .recentReviews(recentReviews)
         .build();
   }

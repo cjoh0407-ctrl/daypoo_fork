@@ -1,5 +1,6 @@
 package com.daypoo.api.repository;
 
+import com.daypoo.api.entity.Toilet;
 import com.daypoo.api.entity.ToiletReview;
 import com.daypoo.api.entity.User;
 import java.util.List;
@@ -23,6 +24,9 @@ public interface ToiletReviewRepository extends JpaRepository<ToiletReview, Long
 
   @Query("SELECT AVG(r.rating) FROM ToiletReview r WHERE r.toilet.id = :toiletId")
   Double calculateAvgRatingByToiletId(@Param("toiletId") Long toiletId);
+
+  @Query("SELECT DISTINCT r.toilet FROM ToiletReview r WHERE r.user = :user")
+  List<Toilet> findDistinctToiletsByUser(@Param("user") User user);
 
   void deleteAllByUser(User user);
 }
