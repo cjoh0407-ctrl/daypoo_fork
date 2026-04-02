@@ -1,5 +1,13 @@
 # Frontend Modification History
 
+## [2026-04-02 18:28:00] Backend: 504 Gateway Timeout 해결 (비동기 재인덱싱 적용)
+
+- **작업 내용**: `/reindex` 호출 시 발생하는 504 Timeout 에러 해결
+- **상세 변경 내역**:
+  - `ApiApplication.java`: `@EnableAsync` 설정 추가.
+  - `ToiletIndexingService.java`: `forceReindex()` 메서드에 `@Async` 적용.
+- **결과/영향**: 대량의 데이터 재인덱싱 시에도 즉시 응답을 반환하고 백그라운드에서 작업을 수행하도록 개선.
+
 ## [2026-04-02 18:11:00] Frontend: 방문 인증 후 마커 실시간 갱신 버그 수정
 
 - **작업 내용**: 방문 인증(💩) 완료 후 새로고침 없이 마커 아이콘이 즉시 바뀌지 않던 문제 해결
