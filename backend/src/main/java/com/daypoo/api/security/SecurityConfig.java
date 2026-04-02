@@ -14,6 +14,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -74,6 +75,10 @@ public class SecurityConfig {
                     .authenticated()
                     .anyRequest()
                     .authenticated())
+        .exceptionHandling(
+            ex ->
+                ex.authenticationEntryPoint(
+                    new HttpStatusEntryPoint(org.springframework.http.HttpStatus.UNAUTHORIZED)))
         .oauth2Login(
             oauth2 ->
                 oauth2
@@ -81,7 +86,6 @@ public class SecurityConfig {
                         auth ->
                             auth.authorizationRequestRepository(
                                 httpCookieOAuth2AuthorizationRequestRepository))
-                    .loginPage(frontendUrl + "/login")
                     .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService))
                     .successHandler(oAuth2SuccessHandler)
                     .failureHandler(
