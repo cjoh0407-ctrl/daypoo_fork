@@ -101,15 +101,15 @@ public class ToiletSearchService {
     queryBody.put("query", Map.of("bool", Map.of("should", shouldClauses, "minimum_should_match", 1)));
     queryBody.put("size", size);
 
-    // 위치 정보가 있으면 가까운 순으로 정렬 (단, 이름 매칭 점수가 최우선)
+    // 화장실 검색 특성상 사용자와의 거리를 1순위로, 텍스트 일치도를 2순위로 정렬
     if (latitude != null && longitude != null) {
       queryBody.put("sort", List.of(
-          Map.of("_score", "desc"), // 일치도 우선
           Map.of("_geo_distance", Map.of(
               "location", Map.of("lat", latitude, "lon", longitude),
               "order", "asc",
               "unit", "m"
-          ))
+          )),
+          Map.of("_score", "desc")
       ));
     }
 
