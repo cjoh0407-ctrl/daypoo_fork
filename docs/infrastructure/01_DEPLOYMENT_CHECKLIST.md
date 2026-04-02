@@ -109,7 +109,7 @@ cd /opt/daypoo
   ```
 
 ### 2.2 GitHub Secrets 등록
-> 📘 상세 가이드: [GITHUB_SECRETS_SETUP.md](./GITHUB_SECRETS_SETUP.md) 참고
+> 📘 상세 가이드: [02_GITHUB_SECRETS_SETUP.md](./02_GITHUB_SECRETS_SETUP.md) 참고
 
 **Settings → Secrets and variables → Actions → New repository secret**
 
