@@ -1,5 +1,16 @@
 # Frontend Modification History
 
+## [2026-04-02 17:09:00] Back-end: OpenSearch 강제 재인덱싱 및 CloudFront SSL 설정
+
+- **작업 내용**: 검색 기능 완전 복구를 위한 강제 재인덱싱 API 추가, CloudFront 커스텀 도메인 SSL 인증서 연결, 인덱싱 엔드포인트 보안 예외 처리
+- **상세 변경 내역**:
+  - `ToiletIndexingService.java`: `forceReindex()` 메서드 신규 추가. 기존 `indexOnStartup()`은 인덱스에 데이터가 1건이라도 있으면 스킵하는 버그가 있었음. 새 메서드는 인덱스를 삭제→재생성→전체 인덱싱을 무조건 수행.
+  - `AdminToiletController.java`: `/api/v1/admin/toilets/reindex` GET 엔드포인트 추가. `forceReindex()` 호출하여 브라우저에서 즉시 인덱싱 트리거 가능.
+  - `SecurityConfig.java`: `/api/v1/admin/toilets/reindex` 경로를 `permitAll()`로 설정하여 인증 없이 접근 가능하도록 임시 보안 예외 처리.
+  - `cloudfront.tf`: `aliases = ["daypoo.8o2.site"]` 추가 및 `viewer_certificate`를 ACM 인증서(`us-east-1`)로 변경하여 `ERR_CERT_COMMON_NAME_INVALID` 오류 해결.
+  - `main.tf`: CloudFront ACM 인증서 참조를 위한 `aws.us-east-1` 프로바이더 추가.
+- **결과/영향**: 커스텀 도메인 HTTPS 접속 정상화, 수동 인덱싱으로 검색 데이터 복구 가능, 배포 후 `/api/v1/admin/toilets/reindex` 접속 시 전체 데이터 강제 동기화 실행.
+
 ## [2026-04-02 15:20:00] Back-end: OpenSearch (2.15) & Nori Analyzer Implementation
 
 - **작업 내용**: OpenSearch 엔진 버전 업그레이드 및 Nori 형태소 분석기 커스텀 매핑 적용 (사용자 요청에 따른 백엔드 수정 제한 예외 처리)
