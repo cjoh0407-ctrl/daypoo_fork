@@ -246,15 +246,37 @@ export const MapView = memo(forwardRef<MapViewHandle, MapViewProps>(
         clustererRef.current.removeMarkers(toRemoveMarkers);
       }
 
-      // 추가할 마커 식별 (이미 있는 건 스킵)
+      // 추가 또는 갱신할 마커 식별
       const newMarkers: any[] = [];
+      const currentLevel = mapRef.current.getLevel();
+      
       toilets.forEach((toilet) => {
-        if (!markersRef.current.has(toilet.id)) {
-          const { marker, overlay } = createToiletMarker(window.kakao, toilet, onSelectToilet);
-          if (level < 5) overlay.setMap(mapRef.current);
-          markersRef.current.set(toilet.id, { marker, overlay });
-          newMarkers.push(marker);
+        const existing = markersRef.current.get(toilet.id);
+
+        if (existing) {
+          // 마커 내용물(이모지)이 현재 상태와 맞는지 확인 (💩 포함 여부 기준)
+          const contentStr = typeof existing.overlay.getContent() === 'string' 
+            ? existing.overlay.getContent() 
+            : '';
+          const wasVisited = contentStr.includes('💩');
+
+          if (wasVisited !== toilet.isVisited) {
+            // 상태가 변했다면 삭제 후 재생성 대상
+            existing.overlay.setMap(null);
+            clustererRef.current.removeMarker(existing.marker);
+            markersRef.current.delete(toilet.id);
+          } else {
+            // 변경사항 없으면 스킵
+            if (currentLevel < 5) existing.overlay.setMap(mapRef.current);
+            return;
+          }
         }
+
+        // 새 마커 생성 (추가 또는 갱신된 경우)
+        const { marker, overlay } = createToiletMarker(window.kakao, toilet, onSelectToilet);
+        if (currentLevel < 5) overlay.setMap(mapRef.current);
+        markersRef.current.set(toilet.id, { marker, overlay });
+        newMarkers.push(marker);
       });
 
       if (newMarkers.length > 0) {

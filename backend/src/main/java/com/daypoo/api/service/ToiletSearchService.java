@@ -64,36 +64,42 @@ public class ToiletSearchService {
     List<Object> shouldClauses = new ArrayList<>();
 
     if (!isChosung) {
-      // 일반 텍스트: nori 분석기로 이름/주소 검색 (이름 가중치 2배)
+      // 1. 일반 텍스트: nori 분석기로 이름/주소 검색 (이름 가중치 대폭 강화)
       shouldClauses.add(
           Map.of(
               "multi_match",
               Map.of(
-                  "query",
-                  query,
-                  "fields",
-                  List.of("name^2", "address"),
-                  "type",
-                  "best_fields",
-                  "minimum_should_match",
-                  "75%")));
+                  "query", query,
+                  "fields", List.of("name^10", "address"),
+                  "type", "best_fields",
+                  "minimum_should_match", "75%",
+                  "boost", 5.0)));
+
+      // 2. 접두사 검색 (나비 -> 나비상가)
+      shouldClauses.add(
+          Map.of("match_phrase_prefix", Map.of("name", Map.of("query", query, "boost", 10.0))));
     }
 
-    // 초성 wildcard 검색 (이름)
+    // 3. 초성 검색: 시작 부분 일치 (ㄴㅂ -> 나비상가, 남부센터) - 매우 높은 가중치
     shouldClauses.add(
-        Map.of("wildcard", Map.of("nameChosung", Map.of("value", "*" + chosungQuery + "*"))));
+        Map.of("wildcard", Map.of("nameChosung", Map.of("value", chosungQuery + "*", "boost", 8.0))));
 
-    // 초성 wildcard 검색 (주소)
+    // 4. 초성 검색: 중간 포함 - 낮은 가중치
     shouldClauses.add(
-        Map.of("wildcard", Map.of("addressChosung", Map.of("value", "*" + chosungQuery + "*"))));
+        Map.of("wildcard", Map.of("nameChosung", Map.of("value", "*" + chosungQuery + "*", "boost", 1.0))));
+
+    // 5. 주소 초성 검색 (참고용)
+    shouldClauses.add(
+        Map.of("wildcard", Map.of("addressChosung", Map.of("value", "*" + chosungQuery + "*", "boost", 0.5))));
 
     java.util.LinkedHashMap<String, Object> queryBody = new java.util.LinkedHashMap<>();
     queryBody.put("query", Map.of("bool", Map.of("should", shouldClauses, "minimum_should_match", 1)));
     queryBody.put("size", size);
 
-    // 위치 정보가 있으면 가까운 순으로 정렬
+    // 위치 정보가 있으면 가까운 순으로 정렬 (단, 이름 매칭 점수가 최우선)
     if (latitude != null && longitude != null) {
       queryBody.put("sort", List.of(
+          Map.of("_score", "desc"), // 일치도 우선
           Map.of("_geo_distance", Map.of(
               "location", Map.of("lat", latitude, "lon", longitude),
               "order", "asc",

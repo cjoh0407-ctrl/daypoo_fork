@@ -27,8 +27,14 @@ public class AdminToiletController {
   @Operation(summary = "OpenSearch 인덱싱 강제 실행", description = "데이터베이스의 모든 화장실 데이터를 OpenSearch에 다시 인덱싱합니다.")
   @GetMapping("/reindex")
   public ResponseEntity<String> reindex() {
-    toiletIndexingService.indexOnStartup();
-    return ResponseEntity.ok("Indexing started in background...");
+    toiletIndexingService.forceReindex();
+    return ResponseEntity.ok("Force re-indexing started in background. Check server logs for progress.");
+  }
+
+  @Operation(summary = "현재 인덱싱된 화장실 개수 조회", description = "OpenSearch에 저장된 전체 화장실 데이터 개수를 조회합니다.")
+  @GetMapping("/count")
+  public ResponseEntity<Long> getCount() {
+    return ResponseEntity.ok(toiletIndexingService.getIndexedCount());
   }
 
   @Operation(summary = "전체 화장실 목록 조회 및 검색", description = "검색어(이름/주소)를 포함한 화장실 전체 리스트를 페이징 조회합니다.")

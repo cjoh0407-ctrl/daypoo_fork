@@ -30,7 +30,7 @@
 
 ### 2. 배포 문서 작성
 
-#### 📘 [GITHUB_SECRETS_SETUP.md](./GITHUB_SECRETS_SETUP.md)
+#### 📘 [02_GITHUB_SECRETS_SETUP.md](./02_GITHUB_SECRETS_SETUP.md)
 **GitHub Actions Secrets 설정 가이드 (22개)**
 
 분류별 시크릿:
@@ -43,7 +43,7 @@
 
 각 시크릿의 설명, 현재 값, 배포 시 권장 값, 생성 방법 포함
 
-#### 📋 [DEPLOYMENT_CHECKLIST.md](./DEPLOYMENT_CHECKLIST.md)
+#### 📋 [01_DEPLOYMENT_CHECKLIST.md](./01_DEPLOYMENT_CHECKLIST.md)
 **단계별 배포 체크리스트**
 
 5단계 구성:
@@ -53,7 +53,7 @@
 - Phase 4: 배포 후 설정 (OAuth Redirect URI, 토스 결제)
 - Phase 5: 모니터링 및 유지보수
 
-#### 🔧 [.env.prod.example](./.env.prod.example)
+#### 🔧 [.env.prod.example](../../.env.prod.example)
 **EC2 서버용 환경변수 템플릿**
 
 EC2의 `/opt/daypoo/.env` 파일로 복사하여 사용
@@ -98,7 +98,7 @@ docker-compose.prod.yml에 필요한 모든 환경변수 포함
 ### 2단계: GitHub Secrets 등록
 ```bash
 # Settings → Secrets and variables → Actions
-# 총 22개 시크릿 등록 (GITHUB_SECRETS_SETUP.md 참고)
+# 총 22개 시크릿 등록 (02_GITHUB_SECRETS_SETUP.md 참고)
 ```
 
 ### 3단계: EC2 초기 설정
@@ -158,10 +158,10 @@ curl http://localhost:8000/health
 
 | 파일 | 설명 |
 |------|------|
-| [GITHUB_SECRETS_SETUP.md](./GITHUB_SECRETS_SETUP.md) | GitHub Actions Secrets 상세 가이드 |
-| [DEPLOYMENT_CHECKLIST.md](./DEPLOYMENT_CHECKLIST.md) | 단계별 배포 체크리스트 |
-| [.env.prod.example](./.env.prod.example) | EC2 환경변수 템플릿 |
-| [frontend/terraform.md](./frontend/terraform.md) | 원본 배포 계획 및 Terraform 가이드 |
+| [02_GITHUB_SECRETS_SETUP.md](./02_GITHUB_SECRETS_SETUP.md) | GitHub Actions Secrets 상세 가이드 |
+| [01_DEPLOYMENT_CHECKLIST.md](./01_DEPLOYMENT_CHECKLIST.md) | 단계별 배포 체크리스트 |
+| [.env.prod.example](../../.env.prod.example) | EC2 환경변수 템플릿 |
+| [frontend/terraform.md](../../frontend/terraform.md) | 원본 배포 계획 및 Terraform 가이드 |
 
 ---
 
@@ -211,4 +211,4 @@ curl http://localhost:8000/health
 **프로젝트**: DayPoo
 **배포 대상**: AWS Free Tier
 
-**다음 단계**: [DEPLOYMENT_CHECKLIST.md](./DEPLOYMENT_CHECKLIST.md) 를 따라 진행하세요! 🚀
+**다음 단계**: [01_DEPLOYMENT_CHECKLIST.md](./01_DEPLOYMENT_CHECKLIST.md) 를 따라 진행하세요! 🚀

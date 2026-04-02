@@ -1,14 +1,14 @@
-<div align="center">
+# 💩 DayPoo (대똥여지도)
 
-# 💩 DayPoo
+<div align="center">
 
 **대한민국 건강한 배변 문화를 위한 공간 정보 및 AI 분석 서비스**
 
-_React · Spring Boot (Virtual Threads) · Python/FastAPI · OpenAI Vision_
+_React · Spring Boot 3.4 (Virtual Threads) · Python/FastAPI · OpenAI Vision_
 
 [![GitHub Actions](https://img.shields.io/badge/CI%2FCD-GitHub_Actions-2088FF?logo=githubactions&logoColor=white)](https://github.com/cjoh0407-ctrl/daypoo)
 [![Frontend](https://img.shields.io/badge/Frontend-React_18+_TypeScript-61DAFB?logo=react&logoColor=white)](./frontend)
-[![Backend](https://img.shields.io/badge/Backend-Spring_Boot_3.4.x-6DB33F?logo=springboot&logoColor=white)](./backend)
+[![Backend](https://img.shields.io/badge/Backend-Spring_Boot_3.4.3-6DB33F?logo=springboot&logoColor=white)](./backend)
 [![AI](https://img.shields.io/badge/AI_Service-FastAPI_Implemented-009688?logo=fastapi&logoColor=white)](./ai-service)
 [![License](https://img.shields.io/badge/License-ISC-yellow)](./LICENSE)
 
@@ -24,9 +24,9 @@ _React · Spring Boot (Virtual Threads) · Python/FastAPI · OpenAI Vision_
 
 ---
 
-## 🏗️ 시스템 아키텍처 (C4 Model - Container Level)
+## 🏗️ 시스템 아키텍처
 
-DayPoo는 고성능 데이터 처리와 AI 확장을 위해 **서비스 지향 아키텍처**를 채택하였습니다.
+DayPoo는 고성능 데이터 처리와 AI 확장을 위해 **서비스 지향 아키텍처(SOA)**를 채택하였습니다.
 
 ```mermaid
 graph TB
@@ -40,14 +40,13 @@ graph TB
         API[REST API /api/v1]
         Auth[Security/JWT/OAuth2]
         Sync[ULTRA-FAST Sync Engine]
-        DB_Write[Batch Update / Transaction]
+        Simulation[Load Simulation Engine]
     end
 
     subgraph AI["🤖 Python AI 서비스 (FastAPI)"]
         FastAPI[FastAPI Server]
         Vision[OpenAI Vision / Stool Analysis]
         Report[Health Report Engine]
-        Cache[Redis Result Cache]
     end
 
     subgraph Data["💾 데이터 레이어"]
@@ -62,7 +61,6 @@ graph TB
     FastAPI --> Vision
     FastAPI --> Redis
     Sync -->|Bulk Insert| PG
-    Sync -->|WebClient| GovAPI
 ```
 
 ---
@@ -71,36 +69,40 @@ graph TB
 
 | 파트           | 기술                           | 설명                                                 |
 | :------------- | :----------------------------- | :--------------------------------------------------- |
-| **Frontend**   | React 18+, TypeScript, Vite    | WebRTC 기반 무음 캡처 및 고성능 지도 UI 구현         |
-|                | TailwindCSS 4, Framer Motion   | 모던한 애니메이션 및 유틸리티 퍼스트 스타일링        |
-| **Backend**    | Spring Boot 3.4 (Java 21)      | **가상 스레드(Virtual Threads)** 기반 병렬 처리      |
-|                | JdbcTemplate (Batch), JPA      | **reWriteBatchedInserts**를 통한 50만 건 삽입 최적화 |
-|                | Spring Security + JWT + OAuth2 | Kakao/Google 소셜 로그인 및 /me 프로필 API 제공      |
+| **Frontend**   | React 18+, TypeScript, Vite    | WebRTC 기반 무음 캡처 및 고성능 지도 UI 구현 (Port: 5173) |
+| **Backend**    | Spring Boot 3.4.3 (Java 21)    | **가상 스레드(Virtual Threads)** 기반 고성능 병렬 처리 |
+|                | QueryDSL 5.0 / Flyway          | 타입 세이프한 쿼리 작성 및 DB 형상 관리 자동화       |
 | **AI Service** | FastAPI (Python 3.12)          | **In-Memory Pipeline** 기반 무저장 이미지 분석       |
 |                | OpenAI GPT-4o Vision           | 브리스톨 척도 및 건강 지표 정밀 분석                 |
 | **Data Layer** | PostgreSQL 16 + PostGIS        | 50만 건 공간 데이터 처리 및 공간 인덱싱(GIST)        |
-|                | Redis (Geo, ZSET, Cache)       | **지역별 실시간 랭킹** 및 분석 결과 캐싱             |
-| **DevOps**     | GitHub Actions, Docker, Husky  | 컨테이너 기반 CI/CD 및 자동 코드 포맷팅(Spotless)    |
+|                | Redis (Geo, ZSET, Cache)       | **지역별 실시간 랭킹** 및 JWT 세션 관리              |
+| **DevOps**     | Terraform (IaC), Docker        | 코드형 인프라 관리 및 컨테이너 기반 운영             |
 
 ---
 
-## ✨ 핵심 고도화 기능 (Advanced Features)
+## ✨ 핵심 차별점 (Core Strengths)
 
-### 1. 🚀 초고속 공공데이터 동기화 엔진 (Virtual Thread Engine)
+### 1. 🚀 가상 스레드 기반 동기화 및 시뮬레이션
+- **동기화 엔진**: 50만 건 이상의 데이터를 수 분 내에 동기화하는 가상 스레드 기반 배치 프로세스.
+- **시뮬레이션 모드**: 수만 명의 가상 유저와 수십만 개의 배변 기록을 생성하여 부하를 테스트하는 엔진 내장.
 
-- **병렬 파이프라이닝**: 가상 스레드를 활용하여 1,000개 이상의 페이지를 동시 페칭.
-- **DB 쓰기 최적화**: 트랜잭션 내 `batchUpdate`와 JDBC 옵션을 결합하여 대량 삽입 성능 극대화.
-- **중복 체크 최적화**: 시작 시 모든 관리번호를 로컬 `ConcurrentHashMap`에 사전 로딩하여 DB I/O 90% 절감.
+### 2. 🛡️ 보안 및 개인정보 보호 (Privacy-First)
+- **무저장 AI 분석**: 배변 이미지를 서버 DB에 저장하지 않고 AI 분석 즉시 메모리에서 폐기하여 민감 정보 보호.
+- **Maintenance Filter**: 시스템 점검 시 어드민을 제외한 접근을 일괄 제어하는 전역 필터 적용.
 
-### 2. 🤖 AI 건강 리포트 & Vision 분석 (In-Memory Pipeline)
+### 3. 🗺️ 정밀 공간 데이터 처리
+- **PostGIS 최적화**: 단순 거리 계산을 넘어 `Geography` 타입을 활용한 정밀한 위치 검증 및 근처 화장실 추천.
 
-- **무음/무저장 원칙**: WebRTC Canvas 추출 및 메모리 상의 Byte Array 전송으로 개인정보 보호 및 셔터음 제거.
-- **지능형 리포팅**: 7일간의 기록을 종합하여 식습관 및 소화기 건강에 대한 전문적인 AI 솔루션 제공.
+---
 
-### 3. 🏆 실시간 지역별 랭킹 시스템
+## 🏁 신규 참여자를 위한 가이드 (Onboarding)
 
-- **행정동 자동 추출**: 카카오 역지오코딩을 통해 배변 시점의 위치를 법정동/행정동 단위로 자동 분류.
-- **Redis 실시간 집계**: Redis ZSET을 활용하여 우리 동네 배변 랭킹 및 칭호(Achievement) 시스템 연동.
+이 프로젝트에 처음 참여하시거나 환경 설정을 시작하시는 분들은 아래 **온보딩 가이드**를 반드시 먼저 확인해 주세요.
+
+- 📥 **[초기 설정 및 설치 가이드](./docs/onboarding/01_initial_setup_plan.md)**: 전체적인 환경 구축 및 필수 도구 설치 안내
+- 🍴 **[포크 및 워크플로우](./docs/onboarding/02_fork_workflow.md)**: 협업을 위한 브랜치 전략 및 커밋 규칙
+- ⚙️ **[상세 환경 설정 (Manual Config)](./docs/onboarding/04_work_me.md)**: `.env` 및 로컬 워크스페이스 상세 설정
+- 📜 **[개발 규칙 및 가이드](./docs/onboarding/05_rules_guide.md)**: 코딩 컨벤션 및 프로젝트 필수 규칙
 
 ---
 
@@ -108,42 +110,36 @@ graph TB
 
 ### 1단계: 환경 설정
 
-루트 폴더의 `.env` 파일을 작성합니다. 백엔드와 AI 서비스는 이를 공유합니다.
+프로젝트 루트의 `.env` 파일을 작성합니다. 상세 가이드는 [Manual Config](./docs/onboarding/04_work_me.md)를 참조하세요.
 
 ```bash
 cp .env.example .env
-# OPENAI_API_KEY, PUBLIC_DATA_API_KEY, KAKAO_CLIENT_ID 등 설정
+# DB_HOST, JWT_SECRET_KEY, OPENAI_API_KEY 등 필수값 기입
 ```
 
-### 2단계: 프로젝트 실행 (Docker)
+### 2단계: 로컬 개발 실행
 
-```bash
-docker-compose up -d
-```
-
-### 3단계: 로컬 개발 실행
-
-- **Frontend**: `cd frontend && npm install && npm run dev`
-- **Backend**: `cd backend && ./gradlew bootRun`
-- **AI Service**: `cd ai-service && python main.py`
+- **Frontend**: `cd frontend && npm install && npm run dev` (URL: `http://localhost:5173`)
+- **Backend**: `cd backend && ./gradlew bootRun` (URL: `http://localhost:8080`)
+- **AI Service**: `cd ai-service && python main.py` (URL: `http://localhost:8000`)
 
 ---
 
 ## 📁 디렉토리 구조
 
-```
+```text
 daypoo/
-├── frontend/                  # React + Vite SPA (UI/UX)
-├── backend/                   # Spring Boot 3.4 (Core Business Logic)
-│   ├── api/                   # Controller & DTO
-│   ├── entity/                # JPA Domain Entities
-│   ├── service/               # Optimized Service Engines
-│   └── repository/            # PostGIS & Data Access
-├── ai-service/                # FastAPI AI Microservice
-│   ├── app/api/               # Analysis & Report Endpoints
-│   └── app/services/          # OpenAI Vision & Prompt Engineering
-├── docs/                      # 아키텍처, 성능 분석 보고서 및 온보딩 가이드
-└── docker-compose.yml         # 로컬 인프라 (PostgreSQL, Redis)
+├── frontend/             # React + Vite SPA
+├── backend/              # Spring Boot 3.4.3 (Core Business Logic)
+├── ai-service/           # FastAPI AI Microservice (Python)
+├── terraform/            # Infrastructure as Code (AWS)
+├── docs/                 # 통합 문서 저장소
+│   ├── architecture/     # 시스템 설계 및 ERD
+│   ├── guides/           # 구현 및 연동 가이드
+│   ├── plans/            # 날짜별 개발 계획서
+│   ├── reports/          # 성능 및 분석 보고서
+│   └── onboarding/       # 신규 개발자 온보딩 가이드
+└── docker-compose.yml    # 로컬 인프라 (PostgreSQL, Redis)
 ```
 
 ---
@@ -151,12 +147,18 @@ daypoo/
 ## 📅 마일스톤 (Milestones)
 
 - **✅ 2026.03.18 - 가상 스레드 기반 50만 건 초고속 동기화 엔진 구축 완료**
-- **✅ 2026.03.18 - 내 정보 조회(Me) 및 프로필 조회 API 개발 완료**
-- **✅ 2026.03.18 - AI Vision 무음 촬영 및 In-Memory 파이프라인 정비 완료**
-- **✅ 2026.03.18 - 지역별 실시간 랭킹 및 칭호/업적 시스템 엔진 구현 완료**
+- **✅ 2026.03.20 - 프로젝트 전체 개선 계획(Antigravity) 수립 및 착수**
+- **✅ 2026.03.28 - 마이페이지 UI 스케일 업 및 리팩토링 완료**
+- **✅ 2026.04.01 - 백엔드 상세 설계(v1.5) 및 API 명세서(Swagger 2.8.5) 최적화**
+- **✅ 2026.04.02 - 프로젝트 문서 체계 통합 및 온보딩 가이드 고도화 완료**
+- **✅ 2026.04.02 - 프론트엔드/백엔드 아키텍처 동기화 및 설계서 전면 개정**
+- **🚀 2026.04.05 - (예정) 실시간 시뮬레이션 엔진 고도화 및 부하 테스트 리포트 작성**
 
 ---
 
 ## 📄 라이선스
 
 이 프로젝트는 [ISC License](./LICENSE)를 따릅니다.
+
+---
+> **최종 업데이트**: 2026-04-02 17:15 (KST)

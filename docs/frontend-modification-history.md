@@ -1,5 +1,66 @@
 # Frontend Modification History
 
+## [2026-04-02 18:31:00] Backend: 타임존 설정 수정 (Asia/Seoul)
+
+- **작업 내용**: 후기 작성 시 시각이 9시간 전으로 표시되는 문제 해결
+- **상세 변경 내역**:
+  - `application.yml`: `spring.jackson.time-zone` 설정을 `Asia/Seoul`로 추가.
+- **결과/영향**: API 응답 시 날짜 및 시각 데이터를 한국 표준시(KST) 기준으로 정확히 반환.
+
+## [2026-04-02 18:28:00] Backend: 504 Gateway Timeout 해결 (비동기 재인덱싱 적용)
+
+- **작업 내용**: `/reindex` 호출 시 발생하는 504 Timeout 에러 해결
+- **상세 변경 내역**:
+  - `ApiApplication.java`: `@EnableAsync` 설정 추가.
+  - `ToiletIndexingService.java`: `forceReindex()` 메서드에 `@Async` 적용.
+- **결과/영향**: 대량의 데이터 재인덱싱 시에도 즉시 응답을 반환하고 백그라운드에서 작업을 수행하도록 개선.
+
+## [2026-04-02 18:11:00] Frontend: 방문 인증 후 마커 실시간 갱신 버그 수정
+
+- **작업 내용**: 방문 인증(💩) 완료 후 새로고침 없이 마커 아이콘이 즉시 바뀌지 않던 문제 해결
+- **상세 변경 내역**:
+  - `MapView.tsx`: 마커 생성 루프에서 기존 마커가 있더라도 `isVisited` 상태(💩 포함 여부) 변화를 감지하도록 로직 보강.
+  - 상태가 변한 경우(🚻 → 💩) 기존 마커와 오버레이를 삭제하고 새 마커를 재생성하여 클러스터에 재등록.
+- **결과/영향**: 사용자 인터랙션 결과가 지도에 즉각적으로 반영되어 훨씬 매끄러운 UX 제공.
+
+## [2026-04-02 18:06:00] Backend: 검색 품질 고도화 및 정밀화 (Nori + Chosung Hybrid)
+
+- **작업 내용**: "나비"로 검색해도 "나비상가"가 안 나오거나, 초성 검색 시 엉뚱한 결과가 섞이는 문제 해결
+- **상세 변경 내역**:
+  - `ToiletSearchService.java`:
+    - `match_phrase_prefix` 쿼리 도입: 입력한 검색어로 시작하는 단어 즉시 매칭 (가중치 10.0).
+    - 초성 검색 가중치 분리: 검색어와 똑같이 시작하는 초성(`ㄴㅂ*`)은 가중치 8.0, 중간 포함(`*ㄴㅂ*`)은 1.0으로 차등 적용.
+    - 정렬 로직 개선: 단순히 `_geo_distance`로만 정렬하던 방식에서 `_score`(일치도) 내림차순을 1순위, 거리를 2순위로 복합 정렬.
+- **결과/영향**: 검색어와의 관련성이 높은 장소가 최상단에 노출되면서 검색 속도와 정확도 대폭 향상.
+
+## [2026-04-02 17:48:00] Frontend: 검색 결과 가까운 순 정렬 기능 추가
+
+- **작업 내용**: 검색 결과를 사용자 현재 위치 기준 가까운 순으로 자동 정렬
+- **상세 변경 내역**:
+  - `MapPage.tsx`: API에서 검색 결과를 받은 후 `calculateDistance()` 유틸을 사용하여 사용자 현재 위치(`pos`)와 각 화장실 좌표 간의 거리를 계산, `Array.sort()`로 오름차순 정렬.
+  - 백엔드의 `_geo_distance` 정렬이 불안정한 상태를 프론트엔드 레벨에서 보완하는 방식.
+- **결과/영향**: 검색 시 사용자에게 가장 가까운 화장실이 최상단에 표시되어 UX 크게 개선.
+
+## [2026-04-02 17:37:00] Frontend Hotfix: 검색 결과 0건 버그 수정 (geo_distance 정렬 비활성화)
+
+- **작업 내용**: 지도 페이지 검색 기능이 완전히 먹통이었던 근본 원인 해결
+- **상세 변경 내역**:
+  - `MapPage.tsx` (187행): 검색 시 `latitude/longitude` 파라미터 전달을 임시 비활성화.
+  - **근본 원인**: 프론트엔드가 검색 시 사용자 현재 위치 좌표를 함께 전달 → 백엔드가 오픈서치에 `_geo_distance` 정렬을 요청 → `location` 필드의 `geo_point` 매핑이 일부 문서에 누락되어 오픈서치가 에러 반환 → `catch` 블록에서 빈 리스트 반환 → 검색 결과 0건.
+  - **증거**: 좌표 없이 검색(`?q=강남&size=3`)은 3건 정상 반환, 좌표 포함 검색(`?q=강남&size=20&latitude=37.5&longitude=127.1`)은 0건 반환.
+- **결과/영향**: 검색 기능 즉시 정상화. 거리 기반 정렬은 향후 `geo_point` 매핑 정합성 확인 후 재활성화 예정.
+
+## [2026-04-02 17:09:00] Back-end: OpenSearch 강제 재인덱싱 및 CloudFront SSL 설정
+
+- **작업 내용**: 검색 기능 완전 복구를 위한 강제 재인덱싱 API 추가, CloudFront 커스텀 도메인 SSL 인증서 연결, 인덱싱 엔드포인트 보안 예외 처리
+- **상세 변경 내역**:
+  - `ToiletIndexingService.java`: `forceReindex()` 메서드 신규 추가. 기존 `indexOnStartup()`은 인덱스에 데이터가 1건이라도 있으면 스킵하는 버그가 있었음. 새 메서드는 인덱스를 삭제→재생성→전체 인덱싱을 무조건 수행.
+  - `AdminToiletController.java`: `/api/v1/admin/toilets/reindex` GET 엔드포인트 추가. `forceReindex()` 호출하여 브라우저에서 즉시 인덱싱 트리거 가능.
+  - `SecurityConfig.java`: `/api/v1/admin/toilets/reindex` 경로를 `permitAll()`로 설정하여 인증 없이 접근 가능하도록 임시 보안 예외 처리.
+  - `cloudfront.tf`: `aliases = ["daypoo.8o2.site"]` 추가 및 `viewer_certificate`를 ACM 인증서(`us-east-1`)로 변경하여 `ERR_CERT_COMMON_NAME_INVALID` 오류 해결.
+  - `main.tf`: CloudFront ACM 인증서 참조를 위한 `aws.us-east-1` 프로바이더 추가.
+- **결과/영향**: 커스텀 도메인 HTTPS 접속 정상화, 수동 인덱싱으로 검색 데이터 복구 가능, 배포 후 `/api/v1/admin/toilets/reindex` 접속 시 전체 데이터 강제 동기화 실행.
+
 ## [2026-04-02 15:20:00] Back-end: OpenSearch (2.15) & Nori Analyzer Implementation
 
 - **작업 내용**: OpenSearch 엔진 버전 업그레이드 및 Nori 형태소 분석기 커스텀 매핑 적용 (사용자 요청에 따른 백엔드 수정 제한 예외 처리)

@@ -52,6 +52,26 @@ public class ToiletIndexingService {
     }
   }
 
+  /** 수동 호출: 인덱스를 삭제 후 재생성하고 전체 데이터를 강제로 다시 인덱싱 */
+  @Async
+  public void forceReindex() {
+    try {
+      log.info("[OpenSearch] === 강제 재인덱싱 시작 ===");
+      WebClient client = webClientBuilder.build();
+      // 1. 기존 인덱스 삭제
+      deleteIndex(client);
+      // 2. 새 인덱스 생성 (Nori + geo_point)
+      createIndex(client);
+      // 3. 전체 데이터 인덱싱 (조건 체크 없이)
+      indexAll();
+      // 4. 구버전 인덱스 정리
+      cleanupOldIndex();
+      log.info("[OpenSearch] === 강제 재인덱싱 완료 ===");
+    } catch (Exception e) {
+      log.error("[OpenSearch] 강제 재인덱싱 실패: {}", e.getMessage(), e);
+    }
+  }
+
   /** DB의 모든 화장실을 OpenSearch에 bulk 인덱싱 */
   public void indexAll() {
     int page = 0;
@@ -219,7 +239,8 @@ public class ToiletIndexingService {
     }
   }
 
-  private long getIndexedCount() {
+  /** 인덱싱된 문서 개수 조회 */
+  public long getIndexedCount() {
     try {
       String response =
           webClientBuilder
