@@ -99,7 +99,7 @@ export function Navbar({ openAuth }: { openAuth: (mode: 'login' | 'signup') => v
             alignItems: 'center',
             background: '#1A2B27',
             borderRadius: '100px',
-            padding: '14px 28px 14px 36px',
+            padding: '12px 20px 12px 24px',
             boxShadow: '0 12px 48px rgba(0,0,0,0.3)',
             gap: '16px',
           }}

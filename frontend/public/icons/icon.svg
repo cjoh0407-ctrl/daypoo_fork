@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg" x1="30%" y1="0%" x2="70%" y2="100%">
+      <stop offset="0%" stop-color="#1a2e24"/>
+      <stop offset="100%" stop-color="#0c1510"/>
+    </linearGradient>
+    <radialGradient id="g1" cx="38%" cy="32%" r="52%">
+      <stop offset="0%" stop-color="#2d6a4f" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#2d6a4f" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="g2" cx="66%" cy="72%" r="44%">
+      <stop offset="0%" stop-color="#E8A838" stop-opacity="0.18"/>
+      <stop offset="100%" stop-color="#E8A838" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="512" height="512" fill="url(#bg)"/>
+
+  <!-- Ambient glows -->
+  <ellipse cx="200" cy="175" rx="210" ry="175" fill="url(#g1)"/>
+  <ellipse cx="330" cy="360" rx="165" ry="135" fill="url(#g2)"/>
+
+  <!-- Subtle noise border top -->
+  <rect width="512" height="1" fill="white" opacity="0.06"/>
+
+  <!-- "Day" -->
+  <text
+    x="256" y="258"
+    font-family="Georgia, 'Times New Roman', serif"
+    font-weight="900"
+    font-size="158"
+    fill="#ffffff"
+    text-anchor="middle"
+    letter-spacing="-6">Day</text>
+
+  <!-- Thin divider -->
+  <rect x="128" y="273" width="256" height="1.5" fill="white" opacity="0.08" rx="1"/>
+
+  <!-- ".Poo" in amber -->
+  <text
+    x="256" y="388"
+    font-family="Georgia, 'Times New Roman', serif"
+    font-weight="900"
+    font-size="158"
+    fill="#E8A838"
+    text-anchor="middle"
+    letter-spacing="-6">.Poo</text>
+
+  <!-- Ambient dot (top-right decoration) -->
+  <circle cx="400" cy="100" r="3" fill="#E8A838" opacity="0.35"/>
+  <circle cx="415" cy="88" r="2" fill="#52b788" opacity="0.3"/>
+  <circle cx="390" cy="82" r="1.5" fill="#ffffff" opacity="0.2"/>
+</svg>

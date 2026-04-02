@@ -82,16 +82,16 @@ export function HeroSection({ onCtaClick, openAuth }: HeroSectionProps) {
 
   return (
     <>
-      <section className="relative min-h-screen flex items-center justify-center bg-[#111E18] overflow-hidden px-4 sm:px-8 pt-32 pb-20 sm:pt-32 sm:pb-32">
+      <section className="relative min-h-screen flex items-center justify-center bg-[#111E18] overflow-hidden px-4 sm:px-8 pt-24 pb-16 sm:pt-32 sm:pb-32">
         {/* Dynamic Background Noise */}
         <div className="absolute inset-0 opacity-[0.15] mix-blend-color-dodge pointer-events-none">
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-emerald-400/20 blur-[150px] rounded-full" />
         </div>
 
-        <div className="max-w-7xl w-full grid grid-cols-1 lg:grid-cols-12 gap-16 items-center relative z-20">
+        <div className="max-w-7xl w-full grid grid-cols-1 lg:grid-cols-12 gap-8 sm:gap-16 items-center relative z-20">
           
           {/* Left: Text Content (60%) */}
-          <div className="lg:col-span-7 space-y-10 text-left">
+          <div className="lg:col-span-7 space-y-6 sm:space-y-10 text-left">
           <m.div
               initial={{ opacity: 0, x: -50 }}
               animate={{ opacity: 1, x: 0 }}
@@ -104,12 +104,12 @@ export function HeroSection({ onCtaClick, openAuth }: HeroSectionProps) {
                 <span className="text-emerald-300 text-xs font-semibold uppercase tracking-wider">실시간 건강 엔진 작동 중</span>
               </div>
 
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-[1.1] text-white tracking-tight">
+              <h1 className="text-[1.75rem] sm:text-5xl lg:text-6xl font-extrabold leading-[1.1] text-white tracking-tight">
                 건강은 <br />
                 <span className="text-emerald-400">데이터</span>로 말합니다.
               </h1>
 
-              <p className="text-base sm:text-lg text-slate-400 font-normal leading-relaxed max-w-lg">
+              <p className="text-sm sm:text-lg text-slate-400 font-normal leading-relaxed max-w-lg">
                 단순한 지도가 아닙니다. <br />
                 사용자의 기록과 AI 분석이 결합된 <br className="hidden md:block" />
                 차세대 라이프스타일 헬스케어 시스템.
@@ -122,7 +122,7 @@ export function HeroSection({ onCtaClick, openAuth }: HeroSectionProps) {
               transition={{ delay: 0.4 }}
               className="flex flex-col sm:flex-row gap-6 pt-4"
             >
-              <WaveButton onClick={onCtaClick} variant="primary" className="px-7 py-3.5 text-[15px] font-semibold">
+              <WaveButton onClick={onCtaClick} variant="primary" className="px-5 py-3 sm:px-7 sm:py-3.5 text-[13px] sm:text-[15px] font-semibold">
                 기록하러 가기
               </WaveButton>
               <WaveButton
@@ -134,7 +134,7 @@ export function HeroSection({ onCtaClick, openAuth }: HeroSectionProps) {
                   }
                 }}
                 variant="accent"
-                className="px-7 py-3.5 text-[15px] font-semibold shadow-lg shadow-amber-500/20"
+                className="px-5 py-3 sm:px-7 sm:py-3.5 text-[13px] sm:text-[15px] font-semibold shadow-lg shadow-amber-500/20"
               >
                 무료 리포트 시작하기
               </WaveButton>
@@ -147,7 +147,7 @@ export function HeroSection({ onCtaClick, openAuth }: HeroSectionProps) {
               initial={{ opacity: 0, scale: 0.9, rotate: 2 }}
               animate={{ opacity: 1, scale: 1, rotate: 0 }}
               transition={{ duration: 0.8, delay: 0.2 }}
-              className="relative p-5 sm:p-8 rounded-[28px] sm:rounded-[40px] bg-slate-900/40 backdrop-blur-3xl border border-white/10 shadow-3xl shadow-emerald-500/5 space-y-6 sm:space-y-8"
+              className="relative p-4 sm:p-8 rounded-[24px] sm:rounded-[40px] bg-slate-900/40 backdrop-blur-3xl border border-white/10 shadow-3xl shadow-emerald-500/5 space-y-4 sm:space-y-8"
             >
               <div className="grid grid-cols-2 gap-3">
                 <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/10 text-center space-y-1.5">
@@ -325,7 +325,7 @@ export function HeroSection({ onCtaClick, openAuth }: HeroSectionProps) {
       </div>
       */}
 
-      <section id="steps-section" className="relative pt-20 pb-32 px-6 overflow-hidden bg-[#F8FAF9]">
+      <section id="steps-section" className="relative pt-12 sm:pt-20 pb-20 sm:pb-32 px-4 sm:px-6 overflow-hidden bg-[#F8FAF9]">
         <div className="max-w-5xl mx-auto mb-12">
           <m.div
             initial={{ opacity: 0, y: 24 }}
@@ -334,7 +334,7 @@ export function HeroSection({ onCtaClick, openAuth }: HeroSectionProps) {
             className="text-center mb-16"
           >
             <p className="text-xs font-semibold uppercase tracking-wider mb-3 text-emerald-600">HOW IT WORKS</p>
-            <h2 className="text-3xl md:text-5xl font-extrabold text-slate-900 tracking-tight">
+            <h2 className="text-2xl sm:text-3xl md:text-5xl font-extrabold text-slate-900 tracking-tight">
               3단계로 끝나는 <br />
               <span className="text-emerald-600">스마트 헬스케어</span>
             </h2>

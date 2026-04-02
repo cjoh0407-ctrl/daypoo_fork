@@ -1,0 +1,36 @@
+{
+  "name": "Day.Poo — 나의 건강 파트너",
+  "short_name": "Day.Poo",
+  "description": "AI 기반 배변 건강 분석 & 전국 화장실 실시간 지도",
+  "start_url": "/main",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#111E18",
+  "theme_color": "#111E18",
+  "lang": "ko",
+  "categories": ["health", "lifestyle"],
+  "icons": [
+    {
+      "src": "/icons/pwa-64x64.png",
+      "sizes": "64x64",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/pwa-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/pwa-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/maskable-icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

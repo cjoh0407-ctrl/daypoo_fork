@@ -63,7 +63,7 @@ function SpotlightCard({ step, index, onAction }: { step: Step; index: number; o
       viewport={{ once: true, margin: '-50px' }}
       transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1], delay: index * 0.1 }}
       onMouseMove={handleMouseMove}
-      className={`relative w-full p-10 md:p-14 rounded-[48px] transition-all duration-700 group overflow-hidden ${
+      className={`relative w-full p-6 sm:p-10 md:p-14 rounded-[28px] sm:rounded-[48px] transition-all duration-700 group overflow-hidden ${
         step.isAction 
           ? 'bg-[#1B4332] text-white shadow-[0_40px_100px_rgba(27,67,50,0.35)]' 
           : 'bg-white shadow-[0_20px_50px_rgba(0,0,0,0.04)] border border-gray-100'
@@ -88,14 +88,14 @@ function SpotlightCard({ step, index, onAction }: { step: Step; index: number; o
         }}
       />
 
-      <div className="relative z-10 flex flex-col md:flex-row items-center gap-10 md:gap-16">
+      <div className="relative z-10 flex flex-col md:flex-row items-center gap-6 sm:gap-10 md:gap-16">
         {/* 좌측: 번호와 아이콘 (강조) */}
         <div className="flex-shrink-0 relative">
-          <div className={`w-24 h-24 rounded-[32px] flex items-center justify-center shadow-2xl transform transition-all duration-700 group-hover:rotate-[10deg] ${step.isAction ? 'bg-white/10 ring-1 ring-white/20' : 'bg-white border border-gray-50'}`} 
+          <div className={`w-16 h-16 sm:w-24 sm:h-24 rounded-2xl sm:rounded-[32px] flex items-center justify-center shadow-2xl transform transition-all duration-700 group-hover:rotate-[10deg] ${step.isAction ? 'bg-white/10 ring-1 ring-white/20' : 'bg-white border border-gray-50'}`}
             style={{ color: step.isAction ? '#fff' : step.color }}>
             {React.isValidElement(step.icon) && React.cloneElement(step.icon as React.ReactElement<any>, { size: 36 })}
           </div>
-          <div className="absolute -top-3 -right-3 w-10 h-10 rounded-full bg-[#E8A838] flex items-center justify-center text-white font-black text-sm shadow-lg border-4 border-white">
+          <div className="absolute -top-2 -right-2 sm:-top-3 sm:-right-3 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-[#E8A838] flex items-center justify-center text-white font-black text-xs sm:text-sm shadow-lg border-[3px] sm:border-4 border-white">
             0{step.id}
           </div>
         </div>
@@ -106,11 +106,11 @@ function SpotlightCard({ step, index, onAction }: { step: Step; index: number; o
             <span className={`text-[12px] font-black tracking-[0.4em] uppercase mb-2 ${step.isAction ? 'text-emerald-400/50' : 'text-emerald-800/20'}`}>
               Roadmap Strategy
             </span>
-            <h3 className={`text-3xl md:text-5xl font-black mb-4 tracking-tighter leading-[1.1] ${step.isAction ? 'text-white' : 'text-[#1B4332]'}`}>
+            <h3 className={`text-xl sm:text-3xl md:text-5xl font-black mb-3 sm:mb-4 tracking-tighter leading-[1.1] ${step.isAction ? 'text-white' : 'text-[#1B4332]'}`}>
               {step.title}
             </h3>
           </div>
-          <p className={`text-lg md:text-xl leading-relaxed whitespace-pre-line ${step.isAction ? 'text-white/60' : 'text-gray-500/80 font-medium'}`}>
+          <p className={`text-sm sm:text-lg md:text-xl leading-relaxed whitespace-pre-line ${step.isAction ? 'text-white/60' : 'text-gray-500/80 font-medium'}`}>
             {step.desc}
           </p>
 
@@ -120,7 +120,7 @@ function SpotlightCard({ step, index, onAction }: { step: Step; index: number; o
               whileHover={{ scale: 1.05, boxShadow: '0 25px 50px rgba(0,0,0,0.3)' }}
               whileTap={{ scale: 0.95 }}
               onClick={onAction}
-              className="mt-10 px-14 py-6 bg-amber-400 text-[#1B4332] font-black rounded-[24px] shadow-2xl flex items-center justify-center gap-4 transition-all"
+              className="mt-6 sm:mt-10 px-8 py-4 sm:px-14 sm:py-6 bg-amber-400 text-[#1B4332] font-black text-sm sm:text-base rounded-2xl sm:rounded-[24px] shadow-2xl flex items-center justify-center gap-3 sm:gap-4 transition-all"
             >
               지금 시작하기
               <ArrowRight size={24} />

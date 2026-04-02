@@ -134,7 +134,7 @@ export function MapSection() {
   }, [toilets, clearMarkers]);
 
   return (
-    <section className="px-4 sm:px-6 md:px-12 pt-20 sm:pt-40 pb-32 sm:pb-56 relative overflow-hidden" style={{ background: '#F8FAF9' }}>
+    <section className="px-4 sm:px-6 md:px-12 pt-4 sm:pt-40 pb-20 sm:pb-56 relative overflow-hidden" style={{ background: '#F8FAF9' }}>
       {/* 배경 장식 원 */}
       <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-[#1B4332]/[0.02] rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl pointer-events-none" />
       
@@ -144,17 +144,17 @@ export function MapSection() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.4 }}
           transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
-          className="text-center mb-16 space-y-6"
+          className="text-center mb-8 sm:mb-16 space-y-4 sm:space-y-6"
         >
           <div className="flex flex-col items-center gap-4">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#1B4332]/[0.05] border border-[#1B4332]/[0.1] shadow-sm">
               <MapPin size={14} className="text-[#1B4332]" />
               <span className="text-[10px] font-black uppercase tracking-widest text-[#1B4332]">Local Explorer</span>
             </div>
-            <h2 className="text-3xl sm:text-4xl md:text-6xl font-black text-[#1A2B27] tracking-tight leading-[1.1]">
+            <h2 className="text-xl sm:text-4xl md:text-6xl font-black text-[#1A2B27] tracking-tight leading-[1.1]">
               내 주변 <span className="text-[#1B4332]">화장실 지도</span>
             </h2>
-            <p className="text-lg md:text-xl text-[#1A2B27]/50 max-w-2xl mx-auto leading-relaxed">
+            <p className="text-[13px] sm:text-lg md:text-xl text-[#1A2B27]/50 max-w-2xl mx-auto leading-relaxed">
               지금 바로 당신 곁의 가장 쾌적한 공간을 확인하세요.<br className="hidden md:block" />
               <span className="font-bold text-[#1B4332]">실시간 데이터</span>를 기반으로 가장 가까운 대안을 제시합니다.
             </p>
