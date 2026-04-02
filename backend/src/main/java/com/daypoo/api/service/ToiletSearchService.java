@@ -59,7 +59,8 @@ public class ToiletSearchService {
 
   private String buildQuery(String query, int size, Double latitude, Double longitude) throws Exception {
     boolean isChosung = ChosungUtils.isChosungOnly(query);
-    String chosungQuery = isChosung ? query : ChosungUtils.extractChosung(query);
+    // 사용자 검색어도 공백/특수문자 제거 후 순수 초성만 추출
+    String chosungQuery = ChosungUtils.extractChosung(query);
 
     List<Object> shouldClauses = new ArrayList<>();
 
@@ -77,14 +78,18 @@ public class ToiletSearchService {
 
       // 2. 접두사 검색 (나비 -> 나비상가)
       shouldClauses.add(
-          Map.of("match_phrase_prefix", Map.of("name", Map.of("query", query, "boost", 10.0))));
+          Map.of("match_phrase_prefix", Map.of("name", Map.of("query", query, "boost", 15.0))));
     }
 
-    // 3. 초성 검색: 시작 부분 일치 (ㄴㅂ -> 나비상가, 남부센터) - 매우 높은 가중치
+    // 3. 초성 100% 일치 (ㄴㅂㅅㄱ -> 나비상가) - 최상단 고정
     shouldClauses.add(
-        Map.of("wildcard", Map.of("nameChosung", Map.of("value", chosungQuery + "*", "boost", 8.0))));
+        Map.of("term", Map.of("nameChosung", Map.of("value", chosungQuery, "boost", 100.0))));
 
-    // 4. 초성 검색: 중간 포함 - 낮은 가중치
+    // 4. 초성 접두사 검색 (ㄴㅂ -> 나비상가) - 매우 높은 가중치
+    shouldClauses.add(
+        Map.of("prefix", Map.of("nameChosung", Map.of("value", chosungQuery, "boost", 50.0))));
+
+    // 5. 초성 중간 포함 검색 (ㄴㅂ -> 강남북동화장실) - 낮은 가중치
     shouldClauses.add(
         Map.of("wildcard", Map.of("nameChosung", Map.of("value", "*" + chosungQuery + "*", "boost", 1.0))));
 
