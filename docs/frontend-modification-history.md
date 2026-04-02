@@ -1,5 +1,12 @@
 # Frontend Modification History
 
+## [2026-04-02 18:38:00] Backend: 글로벌 타임존 설정 추가 (JVM Default KST)
+
+- **작업 내용**: 서버 시각(UTC) 사용으로 인해 모든 게시물 시각이 9시간 전으로 표시되는 문제 근본 해결
+- **상세 변경 내역**:
+  - `ApiApplication.java`: `@PostConstruct`를 사용하여 애플리케이션 시작 시 `TimeZone.setDefault("Asia/Seoul")` 설정.
+- **결과/영향**: `LocalDateTime.now()` 등 모든 서버 측 시간 작업이 한국 표준시(KST)를 기본값으로 사용하게 되어 실시간 시각 동기화 완료.
+
 ## [2026-04-02 18:31:00] Backend: 타임존 설정 수정 (Asia/Seoul)
 
 - **작업 내용**: 후기 작성 시 시각이 9시간 전으로 표시되는 문제 해결
