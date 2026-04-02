@@ -22,10 +22,11 @@ public class PublicDataSyncTest {
     int endPage = 10;
 
     // When
-    int savedCount = publicDataSyncService.syncAllToilets(startPage, endPage);
+    int[] result = publicDataSyncService.syncAllToilets(startPage, endPage);
+    int totalCount = result[0];
 
     // Then
-    System.out.println("✅ Successfully saved " + savedCount + " toilets.");
-    assertThat(savedCount).isGreaterThanOrEqualTo(0);
+    System.out.println("✅ Successfully processed " + totalCount + " toilets.");
+    assertThat(totalCount).isGreaterThanOrEqualTo(0);
   }
 }
