@@ -36,24 +36,42 @@ public class ToiletSearchService {
       String query, int size, Double latitude, Double longitude) {
     if (query == null || query.isBlank()) return List.of();
 
-    try {
-      String requestBody = buildQuery(query.trim(), size, latitude, longitude);
-      String response =
-          webClientBuilder
-              .build()
-              .post()
-              .uri(opensearchUrl + "/" + INDEX_NAME + "/_search")
-              .header("Content-Type", "application/json")
-              .bodyValue(requestBody)
-              .retrieve()
-              .bodyToMono(String.class)
-              .block();
+    // 1차: 좌표 포함 검색 시도 (geo_distance 정렬)
+    if (latitude != null && longitude != null) {
+      try {
+        String requestBody = buildQuery(query.trim(), size, latitude, longitude);
+        String response = executeSearch(requestBody);
+        List<ToiletSearchResultResponse> results = parseResponse(response);
+        if (!results.isEmpty()) {
+          return results;
+        }
+      } catch (Exception e) {
+        log.warn(
+            "[OpenSearch] geo_distance 검색 실패, 좌표 없이 재시도합니다. query='{}': {}", query, e.getMessage());
+      }
+    }
 
+    // 2차: 좌표 없이 검색 (순수 텍스트/초성 일치도만)
+    try {
+      String requestBody = buildQuery(query.trim(), size, null, null);
+      String response = executeSearch(requestBody);
       return parseResponse(response);
     } catch (Exception e) {
-      log.warn("[OpenSearch] 검색 실패 query='{}': {}", query, e.getMessage());
+      log.error("[OpenSearch] 검색 완전 실패 query='{}': {}", query, e.getMessage());
       return List.of();
     }
+  }
+
+  private String executeSearch(String requestBody) {
+    return webClientBuilder
+        .build()
+        .post()
+        .uri(opensearchUrl + "/" + INDEX_NAME + "/_search")
+        .header("Content-Type", "application/json")
+        .bodyValue(requestBody)
+        .retrieve()
+        .bodyToMono(String.class)
+        .block();
   }
 
   // ── private helpers ──────────────────────────────────────────────────────
