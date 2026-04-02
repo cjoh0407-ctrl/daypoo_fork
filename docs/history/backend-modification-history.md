@@ -1,48 +1,52 @@
 # Backend & AI Service Modification History
 
 ## [2026-04-01 16:58:00] 배포 환경 로그인 429(Too Many Requests) 에러 해결을 위한 Rate Limit 완화
+
 - **작업 내용**: 배포 환경에서 정당한 사용자가 차단되는 현상을 방지하기 위해 인증 관련 API의 호출 임계치를 상향 조정함.
 - **상세 변경 내역**:
-    - **`AuthController.java`**: 
-        - 이메일/닉네임 중복 확인 필터: 10회/60초 -> **20회/60초**
-        - 회원가입 API: 5회/600초 -> **10회/600초**
-        - 로그인 API: 5회/300초 -> **10회/300초**
+  - **`AuthController.java`**:
+    - 이메일/닉네임 중복 확인 필터: 10회/60초 -> **20회/60초**
+    - 회원가입 API: 5회/600초 -> **10회/600초**
+    - 로그인 API: 5회/300초 -> **10회/300초**
 - **결과/영향**: 사무실 등 공유 IP 환경이나 일시적인 오타/입력 시도 시에도 서비스 이용에 지장이 없도록 접근성 개선. 단, 보안을 위해 무분별한 공격을 막기 위한 최소한의 제한선은 유지함.
 
 ---
 
 ## [2026-04-01 16:25:00] 관리자 페이지 유저 검색 및 필터링 백엔드 구현
+
 - **작업 내용**: 관리자 페이지 유저 관리 섹션의 검색 기능을 이메일/닉네임으로 한정하고, 역할 및 구독 플랜별 필터링 기능을 백엔드에 구현함.
 - **상세 변경 내역**:
-    - **`AdminUserController.java`**: `getUsers` API에 `SubscriptionPlan plan` 파라미터를 추가하여 필터링 조건 수신 가능하게 수정.
-    - **`AdminManagementService.java`**: 
-        - `getUsers` 메서드의 JPA `Specification` 로직을 확장.
-        - `email` 및 `nickname` 필드에 대한 키워드 검색(Partial Match) 한정 적용.
-        - `Subscription` 엔터티를 Join하여 현재 활성화된(ACTIVE) 구독 플랜별 필터링 조건 추가 (BASIC, PRO, PREMIUM 대응).
-    - **가이드 작성**: 프론트엔드 팀의 원활한 연동을 위해 `docs/frontend-implementation-guide.md`에 API 규격 및 UI 구현 주의사항 정리.
+  - **`AdminUserController.java`**: `getUsers` API에 `SubscriptionPlan plan` 파라미터를 추가하여 필터링 조건 수신 가능하게 수정.
+  - **`AdminManagementService.java`**:
+    - `getUsers` 메서드의 JPA `Specification` 로직을 확장.
+    - `email` 및 `nickname` 필드에 대한 키워드 검색(Partial Match) 한정 적용.
+    - `Subscription` 엔터티를 Join하여 현재 활성화된(ACTIVE) 구독 플랜별 필터링 조건 추가 (BASIC, PRO, PREMIUM 대응).
+  - **가이드 작성**: 프론트엔드 팀의 원활한 연동을 위해 `docs/frontend-implementation-guide.md`에 API 규격 및 UI 구현 주의사항 정리.
 - **결과/영향**: 관리자가 수만 명의 유저 중 특정 이메일/닉네임이나 구독 등급별로 대상자를 신속하게 추출하여 관리할 수 있는 기반 마련.
 
 ---
 
 ## [2026-04-01 16:10:00] 람다봇(Lambda Bot) 메가 업그레이드 (대규모 증설 및 서울 전역 확장)
+
 - **작업 내용**: 서비스 활성화를 위해 람다봇의 규모를 대폭 늘리고 활동 범위를 서울 전역으로 확장.
 - **상세 변경 내역**:
-    - **봇 규모 증설**: 기본 30명에서 **100명**으로 상향 조정.
-    - **성장 모델 고도화**: 매일 1명 증가에서 **매일 5명 증가**(`100 + days * 5`)로 로직 변경.
-    - **활동 범위 확장 (Seoul-Wide)**: 기존 강남역 중심에서 **서울 25개 자치구별 주요 거점(강남, 홍대, 잠실, 시청 등 25곳)**으로 활동 반경 확대 및 랜덤 배정 로직 구현.
-    - **데이터 최적화**: 봇 활동 간 무작위 딜레이(0.1~0.4초) 적용으로 서버 부하 분산 및 자연스러운 데이터 생성 유도.
-    - **브랜치 생성**: `fix/lambda-bot-mega-upgrade` 브랜치에서 작업 진행.
+  - **봇 규모 증설**: 기본 30명에서 **100명**으로 상향 조정.
+  - **성장 모델 고도화**: 매일 1명 증가에서 **매일 5명 증가**(`100 + days * 5`)로 로직 변경.
+  - **활동 범위 확장 (Seoul-Wide)**: 기존 강남역 중심에서 **서울 25개 자치구별 주요 거점(강남, 홍대, 잠실, 시청 등 25곳)**으로 활동 반경 확대 및 랜덤 배정 로직 구현.
+  - **데이터 최적화**: 봇 활동 간 무작위 딜레이(0.1~0.4초) 적용으로 서버 부하 분산 및 자연스러운 데이터 생성 유도.
+  - **브랜치 생성**: `fix/lambda-bot-mega-upgrade` 브랜치에서 작업 진행.
 - **결과/영향**: 서울 전역의 화장실 데이터와 사용자 활동 로그가 풍부해져 서비스의 전반적인 활기가 크게 향상됨.
 
 ---
 
 ## [2026-04-01 15:45:00] 람다봇(Lambda Bot) API 규격 동기화 및 안정화
+
 - **작업 내용**: 배포 환경에서 작동하지 않던 람다봇(`main.py`)을 최신 백엔드 API 명세에 맞춰 전면 리팩토링.
 - **상세 변경 내역**:
-    - **API 경로 수정**: `/toilets/nearby` → `/api/v1/toilets`, `/reviews/toilets` → `/api/v1/toilets/{id}/reviews`.
-    - **파라미터 및 필드명 동기화**: `lat`/`lng` → `latitude`/`longitude`, `shape` → `bristolScale`, `smellLevel` → `conditionTags` 등.
-    - **로직 개선**: 배변 기록 생성 전 화장실 조회를 먼저 수행하여 필수값(`toiletId`) 및 좌표 정보를 확보하도록 순서 조정.
-    - **브랜치 생성**: `fix/lambda-bot-api-sync` 브랜치에서 작업 진행.
+  - **API 경로 수정**: `/toilets/nearby` → `/api/v1/toilets`, `/reviews/toilets` → `/api/v1/toilets/{id}/reviews`.
+  - **파라미터 및 필드명 동기화**: `lat`/`lng` → `latitude`/`longitude`, `shape` → `bristolScale`, `smellLevel` → `conditionTags` 등.
+  - **로직 개선**: 배변 기록 생성 전 화장실 조회를 먼저 수행하여 필수값(`toiletId`) 및 좌표 정보를 확보하도록 순서 조정.
+  - **브랜치 생성**: `fix/lambda-bot-api-sync` 브랜치에서 작업 진행.
 - **결과/영향**: 배포 환경에서 람다봇이 정상적으로 30명의 유저 활동을 시뮬레이션할 수 있게 됨.
 
 ---
@@ -50,48 +54,55 @@
 ## [2026-04-01 10:55:00] 백엔드 하드코딩된 서비스 명칭 수정 (대똥여지도 → Day Poo)
 
 ### 작업 내용 요약
+
 - **하드코딩 제거**: 백엔드 코드 내에 잔존하던 구(舊) 명칭 '대똥여지도' 및 '대똥여지도(DayPoo)' 문자열을 공식 명칭인 'Day Poo'로 일괄 수정하여 브랜드 일관성 확보.
 
 ### 상세 변경 내역
+
 - `AuthService.java`: 임시 비밀번호 안내 이메일 제목 및 본문 인사말 수정.
 - `ApiApplication.java`: 서버 시작 시 발송되는 자가 진단 메일 제목 수정.
 - `AdminSettingsService.java`: 시스템 초기 설정 시의 기본 공지사항 메시지 수정.
 
 ### 결과/영향
+
 - 이메일 발송 및 관리자 설정 시 사용자에게 'Day Poo'로 통일된 명칭이 노출됨.
 
 [✅ 규칙을 잘 수행했습니다.]
 
-
 ## [2026-04-01 10:25:00] 랭킹 페이지 내 랭킹 섹션 아바타 표시 오류 수정
 
 ### 작업 내용 요약
+
 - **결함 원인 파악**: `RankingService.getRankingFromRedis()`에서 인벤토리 아이템을 Top 10 유저만 대상으로 배치 조회하여, 로그인 유저가 Top 10 밖일 경우 장착 아이템 정보가 누락되는 현상 확인.
 - **로직 개선**: 인벤토리 조회 대상 리스트에 로그인 유저를 조건부로 추가하여 Top 10 여부와 상관없이 내 랭킹 정보에 아바타가 정상 표시되도록 수정.
 
 ### 상세 변경 내역
+
 - `RankingService.java` 내 `getRankingFromRedis()` 메서드 수정
 - `usersForInventory` 리스트를 신설하여 Top 10 유저들과 로그인 유저(`myUser`)를 합침
 - `inventoryRepository.findEquippedByUserIn(usersForInventory)`를 호출하여 배치 조회 범위 확장
 
 ### 결과/영향
+
 - 랭킹 페이지 하단의 '내 랭킹' 섹션에서 사용자가 장착한 아바타가 항상 올바르게 표시됨.
 
 [✅ 규칙을 잘 수행했습니다.]
 
-
 ## [2026-03-31 17:15:00] 신규 회원 기본 아바타 지급 로직 복구
 
 ### 작업 내용 요약
+
 - **결함 원인 파악**: 프론트엔드/백엔드 수정 병합 과정 중 `AuthService.java`에 존재해야 할 신규 회원 기본 아바타(`ItemType.AVATAR`) 인벤토리 할당 로직이 소실되어 있던 것을 확인.
 - **로직 추가 및 복구**: 회원가입 시 가격이 `0`인 기본 아바타를 찾아 유저 인벤토리에 자동 장착(`isEquipped=true`) 시켜주는 `assignDefaultAvatar` 헬퍼 메서드를 재구현.
 
 ### 상세 변경 내역
+
 - `AuthService.java` 내 `ItemRepository` 의존성 추가
 - `signUp()`, `socialSignUp()` 완료 직전 `assignDefaultAvatar(user)` 호출
 - `ItemType.AVATAR` 중 가격이 `0`인 아이템을 우선적으로 필터링하여 인벤토리(`Inventory`) 엔티티 생성 후 저장
 
 ### 결과/영향
+
 - 새로 가입하는 유저는 가입 즉시 프로필에 기본 아바타가 정상적으로 표시됨.
 
 [✅ 규칙을 잘 수행했습니다.]
@@ -106,10 +117,12 @@
 ### 상세 변경 내역
 
 #### 1. 프리미엄 리포트 접근 제어 (`ReportService.java`)
+
 - `applyPremiumMasking` 프라이빗 메서드 신규 구현
 - 일반 등급 사용자가 생성, 스냅샷 조회, 캐시 조회 등 어떠한 경로로 분석 리포트를 요청하더라도 응답(DTO) 생성 과정에서 `premiumSolution` 및 `insights` 등 프리미엄 필드를 강제로 `null` 처리하여 반환하도록 보안 강화 완료
 
 #### 2. 지역 랭킹 점검 (`RankingController.java`, `RankingService.java`)
+
 - `GET /api/v1/rankings/region?regionName={이름}` 형태의 동네 왕 랭킹 조회 API가 기존에 정상적으로 구현 및 Redis 캐싱까지 완벽히 동작하고 있음을 디버깅 확인.
 - 해당 결함(P1)은 백엔드 누락이 아닌 프론트엔드 연동(파라미터 누락 등) 문제로 분류하여 프론트 팀으로 이전 조치.
 
@@ -131,14 +144,17 @@
 ### 상세 변경 내역
 
 #### 1. SSE 및 보안 (`SecurityConfig.java`, `JwtAuthenticationFilter.java`)
+
 - SSE 구독 경로(`/api/v1/notifications/subscribe`)를 `permitAll()`로 설정하여 인증 리다이렉트 문제 해결
 - `sseToken` 쿼리 파라미터를 통한 JWT 추출 로직 추가 (브라우저 EventSource 제약 대응)
 
 #### 2. 배변 기록 및 리뷰 (`ToiletReviewService.java`, `PooRecordService.java`, `LocationVerificationService.java`)
+
 - **리뷰 중복 방지**: 동일 사용자의 특정 화장실 중복 리뷰 작성을 비즈니스 로직 레벨에서 차단 (에러 코드 `T002`)
 - **체류 시간 정밀화**: `check-in` 요청 시 클라이언트의 실제 진입 시점(`enteredAt`)을 전달받아 Redis에 기록하고 이를 기준으로 60초 체류 여부 검증하도록 개선
 
 #### 3. 고객 지원 및 관리자 기능 (`SupportController.java`, `AdminInquiryController.java`, `AdminShopController.java`, `AdminTitleController.java`)
+
 - **문의 삭제**: 사용자 본인이 작성한 1:1 문의를 삭제할 수 있는 API 신설 (`DELETE /api/v1/support/inquiries/{id}`)
 - **어드민 검색 복구**: 문의 내역(제목/이메일/닉네임), 상점 아이템(이름), 칭호(이름)에 대한 검색(search) 파라미터 추가 및 레포지토리 연동
 - **이미지 URL 확장**: `Item`, `Title` 엔터티의 `imageUrl` 컬럼 길이를 `1024`로 확장하여 데이터 절단 방지

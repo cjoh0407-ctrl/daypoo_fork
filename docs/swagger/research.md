@@ -1,84 +1,90 @@
-# Swagger API 문서 구축 리서치
+# Swagger API 문서 구축 및 유지보수 가이드
 
-> **작성일**: 2026-03-04
-> **목적**: `plan.md`에 정의된 REST API 엔드포인트를 Swagger(OpenAPI 3.0) 문서로 구축하여 팀원과 공유하기 위한 사전 조사
+> **최종 수정일**: 2026-04-02
+> **목적**: 현재 프로젝트(`com.daypoo.api`)의 REST API를 Swagger(OpenAPI 3.0)로 자동화하여 문서화하고, 개발자 간 효율적인 협업 환경을 유지하기 위함
 
 ---
 
-## 1. 현재 프로젝트 상태 분석
+## 1. 현재 프로젝트 기술 스택 및 설정
 
-### 백엔드 기술 스택
+### 백엔드 인프라 (2026-04-02 기준)
 
-| 항목        | 버전/값                                 |
-| ----------- | --------------------------------------- |
-| Spring Boot | 3.2.3                                   |
-| Java        | 21                                      |
-| 빌드 도구   | Gradle                                  |
-| 패키지 구조 | `com.ddmap.backend`                     |
-| 의존성 관리 | `io.spring.dependency-management:1.1.4` |
+| 항목           | 버전/값                                      |
+| -------------- | -------------------------------------------- |
+| Spring Boot    | 3.4.3                                        |
+| Java           | 21                                           |
+| 빌드 도구      | Gradle                                       |
+| 패키지 구조    | `com.daypoo.api`                             |
+| Swagger 라이브러리 | `springdoc-openapi-starter-webmvc-ui:2.8.5` |
 
 ### 현재 구현 현황
-
-- `BackendApplication.java` (메인 클래스)만 존재
-- **컨트롤러, 서비스, 엔티티 등 아직 미구현 상태**
-- Swagger/OpenAPI 관련 의존성 **미추가**
-- `application.properties`에는 `spring.application.name=backend`만 설정됨
-
-### `plan.md` API 엔드포인트 요약 (총 30개)
-
-| 도메인               | 엔드포인트 수 | 주요 기능                                |
-| -------------------- | ------------- | ---------------------------------------- |
-| 인증 (Auth)          | 5개           | 회원가입, 로그인, 소셜 로그인, 토큰 갱신 |
-| 사용자 (User)        | 5개           | 프로필 조회/수정, 뱃지, 영역, 즐겨찾기   |
-| 화장실/지도 (Toilet) | 6개           | 목록, 상세, 검색, 마커, 리뷰, 근처       |
-| 방문/인증 (Visit)    | 3개           | 방문 인증, 리뷰 작성, 방문 기록          |
-| 건강분석 (Health)    | 4개           | 배변 기록, 분석, 똥체리듬                |
-| 커뮤니티 (Community) | 5개           | 게시글 CRUD, 댓글, 랭킹                  |
-| AI                   | 3개           | 건강 분석, 추천, 급똥모드                |
+- **컨트롤러 자동 스캔**: `AuthController`, `ToiletController` 등 20여 개의 컨트롤러가 이미 Swagger 문서에 포함됨
+- **Security 연동**: `SecurityConfig`에서 `/swagger-ui/**`, `/v3/api-docs/**` 경로에 대한 접근 허용 완료
+- **애노테이션 적용**: `@Tag`, `@Operation`, `@ApiResponse` 등을 통해 주요 API 설명 완료
 
 ---
 
-## 2. Swagger 라이브러리 선택
+## 2. API 문서 접근 및 확인
 
-### springdoc-openapi (선택 ✅)
-
-- **Spring Boot 3.x 공식 지원** (springfox는 Spring Boot 3.x 미지원)
-- OpenAPI 3.0 스펙 기반
-- 자동으로 컨트롤러와 DTO를 스캔하여 문서 생성
-- Swagger UI + ReDoc 모두 지원
-- Gradle 의존성: `org.springdoc:springdoc-openapi-starter-webmvc-ui:2.3.0`
-
-### springfox (미선택 ❌)
-
-- Spring Boot 3.x 미지원 (2021년부터 업데이트 중단)
-- 레거시 프로젝트에만 해당
+서버가 실행 중일 때 다음 URL을 통해 문서를 확인할 수 있습니다:
+- **Swagger UI**: `http://localhost:8080/swagger-ui/index.html` (또는 실제 서버 도메인)
+- **OpenAPI JSON**: `http://localhost:8080/v3/api-docs`
 
 ---
 
-## 3. 구현 접근 방식 비교
+## 3. 핵심 구현 및 유지보수 가이드 (Code-First)
 
-### 방식 A: 컨트롤러 코드 기반 자동 생성 (Code-First)
+현재 프로젝트는 코드가 작성되면 문서가 자동으로 생성되는 **Code-First** 방식을 채택하고 있습니다.
 
-- 컨트롤러 → DTO → 애노테이션 → Swagger가 자동 스캔
-- **장점**: 코드와 문서가 항상 동기화됨
-- **단점**: 컨트롤러와 DTO가 먼저 존재해야 함
+### 3.1. 컨트롤러 작성 규칙
+새로운 API를 생성할 때 반드시 다음 애노테이션을 사용하여 문서를 풍성하게 만드십시오.
 
-### 방식 B: OpenAPI YAML/JSON 직접 작성 (Design-First) ⭐ 추천
+```java
+@Tag(name = "도메인명", description = "도메인에 대한 설명")
+@RestController
+@RequestMapping("/api/v1/domain")
+public class MyController {
 
-- `openapi.yaml` 파일을 직접 작성하여 Swagger UI에서 표시
-- **장점**: 컨트롤러 구현 전에도 문서 공유 가능, 팀원과 API 계약 선확정
-- **단점**: 코드와 수동 동기화 필요
+    @Operation(summary = "기능 요약", description = "기능에 대한 상세 설명")
+    @ApiResponse(responseCode = "200", description = "성공 시나리오 설명")
+    @ApiResponse(responseCode = "400", description = "실패 시나리오 설명")
+    @GetMapping("/path")
+    public ResponseEntity<?> myApi() { ... }
+}
+```
 
-### 방식 C: 하이브리드 (Design-First → Code-First 전환)
+### 3.2. JWT 인증 연동 (향후 적용 제안)
+Swagger UI 상단에 'Authorize' 버튼을 추가하여 JWT 토큰을 직접 입력하고 테스트하려면 아래와 같은 설정 클래스를 추가해야 합니다. (현재 프로젝트에 추가 제안 사항)
 
-- 초기에는 `openapi.yaml`로 팀원과 API 스펙 공유
-- 컨트롤러 구현 후에는 Code-First로 전환
-- **장점**: 현재 상황(미구현)에 가장 적합하면서도 나중에 자연스럽게 전환 가능
+```java
+@Configuration
+public class OpenApiConfig {
+    @Bean
+    public OpenAPI openAPI() {
+        String jwtSchemeName = "BearerAuth";
+        SecurityRequirement securityRequirement = new SecurityRequirement().addList(jwtSchemeName);
+        Components components = new Components()
+            .addSecuritySchemes(jwtSchemeName, new SecurityScheme()
+                .name(jwtSchemeName)
+                .type(SecurityScheme.Type.HTTP)
+                .scheme("bearer")
+                .bearerFormat("JWT"));
+
+        return new OpenAPI()
+            .info(new Info()
+                .title("DayPoo API Documentation")
+                .description("DayPoo 프로젝트의 백엔드 API 명세서입니다.")
+                .version("v1.0.0"))
+            .addSecurityItem(securityRequirement)
+            .components(components);
+    }
+}
+```
 
 ---
 
-## 4. 핵심 결론
+## 4. 보안 및 운영 시 주의사항
 
-- 현재 백엔드에 컨트롤러가 하나도 없으므로 **Design-First 방식**으로 `openapi.yaml`을 먼저 작성하여 팀원과 API 스펙을 공유하는 것이 가장 실용적
-- springdoc-openapi 의존성을 추가하고, 커스텀 `openapi.yaml`을 Swagger UI에서 볼 수 있도록 설정
-- 나중에 컨트롤러가 구현되면 Code-First 방식으로 전환 가능
+- **운영 환경 제한**: 운영(Production) 환경에서는 Swagger UI를 비활성화하거나, 별도의 인증(Basic Auth 등)을 통해 접근을 제한해야 합니다.
+- **DTO 필드 설명**: `@Schema` 애노테이션을 DTO 필드에 사용하여 데이터 형식을 명시하십시오. (예: `@Schema(description = "사용자 닉네임", example = "똥대장")`)
+- **버전 관리**: API 주소에 `/api/v1/`과 같은 버전 정보를 명시하여 하위 호환성을 유지하십시오.
