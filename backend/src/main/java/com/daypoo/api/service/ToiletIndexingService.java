@@ -166,16 +166,16 @@ public class ToiletIndexingService {
           "settings": {
             "analysis": {
               "analyzer": {
-                "korean": {"type": "nori"}
+                "korean": {"type": "seunjeon"}
               }
             }
           },
           "mappings": {
             "properties": {
               "id":             {"type": "long"},
-              "name":           {"type": "text", "analyzer": "nori"},
+              "name":           {"type": "text", "analyzer": "korean"},
               "nameChosung":    {"type": "keyword"},
-              "address":        {"type": "text", "analyzer": "nori"},
+              "address":        {"type": "text", "analyzer": "korean"},
               "addressChosung": {"type": "keyword"},
               "latitude":       {"type": "double"},
               "longitude":      {"type": "double"},
