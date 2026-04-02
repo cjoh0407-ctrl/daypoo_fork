@@ -14,6 +14,10 @@ import com.daypoo.api.entity.User;
 import com.daypoo.api.entity.enums.Role;
 import com.daypoo.api.global.exception.BusinessException;
 import com.daypoo.api.global.exception.ErrorCode;
+import com.daypoo.api.repository.InventoryRepository;
+import com.daypoo.api.repository.ItemRepository;
+import com.daypoo.api.repository.PooRecordRepository;
+import com.daypoo.api.repository.TitleRepository;
 import com.daypoo.api.repository.UserRepository;
 import com.daypoo.api.security.JwtProvider;
 import java.util.Optional;
@@ -24,6 +28,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 @ExtendWith(MockitoExtension.class)
@@ -33,10 +38,17 @@ class AuthServiceTest {
   @InjectMocks private AuthService authService;
 
   @Mock private UserRepository userRepository;
-
   @Mock private PasswordEncoder passwordEncoder;
-
   @Mock private JwtProvider jwtProvider;
+  @Mock private EmailService emailService;
+  @Mock private StringRedisTemplate redisTemplate;
+  @Mock private TitleRepository titleRepository;
+  @Mock private UserDeletionService userDeletionService;
+  @Mock private PooRecordRepository pooRecordRepository;
+  @Mock private SystemLogService systemLogService;
+  @Mock private InventoryRepository inventoryRepository;
+  @Mock private ItemRepository itemRepository;
+  @Mock private AdminSettingsService adminSettingsService;
 
   private SignUpRequest signUpRequest;
   private LoginRequest loginRequest;
@@ -59,6 +71,7 @@ class AuthServiceTest {
   @DisplayName("성공: 회원가입")
   void signUp_success() {
     // given
+    given(adminSettingsService.isSignupEnabled()).willReturn(true);
     given(userRepository.existsByEmail(anyString())).willReturn(false);
     given(userRepository.existsByNickname(anyString())).willReturn(false);
     given(passwordEncoder.encode(anyString())).willReturn("encodedPassword");
@@ -74,6 +87,7 @@ class AuthServiceTest {
   @DisplayName("실패: 중복된 이메일로 회원가입")
   void signUp_fail_duplicateEmail() {
     // given
+    given(adminSettingsService.isSignupEnabled()).willReturn(true);
     given(userRepository.existsByEmail(anyString())).willReturn(true);
 
     // when & then

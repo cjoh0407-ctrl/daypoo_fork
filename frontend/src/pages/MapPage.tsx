@@ -184,7 +184,7 @@ export function MapPage({ openAuth }: { openAuth: (mode: 'login' | 'signup') => 
     setSearchLoading(true);
     const timer = setTimeout(async () => {
       try {
-        const locationParams = ''; // 임시: geo_distance 정렬 오류로 좌표 비활성화
+        const locationParams = pos ? `&latitude=${pos.lat}&longitude=${pos.lng}` : '';
         const data = await api.get<any[]>(`/toilets/search?q=${encodeURIComponent(trimmed)}&size=20${locationParams}`);
         const results: ToiletData[] = (data || []).map((item: any) => ({
           id: String(item.id),

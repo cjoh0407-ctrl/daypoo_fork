@@ -131,6 +131,9 @@ jobs:
             printf "REDIS_HOST=redis\n" >> .env
             printf "REDIS_PORT=6379\n" >> .env
             
+            # 기존 컨테이너 이름 충돌 방지 (프로젝트 무관하게 이름으로 찾아 삭제)
+            docker rm -f daypoo-backend daypoo-ai daypoo-redis 2>/dev/null || true
+
             docker compose -f docker-compose.prod.yml pull
             docker compose -f docker-compose.prod.yml down --remove-orphans
             docker compose -f docker-compose.prod.yml up -d

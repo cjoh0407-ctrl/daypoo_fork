@@ -5,7 +5,7 @@ interface WaveButtonProps {
   children: React.ReactNode;
   onClick?: () => void;
   className?: string;
-  variant?: 'primary' | 'secondary' | 'accent' | 'outline' | 'ghost' | 'error';
+  variant?: 'primary' | 'secondary' | 'accent' | 'outline' | 'ghost' | 'error' | 'light';
   disabled?: boolean;
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
   type?: 'button' | 'submit' | 'reset';
@@ -55,6 +55,11 @@ const WaveButton: React.FC<WaveButtonProps> = ({
       bg: 'transparent',
       text: '#1B4332',
       waves: ['rgba(0,0,0,0.02)', 'rgba(0,0,0,0.04)', 'rgba(0,0,0,0.06)'],
+    },
+    light: {
+      bg: '#FFFFFF',
+      text: '#1B4332',
+      waves: ['#F0FDF4', '#DCFCE7', '#BBF7D0'],
     }
   };
 

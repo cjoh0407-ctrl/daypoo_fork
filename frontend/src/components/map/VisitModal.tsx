@@ -243,9 +243,10 @@ export function VisitModal({ toilet, onClose, onComplete, checkInTime }: VisitMo
                         </div>
                         <WaveButtonComponent 
                           onClick={startCamera}
-                          variant="outline"
+                          variant="light"
                           size="md"
-                          className="shadow-xl bg-white/90 backdrop-blur-md"
+                          className="shadow-2xl"
+                          icon={<Camera size={18} />}
                         >
                           카메라 실행하기
                         </WaveButtonComponent>

@@ -1,0 +1,254 @@
+﻿build-and-push-images	Build and push Backend Image	癤?026-03-31T04:09:35.6174609Z ##[group]Run docker/build-push-action@v5
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:35.6175922Z with:
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:35.6176640Z   context: ./backend
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:35.6177436Z   push: true
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:35.6178312Z   tags: ***/daypoo-backend:latest
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:35.6179284Z   load: false
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:35.6180029Z   no-cache: false
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:35.6180820Z   pull: false
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:35.6181888Z   github-token: ***
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:35.6182680Z ##[endgroup]
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:35.8412175Z ##[group]GitHub Actions runtime token ACs
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:35.8423942Z refs/heads/main: read/write
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:35.8426581Z ##[endgroup]
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:35.8428867Z ##[group]Docker info
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:35.8470937Z [command]/usr/bin/docker version
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:35.8649464Z Client: Docker Engine - Community
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:35.8652272Z  Version:           28.0.4
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:35.8654055Z  API version:       1.48
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:35.8655440Z  Go version:        go1.23.7
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:35.8656385Z  Git commit:        b8034c0
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:35.8657419Z  Built:             Tue Mar 25 15:07:16 2025
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:35.8659265Z  OS/Arch:           linux/amd64
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:35.8660229Z  Context:           default
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:35.8660805Z 
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:35.8661195Z Server: Docker Engine - Community
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:35.8662166Z  Engine:
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:35.8662902Z   Version:          28.0.4
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:35.8664135Z   API version:      1.48 (minimum version 1.24)
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:35.8665324Z   Go version:       go1.23.7
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:35.8666259Z   Git commit:       6430e49
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:35.8667219Z   Built:            Tue Mar 25 15:07:16 2025
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:35.8668300Z   OS/Arch:          linux/amd64
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:35.8669249Z   Experimental:     false
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:35.8670119Z  containerd:
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:35.8670882Z   Version:          v2.2.2
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:35.8671988Z   GitCommit:        301b2dac98f15c27117da5c8af12118a041a31d9
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:35.8673206Z  runc:
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:35.8674167Z   Version:          1.3.4
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:35.8675119Z   GitCommit:        v1.3.4-0-gd6d73eb8
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:35.8676132Z  docker-init:
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:35.8676896Z   Version:          0.19.0
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:35.8677792Z   GitCommit:        de40ad0
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:35.8697862Z [command]/usr/bin/docker info
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:36.0025720Z Client: Docker Engine - Community
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:36.0027586Z  Version:    28.0.4
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:36.0028283Z  Context:    default
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:36.0029183Z  Debug Mode: false
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:36.0029680Z  Plugins:
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:36.0030192Z   buildx: Docker Buildx (Docker Inc.)
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:36.0030589Z     Version:  v0.32.1
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:36.0031227Z     Path:     /usr/libexec/docker/cli-plugins/docker-buildx
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:36.0031992Z   compose: Docker Compose (Docker Inc.)
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:36.0032589Z     Version:  v2.38.2
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:36.0033215Z     Path:     /usr/libexec/docker/cli-plugins/docker-compose
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:36.0033941Z 
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:36.0034189Z Server:
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:36.0034627Z  Containers: 0
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:36.0035182Z   Running: 0
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:36.0035495Z   Paused: 0
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:36.0035775Z   Stopped: 0
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:36.0036045Z  Images: 6
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:36.0036328Z  Server Version: 28.0.4
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:36.0036675Z  Storage Driver: overlay2
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:36.0037012Z   Backing Filesystem: extfs
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:36.0037349Z   Supports d_type: true
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:36.0037670Z   Using metacopy: false
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:36.0037988Z   Native Overlay Diff: false
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:36.0038315Z   userxattr: false
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:36.0038641Z  Logging Driver: json-file
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:36.0039014Z  Cgroup Driver: systemd
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:36.0039326Z  Cgroup Version: 2
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:36.0039613Z  Plugins:
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:36.0039914Z   Volume: local
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:36.0040295Z   Network: bridge host ipvlan macvlan null overlay
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:36.0040859Z   Log: awslogs fluentd gcplogs gelf journald json-file local splunk syslog
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:36.0041733Z  Swarm: inactive
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:36.0042194Z  Runtimes: runc io.containerd.runc.v2
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:36.0042584Z  Default Runtime: runc
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:36.0042957Z  Init Binary: docker-init
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:36.0043389Z  containerd version: 301b2dac98f15c27117da5c8af12118a041a31d9
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:36.0044571Z  runc version: v1.3.4-0-gd6d73eb8
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:36.0045223Z  init version: de40ad0
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:36.0045732Z  Security Options:
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:36.0046188Z   apparmor
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:36.0046604Z   seccomp
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:36.0047035Z    Profile: builtin
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:36.0047479Z   cgroupns
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:36.0047938Z  Kernel Version: 6.17.0-1008-azure
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:36.0048545Z  Operating System: Ubuntu 24.04.4 LTS
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:36.0049087Z  OSType: linux
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:36.0049545Z  Architecture: x86_64
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:36.0050026Z  CPUs: 4
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:36.0050474Z  Total Memory: 15.62GiB
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:36.0050971Z  Name: runnervmrg6be
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:36.0051511Z  ID: 26c853c4-ebf5-403c-a446-44e39e017c08
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:36.0052155Z  Docker Root Dir: /var/lib/docker
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:36.0052701Z  Debug Mode: false
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:36.0053393Z  Username: ***
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:36.0054225Z  Experimental: false
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:36.0054731Z  Insecure Registries:
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:36.0059296Z   ::1/128
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:36.0059819Z   127.0.0.0/8
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:36.0060353Z  Live Restore Enabled: false
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:36.0060745Z 
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:36.0063509Z ##[endgroup]
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:36.0064710Z ##[group]Proxy configuration
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:36.0068062Z No proxy configuration found
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:36.0069114Z ##[endgroup]
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:36.0754441Z ##[group]Buildx version
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:36.0789751Z [command]/usr/bin/docker buildx version
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:36.1386487Z github.com/docker/buildx v0.32.1 d3bfb3f4e48a67dda56e957a6636f4fab6c5fcb2
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:36.1418684Z ##[endgroup]
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:36.1420918Z ##[group]Builder info
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:36.2395296Z {
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:36.2395819Z   "nodes": [
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:36.2396185Z     {
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:36.2396532Z       "name": "default",
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:36.2397007Z       "endpoint": "default",
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:36.2397457Z       "status": "running",
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:36.2397895Z       "buildkit": "v0.20.2",
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:36.2398889Z       "platforms": "linux/amd64,linux/amd64/v2,linux/amd64/v3,linux/386",
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:36.2399727Z       "features": {
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:36.2400529Z         "Automatically load images to the Docker Engine image store": true,
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:36.2401468Z         "Cache export": true,
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:36.2402090Z         "Direct push": true,
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:36.2402717Z         "Docker exporter": true,
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:36.2403365Z         "Multi-platform build": true,
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:36.2406074Z         "OCI exporter": true
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:36.2406538Z       },
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:36.2406856Z       "labels": {
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:36.2407680Z         "org.mobyproject.buildkit.worker.moby.host-gateway-ip": "172.17.0.1"
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:36.2408486Z       }
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:36.2408784Z     }
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:36.2409072Z   ],
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:36.2409390Z   "name": "default",
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:36.2409760Z   "driver": "docker"
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:36.2410081Z }
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:36.2410853Z ##[endgroup]
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:36.4267768Z [command]/usr/bin/docker buildx build --iidfile /home/runner/work/_temp/docker-actions-toolkit-dP71tE/build-iidfile-4f6e82a36b.txt --tag ***/daypoo-backend:latest --metadata-file /home/runner/work/_temp/docker-actions-toolkit-dP71tE/build-metadata-fb053f64c5.json --push ./backend
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:36.5239537Z #0 building with "default" instance using docker driver
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:36.5245738Z 
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:36.5246191Z #1 [internal] load build definition from Dockerfile
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:36.7083589Z #1 transferring dockerfile: 405B done
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:36.7084457Z #1 DONE 0.0s
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:36.7084713Z 
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:36.7085091Z #2 [auth] library/amazoncorretto:pull token for registry-1.docker.io
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:36.7086083Z #2 DONE 0.0s
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:36.7086244Z 
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:36.7086543Z #3 [internal] load metadata for docker.io/library/amazoncorretto:21-alpine
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:36.8975672Z #3 DONE 0.4s
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:37.0125744Z 
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:37.0126655Z #4 [internal] load .dockerignore
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:37.0127796Z #4 transferring context: 2B done
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:37.0129229Z #4 DONE 0.0s
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:37.0129951Z 
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:37.0130413Z #5 [internal] load build context
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:37.0131825Z #5 transferring context: 556.29kB 0.0s done
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:37.0133373Z #5 DONE 0.0s
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:37.0134337Z 
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:37.0135570Z #6 [builder 1/4] FROM docker.io/library/amazoncorretto:21-alpine@sha256:c64034bdceaff59b33bc366b9ab1b7fc5593d8155daf82cd978541b206555d1f
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:37.0139472Z #6 resolve docker.io/library/amazoncorretto:21-alpine@sha256:c64034bdceaff59b33bc366b9ab1b7fc5593d8155daf82cd978541b206555d1f done
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:37.0142823Z #6 sha256:0cc97139e3485d6a9592f9620be4618f4ae02b739b07c5356db7e01dd9ba37ed 1.37kB / 1.37kB done
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:37.0144588Z #6 sha256:c7eb4677b2dff9103504635a2a577b7a05346b52d76f27ed7b249470237e5147 2.48kB / 2.48kB done
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:37.0146402Z #6 sha256:0476ba18ce4a7d863df3375a1843d00caa67c25f77311a8828c2f340ca01d1fc 1.05MB / 161.59MB 0.1s
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:37.0163173Z #6 sha256:c64034bdceaff59b33bc366b9ab1b7fc5593d8155daf82cd978541b206555d1f 2.67kB / 2.67kB done
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:37.1123506Z #6 sha256:0476ba18ce4a7d863df3375a1843d00caa67c25f77311a8828c2f340ca01d1fc 11.53MB / 161.59MB 0.2s
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:37.3127012Z #6 sha256:0476ba18ce4a7d863df3375a1843d00caa67c25f77311a8828c2f340ca01d1fc 28.31MB / 161.59MB 0.4s
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:37.5132081Z #6 sha256:0476ba18ce4a7d863df3375a1843d00caa67c25f77311a8828c2f340ca01d1fc 49.28MB / 161.59MB 0.6s
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:37.6132597Z #6 sha256:0476ba18ce4a7d863df3375a1843d00caa67c25f77311a8828c2f340ca01d1fc 61.87MB / 161.59MB 0.7s
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:37.8125686Z #6 sha256:0476ba18ce4a7d863df3375a1843d00caa67c25f77311a8828c2f340ca01d1fc 84.93MB / 161.59MB 0.9s
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:37.9129304Z #6 sha256:0476ba18ce4a7d863df3375a1843d00caa67c25f77311a8828c2f340ca01d1fc 95.42MB / 161.59MB 1.0s
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:38.1123654Z #6 sha256:0476ba18ce4a7d863df3375a1843d00caa67c25f77311a8828c2f340ca01d1fc 110.10MB / 161.59MB 1.2s
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:38.5133169Z #6 sha256:0476ba18ce4a7d863df3375a1843d00caa67c25f77311a8828c2f340ca01d1fc 130.02MB / 161.59MB 1.6s
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:38.6136230Z #6 sha256:0476ba18ce4a7d863df3375a1843d00caa67c25f77311a8828c2f340ca01d1fc 138.41MB / 161.59MB 1.7s
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:38.8127410Z #6 sha256:0476ba18ce4a7d863df3375a1843d00caa67c25f77311a8828c2f340ca01d1fc 155.19MB / 161.59MB 1.9s
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:39.0122051Z #6 sha256:0476ba18ce4a7d863df3375a1843d00caa67c25f77311a8828c2f340ca01d1fc 161.59MB / 161.59MB 2.1s done
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:39.1393343Z #6 extracting sha256:0476ba18ce4a7d863df3375a1843d00caa67c25f77311a8828c2f340ca01d1fc 0.1s
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:40.5324471Z #6 extracting sha256:0476ba18ce4a7d863df3375a1843d00caa67c25f77311a8828c2f340ca01d1fc 1.3s done
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:41.1053057Z #6 DONE 4.2s
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:41.3126229Z 
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:41.3127616Z #7 [builder 2/4] WORKDIR /app
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:41.3127984Z #7 DONE 0.0s
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:41.3128117Z 
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:41.3128223Z #8 [builder 3/4] COPY . .
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:41.3128511Z #8 DONE 0.0s
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:41.3128713Z 
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:41.3128932Z #9 [builder 4/4] RUN ./gradlew bootJar -x test
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:41.3687652Z #9 0.206 Downloading https://services.gradle.org/distributions/gradle-8.5-bin.zip
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:43.0838308Z #9 0.788 ............10%.............20%............30%.............40%.............50%............60%.............70%.............80%............90%.............100%
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:44.0870567Z #9 2.924 
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:44.0882691Z #9 2.924 Welcome to Gradle 8.5!
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:44.0884308Z #9 2.924 
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:44.3365187Z #9 2.924 Here are the highlights of this release:
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:44.3366794Z #9 2.924  - Support for running on Java 21
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:44.3367586Z #9 2.924  - Faster first use with Kotlin DSL
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:44.3368157Z #9 2.924  - Improved error and warning messages
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:44.3368648Z #9 2.924 
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:44.3369183Z #9 2.925 For more details see https://docs.gradle.org/8.5/release-notes.html
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:44.3369845Z #9 2.925 
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:44.3370300Z #9 3.023 Starting a Gradle Daemon (subsequent builds will be faster)
+build-and-push-images	Build and push Backend Image	2026-03-31T04:09:46.6857955Z #9 5.523 Calculating task graph as no cached configuration is available for tasks: bootJar
+build-and-push-images	Build and push Backend Image	2026-03-31T04:10:06.8904875Z #9 25.73 > Task :processResources
+build-and-push-images	Build and push Backend Image	2026-03-31T04:10:17.1864978Z #9 36.02 
+build-and-push-images	Build and push Backend Image	2026-03-31T04:10:17.3388494Z #9 36.02 > Task :compileJava
+build-and-push-images	Build and push Backend Image	2026-03-31T04:10:17.3389420Z #9 36.03 /app/src/main/java/com/daypoo/api/service/AdminService.java:46: error: cannot find symbol
+build-and-push-images	Build and push Backend Image	2026-03-31T04:10:17.3405168Z #9 36.03     long proUsersCount = userRepository.countByRoleIn(List.of(
+build-and-push-images	Build and push Backend Image	2026-03-31T04:10:17.3405922Z #9 36.03                                        ^
+build-and-push-images	Build and push Backend Image	2026-03-31T04:10:17.3406510Z #9 36.03   symbol:   method countByRoleIn(List<Role>)
+build-and-push-images	Build and push Backend Image	2026-03-31T04:10:17.3407184Z #9 36.03   location: variable userRepository of type UserRepository
+build-and-push-images	Build and push Backend Image	2026-03-31T04:10:17.3850123Z #9 36.22 Note: /app/src/main/java/com/daypoo/api/security/CookieUtils.java uses or overrides a deprecated API.
+build-and-push-images	Build and push Backend Image	2026-03-31T04:10:17.3851202Z #9 36.22 Note: Recompile with -Xlint:deprecation for details.
+build-and-push-images	Build and push Backend Image	2026-03-31T04:10:17.3851834Z #9 36.22 Note: Some input files use unchecked or unsafe operations.
+build-and-push-images	Build and push Backend Image	2026-03-31T04:10:17.4855662Z #9 36.22 Note: Recompile with -Xlint:unchecked for details.
+build-and-push-images	Build and push Backend Image	2026-03-31T04:10:17.4856283Z #9 36.22 1 error
+build-and-push-images	Build and push Backend Image	2026-03-31T04:10:17.4856774Z #9 36.32 
+build-and-push-images	Build and push Backend Image	2026-03-31T04:10:17.6420491Z #9 36.33 > Task :compileJava FAILED
+build-and-push-images	Build and push Backend Image	2026-03-31T04:10:17.6421090Z #9 36.33 
+build-and-push-images	Build and push Backend Image	2026-03-31T04:10:17.6421500Z #9 36.33 FAILURE: Build failed with an exception.
+build-and-push-images	Build and push Backend Image	2026-03-31T04:10:17.6421993Z #9 36.33 
+build-and-push-images	Build and push Backend Image	2026-03-31T04:10:17.6422316Z #9 36.33 * What went wrong:
+build-and-push-images	Build and push Backend Image	2026-03-31T04:10:17.6422835Z #9 36.33 Execution failed for task ':compileJava'.
+build-and-push-images	Build and push Backend Image	2026-03-31T04:10:17.6423547Z #9 36.33 > Compilation failed; see the compiler error output for details.
+build-and-push-images	Build and push Backend Image	2026-03-31T04:10:17.6427204Z #9 36.33 
+build-and-push-images	Build and push Backend Image	2026-03-31T04:10:17.6427520Z #9 36.33 * Try:
+build-and-push-images	Build and push Backend Image	2026-03-31T04:10:17.6427948Z #9 36.33 > Run with --info option to get more log output.
+build-and-push-images	Build and push Backend Image	2026-03-31T04:10:17.6428702Z #9 36.33 > 2 actionable tasks: 2 executedRun with --scan to get full insights.
+build-and-push-images	Build and push Backend Image	2026-03-31T04:10:17.6429378Z #9 36.33 
+build-and-push-images	Build and push Backend Image	2026-03-31T04:10:17.6429693Z #9 36.33 BUILD FAILED in 36s
+build-and-push-images	Build and push Backend Image	2026-03-31T04:10:17.6430081Z #9 36.33 
+build-and-push-images	Build and push Backend Image	2026-03-31T04:10:17.6430430Z #9 36.33 Configuration cache entry stored.
+build-and-push-images	Build and push Backend Image	2026-03-31T04:10:17.9855350Z #9 ERROR: process "/bin/sh -c ./gradlew bootJar -x test" did not complete successfully: exit code: 1
+build-and-push-images	Build and push Backend Image	2026-03-31T04:10:17.9992587Z ------
+build-and-push-images	Build and push Backend Image	2026-03-31T04:10:17.9994436Z  > [builder 4/4] RUN ./gradlew bootJar -x test:
+build-and-push-images	Build and push Backend Image	2026-03-31T04:10:17.9995695Z 36.33 Execution failed for task ':compileJava'.
+build-and-push-images	Build and push Backend Image	2026-03-31T04:10:17.9996147Z 36.33 > Compilation failed; see the compiler error output for details.
+build-and-push-images	Build and push Backend Image	2026-03-31T04:10:17.9996781Z 36.33 
+build-and-push-images	Build and push Backend Image	2026-03-31T04:10:17.9996961Z 36.33 * Try:
+build-and-push-images	Build and push Backend Image	2026-03-31T04:10:17.9997195Z 36.33 > Run with --info option to get more log output.
+build-and-push-images	Build and push Backend Image	2026-03-31T04:10:17.9997616Z 36.33 > 2 actionable tasks: 2 executedRun with --scan to get full insights.
+build-and-push-images	Build and push Backend Image	2026-03-31T04:10:17.9998080Z 36.33 
+build-and-push-images	Build and push Backend Image	2026-03-31T04:10:17.9998255Z 36.33 BUILD FAILED in 36s
+build-and-push-images	Build and push Backend Image	2026-03-31T04:10:17.9998466Z 36.33 
+build-and-push-images	Build and push Backend Image	2026-03-31T04:10:17.9998663Z 36.33 Configuration cache entry stored.
+build-and-push-images	Build and push Backend Image	2026-03-31T04:10:17.9999017Z ------
+build-and-push-images	Build and push Backend Image	2026-03-31T04:10:18.0024339Z Dockerfile:4
+build-and-push-images	Build and push Backend Image	2026-03-31T04:10:18.0024733Z --------------------
+build-and-push-images	Build and push Backend Image	2026-03-31T04:10:18.0025107Z    2 |     WORKDIR /app
+build-and-push-images	Build and push Backend Image	2026-03-31T04:10:18.0025469Z    3 |     COPY . .
+build-and-push-images	Build and push Backend Image	2026-03-31T04:10:18.0026059Z    4 | >>> RUN ./gradlew bootJar -x test
+build-and-push-images	Build and push Backend Image	2026-03-31T04:10:18.0026654Z    5 |     
+build-and-push-images	Build and push Backend Image	2026-03-31T04:10:18.0027127Z    6 |     FROM amazoncorretto:21-alpine
+build-and-push-images	Build and push Backend Image	2026-03-31T04:10:18.0027839Z --------------------
+build-and-push-images	Build and push Backend Image	2026-03-31T04:10:18.0029158Z ERROR: failed to build: failed to solve: process "/bin/sh -c ./gradlew bootJar -x test" did not complete successfully: exit code: 1
+build-and-push-images	Build and push Backend Image	2026-03-31T04:10:18.0126506Z ##[error]buildx failed with: ERROR: failed to build: failed to solve: process "/bin/sh -c ./gradlew bootJar -x test" did not complete successfully: exit code: 1

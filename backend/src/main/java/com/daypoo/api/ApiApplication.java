@@ -16,6 +16,13 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @EnableScheduling
 @SpringBootApplication
 public class ApiApplication {
+  @jakarta.annotation.PostConstruct
+  public void init() {
+    java.util.TimeZone.setDefault(java.util.TimeZone.getTimeZone("Asia/Seoul"));
+    log.info(
+        "⏰ [Time-Check] System timezone set to Asia/Seoul. Current time: {}",
+        java.time.LocalDateTime.now());
+  }
 
   public static void main(String[] args) {
     SpringApplication.run(ApiApplication.class, args);

@@ -241,7 +241,7 @@ export function HeroSection({ onCtaClick, openAuth }: HeroSectionProps) {
                         stroke="rgba(52,211,153,0.06)"
                         strokeWidth="1"
                         strokeDasharray="3 6"
-                        transform="translate(16%, 0)"
+                        style={{ transform: 'translateX(16%)' }}
                       />
                     ))}
                   </svg>

@@ -78,7 +78,7 @@ public class AuthController {
   @Operation(summary = "회원가입", description = "아이디, 비밀번호, 닉네임을 입력받아 신규 회원을 등록합니다.")
   @ApiResponse(responseCode = "200", description = "회원가입 성공")
   @ApiResponse(responseCode = "400", description = "잘못된 입력값 또는 중복된 아이디/닉네임")
-  @RateLimit(maxAttempts = 10, windowSeconds = 600)
+  @RateLimit(maxAttempts = 20, windowSeconds = 600)
   @PostMapping("/signup")
   public ResponseEntity<String> signUp(@Valid @RequestBody SignUpRequest request) {
     authService.signUp(request);
@@ -88,7 +88,7 @@ public class AuthController {
   @Operation(summary = "로그인", description = "아이디와 비밀번호를 검증하여 JWT 토큰을 발급합니다.")
   @ApiResponse(responseCode = "200", description = "로그인 성공 및 토큰 발급")
   @ApiResponse(responseCode = "401", description = "인증 실패")
-  @RateLimit(maxAttempts = 10, windowSeconds = 300)
+  @RateLimit(maxAttempts = 20, windowSeconds = 300)
   @PostMapping("/login")
   public ResponseEntity<TokenResponse> login(@Valid @RequestBody LoginRequest request) {
     TokenResponse response = authService.login(request);
