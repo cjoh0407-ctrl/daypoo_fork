@@ -66,7 +66,7 @@ export function ReportCard({ openAuth }: { openAuth: (mode: 'login' | 'signup') 
     <section
       ref={sectionRef}
       id="health-section"
-      className="relative pt-20 sm:pt-40 pb-32 sm:pb-64 px-4 sm:px-6 overflow-hidden"
+      className="relative pt-12 sm:pt-40 pb-10 sm:pb-64 px-4 sm:px-6 overflow-hidden"
       style={{ backgroundColor: '#eef5f0' }}
     >
       {/* 배경 그라데이션 블롭 */}
@@ -110,7 +110,7 @@ export function ReportCard({ openAuth }: { openAuth: (mode: 'login' | 'signup') 
           initial={{ opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="text-center mb-16"
+          className="text-center mb-8 sm:mb-16"
         >
           <p
             className="text-xs font-bold uppercase tracking-widest mb-3"
@@ -119,7 +119,7 @@ export function ReportCard({ openAuth }: { openAuth: (mode: 'login' | 'signup') 
             AI HEALTH REPORT
           </p>
           <h2
-            className="text-3xl md:text-5xl font-black"
+            className="text-2xl sm:text-3xl md:text-5xl font-black"
             style={{ color: 'var(--text-main)', letterSpacing: '-0.02em' }}
           >
             당신의 <HighlightReveal
@@ -130,7 +130,7 @@ export function ReportCard({ openAuth }: { openAuth: (mode: 'login' | 'signup') 
               translateY={8}
             />
           </h2>
-          <p className="mt-4 text-lg" style={{ color: 'var(--text-sec)' }}>
+          <p className="mt-3 sm:mt-4 text-sm sm:text-lg" style={{ color: 'var(--text-sec)' }}>
             기록만 하면 AI가 알아서 분석합니다
           </p>
         </motion.div>
@@ -221,7 +221,7 @@ export function ReportCard({ openAuth }: { openAuth: (mode: 'login' | 'signup') 
                           initial={{ scale: 0 }}
                           whileInView={{ scale: 1 }}
                           transition={{ type: "spring", delay: 0.5, stiffness: 100 }}
-                          className="text-5xl sm:text-7xl font-black leading-none"
+                          className="text-3xl sm:text-5xl md:text-7xl font-black leading-none"
                           style={{ color: 'var(--text-main)', letterSpacing: '-0.05em' }}
                         >
                           85
@@ -296,7 +296,7 @@ export function ReportCard({ openAuth }: { openAuth: (mode: 'login' | 'signup') 
         </motion.div>
 
         {/* ── 인사이트 카드들 (레이어드) ─────────────────── */}
-        <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 items-stretch">
+        <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8 items-stretch">
           {LOCKED_INSIGHTS.map((item, i) => (
             <motion.div
               key={i}
@@ -305,7 +305,7 @@ export function ReportCard({ openAuth }: { openAuth: (mode: 'login' | 'signup') 
               viewport={{ once: true, amount: 0.05 }}
               transition={{ delay: 0.3, duration: 0.5, ease: "easeOut" }}
               whileHover={{ y: -8, scale: 1.02 }}
-              className="relative p-6 rounded-[28px] overflow-hidden group will-change-transform h-full flex flex-col justify-start min-h-[130px]"
+              className="relative p-4 sm:p-6 rounded-[20px] sm:rounded-[28px] overflow-hidden group will-change-transform h-full flex flex-col justify-start min-h-[100px] sm:min-h-[130px]"
               style={{
                 background: 'rgba(255, 255, 255, 0.75)',
                 backdropFilter: 'blur(16px)',

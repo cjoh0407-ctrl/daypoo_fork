@@ -1,6 +1,27 @@
 # Frontend Modification History
 
+## [2026-04-02 15:20:00] Back-end: OpenSearch (2.15) & Nori Analyzer Implementation
+
+- **작업 내용**: OpenSearch 엔진 버전 업그레이드 및 Nori 형태소 분석기 커스텀 매핑 적용 (사용자 요청에 따른 백엔드 수정 제한 예외 처리)
+- **상세 변경 내역**:
+  - `ToiletIndexingService.java`: `nori_tokenizer` (mixed 모드) 및 `custom analyzer`를 이용한 인덱스 생성 로직(Mapping) 최적화. `number_of_replicas: 0` 설정을 통해 1개 노드 환경에서의 Yellow 상태 해결.
+  - `ToiletIndexingService.java`: 위치 기반 검색 성능 고도화를 위해 `geo_point` 타입인 `location` 필드를 도입하고, 직렬화 시 `lat/lon` 데이터 구조 연동.
+  - `opensearch.tf`: 엔진 버전을 `OpenSearch_2.11`에서 `OpenSearch_2.15`로, 볼륨 용량을 `10GB`에서 `20GB`로 상향 조정.
+  - `init_opensearch_nori.sh`: Nori 분석기 설정을 바탕으로 인덱스를 즉각 초기화하고 재생성할 수 있는 복구 스크립트 작성.
+  - `ToiletIndexingService.java` & `ToiletSearchService.java`: 인덱스 이름을 `toilets_v2`로 변경하여, VPC 외부망에서의 스크립트 실행 없이 백엔드 서버가 시작 시 자동으로 새로운 Nori/GeoPoint 규격의 인덱스를 생성하도록 개선.
+- **결과/영향**: 한국어 자연어 검색 정확도가 대폭 향상되었으며, 거리 기반 정렬 및 고해상도 검색이 가능해짐. 클러스터 상태를 Green으로 정상화하여 가용성 확보.
+
+## [2026-04-02 14:59:00] Mobile UI Optimization: Section Gaps & Typography Refinement
+
+- **작업 내용**: 메인 페이지 섹션 간 불필요한 여백 제거 및 모바일 반응형 텍스트 크기 최적화
+- **상세 변경 내역**:
+  - `MapSection.tsx`: 모바일 환경에서의 상단 패딩을 `pt-12`(48px)에서 `pt-4`(16px)로 대폭 축소하여 물결 SVG와 콘텐츠 사이의 간격 밀착.
+  - `MapSection.tsx`: 모바일 제목(`h2`) 크기를 `text-2xl`에서 `text-xl`로, 설명(`p`) 크기를 `text-sm`에서 `text-[13px]`로 하향 조정하여 가독성 및 화면 점유율 최적화.
+  - `ReportCard_Glass.tsx`: 모바일 하단 패딩을 `pb-20`에서 `pb-10`으로 줄여 섹션 전환부의 시각적 연속성 강화.
+- **결과/영향**: 섹션 간의 흐름이 더 자연스러워졌으며, 모바일 기기에서 텍스트가 과도하게 크게 표시되는 현상을 해결하여 한 화면에 더 많은 정보를 쾌적하게 노출.
+
 ## [2026-04-02 11:20:00] UI/UX Refinement: Navbar & LoginForm Responsiveness
+
 - **작업 내용**: 해상도 별 내비게이션 바 및 로그인 폼 레이아웃 깨짐 현상 수정
 - **상세 변경 내역**:
   - `Navbar.tsx`: 네비 링크 컨테이너에 `flex-nowrap` 및 텍스트에 `whitespace-nowrap` 적용. 패딩(`14px 28px 14px 36px`) 및 간격(`16px`) 축소로 중간 해상도 공간 확보.
@@ -8,6 +29,7 @@
 - **결과/영향**: 모바일 및 태블릿 환경에서의 UI 완성도가 향상되었으며, 텍스트가 세로로 깨지는 시각적 결함 제거.
 
 ## [2026-04-02 11:10:00] Smart Navigation: "Record Activity" & Nearest Toilet Auto-Open
+
 - **작업 내용**: 메인 CTA 버튼 연동 및 위치 기반 가장 가까운 화장실 자동 팝업 기능 구현
 - **상세 변경 내역**:
   - `HeroSection.tsx`: 버튼 텍스트를 '기록하러 가기'로 변경하여 직관성 강화.
@@ -16,6 +38,7 @@
 - **결과/영향**: 사용자의 위치에 따른 즉각적인 화장실 정보 제공으로 서비스 체류 시간 및 활동 기록 전환율 향상 기대.
 
 ## [2026-04-02 10:45:00] Social Signup Authentication Flow Optimization
+
 - **작업 내용**: 소셜 회원가입 완료 시 사용자 정보 자동 갱신 및 상태 동기화 로직 개선
 - **상세 변경 내역**:
   - `SocialSignupPage.tsx`: `localStorage.setItem`을 사용한 수동 토큰 저장 방식을 `AuthContext`의 `login` 함수 호출로 대체.

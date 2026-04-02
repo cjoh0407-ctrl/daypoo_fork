@@ -36,7 +36,7 @@ resource "aws_iam_service_linked_role" "opensearch" {
 # ── OpenSearch 도메인 ──
 resource "aws_opensearch_domain" "main" {
   domain_name    = "${var.project_name}-search"
-  engine_version = "OpenSearch_2.11"
+  engine_version = "OpenSearch_2.15"
 
   cluster_config {
     instance_type  = "t3.small.search"
@@ -45,7 +45,7 @@ resource "aws_opensearch_domain" "main" {
 
   ebs_options {
     ebs_enabled = true
-    volume_size = 10
+    volume_size = 20
     volume_type = "gp3"
   }
 

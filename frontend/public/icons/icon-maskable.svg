@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg" x1="30%" y1="0%" x2="70%" y2="100%">
+      <stop offset="0%" stop-color="#1a2e24"/>
+      <stop offset="100%" stop-color="#0c1510"/>
+    </linearGradient>
+    <radialGradient id="g1" cx="38%" cy="35%" r="52%">
+      <stop offset="0%" stop-color="#2d6a4f" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#2d6a4f" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="g2" cx="66%" cy="70%" r="44%">
+      <stop offset="0%" stop-color="#E8A838" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#E8A838" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Full bleed background (maskable safe zone = center 80%) -->
+  <rect width="512" height="512" fill="url(#bg)"/>
+  <ellipse cx="200" cy="185" rx="200" ry="170" fill="url(#g1)"/>
+  <ellipse cx="325" cy="355" rx="160" ry="130" fill="url(#g2)"/>
+
+  <!-- Text centered in safe zone -->
+  <text
+    x="256" y="265"
+    font-family="Georgia, 'Times New Roman', serif"
+    font-weight="900"
+    font-size="148"
+    fill="#ffffff"
+    text-anchor="middle"
+    letter-spacing="-5">Day</text>
+
+  <rect x="140" y="278" width="232" height="1.5" fill="white" opacity="0.07" rx="1"/>
+
+  <text
+    x="256" y="390"
+    font-family="Georgia, 'Times New Roman', serif"
+    font-weight="900"
+    font-size="148"
+    fill="#E8A838"
+    text-anchor="middle"
+    letter-spacing="-5">.Poo</text>
+</svg>

@@ -1,4 +1,12 @@
+# us-east-1 리전의 ACM 인증서 (CloudFront용)
+data "aws_acm_certificate" "main" {
+  provider = aws.us-east-1
+  domain   = "daypoo.8o2.site"
+  statuses = ["ISSUED"]
+}
+
 resource "aws_cloudfront_distribution" "main" {
+  aliases = ["daypoo.8o2.site"]
   enabled             = true
   is_ipv6_enabled    = true
   default_root_object = "index.html"
@@ -91,7 +99,9 @@ resource "aws_cloudfront_distribution" "main" {
   }
 
   viewer_certificate {
-    cloudfront_default_certificate = true
+    acm_certificate_arn            = data.aws_acm_certificate.main.arn
+    ssl_support_method              = "sni-only"
+    minimum_protocol_version        = "TLSv1.2_2021"
   }
 
   # SPA 라우팅을 위한 에러 응답 설정

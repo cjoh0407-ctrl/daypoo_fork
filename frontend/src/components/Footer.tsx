@@ -55,8 +55,8 @@ export function Footer() {
         {/* 좌측 — 로고 & 브랜딩 */}
         <div className="w-full lg:w-1/2 flex flex-col gap-5 sm:gap-6">
           <div className="space-y-3">
-            <h2 
-              className="text-4xl sm:text-5xl lg:text-7xl font-black leading-none tracking-tighter text-white/90"
+            <h2
+              className="text-3xl sm:text-5xl lg:text-7xl font-black leading-none tracking-tighter text-white/90"
               style={{ fontFamily: 'SchoolSafetyNotification, sans-serif' }}
             >
               Day<span className="text-[#E8A838]">.</span>Poo

@@ -23,7 +23,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 @RequiredArgsConstructor
 public class ToiletIndexingService {
 
-  private static final String INDEX_NAME = "toilets";
+  private static final String INDEX_NAME = "toilets_v2";
   private static final int PAGE_SIZE = 200;
 
   private final ToiletRepository toiletRepository;
@@ -46,6 +46,7 @@ public class ToiletIndexingService {
       } else {
         log.info("[OpenSearch] 기존 인덱스에 {}개 문서 존재 - 인덱싱 스킵", count);
       }
+      cleanupOldIndex();
     } catch (Exception e) {
       log.warn("[OpenSearch] 시작 시 인덱싱 실패 (검색 기능 비활성화): {}", e.getMessage());
     }
@@ -107,7 +108,8 @@ public class ToiletIndexingService {
       client.head().uri(opensearchUrl + "/" + INDEX_NAME).retrieve().toBodilessEntity().block();
       indexExists = true;
     } catch (Exception e) {
-      // 404 → 인덱스 없음
+      // 404 → 인덱스 없음 → 생성
+      createIndex(client);
     }
 
     // 인덱스가 있지만 geo_point 매핑이 없으면 삭제 후 재생성
@@ -164,18 +166,36 @@ public class ToiletIndexingService {
         """
         {
           "settings": {
+            "index": {
+              "number_of_shards": 1,
+              "number_of_replicas": 0
+            },
             "analysis": {
+              "tokenizer": {
+                "kor_tokenizer": {
+                  "type": "nori_tokenizer",
+                  "decompound_mode": "mixed"
+                }
+              },
               "analyzer": {
-                "korean": {"type": "nori"}
+                "nori_analyzer": {
+                  "type": "custom",
+                  "tokenizer": "kor_tokenizer",
+                  "filter": [
+                    "lowercase",
+                    "nori_readingform",
+                    "nori_part_of_speech"
+                  ]
+                }
               }
             }
           },
           "mappings": {
             "properties": {
               "id":             {"type": "long"},
-              "name":           {"type": "text", "analyzer": "nori"},
+              "name":           {"type": "text", "analyzer": "nori_analyzer"},
               "nameChosung":    {"type": "keyword"},
-              "address":        {"type": "text", "analyzer": "nori"},
+              "address":        {"type": "text", "analyzer": "nori_analyzer"},
               "addressChosung": {"type": "keyword"},
               "latitude":       {"type": "double"},
               "longitude":      {"type": "double"},
@@ -236,6 +256,17 @@ public class ToiletIndexingService {
     } catch (Exception e) {
       log.warn("[OpenSearch] 문서 직렬화 실패 id={}: {}", t.getId(), e.getMessage());
       return "{}";
+    }
+  }
+
+  private void cleanupOldIndex() {
+    WebClient client = webClientBuilder.build();
+    try {
+      // 구버전 인덱스(toilets) 삭제 시도
+      client.delete().uri(opensearchUrl + "/toilets").retrieve().toBodilessEntity().block();
+      log.info("[OpenSearch] 구버전 인덱스 'toilets' 삭제 완료 - 클러스터 상태 녹색(Green) 전환 유도");
+    } catch (Exception e) {
+      // 이미 삭제되었거나 없으면 무시
     }
   }
 }

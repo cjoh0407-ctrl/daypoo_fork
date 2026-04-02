@@ -1943,28 +1943,28 @@ function ReportTab({ records = [], reportCacheRef }: { records?: any[]; reportCa
                     </div>
                   </div>
 
-                  <div className="p-5 sm:p-10 rounded-[24px] sm:rounded-[40px] bg-emerald-950 text-white relative overflow-hidden shadow-2xl">
+                  <div className="p-4 sm:p-10 rounded-[20px] sm:rounded-[40px] bg-emerald-950 text-white relative overflow-hidden shadow-2xl">
                     <div className="absolute top-0 right-0 p-8 opacity-10">
-                      <Sparkles size={80} />
+                      <Sparkles size={60} />
                     </div>
-                    <p className="text-[13px] font-black text-emerald-300 mb-3 uppercase tracking-[0.2em] flex items-center gap-2">
+                    <p className="text-[11px] sm:text-[13px] font-black text-emerald-300 mb-2 sm:mb-3 uppercase tracking-[0.2em] flex items-center gap-2">
                       <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" /> AI Doctor Poo
                       Insight
                     </p>
-                    <p className="text-xl font-bold leading-relaxed relative z-10 tracking-tight">
+                    <p className="text-base sm:text-xl font-bold leading-relaxed relative z-10 tracking-tight">
                       "
                       {reportData?.summary || '기록을 분석하고 있습니다. 화장실 기록을 남겨주세요!'}
                       "
                     </p>
                     {reportData?.solution && (
-                      <p className="mt-4 text-emerald-200 text-lg italic">
+                      <p className="mt-3 sm:mt-4 text-emerald-200 text-sm sm:text-lg italic">
                         💡 {reportData.solution}
                       </p>
                     )}
                     {reportData?.premiumSolution && (
                       <button
                         onClick={() => setShowPremiumModal(true)}
-                        className="mt-6 w-full py-4 bg-amber-400 text-emerald-950 font-black rounded-2xl flex items-center justify-center gap-2 shadow-lg shadow-amber-400/20 hover:bg-amber-300 transition-all uppercase tracking-widest text-sm"
+                        className="mt-4 sm:mt-6 w-full py-3 sm:py-4 bg-amber-400 text-emerald-950 font-black rounded-xl sm:rounded-2xl flex items-center justify-center gap-2 shadow-lg shadow-amber-400/20 hover:bg-amber-300 transition-all uppercase tracking-widest text-xs sm:text-sm"
                       >
                         <Crown size={18} /> 프리미엄 정밀 분석 보기
                       </button>
@@ -2007,9 +2007,9 @@ function ReportTab({ records = [], reportCacheRef }: { records?: any[]; reportCa
                     </div>
                   </div>
 
-                  <div className="flex justify-center mb-12">
+                  <div className="flex justify-center mb-8 sm:mb-12">
                     <div className="relative">
-                      <svg width="200" height="200" viewBox="0 0 200 200">
+                      <svg width="160" height="160" viewBox="0 0 200 200" className="sm:w-[200px] sm:h-[200px]">
                         <circle
                           cx="100"
                           cy="100"
@@ -2037,7 +2037,7 @@ function ReportTab({ records = [], reportCacheRef }: { records?: any[]; reportCa
                         />
                       </svg>
                       <div className="absolute inset-0 flex flex-col items-center justify-center">
-                        <span className="text-5xl font-black text-[#1A2B27] tracking-tighter">
+                        <span className="text-3xl sm:text-5xl font-black text-[#1A2B27] tracking-tighter">
                           {reportData?.healthScore || 0}
                         </span>
                         <span className="text-[12px] font-black text-gray-400 mt-0.5 uppercase tracking-widest">
@@ -2084,7 +2084,7 @@ function ReportTab({ records = [], reportCacheRef }: { records?: any[]; reportCa
                     ].map((stat, i) => (
                       <div
                         key={i}
-                        className="flex flex-col items-center p-6 rounded-[32px] bg-gray-50 border border-gray-50 shadow-inner group hover:bg-white hover:shadow-xl transition-all"
+                        className="flex flex-col items-center p-3 sm:p-6 rounded-[20px] sm:rounded-[32px] bg-gray-50 border border-gray-50 shadow-inner group hover:bg-white hover:shadow-xl transition-all"
                       >
                         <span className="text-[#1A2B27] mb-3 transform group-hover:scale-110 transition-transform">
                           {stat.emoji}
@@ -2098,18 +2098,18 @@ function ReportTab({ records = [], reportCacheRef }: { records?: any[]; reportCa
                   </div>
 
                   <div className="space-y-6">
-                    <div className="p-5 sm:p-8 rounded-[24px] sm:rounded-[40px] bg-emerald-50 border border-emerald-100 shadow-inner">
-                      <div className="flex items-center gap-3 mb-4">
-                        <Brain size={20} className="text-emerald-700" />
-                        <p className="text-lg font-black text-emerald-800">
+                    <div className="p-4 sm:p-8 rounded-[20px] sm:rounded-[40px] bg-emerald-50 border border-emerald-100 shadow-inner">
+                      <div className="flex items-center gap-3 mb-3 sm:mb-4">
+                        <Brain size={18} className="text-emerald-700" />
+                        <p className="text-sm sm:text-lg font-black text-emerald-800">
                           심층 분석 데이터 인사이트
                         </p>
                       </div>
-                      <div className="space-y-4">
+                      <div className="space-y-3 sm:space-y-4">
                         {(reportData?.insights || []).map((insight: string, i: number) => (
                           <p
                             key={i}
-                            className="text-base text-emerald-900/70 font-bold leading-relaxed flex items-start gap-2"
+                            className="text-sm sm:text-base text-emerald-900/70 font-bold leading-relaxed flex items-start gap-2"
                           >
                             <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
                             {insight}
@@ -2118,7 +2118,7 @@ function ReportTab({ records = [], reportCacheRef }: { records?: any[]; reportCa
                       </div>
                       {reportData?.solution && (
                         <div className="mt-6 pt-6 border-t border-emerald-100">
-                          <p className="text-emerald-700 text-lg italic font-bold">
+                          <p className="text-emerald-700 text-sm sm:text-lg italic font-bold">
                             💡 {reportData.solution}
                           </p>
                         </div>
@@ -2126,7 +2126,7 @@ function ReportTab({ records = [], reportCacheRef }: { records?: any[]; reportCa
                       {reportData?.premiumSolution && (
                         <button
                           onClick={() => setShowPremiumModal(true)}
-                          className="mt-8 w-full py-5 bg-gradient-to-r from-amber-400 to-amber-500 text-amber-950 font-black rounded-[24px] flex items-center justify-center gap-3 shadow-xl shadow-amber-500/10 hover:shadow-amber-500/20 hover:-translate-y-1 transition-all uppercase tracking-[0.15em] text-sm"
+                          className="mt-5 sm:mt-8 w-full py-4 sm:py-5 bg-gradient-to-r from-amber-400 to-amber-500 text-amber-950 font-black rounded-[20px] sm:rounded-[24px] flex items-center justify-center gap-2 sm:gap-3 shadow-xl shadow-amber-500/10 hover:shadow-amber-500/20 hover:-translate-y-1 transition-all uppercase tracking-[0.15em] text-xs sm:text-sm"
                         >
                           <Crown size={20} /> 프리미엄 정밀 분석 보기
                         </button>
@@ -2136,9 +2136,9 @@ function ReportTab({ records = [], reportCacheRef }: { records?: any[]; reportCa
 
                   {/* MONTHLY 전용 추가 트렌드 섹션 (데이터가 있을 때만 혹은 블러 처리용) */}
                   {(activeSubTab === 'monthly' || !isPro) && (
-                    <div className="mt-6 sm:mt-8 p-5 sm:p-8 rounded-[24px] sm:rounded-[40px] bg-gray-50 border border-gray-100 shadow-inner">
-                      <div className="flex items-center justify-between mb-8">
-                        <h4 className="text-lg font-black text-[#1A2B27]">30일 심층 트렌드</h4>
+                    <div className="mt-5 sm:mt-8 p-4 sm:p-8 rounded-[20px] sm:rounded-[40px] bg-gray-50 border border-gray-100 shadow-inner">
+                      <div className="flex items-center justify-between mb-5 sm:mb-8">
+                        <h4 className="text-base sm:text-lg font-black text-[#1A2B27]">30일 심층 트렌드</h4>
                         <div className="flex items-center gap-2">
                           {reportData?.improvementTrend === 'IMPROVING' ? (
                             <span className="px-3 py-1.5 rounded-full bg-emerald-100 text-emerald-600 text-xs font-black flex items-center gap-1">
@@ -2246,19 +2246,19 @@ function ReportTab({ records = [], reportCacheRef }: { records?: any[]; reportCa
                 <motion.div
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  className="w-full max-w-md bg-white/95 backdrop-blur-xl p-8 sm:p-14 rounded-[32px] sm:rounded-[56px] shadow-[0_32px_80px_rgba(0,0,0,0.15)] border border-white text-center"
+                  className="w-full max-w-md bg-white/95 backdrop-blur-xl p-6 sm:p-14 rounded-[28px] sm:rounded-[56px] shadow-[0_32px_80px_rgba(0,0,0,0.15)] border border-white text-center"
                 >
                   <motion.div
-                    className="w-20 h-20 bg-amber-100 rounded-[32px] flex items-center justify-center mx-auto mb-6 shadow-inner"
+                    className="w-16 h-16 sm:w-20 sm:h-20 bg-amber-100 rounded-[24px] sm:rounded-[32px] flex items-center justify-center mx-auto mb-4 sm:mb-6 shadow-inner"
                     animate={{ rotate: [0, -15, 15, -10, 10, -5, 5, 0] }}
                     transition={{ duration: 0.8, repeat: Infinity, repeatDelay: 2, ease: 'easeInOut' }}
                   >
                     <Lock size={36} className="text-amber-500" />
                   </motion.div>
-                  <h3 className="text-2xl font-black text-[#1A2B27] mb-3 tracking-tight">
+                  <h3 className="text-xl sm:text-2xl font-black text-[#1A2B27] mb-2 sm:mb-3 tracking-tight">
                     정밀 분석 리포트 잠금
                   </h3>
-                  <p className="text-gray-500 font-bold text-base mb-10 leading-relaxed">
+                  <p className="text-gray-500 font-bold text-sm sm:text-base mb-6 sm:mb-10 leading-relaxed">
                     {activeSubTab === 'weekly' ? '7일간의' : '30일간의'} 누적 기록을 바탕으로 산출되는 <br />
                     <span className="text-emerald-700">장 건강 점수</span>와{' '}
                     <span className="text-emerald-700">AI 푸의 맞춤 가이드</span>는<br />
@@ -2271,7 +2271,7 @@ function ReportTab({ records = [], reportCacheRef }: { records?: any[]; reportCa
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={() => navigate('/premium')}
-                    className="w-full py-6 bg-[#1B4332] text-white font-black rounded-[28px] shadow-2xl shadow-emerald-900/40 flex items-center justify-center gap-3 text-lg"
+                    className="w-full py-4 sm:py-6 bg-[#1B4332] text-white font-black rounded-[20px] sm:rounded-[28px] shadow-2xl shadow-emerald-900/40 flex items-center justify-center gap-2 sm:gap-3 text-sm sm:text-lg"
                   >
                     {activeSubTab === 'weekly' ? 'PRO' : 'PREMIUM'} 멤버십 가입하고 확인하기{' '}
                     <ArrowRight size={22} />

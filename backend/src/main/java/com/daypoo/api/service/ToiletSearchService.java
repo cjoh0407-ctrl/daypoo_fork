@@ -18,7 +18,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 @RequiredArgsConstructor
 public class ToiletSearchService {
 
-  private static final String INDEX_NAME = "toilets";
+  private static final String INDEX_NAME = "toilets_v2";
 
   private final WebClient.Builder webClientBuilder;
   private final ObjectMapper objectMapper;

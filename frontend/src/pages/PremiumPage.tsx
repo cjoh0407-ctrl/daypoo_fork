@@ -131,9 +131,9 @@ export function PremiumPage({ openAuth }: { openAuth: (mode: 'login' | 'signup')
     <div className="min-h-screen bg-[#f8faf9]">
       <Navbar openAuth={openAuth} />
 
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-24 sm:pt-32 pb-12 sm:pb-20">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-20 sm:pt-32 pb-10 sm:pb-20">
         {/* 헤더 */}
-        <div className="text-center mb-16">
+        <div className="text-center mb-10 sm:mb-16">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -147,7 +147,7 @@ export function PremiumPage({ openAuth }: { openAuth: (mode: 'login' | 'signup')
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="text-4xl sm:text-5xl font-black text-[#1A2B27] mb-6 leading-tight"
+            className="text-2xl sm:text-4xl md:text-5xl font-black text-[#1A2B27] mb-4 sm:mb-6 leading-tight"
           >
             당신의 쾌변 데이터를<br />
             <span className="text-emerald-700">인텔리전트하게</span> 분석하세요.
@@ -157,7 +157,7 @@ export function PremiumPage({ openAuth }: { openAuth: (mode: 'login' | 'signup')
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="text-gray-500 text-lg sm:text-xl font-medium max-w-2xl mx-auto"
+            className="text-gray-500 text-sm sm:text-lg md:text-xl font-medium max-w-2xl mx-auto"
           >
             AI 닥터 푸가 제안하는 맞춤형 정밀 보고서로<br />
             매일 아침 가벼워지는 놀라운 경험을 시작해보세요.
@@ -173,7 +173,7 @@ export function PremiumPage({ openAuth }: { openAuth: (mode: 'login' | 'signup')
               animate={{ opacity: 1, scale: 1, y: 0 }}
               transition={{ delay: 0.3 + idx * 0.1 }}
               onClick={() => setSelectedPlan(plan.id)}
-              className={`relative flex flex-col p-6 sm:p-8 rounded-[32px] sm:rounded-[40px] cursor-pointer transition-all duration-300 ${
+              className={`relative flex flex-col p-5 sm:p-8 rounded-[24px] sm:rounded-[40px] cursor-pointer transition-all duration-300 ${
                 selectedPlan === plan.id 
                 ? 'bg-white shadow-2xl scale-105 ring-4 ring-emerald-100 z-10' 
                 : 'bg-white/60 hover:bg-white border border-gray-100 grayscale-[0.3]'
@@ -185,18 +185,18 @@ export function PremiumPage({ openAuth }: { openAuth: (mode: 'login' | 'signup')
                 </div>
               )}
 
-              <div className="mb-8">
-                <span className="text-xs font-black tracking-widest uppercase mb-4 block" style={{ color: plan.accent }}>
+              <div className="mb-6 sm:mb-8">
+                <span className="text-[10px] sm:text-xs font-black tracking-widest uppercase mb-3 sm:mb-4 block" style={{ color: plan.accent }}>
                   {plan.name}
                 </span>
                 <div className="flex items-baseline gap-1 mb-2">
-                  <span className="text-4xl font-black text-[#1A2B27]">{plan.price}</span>
+                  <span className="text-2xl sm:text-4xl font-black text-[#1A2B27]">{plan.price}</span>
                   {plan.period && <span className="text-gray-400 font-bold">{plan.period}</span>}
                 </div>
                 <p className="text-gray-500 text-sm font-medium leading-relaxed">{plan.desc}</p>
               </div>
 
-              <div className="flex-1 space-y-4 mb-10">
+              <div className="flex-1 space-y-3 sm:space-y-4 mb-6 sm:mb-10">
                 {plan.features.map((feature, fidx) => (
                   <div key={fidx} className="flex items-start gap-3">
                     <div className={`mt-0.5 flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center ${
@@ -229,7 +229,7 @@ export function PremiumPage({ openAuth }: { openAuth: (mode: 'login' | 'signup')
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.7 }}
-          className="max-w-5xl mx-auto p-6 sm:p-12 md:p-14 rounded-[32px] sm:rounded-[56px] bg-[#1B4332] text-white shadow-3xl overflow-hidden relative"
+          className="max-w-5xl mx-auto p-5 sm:p-12 md:p-14 rounded-[24px] sm:rounded-[56px] bg-[#1B4332] text-white shadow-3xl overflow-hidden relative"
         >
           {/* 장식용 배경 */}
           <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-700/30 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
@@ -237,10 +237,10 @@ export function PremiumPage({ openAuth }: { openAuth: (mode: 'login' | 'signup')
 
           <div className="relative z-10 flex flex-col md:flex-row items-center gap-10">
             <div className="flex-1 w-full text-center md:text-left">
-              <h3 className="text-2xl font-black mb-4 flex items-center gap-2">
-                지금 결제하고 장 건강 관리를 업그레이드 하세요! <Sparkles size={24} className="text-amber-400" />
+              <h3 className="text-lg sm:text-2xl font-black mb-3 sm:mb-4 flex items-center gap-2">
+                지금 결제하고 장 건강 관리를 업그레이드 하세요! <Sparkles size={20} className="text-amber-400 shrink-0" />
               </h3>
-              <p className="text-emerald-100/70 font-medium mb-0">
+              <p className="text-emerald-100/70 font-medium mb-0 text-sm sm:text-base">
                 선택하신 {selectedPlan} 플랜으로 한 달간 모든 혜택을 누릴 수 있습니다.<br />
                 {selectedPlan !== 'BASIC' && (
                   <>
@@ -271,7 +271,7 @@ export function PremiumPage({ openAuth }: { openAuth: (mode: 'login' | 'signup')
                     whileTap={{ scale: 0.95 }}
                     onClick={handlePayment}
                     disabled={selectedPlan === 'BASIC'}
-                    className={`w-full py-5 px-10 rounded-3xl font-black text-lg flex items-center justify-center gap-2 shadow-2xl transition-all ${
+                    className={`w-full py-4 px-6 sm:py-5 sm:px-10 rounded-2xl sm:rounded-3xl font-black text-base sm:text-lg flex items-center justify-center gap-2 shadow-2xl transition-all ${
                       selectedPlan === 'BASIC' 
                       ? 'bg-emerald-800 text-emerald-900 cursor-not-allowed' 
                       : 'bg-amber-400 text-emerald-950 hover:bg-amber-300'
@@ -289,7 +289,7 @@ export function PremiumPage({ openAuth }: { openAuth: (mode: 'login' | 'signup')
         </motion.div>
 
         {/* 푸터 안내 */}
-        <div className="mt-16 text-center space-y-4">
+        <div className="mt-10 sm:mt-16 text-center space-y-3 sm:space-y-4">
           <p className="text-gray-400 text-xs font-bold leading-relaxed">
             구독은 매월 자동 갱신되며, 언제든지 마이페이지 설정에서 멤버십을 변경할 수 있습니다.<br />
             결제와 관련된 문의는 고객센터 1:1 문의하기를 이용해주세요.
