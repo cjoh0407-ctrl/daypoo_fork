@@ -6,6 +6,7 @@ import com.daypoo.api.util.ChosungUtils;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -101,12 +102,60 @@ public class ToiletIndexingService {
 
   private void ensureIndexExists() {
     WebClient client = webClientBuilder.build();
+    boolean indexExists = false;
     try {
-      // HEAD 요청으로 인덱스 존재 여부 확인
       client.head().uri(opensearchUrl + "/" + INDEX_NAME).retrieve().toBodilessEntity().block();
+      indexExists = true;
     } catch (Exception e) {
-      // 404 → 인덱스 없음 → 생성
+      // 404 → 인덱스 없음
+    }
+
+    // 인덱스가 있지만 geo_point 매핑이 없으면 삭제 후 재생성
+    if (indexExists && !isIndexMappingCurrent(client)) {
+      log.info("[OpenSearch] geo_point 매핑 누락 - 인덱스 재생성");
+      deleteIndex(client);
+      indexExists = false;
+    }
+
+    if (!indexExists) {
       createIndex(client);
+    }
+  }
+
+  private boolean isIndexMappingCurrent(WebClient client) {
+    try {
+      String response =
+          client
+              .get()
+              .uri(opensearchUrl + "/" + INDEX_NAME + "/_mapping")
+              .retrieve()
+              .bodyToMono(String.class)
+              .block();
+      JsonNode node = objectMapper.readTree(response);
+      String locationType =
+          node.path(INDEX_NAME)
+              .path("mappings")
+              .path("properties")
+              .path("location")
+              .path("type")
+              .asText("");
+      return "geo_point".equals(locationType);
+    } catch (Exception e) {
+      return false;
+    }
+  }
+
+  private void deleteIndex(WebClient client) {
+    try {
+      client
+          .delete()
+          .uri(opensearchUrl + "/" + INDEX_NAME)
+          .retrieve()
+          .bodyToMono(String.class)
+          .block();
+      log.info("[OpenSearch] 인덱스 '{}' 삭제 완료", INDEX_NAME);
+    } catch (Exception e) {
+      log.warn("[OpenSearch] 인덱스 삭제 실패: {}", e.getMessage());
     }
   }
 
@@ -129,7 +178,8 @@ public class ToiletIndexingService {
               "address":        {"type": "text", "analyzer": "nori"},
               "addressChosung": {"type": "keyword"},
               "latitude":       {"type": "double"},
-              "longitude":      {"type": "double"}
+              "longitude":      {"type": "double"},
+              "location":       {"type": "geo_point"}
             }
           }
         }
@@ -180,6 +230,7 @@ public class ToiletIndexingService {
               put("addressChosung", ChosungUtils.extractChosung(address));
               put("latitude", t.getLocation().getY());
               put("longitude", t.getLocation().getX());
+              put("location", Map.of("lat", t.getLocation().getY(), "lon", t.getLocation().getX()));
             }
           });
     } catch (Exception e) {

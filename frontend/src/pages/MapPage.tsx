@@ -184,7 +184,8 @@ export function MapPage({ openAuth }: { openAuth: (mode: 'login' | 'signup') => 
     setSearchLoading(true);
     const timer = setTimeout(async () => {
       try {
-        const data = await api.get<any[]>(`/toilets/search?q=${encodeURIComponent(trimmed)}&size=20`);
+        const locationParams = pos ? `&latitude=${pos.lat}&longitude=${pos.lng}` : '';
+        const data = await api.get<any[]>(`/toilets/search?q=${encodeURIComponent(trimmed)}&size=20${locationParams}`);
         const results: ToiletData[] = (data || []).map((item: any) => ({
           id: String(item.id),
           name: item.name || '이름없음',

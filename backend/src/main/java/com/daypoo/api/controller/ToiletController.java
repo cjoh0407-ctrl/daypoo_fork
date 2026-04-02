@@ -37,8 +37,11 @@ public class ToiletController {
    */
   @GetMapping("/search")
   public ResponseEntity<List<ToiletSearchResultResponse>> textSearch(
-      @RequestParam String q, @RequestParam(defaultValue = "10") int size) {
-    List<ToiletSearchResultResponse> results = toiletSearchService.search(q, size);
+      @RequestParam String q,
+      @RequestParam(defaultValue = "10") int size,
+      @RequestParam(required = false) Double latitude,
+      @RequestParam(required = false) Double longitude) {
+    List<ToiletSearchResultResponse> results = toiletSearchService.search(q, size, latitude, longitude);
     return ResponseEntity.ok(results);
   }
 }

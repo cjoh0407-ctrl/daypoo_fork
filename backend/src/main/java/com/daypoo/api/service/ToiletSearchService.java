@@ -32,11 +32,11 @@ public class ToiletSearchService {
    * @param query 검색어 (일반 한글 또는 초성만)
    * @param size 최대 결과 개수
    */
-  public List<ToiletSearchResultResponse> search(String query, int size) {
+  public List<ToiletSearchResultResponse> search(String query, int size, Double latitude, Double longitude) {
     if (query == null || query.isBlank()) return List.of();
 
     try {
-      String requestBody = buildQuery(query.trim(), size);
+      String requestBody = buildQuery(query.trim(), size, latitude, longitude);
       String response =
           webClientBuilder
               .build()
@@ -57,7 +57,7 @@ public class ToiletSearchService {
 
   // ── private helpers ──────────────────────────────────────────────────────
 
-  private String buildQuery(String query, int size) throws Exception {
+  private String buildQuery(String query, int size, Double latitude, Double longitude) throws Exception {
     boolean isChosung = ChosungUtils.isChosungOnly(query);
     String chosungQuery = isChosung ? query : ChosungUtils.extractChosung(query);
 
@@ -87,12 +87,20 @@ public class ToiletSearchService {
     shouldClauses.add(
         Map.of("wildcard", Map.of("addressChosung", Map.of("value", "*" + chosungQuery + "*"))));
 
-    Map<String, Object> queryBody =
-        Map.of(
-            "query",
-            Map.of("bool", Map.of("should", shouldClauses, "minimum_should_match", 1)),
-            "size",
-            size);
+    java.util.LinkedHashMap<String, Object> queryBody = new java.util.LinkedHashMap<>();
+    queryBody.put("query", Map.of("bool", Map.of("should", shouldClauses, "minimum_should_match", 1)));
+    queryBody.put("size", size);
+
+    // 위치 정보가 있으면 가까운 순으로 정렬
+    if (latitude != null && longitude != null) {
+      queryBody.put("sort", List.of(
+          Map.of("_geo_distance", Map.of(
+              "location", Map.of("lat", latitude, "lon", longitude),
+              "order", "asc",
+              "unit", "m"
+          ))
+      ));
+    }
 
     return objectMapper.writeValueAsString(queryBody);
   }
