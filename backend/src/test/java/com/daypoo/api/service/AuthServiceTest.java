@@ -87,6 +87,7 @@ class AuthServiceTest {
   @DisplayName("실패: 중복된 이메일로 회원가입")
   void signUp_fail_duplicateEmail() {
     // given
+    given(adminSettingsService.isSignupEnabled()).willReturn(true);
     given(userRepository.existsByEmail(anyString())).willReturn(true);
 
     // when & then
