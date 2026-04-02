@@ -239,7 +239,8 @@ public class ToiletIndexingService {
     }
   }
 
-  private long getIndexedCount() {
+  /** 인덱싱된 문서 개수 조회 */
+  public long getIndexedCount() {
     try {
       String response =
           webClientBuilder

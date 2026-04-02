@@ -52,7 +52,7 @@ public class SecurityConfig {
             auth ->
                 auth.requestMatchers(HttpMethod.OPTIONS, "/**")
                     .permitAll()
-                    .requestMatchers("/api/v1/admin/toilets/reindex")
+                    .requestMatchers("/api/v1/admin/toilets/reindex", "/api/v1/admin/toilets/count")
                     .permitAll()
                     .requestMatchers("/api/v1/admin/**")
                     .hasRole("ADMIN")

@@ -31,6 +31,12 @@ public class AdminToiletController {
     return ResponseEntity.ok("Force re-indexing started in background. Check server logs for progress.");
   }
 
+  @Operation(summary = "현재 인덱싱된 화장실 개수 조회", description = "OpenSearch에 저장된 전체 화장실 데이터 개수를 조회합니다.")
+  @GetMapping("/count")
+  public ResponseEntity<Long> getCount() {
+    return ResponseEntity.ok(toiletIndexingService.getIndexedCount());
+  }
+
   @Operation(summary = "전체 화장실 목록 조회 및 검색", description = "검색어(이름/주소)를 포함한 화장실 전체 리스트를 페이징 조회합니다.")
   @GetMapping
   public ResponseEntity<Page<AdminToiletListResponse>> getToilets(
