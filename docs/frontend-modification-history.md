@@ -1,5 +1,12 @@
 # Frontend Modification History
 
+## [2026-04-02 18:31:00] Backend: 타임존 설정 수정 (Asia/Seoul)
+
+- **작업 내용**: 후기 작성 시 시각이 9시간 전으로 표시되는 문제 해결
+- **상세 변경 내역**:
+  - `application.yml`: `spring.jackson.time-zone` 설정을 `Asia/Seoul`로 추가.
+- **결과/영향**: API 응답 시 날짜 및 시각 데이터를 한국 표준시(KST) 기준으로 정확히 반환.
+
 ## [2026-04-02 18:28:00] Backend: 504 Gateway Timeout 해결 (비동기 재인덱싱 적용)
 
 - **작업 내용**: `/reindex` 호출 시 발생하는 504 Timeout 에러 해결
