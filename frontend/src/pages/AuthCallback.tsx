@@ -27,7 +27,17 @@ export const AuthCallback = () => {
         if (refreshToken) sessionStorage.setItem('refreshToken', refreshToken);
       }
       
-      // 로그인 성공 시 메인 또는 원래 있던 페이지로 이동
+      // JWT 디코딩하여 어드민 여부 확인
+      try {
+        const payload = JSON.parse(atob(accessToken.split('.')[1]));
+        if (payload.role === 'ROLE_ADMIN') {
+          localStorage.removeItem('returnUrl');
+          navigate('/admin', { replace: true });
+          return;
+        }
+      } catch {}
+
+      // 일반 유저: 메인 또는 원래 있던 페이지로 이동
       const returnUrl = localStorage.getItem('returnUrl') || '/main';
       localStorage.removeItem('returnUrl');
       navigate(returnUrl, { replace: true });
