@@ -190,6 +190,13 @@ public class PooRecordService {
   }
 
   private void validateLocationAndTime(User user, Toilet toilet, double lat, double lon) {
+    // 시뮬레이션 봇은 위치 및 체류 시간 검증 생략
+    if (user.getEmail() != null && user.getEmail().startsWith("bot_")) {
+      log.info(
+          "Bot account detected ({}), skipping location and time validation.", user.getEmail());
+      return;
+    }
+
     Double distance = locationVerificationService.getDistanceToToilet(toilet.getId(), lat, lon);
     if (distance == null || distance > 150.0) {
       logVisit(

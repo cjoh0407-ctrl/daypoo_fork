@@ -239,8 +239,8 @@ def lambda_handler(event, context):
             except Exception:
                 pass
                 
-        # API 과부하 방지 딜레이 (0.1~0.4초 무작위)
-        time.sleep(random.uniform(0.1, 0.4))
+        # API 과부하 방지 딜레이 (0.5~1.0초 무작위)
+        time.sleep(random.uniform(0.5, 1.0))
 
     print("AI Mega Simulation Bot Finished Execution")
     return {"statusCode": 200, "body": f"Successfully executed {active_bot_count} bots over Seoul."}
