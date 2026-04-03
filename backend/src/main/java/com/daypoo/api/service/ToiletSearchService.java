@@ -5,6 +5,7 @@ import com.daypoo.api.util.ChosungUtils;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +20,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 public class ToiletSearchService {
 
   private static final String INDEX_NAME = "toilets_v2";
+  private static final String GEO_FILTER_DISTANCE = "20km";
 
   private final WebClient.Builder webClientBuilder;
   private final ObjectMapper objectMapper;
@@ -27,7 +29,7 @@ public class ToiletSearchService {
   private String opensearchUrl;
 
   /**
-   * 화장실 이름/주소 텍스트 검색 (초성 검색 지원)
+   * 화장실 이름/주소 텍스트 검색 (초성 n-gram 검색 지원)
    *
    * @param query 검색어 (일반 한글 또는 초성만)
    * @param size 최대 결과 개수
@@ -36,26 +38,33 @@ public class ToiletSearchService {
       String query, int size, Double latitude, Double longitude) {
     if (query == null || query.isBlank()) return List.of();
 
-    // 1차: 좌표 포함 검색 시도 (geo_distance 정렬)
-    if (latitude != null && longitude != null) {
+    boolean hasLocation = latitude != null && longitude != null;
+
+    // 1차: 위치 반경 필터 + 매칭 → Java 거리순 정렬
+    if (hasLocation) {
       try {
-        String requestBody = buildQuery(query.trim(), size, latitude, longitude);
+        String requestBody = buildQuery(query.trim(), size * 3, latitude, longitude);
         String response = executeSearch(requestBody);
         List<ToiletSearchResultResponse> results = parseResponse(response);
         if (!results.isEmpty()) {
-          return results;
+          return sortByDistance(results, latitude, longitude, size);
         }
       } catch (Exception e) {
         log.warn(
-            "[OpenSearch] geo_distance 검색 실패, 좌표 없이 재시도합니다. query='{}': {}", query, e.getMessage());
+            "[OpenSearch] geo_distance 필터 실패, 전체 검색으로 재시도. query='{}': {}", query, e.getMessage());
       }
     }
 
-    // 2차: 좌표 없이 검색 (순수 텍스트/초성 일치도만)
+    // 2차: 필터 없이 전체 매칭 → Java 거리순 정렬 (반경 내 결과 없거나 필터 실패 시)
     try {
-      String requestBody = buildQuery(query.trim(), size, null, null);
+      int fetchSize = hasLocation ? 200 : size;
+      String requestBody = buildQuery(query.trim(), fetchSize, null, null);
       String response = executeSearch(requestBody);
-      return parseResponse(response);
+      List<ToiletSearchResultResponse> results = parseResponse(response);
+      if (hasLocation) {
+        return sortByDistance(results, latitude, longitude, size);
+      }
+      return results;
     } catch (Exception e) {
       log.error("[OpenSearch] 검색 완전 실패 query='{}': {}", query, e.getMessage());
       return List.of();
@@ -80,90 +89,53 @@ public class ToiletSearchService {
       throws Exception {
     boolean isChosung = ChosungUtils.isChosungOnly(query);
     String chosungQuery = ChosungUtils.extractChosung(query);
+    boolean hasLocation = latitude != null && longitude != null;
 
     List<Object> shouldClauses = new ArrayList<>();
 
-    if (!isChosung) {
-      // 1. 일반 텍스트 검색
+    if (isChosung) {
+      // 순수 초성 검색: n-gram 배열 term 조회만 사용
+      shouldClauses.add(Map.of("term", Map.of("nameChosungNgrams", chosungQuery)));
+    } else {
+      // 일반 텍스트 검색: 텍스트 매칭만 사용 (초성 혼용 금지)
       shouldClauses.add(
           Map.of(
               "multi_match",
-              Map.of(
-                  "query",
-                  query,
-                  "fields",
-                  List.of("name^10", "address"),
-                  "type",
-                  "best_fields",
-                  "boost",
-                  5.0)));
-      shouldClauses.add(
-          Map.of("match_phrase_prefix", Map.of("name", Map.of("query", query, "boost", 15.0))));
+              Map.of("query", query, "fields", List.of("name", "address"), "type", "best_fields")));
+      shouldClauses.add(Map.of("match_phrase_prefix", Map.of("name", Map.of("query", query))));
     }
 
-    // 2. 초성 검색 (가중치 조정)
-    shouldClauses.add(
-        Map.of("term", Map.of("nameChosung", Map.of("value", chosungQuery, "boost", 100.0))));
-    shouldClauses.add(
-        Map.of("prefix", Map.of("nameChosung", Map.of("value", chosungQuery, "boost", 50.0))));
-    shouldClauses.add(
-        Map.of(
-            "wildcard",
-            Map.of("nameChosung", Map.of("value", "*" + chosungQuery + "*", "boost", 10.0))));
-    shouldClauses.add(
-        Map.of(
-            "wildcard",
-            Map.of("addressChosung", Map.of("value", "*" + chosungQuery + "*", "boost", 5.0))));
+    java.util.LinkedHashMap<String, Object> boolQuery = new java.util.LinkedHashMap<>();
+    boolQuery.put("should", shouldClauses);
+    boolQuery.put("minimum_should_match", 1);
 
-    Map<String, Object> finalQuery;
-
-    if (latitude != null && longitude != null) {
-      // 거리와 일치도를 합산한 점수 모델 사용
-      finalQuery =
-          Map.of(
-              "function_score",
+    // 위치 반경 필터 (geo_distance) - 검색 대상을 근거리로 제한
+    if (hasLocation) {
+      boolQuery.put(
+          "filter",
+          List.of(
               Map.of(
-                  "query",
-                  Map.of("bool", Map.of("should", shouldClauses, "minimum_should_match", 1)),
-                  "functions",
-                  List.of(
-                      Map.of(
-                          "gauss",
-                          Map.of(
-                              "location",
-                              Map.of(
-                                  "origin", Map.of("lat", latitude, "lon", longitude),
-                                  "offset", "500m",
-                                  "scale", "3km")),
-                          "weight",
-                          2.0)),
-                  "score_mode",
-                  "multiply",
-                  "boost_mode",
-                  "multiply"));
-    } else {
-      finalQuery = Map.of("bool", Map.of("should", shouldClauses, "minimum_should_match", 1));
+                  "geo_distance",
+                  Map.of(
+                      "distance",
+                      GEO_FILTER_DISTANCE,
+                      "location",
+                      Map.of("lat", latitude, "lon", longitude)))));
     }
 
     java.util.LinkedHashMap<String, Object> queryBody = new java.util.LinkedHashMap<>();
-    queryBody.put("query", finalQuery);
+    queryBody.put("query", Map.of("bool", boolQuery));
     queryBody.put("size", size);
 
-    // 점수(일치도+거리)를 1순위로, 그래도 같으면 더 가까운 순으로
-    if (latitude != null && longitude != null) {
-      queryBody.put(
-          "sort",
-          List.of(
-              Map.of("_score", "desc"),
-              Map.of(
-                  "_geo_distance",
-                  Map.of(
-                      "location", Map.of("lat", latitude, "lon", longitude),
-                      "order", "asc",
-                      "unit", "m"))));
-    }
-
     return objectMapper.writeValueAsString(queryBody);
+  }
+
+  private List<ToiletSearchResultResponse> sortByDistance(
+      List<ToiletSearchResultResponse> results, double latitude, double longitude, int size) {
+    results.sort(
+        Comparator.comparingDouble(
+            r -> haversine(latitude, longitude, r.latitude(), r.longitude())));
+    return results.subList(0, Math.min(size, results.size()));
   }
 
   private List<ToiletSearchResultResponse> parseResponse(String responseJson) throws Exception {
@@ -183,5 +155,18 @@ public class ToiletSearchService {
               .build());
     }
     return results;
+  }
+
+  private double haversine(double lat1, double lon1, double lat2, double lon2) {
+    final double R = 6371000;
+    double dLat = Math.toRadians(lat2 - lat1);
+    double dLon = Math.toRadians(lon2 - lon1);
+    double a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2)
+            + Math.cos(Math.toRadians(lat1))
+                * Math.cos(Math.toRadians(lat2))
+                * Math.sin(dLon / 2)
+                * Math.sin(dLon / 2);
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   }
 }

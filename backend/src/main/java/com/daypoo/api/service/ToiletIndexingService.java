@@ -5,6 +5,7 @@ import com.daypoo.api.repository.ToiletRepository;
 import com.daypoo.api.util.ChosungUtils;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +26,7 @@ public class ToiletIndexingService {
 
   private static final String INDEX_NAME = "toilets_v2";
   private static final int PAGE_SIZE = 200;
+  private static final int NGRAM_MAX = 6;
 
   private final ToiletRepository toiletRepository;
   private final WebClient.Builder webClientBuilder;
@@ -58,13 +60,9 @@ public class ToiletIndexingService {
     try {
       log.info("[OpenSearch] === 강제 재인덱싱 시작 ===");
       WebClient client = webClientBuilder.build();
-      // 1. 기존 인덱스 삭제
       deleteIndex(client);
-      // 2. 새 인덱스 생성 (Nori + geo_point)
       createIndex(client);
-      // 3. 전체 데이터 인덱싱 (조건 체크 없이)
       indexAll();
-      // 4. 구버전 인덱스 정리
       cleanupOldIndex();
       log.info("[OpenSearch] === 강제 재인덱싱 완료 ===");
     } catch (Exception e) {
@@ -128,13 +126,11 @@ public class ToiletIndexingService {
       client.head().uri(opensearchUrl + "/" + INDEX_NAME).retrieve().toBodilessEntity().block();
       indexExists = true;
     } catch (Exception e) {
-      // 404 → 인덱스 없음 → 생성
       createIndex(client);
     }
 
-    // 인덱스가 있지만 geo_point 매핑이 없으면 삭제 후 재생성
     if (indexExists && !isIndexMappingCurrent(client)) {
-      log.info("[OpenSearch] geo_point 매핑 누락 - 인덱스 재생성");
+      log.info("[OpenSearch] 인덱스 매핑 outdated - 재생성");
       deleteIndex(client);
       indexExists = false;
     }
@@ -154,14 +150,11 @@ public class ToiletIndexingService {
               .bodyToMono(String.class)
               .block();
       JsonNode node = objectMapper.readTree(response);
-      String locationType =
-          node.path(INDEX_NAME)
-              .path("mappings")
-              .path("properties")
-              .path("location")
-              .path("type")
-              .asText("");
-      return "geo_point".equals(locationType);
+      JsonNode properties = node.path(INDEX_NAME).path("mappings").path("properties");
+      // nameChosungNgrams 필드가 keyword 타입으로 존재하는지 확인
+      String ngramsType = properties.path("nameChosungNgrams").path("type").asText("");
+      String locationType = properties.path("location").path("type").asText("");
+      return "keyword".equals(ngramsType) && "geo_point".equals(locationType);
     } catch (Exception e) {
       return false;
     }
@@ -182,6 +175,7 @@ public class ToiletIndexingService {
   }
 
   private void createIndex(WebClient client) {
+    // 커스텀 분석기 없이 표준 필드만 사용 (AWS 관리형 OpenSearch 호환)
     String mapping =
         """
         {
@@ -189,37 +183,20 @@ public class ToiletIndexingService {
             "index": {
               "number_of_shards": 1,
               "number_of_replicas": 0
-            },
-            "analysis": {
-              "tokenizer": {
-                "kor_tokenizer": {
-                  "type": "nori_tokenizer",
-                  "decompound_mode": "mixed"
-                }
-              },
-              "analyzer": {
-                "nori_analyzer": {
-                  "type": "custom",
-                  "tokenizer": "kor_tokenizer",
-                  "filter": [
-                    "lowercase",
-                    "nori_readingform",
-                    "nori_part_of_speech"
-                  ]
-                }
-              }
             }
           },
           "mappings": {
             "properties": {
-              "id":             {"type": "long"},
-              "name":           {"type": "text", "analyzer": "nori_analyzer"},
-              "nameChosung":    {"type": "keyword"},
-              "address":        {"type": "text", "analyzer": "nori_analyzer"},
-              "addressChosung": {"type": "keyword"},
-              "latitude":       {"type": "double"},
-              "longitude":      {"type": "double"},
-              "location":       {"type": "geo_point"}
+              "id":                  {"type": "long"},
+              "name":                {"type": "text"},
+              "nameChosung":         {"type": "keyword"},
+              "nameChosungNgrams":   {"type": "keyword"},
+              "address":             {"type": "text"},
+              "addressChosung":      {"type": "keyword"},
+              "addressChosungNgrams":{"type": "keyword"},
+              "latitude":            {"type": "double"},
+              "longitude":           {"type": "double"},
+              "location":            {"type": "geo_point"}
             }
           }
         }
@@ -261,14 +238,18 @@ public class ToiletIndexingService {
     try {
       String name = t.getName() != null ? t.getName() : "";
       String address = t.getAddress() != null ? t.getAddress() : "";
+      String nameChosung = ChosungUtils.extractChosung(name);
+      String addressChosung = ChosungUtils.extractChosung(address);
       return objectMapper.writeValueAsString(
           new java.util.LinkedHashMap<>() {
             {
               put("id", t.getId());
               put("name", name);
-              put("nameChosung", ChosungUtils.extractChosung(name));
+              put("nameChosung", nameChosung);
+              put("nameChosungNgrams", computeNgrams(nameChosung));
               put("address", address);
-              put("addressChosung", ChosungUtils.extractChosung(address));
+              put("addressChosung", addressChosung);
+              put("addressChosungNgrams", computeNgrams(addressChosung));
               put("latitude", t.getLocation().getY());
               put("longitude", t.getLocation().getX());
               put("location", Map.of("lat", t.getLocation().getY(), "lon", t.getLocation().getX()));
@@ -280,12 +261,25 @@ public class ToiletIndexingService {
     }
   }
 
+  /**
+   * 초성 문자열의 모든 부분 문자열(n-gram)을 계산합니다. 예: "ㄴㅂㅅㄱ" → ["ㄴ", "ㄴㅂ", "ㄴㅂㅅ", "ㄴㅂㅅㄱ", "ㅂ", "ㅂㅅ", "ㅂㅅㄱ", "ㅅ",
+   * "ㅅㄱ", "ㄱ"]
+   */
+  private List<String> computeNgrams(String chosung) {
+    List<String> ngrams = new ArrayList<>();
+    for (int start = 0; start < chosung.length(); start++) {
+      for (int end = start + 1; end <= Math.min(start + NGRAM_MAX, chosung.length()); end++) {
+        ngrams.add(chosung.substring(start, end));
+      }
+    }
+    return ngrams;
+  }
+
   private void cleanupOldIndex() {
     WebClient client = webClientBuilder.build();
     try {
-      // 구버전 인덱스(toilets) 삭제 시도
       client.delete().uri(opensearchUrl + "/toilets").retrieve().toBodilessEntity().block();
-      log.info("[OpenSearch] 구버전 인덱스 'toilets' 삭제 완료 - 클러스터 상태 녹색(Green) 전환 유도");
+      log.info("[OpenSearch] 구버전 인덱스 'toilets' 삭제 완료");
     } catch (Exception e) {
       // 이미 삭제되었거나 없으면 무시
     }

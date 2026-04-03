@@ -200,13 +200,6 @@ export function MapPage({ openAuth }: { openAuth: (mode: 'login' | 'signup') => 
           isVisited: visitedIds.has(String(item.id)),
           isFavorite: favoriteIds.has(String(item.id)),
         }));
-        // 현재 위치 기준 가까운 순으로 정렬
-        if (pos) {
-          results.sort((a, b) =>
-            calculateDistance(pos.lat, pos.lng, a.lat, a.lng) -
-            calculateDistance(pos.lat, pos.lng, b.lat, b.lng)
-          );
-        }
         setSearchResults(results);
       } catch (e) {
         console.warn('검색 실패:', e);
