@@ -11,6 +11,10 @@ export default defineConfig({
       registerType: 'autoUpdate',
       // 서비스 워커가 오프라인 환경을 위해 미리 캐싱할 정적 자산들 경로 수정
       includeAssets: ['favicon.png', 'icons/favicon.ico', 'icons/icon.svg', 'icons/og-image.png'],
+      workbox: {
+        // 이 경로들은 서비스 워커가 가로채지 않고 서버로 직접 요청을 보냅니다.
+        navigateFallbackDenylist: [/^\/api/, /^\/oauth2/, /^\/login/, /^\/swagger-ui/, /^\/v3\/api-docs/],
+      },
       manifest: {
         name: 'DayPoo - 데이푸',
         short_name: 'DayPoo',
