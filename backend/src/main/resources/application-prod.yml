@@ -12,8 +12,7 @@ spring:
   
   jpa:
     hibernate:
-      # 운영 환경에서는 update 대신 validate를 권장하지만, 초기 배포 편의성을 위해 update 유지
-      ddl-auto: update
+      ddl-auto: validate
     show-sql: false
   
   config:

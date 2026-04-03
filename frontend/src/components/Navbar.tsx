@@ -176,12 +176,14 @@ export function Navbar({ openAuth }: { openAuth: (mode: 'login' | 'signup') => v
               <>
                 <button
                   onClick={() => openAuth('login')}
+                  aria-label="로그인"
                   className="text-sm font-bold transition-all hover:text-white cursor-pointer text-white/60"
                 >
                   로그인
                 </button>
                 <button
                   onClick={() => openAuth('signup')}
+                  aria-label="회원가입"
                   className="text-sm font-bold transition-all hover:text-white cursor-pointer text-white/60"
                 >
                   회원가입

@@ -114,6 +114,17 @@ public class AuthController {
     return ResponseEntity.ok(foundEmail);
   }
 
+  @Operation(summary = "OAuth2 코드 교환", description = "OAuth2 로그인 후 전달받은 임시 코드를 JWT 토큰으로 교환합니다.")
+  @ApiResponse(responseCode = "200", description = "교환 성공")
+  @ApiResponse(responseCode = "400", description = "유효하지 않은 코드")
+  @PostMapping("/exchange-code")
+  public ResponseEntity<TokenResponse> exchangeCode(
+      @RequestBody java.util.Map<String, String> request) {
+    String code = request.get("code");
+    TokenResponse response = authService.exchangeCode(code);
+    return ResponseEntity.ok(response);
+  }
+
   @Operation(summary = "토큰 재발급", description = "리프레시 토큰을 사용하여 새로운 액세스 토큰을 발급합니다.")
   @ApiResponse(responseCode = "200", description = "재발급 성공")
   @ApiResponse(responseCode = "400", description = "유효하지 않은 리프레시 토큰")
