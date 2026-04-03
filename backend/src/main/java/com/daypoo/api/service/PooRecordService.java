@@ -125,13 +125,15 @@ public class PooRecordService {
         throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
       }
       validateLocationAndTime(user, toilet, request.latitude(), request.longitude());
-
-      // 방문 타이머 리셋
-      locationVerificationService.resetArrivalTime(user.getId(), toilet.getId());
     }
 
-    // AI 분석 or 수동 입력값 결정
+    // AI 분석 or 수동 입력값 결정 (실패 시 여기서 예외 발생 → 아래 resetArrivalTime 미호출)
     PoopAttributes attrs = resolvePoopAttributes(request);
+
+    // AI 분석 성공 후, 방문 인증인 경우에만 타이머 리셋
+    if (isVisitAuth && toilet != null) {
+      locationVerificationService.resetArrivalTime(user.getId(), toilet.getId());
+    }
 
     // 지역명 추출 (화장실 주소 우선, 없을 경우 좌표 기반 역지오코딩)
     String regionName = determineRegion(toilet, request.latitude(), request.longitude());

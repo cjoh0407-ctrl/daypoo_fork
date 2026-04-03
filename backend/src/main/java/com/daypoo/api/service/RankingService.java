@@ -101,38 +101,71 @@ public class RankingService {
   }
 
   public void rebuildAllRankings() {
-    log.info("[Ranking] 전체 랭킹 재구축 시작...");
-
-    // 1. 기존 키 삭제
-    redisTemplate.delete(GLOBAL_RANK_KEY);
-    redisTemplate.delete(HEALTH_RANK_KEY);
-    Set<String> regionKeys = redisTemplate.keys(REGION_RANK_KEY_PREFIX + "*");
-    if (regionKeys != null && !regionKeys.isEmpty()) {
-      redisTemplate.delete(regionKeys);
+    String lockKey = "daypoo:lock:rebuild_rankings";
+    // 5분 동안 유효한 분산 락 획득 시도
+    Boolean acquired =
+        redisTemplate.opsForValue().setIfAbsent(lockKey, "locked", java.time.Duration.ofMinutes(5));
+    if (acquired == null || !acquired) {
+      log.info("[Ranking] 이미 다른 프로세스에서 랭킹 재구축 중입니다. 스킵합니다.");
+      return;
     }
 
-    // 2. 전체 랭킹 재구축 (DB 쿼리 1회)
-    List<UserScoreProjection> globalScores = recordRepository.findAllGlobalScores();
-    for (UserScoreProjection p : globalScores) {
-      double score = p.getRecordCount() + p.getUniqueToilets() * 3.0;
-      redisTemplate.opsForZSet().add(GLOBAL_RANK_KEY, p.getUserId().toString(), score);
+    try {
+      log.info("[Ranking] 전체 랭킹 재구축 시작 (Atomically)...");
+
+      // 1. 전체 랭킹 (Global) - 임시 키 사용 후 RENAME
+      String tempGlobalKey = GLOBAL_RANK_KEY + ":rebuilding";
+      List<UserScoreProjection> globalScores = recordRepository.findAllGlobalScores();
+      for (UserScoreProjection p : globalScores) {
+        double score = p.getRecordCount() + p.getUniqueToilets() * 3.0;
+        redisTemplate.opsForZSet().add(tempGlobalKey, p.getUserId().toString(), score);
+      }
+      redisTemplate.rename(tempGlobalKey, GLOBAL_RANK_KEY);
+      log.info("[Ranking] 전체 랭킹 재구축 완료 (Atomically)");
+
+      // 2. 지역 랭킹 (Region) - 임시 키 사용 후 RENAME
+      List<UserRegionScoreProjection> regionScores = recordRepository.findAllRegionScores();
+      java.util.Map<String, List<UserRegionScoreProjection>> groupedByRegion =
+          regionScores.stream()
+              .collect(Collectors.groupingBy(UserRegionScoreProjection::getRegionName));
+
+      for (java.util.Map.Entry<String, List<UserRegionScoreProjection>> entry :
+          groupedByRegion.entrySet()) {
+        String regionName = entry.getKey();
+        String targetKey = REGION_RANK_KEY_PREFIX + regionName;
+        String tempKey = targetKey + ":rebuilding";
+
+        for (UserRegionScoreProjection p : entry.getValue()) {
+          double score = p.getRecordCount() + p.getUniqueToilets() * 3.0;
+          if (score > 0) {
+            redisTemplate.opsForZSet().add(tempKey, p.getUserId().toString(), score);
+          }
+        }
+        redisTemplate.rename(tempKey, targetKey);
+      }
+      log.info("[Ranking] 지역 랭킹 재구축 완료 (Atomically)");
+
+      // 3. 건강왕 (Health) - 임시 키 사용 후 RENAME
+      String tempHealthKey = HEALTH_RANK_KEY + ":rebuilding";
+      LocalDateTime startOfDay = LocalDateTime.now().with(LocalTime.MIN);
+      LocalDateTime endOfDay = LocalDateTime.now().with(LocalTime.MAX);
+      List<HealthReportSnapshot> snapshots =
+          snapshotRepository.findTodayDailySnapshots(startOfDay, endOfDay);
+      for (HealthReportSnapshot snapshot : snapshots) {
+        redisTemplate
+            .opsForZSet()
+            .add(tempHealthKey, snapshot.getUser().getId().toString(), snapshot.getHealthScore());
+      }
+      redisTemplate.rename(tempHealthKey, HEALTH_RANK_KEY);
+      log.info("[Ranking] 건강왕 랭킹 재구축 완료 (Atomically)");
+
+    } catch (Exception e) {
+      log.error("[Ranking] 랭킹 재구축 중 오류 발생: {}", e.getMessage(), e);
+    } finally {
+      // 락 해제
+      redisTemplate.delete(lockKey);
+      log.info("[Ranking] 랭킹 재구축 프로세스 종료.");
     }
-    log.info("[Ranking] 전체 랭킹 재구축 완료: {}명", globalScores.size());
-
-    // 3. 지역 랭킹 재구축 (DB 쿼리 1회)
-    List<UserRegionScoreProjection> regionScores = recordRepository.findAllRegionScores();
-    for (UserRegionScoreProjection p : regionScores) {
-      double score = p.getRecordCount() + p.getUniqueToilets() * 3.0;
-      if (score <= 0) continue;
-      String key = REGION_RANK_KEY_PREFIX + p.getRegionName();
-      redisTemplate.opsForZSet().add(key, p.getUserId().toString(), score);
-    }
-    log.info("[Ranking] 지역 랭킹 재구축 완료: {}개 레코드", regionScores.size());
-
-    // 4. 건강왕 재구축
-    initializeHealthRanking();
-
-    log.info("[Ranking] 전체 랭킹 재구축 완료.");
   }
 
   public RankingResponse getGlobalRanking() {

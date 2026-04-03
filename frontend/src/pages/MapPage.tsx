@@ -325,12 +325,15 @@ export function MapPage({ openAuth }: { openAuth: (mode: 'login' | 'signup') => 
         switch (code) {
           case 'R007':
             throw e; // VisitModal에서 카메라 복귀 처리
-          case 'STAY_TIME_NOT_MET':
+          case 'R005': // STAY_TIME_NOT_MET
             alert('⏳ 아직 1분이 지나지 않았습니다. 잠시 후 다시 시도해주세요!');
             break;
-          case 'LOCATION_OUT_OF_RANGE':
-          case 'OUT_OF_RANGE':
+          case 'R001': // LOCATION_OUT_OF_RANGE
+          case 'R006': // OUT_OF_RANGE
             alert('📍 화장실 근처(150m 이내)에서만 인증이 가능합니다.');
+            break;
+          case 'R003': // AI_SERVICE_ERROR
+            alert('🤖 AI 분석 서비스에 일시적 문제가 발생했습니다. 잠시 후 다시 시도해주세요.');
             break;
           default:
             alert(`인증 오류: ${e.message || '서버 오류'}`);
@@ -362,12 +365,9 @@ export function MapPage({ openAuth }: { openAuth: (mode: 'login' | 'signup') => 
 
   if (!pos) {
     return (
-      <div
-        className="relative h-screen flex flex-col overflow-hidden"
-        style={{ background: '#F2F7F4' }}
-      >
+      <div className="relative h-screen flex flex-col" style={{ background: '#F2F7F4' }}>
         <Navbar openAuth={openAuth} />
-        <div className="flex-1 flex items-center justify-center text-center">
+        <div className="flex-1 flex items-center justify-center text-center overflow-hidden">
           <div className="text-4xl mb-4 animate-bounce">📍</div>
           <p className="text-[#7a9e8a] font-bold">위치를 찾고 있습니다...</p>
         </div>
@@ -376,12 +376,9 @@ export function MapPage({ openAuth }: { openAuth: (mode: 'login' | 'signup') => 
   }
 
   return (
-    <div
-      className="relative h-screen flex flex-col overflow-hidden"
-      style={{ background: '#F2F7F4' }}
-    >
+    <div className="relative h-screen flex flex-col" style={{ background: '#F2F7F4' }}>
       <Navbar openAuth={openAuth} />
-      <div className="flex-1 relative">
+      <div className="flex-1 relative overflow-hidden">
         <MapView
           ref={mapViewRef}
           toilets={filteredToilets}
@@ -454,7 +451,10 @@ export function MapPage({ openAuth }: { openAuth: (mode: 'login' | 'signup') => 
           )}
         </AnimatePresence>
 
-        <div className="absolute right-4 bottom-8 z-20">
+        <div
+          className="absolute right-4 z-[30]"
+          style={{ bottom: 'max(2rem, calc(env(safe-area-inset-bottom) + 1rem))' }}
+        >
           <button
             onClick={() => mapViewRef.current?.panTo(pos.lat, pos.lng)}
             className="w-12 h-12 rounded-full flex items-center justify-center bg-white shadow-lg active:scale-95 transition-transform"

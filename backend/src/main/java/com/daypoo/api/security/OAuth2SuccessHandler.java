@@ -21,6 +21,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
 
   private final JwtProvider jwtProvider;
   private final com.daypoo.api.repository.UserRepository userRepository;
+  private final org.springframework.data.redis.core.StringRedisTemplate redisTemplate;
 
   @org.springframework.beans.factory.annotation.Value("${app.frontend.url}")
   private String frontendUrl;
@@ -69,13 +70,14 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
       String accessToken = jwtProvider.createAccessToken(email, user.getRole().name());
       String refreshToken = jwtProvider.createRefreshToken(email);
 
-      targetUrl =
-          frontendUrl
-              + "/auth/callback?access_token="
-              + accessToken
-              + "&refresh_token="
-              + refreshToken;
-      log.info("Existing OAuth2 User Login Success! Redirecting to: {}", targetUrl);
+      // 보안 개선: JWT를 직접 노출하지 않고 일회용 코드로 교환
+      String authCode = java.util.UUID.randomUUID().toString();
+      String redisKey = "auth_code:" + authCode;
+      String redisValue = accessToken + ":" + refreshToken;
+      redisTemplate.opsForValue().set(redisKey, redisValue, java.time.Duration.ofMinutes(1));
+
+      targetUrl = frontendUrl + "/auth/callback?code=" + authCode;
+      log.info("Existing OAuth2 User Login Success! Redirecting with authCode: {}", authCode);
     } else {
       // 신규 회원: 닉네임 설정 페이지로 유도
       String registrationToken = jwtProvider.createRegistrationToken(email, "ROLE_USER");
