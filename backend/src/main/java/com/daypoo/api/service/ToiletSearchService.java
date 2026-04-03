@@ -5,6 +5,7 @@ import com.daypoo.api.util.ChosungUtils;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
@@ -36,23 +37,25 @@ public class ToiletSearchService {
       String query, int size, Double latitude, Double longitude) {
     if (query == null || query.isBlank()) return List.of();
 
-    // 1차: 위치 포함 검색 (geo_distance 정렬)
-    try {
-      String requestBody = buildQuery(query.trim(), size, latitude, longitude);
-      String response = executeSearch(requestBody);
-      return parseResponse(response);
-    } catch (Exception e) {
-      log.warn(
-          "[OpenSearch] geo_distance 정렬 실패, 점수순으로 재시도합니다. query='{}': {}", query, e.getMessage());
-    }
+    boolean hasLocation = latitude != null && longitude != null;
+    // 위치 기반 정렬을 위해 충분한 후보군 확보
+    int fetchSize = hasLocation ? Math.max(size * 5, 100) : size;
 
-    // 2차: geo_distance 정렬 실패 시에만 점수순 fallback (결과 0건은 fallback 없이 빈 배열 반환)
     try {
-      String requestBody = buildQuery(query.trim(), size, null, null);
+      String requestBody = buildQuery(query.trim(), fetchSize);
       String response = executeSearch(requestBody);
-      return parseResponse(response);
+      List<ToiletSearchResultResponse> results = parseResponse(response);
+
+      if (hasLocation) {
+        double lat = latitude;
+        double lon = longitude;
+        results.sort(
+            Comparator.comparingDouble(r -> haversine(lat, lon, r.latitude(), r.longitude())));
+        return results.subList(0, Math.min(size, results.size()));
+      }
+      return results;
     } catch (Exception e) {
-      log.error("[OpenSearch] 검색 완전 실패 query='{}': {}", query, e.getMessage());
+      log.error("[OpenSearch] 검색 실패 query='{}': {}", query, e.getMessage());
       return List.of();
     }
   }
@@ -71,11 +74,9 @@ public class ToiletSearchService {
 
   // ── private helpers ──────────────────────────────────────────────────────
 
-  private String buildQuery(String query, int size, Double latitude, Double longitude)
-      throws Exception {
+  private String buildQuery(String query, int size) throws Exception {
     boolean isChosung = ChosungUtils.isChosungOnly(query);
     String chosungQuery = ChosungUtils.extractChosung(query);
-    boolean hasLocation = latitude != null && longitude != null;
 
     List<Object> shouldClauses = new ArrayList<>();
 
@@ -94,30 +95,13 @@ public class ToiletSearchService {
     shouldClauses.add(Map.of("wildcard", Map.of("nameChosung", "*" + chosungQuery + "*")));
     shouldClauses.add(Map.of("wildcard", Map.of("addressChosung", "*" + chosungQuery + "*")));
 
-    // ── bool 쿼리 조립 ──────────────────────────────────────────
     java.util.LinkedHashMap<String, Object> boolQuery = new java.util.LinkedHashMap<>();
     boolQuery.put("should", shouldClauses);
     boolQuery.put("minimum_should_match", 1);
 
-    Map<String, Object> finalQuery = Map.of("bool", boolQuery);
-
-    // ── 결과 조립 ───────────────────────────────────────────────
     java.util.LinkedHashMap<String, Object> queryBody = new java.util.LinkedHashMap<>();
-    queryBody.put("query", finalQuery);
+    queryBody.put("query", Map.of("bool", boolQuery));
     queryBody.put("size", size);
-
-    // 위치가 있으면 항상 거리순 정렬 (화장실 앱 특성상 가까운 결과가 항상 우선)
-    if (hasLocation) {
-      queryBody.put(
-          "sort",
-          List.of(
-              Map.of(
-                  "_geo_distance",
-                  Map.of(
-                      "location", Map.of("lat", latitude, "lon", longitude),
-                      "order", "asc",
-                      "unit", "m"))));
-    }
 
     return objectMapper.writeValueAsString(queryBody);
   }
@@ -139,5 +123,18 @@ public class ToiletSearchService {
               .build());
     }
     return results;
+  }
+
+  private double haversine(double lat1, double lon1, double lat2, double lon2) {
+    final double R = 6371000;
+    double dLat = Math.toRadians(lat2 - lat1);
+    double dLon = Math.toRadians(lon2 - lon1);
+    double a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2)
+            + Math.cos(Math.toRadians(lat1))
+                * Math.cos(Math.toRadians(lat2))
+                * Math.sin(dLon / 2)
+                * Math.sin(dLon / 2);
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   }
 }
