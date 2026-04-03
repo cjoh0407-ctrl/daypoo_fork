@@ -76,8 +76,6 @@ public class ToiletSearchService {
     boolean isChosung = ChosungUtils.isChosungOnly(query);
     String chosungQuery = ChosungUtils.extractChosung(query);
     boolean hasLocation = latitude != null && longitude != null;
-    // 짧은 초성(1~2글자)은 매칭 범위가 너무 넓으므로 거리 필터로 후보를 제한
-    boolean isShortChosung = isChosung && chosungQuery.length() <= 2;
 
     List<Object> shouldClauses = new ArrayList<>();
 
@@ -86,32 +84,15 @@ public class ToiletSearchService {
       shouldClauses.add(
           Map.of(
               "multi_match",
-              Map.of(
-                  "query",
-                  query,
-                  "fields",
-                  List.of("name^10", "address"),
-                  "type",
-                  "best_fields",
-                  "boost",
-                  5.0)));
-      shouldClauses.add(
-          Map.of("match_phrase_prefix", Map.of("name", Map.of("query", query, "boost", 15.0))));
+              Map.of("query", query, "fields", List.of("name", "address"), "type", "best_fields")));
+      shouldClauses.add(Map.of("match_phrase_prefix", Map.of("name", Map.of("query", query))));
     }
 
     // 2. 초성 검색
-    shouldClauses.add(
-        Map.of("term", Map.of("nameChosung", Map.of("value", chosungQuery, "boost", 100.0))));
-    shouldClauses.add(
-        Map.of("prefix", Map.of("nameChosung", Map.of("value", chosungQuery, "boost", 50.0))));
-    shouldClauses.add(
-        Map.of(
-            "wildcard",
-            Map.of("nameChosung", Map.of("value", "*" + chosungQuery + "*", "boost", 10.0))));
-    shouldClauses.add(
-        Map.of(
-            "wildcard",
-            Map.of("addressChosung", Map.of("value", "*" + chosungQuery + "*", "boost", 5.0))));
+    shouldClauses.add(Map.of("term", Map.of("nameChosung", chosungQuery)));
+    shouldClauses.add(Map.of("prefix", Map.of("nameChosung", chosungQuery)));
+    shouldClauses.add(Map.of("wildcard", Map.of("nameChosung", "*" + chosungQuery + "*")));
+    shouldClauses.add(Map.of("wildcard", Map.of("addressChosung", "*" + chosungQuery + "*")));
 
     // ── bool 쿼리 조립 ──────────────────────────────────────────
     java.util.LinkedHashMap<String, Object> boolQuery = new java.util.LinkedHashMap<>();
@@ -125,31 +106,17 @@ public class ToiletSearchService {
     queryBody.put("query", finalQuery);
     queryBody.put("size", size);
 
-    // 짧은 초성은 거리순 정렬 (모두 동일한 매칭 점수이므로)
-    // 긴 초성/텍스트는 점수순 → 거리순
+    // 위치가 있으면 항상 거리순 정렬 (화장실 앱 특성상 가까운 결과가 항상 우선)
     if (hasLocation) {
-      if (isShortChosung) {
-        queryBody.put(
-            "sort",
-            List.of(
-                Map.of(
-                    "_geo_distance",
-                    Map.of(
-                        "location", Map.of("lat", latitude, "lon", longitude),
-                        "order", "asc",
-                        "unit", "m"))));
-      } else {
-        queryBody.put(
-            "sort",
-            List.of(
-                Map.of("_score", "desc"),
-                Map.of(
-                    "_geo_distance",
-                    Map.of(
-                        "location", Map.of("lat", latitude, "lon", longitude),
-                        "order", "asc",
-                        "unit", "m"))));
-      }
+      queryBody.put(
+          "sort",
+          List.of(
+              Map.of(
+                  "_geo_distance",
+                  Map.of(
+                      "location", Map.of("lat", latitude, "lon", longitude),
+                      "order", "asc",
+                      "unit", "m"))));
     }
 
     return objectMapper.writeValueAsString(queryBody);
