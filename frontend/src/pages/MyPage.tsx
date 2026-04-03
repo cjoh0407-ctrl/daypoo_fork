@@ -1230,6 +1230,11 @@ function HomeTab({
                               isSelected
                                 ? 'border-emerald-500 shadow-2xl shadow-emerald-500/20'
                                 : 'border-gray-100 hover:border-emerald-200 hover:shadow-xl'
+                            } ${
+                              idx === (Math.min(items.length, (currentPage + 1) * itemsPerPage) - (currentPage * itemsPerPage)) - 1 && 
+                              (Math.min(items.length, (currentPage + 1) * itemsPerPage) - (currentPage * itemsPerPage)) % 2 !== 0 
+                                ? 'col-span-2 sm:col-span-1' 
+                                : ''
                             }`}
                             style={{ background: '#fff' }}
                           >
@@ -1609,6 +1614,16 @@ function CollectionTab({
           <p className="text-2xl font-black text-[#1A2B27] tracking-tighter">칭호 컬렉션 도감</p>
         </div>
 
+        {/* 컬렉션 상단 안내 문구 추가 */}
+        <div className="flex flex-col items-center justify-center py-2 sm:py-4 gap-2 border-b border-gray-50 mb-4 bg-gray-50/30">
+          <div className="w-8 h-8 rounded-full bg-white border border-gray-100 flex items-center justify-center text-amber-500 shadow-sm">
+            <Trophy size={14} />
+          </div>
+          <p className="text-[10px] sm:text-xs font-bold text-gray-400 italic text-center">
+            도감의 칭호를 클릭하여 상세 조건과 진행 상황을 확인해보세요!
+          </p>
+        </div>
+
         <div className="px-6 pb-6">
           <DepthDeckCarousel
             cards={titleCards}
@@ -1731,13 +1746,11 @@ function CollectionTab({
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center py-6 gap-3">
-              <div className="w-12 h-12 rounded-full bg-white border border-gray-100 flex items-center justify-center text-amber-500 shadow-sm">
-                <Trophy size={20} />
+              <div className="w-12 h-12 rounded-full bg-white border border-gray-100 flex items-center justify-center text-emerald-500 shadow-sm">
+                <Sparkles size={20} />
               </div>
-              <p className="text-sm font-bold text-gray-400 italic text-center">
-                도감의 칭호를 클릭하여 상세 조건과
-                <br />
-                진행 상황을 확인해보세요!
+              <p className="text-sm font-bold text-emerald-600/60 italic text-center">
+                위 도감에서 칭호를 선택하여<br />상세 내용을 확인하세요!
               </p>
             </div>
           )}
@@ -2242,23 +2255,23 @@ function ReportTab({ records = [], reportCacheRef }: { records?: any[]; reportCa
 
             {/* 잠금 오버레이 (비PRO 회원 전용) */}
             {!isPro && (
-              <div className="absolute inset-0 z-10 flex items-center justify-center p-4 sm:p-8">
+              <div className="absolute inset-0 z-10 flex items-center justify-center p-3 sm:p-8">
                 <motion.div
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  className="w-full max-w-md bg-white/95 backdrop-blur-xl p-6 sm:p-14 rounded-[28px] sm:rounded-[56px] shadow-[0_32px_80px_rgba(0,0,0,0.15)] border border-white text-center"
+                  className="w-full max-w-md bg-white/95 backdrop-blur-xl p-5 sm:p-14 rounded-[32px] sm:rounded-[56px] shadow-[0_20px_60px_rgba(0,0,0,0.12)] border border-white text-center"
                 >
                   <motion.div
-                    className="w-16 h-16 sm:w-20 sm:h-20 bg-amber-100 rounded-[24px] sm:rounded-[32px] flex items-center justify-center mx-auto mb-4 sm:mb-6 shadow-inner"
+                    className="w-12 h-12 sm:w-20 sm:h-20 bg-amber-100 rounded-[20px] sm:rounded-[32px] flex items-center justify-center mx-auto mb-3 sm:mb-6 shadow-inner"
                     animate={{ rotate: [0, -15, 15, -10, 10, -5, 5, 0] }}
                     transition={{ duration: 0.8, repeat: Infinity, repeatDelay: 2, ease: 'easeInOut' }}
                   >
-                    <Lock size={36} className="text-amber-500" />
+                    <Lock size={24} className="text-amber-500 sm:w-9 sm:h-9" />
                   </motion.div>
-                  <h3 className="text-xl sm:text-2xl font-black text-[#1A2B27] mb-2 sm:mb-3 tracking-tight">
+                  <h3 className="text-lg sm:text-2xl font-black text-[#1A2B27] mb-1 sm:mb-3 tracking-tight">
                     정밀 분석 리포트 잠금
                   </h3>
-                  <p className="text-gray-500 font-bold text-sm sm:text-base mb-6 sm:mb-10 leading-relaxed">
+                  <p className="text-gray-500 font-bold text-xs sm:text-base mb-5 sm:mb-10 leading-relaxed">
                     {activeSubTab === 'weekly' ? '7일간의' : '30일간의'} 누적 기록을 바탕으로 산출되는 <br />
                     <span className="text-emerald-700">장 건강 점수</span>와{' '}
                     <span className="text-emerald-700">AI 푸의 맞춤 가이드</span>는<br />
@@ -2271,10 +2284,10 @@ function ReportTab({ records = [], reportCacheRef }: { records?: any[]; reportCa
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={() => navigate('/premium')}
-                    className="w-full py-4 sm:py-6 bg-[#1B4332] text-white font-black rounded-[20px] sm:rounded-[28px] shadow-2xl shadow-emerald-900/40 flex items-center justify-center gap-2 sm:gap-3 text-sm sm:text-lg"
+                    className="w-full py-3.5 sm:py-6 bg-[#1B4332] text-white font-black rounded-[18px] sm:rounded-[28px] shadow-xl shadow-emerald-900/30 flex items-center justify-center gap-2 sm:gap-3 text-sm sm:text-lg"
                   >
                     {activeSubTab === 'weekly' ? 'PRO' : 'PREMIUM'} 멤버십 가입하고 확인하기{' '}
-                    <ArrowRight size={22} />
+                    <ArrowRight size={18} />
                   </motion.button>
                 </motion.div>
               </div>
@@ -2728,15 +2741,15 @@ function SettingsTab({
             {section.items.map((item, i) => (
               <div
                 key={i}
-                className="flex items-center justify-between p-6 rounded-3xl hover:bg-gray-50/50 transition-colors"
+                className="flex items-center justify-between p-3 sm:p-6 rounded-[24px] sm:rounded-3xl hover:bg-gray-50/50 transition-colors"
               >
-                <div className="flex items-center gap-6">
-                  <div className="w-14 h-14 rounded-2xl bg-gray-50 flex items-center justify-center text-gray-400 shadow-inner">
+                <div className="flex items-center gap-3 sm:gap-6">
+                  <div className="w-11 h-11 sm:w-14 sm:h-14 rounded-[16px] sm:rounded-2xl bg-gray-50 flex items-center justify-center text-gray-400 shadow-inner shrink-0">
                     {item.icon}
                   </div>
-                  <div>
-                    <p className="text-xs font-bold text-gray-400 mb-1">{item.label}</p>
-                    <p className="text-lg font-black text-[#1A2B27] tracking-tight">{item.value}</p>
+                  <div className="min-w-0">
+                    <p className="text-[10px] sm:text-xs font-bold text-gray-400 mb-0.5 sm:mb-1">{item.label}</p>
+                    <p className="text-sm sm:text-lg font-black text-[#1A2B27] tracking-tight truncate">{item.value}</p>
                   </div>
                 </div>
                 {item.action && (
@@ -2744,7 +2757,7 @@ function SettingsTab({
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     onClick={item.onClick}
-                    className="px-6 py-3 rounded-2xl text-sm font-black bg-white border border-gray-200 text-gray-500 hover:text-emerald-600 hover:border-emerald-100 hover:shadow-lg transition-all"
+                    className="px-4 py-2 sm:px-6 sm:py-3 rounded-[14px] sm:rounded-2xl text-[11px] sm:text-sm font-black bg-white border border-gray-200 text-gray-500 hover:text-emerald-600 hover:border-emerald-100 hover:shadow-lg transition-all shrink-0 ml-2"
                   >
                     {item.action}
                   </motion.button>

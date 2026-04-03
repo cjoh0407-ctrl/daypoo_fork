@@ -164,7 +164,7 @@ function ModernSearch({ value, onChange }: { value: string; onChange: (v: string
   }
 
   return (
-    <div className="relative w-full max-w-2xl mx-auto mb-8">
+    <div className="relative w-full max-w-2xl mx-auto mb-4 sm:mb-8">
       <motion.div
         ref={searchRef}
         onMouseMove={handleMouseMove}
@@ -711,7 +711,7 @@ export function SupportPage({ openAuth }: { openAuth: (mode: 'login' | 'signup',
       <Navbar openAuth={openAuth} />
 
       {/* Hero Section */}
-      <section className="relative pt-[120px] sm:pt-[180px] pb-[60px] sm:pb-[80px] px-4 sm:px-6 overflow-hidden bg-[#F8FAF9]">
+      <section className="relative pt-[100px] sm:pt-[180px] pb-[40px] sm:pb-[80px] px-4 sm:px-6 overflow-hidden bg-[#F8FAF9]">
         <div className="absolute top-[-10%] left-[-10%] w-[45%] h-[45%] bg-[#52B788] blur-[140px] rounded-full opacity-[0.1]" />
         <div className="absolute bottom-[-10%] right-[-10%] w-[45%] h-[45%] bg-[#E8A838] blur-[140px] rounded-full opacity-[0.08]" />
 
@@ -721,7 +721,7 @@ export function SupportPage({ openAuth }: { openAuth: (mode: 'login' | 'signup',
             <span className="text-[12px] font-black text-[#1B4332] uppercase tracking-[0.25em]">Customer Support</span>
           </motion.div>
 
-          <motion.h1 initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }} className="text-4xl sm:text-6xl md:text-8xl font-black mb-8 sm:mb-12 leading-[1.1] sm:leading-[0.95] tracking-tighter text-[#1A2B27]">
+          <motion.h1 initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }} className="text-3xl sm:text-6xl md:text-8xl font-black mb-6 sm:mb-12 leading-[1.1] sm:leading-[0.95] tracking-tighter text-[#1A2B27]">
             우리가 무엇을<br /><span className="text-transparent bg-clip-text bg-gradient-to-r from-[#1B4332] via-[#2D6A4F] to-[#52B788]">도와드릴까요?</span>
           </motion.h1>
 
@@ -732,10 +732,10 @@ export function SupportPage({ openAuth }: { openAuth: (mode: 'login' | 'signup',
 
       {/* Main Content Area */}
       <main className="relative z-10 bg-white">
-        <div className="max-w-[1240px] mx-auto px-4 sm:px-6 pt-[40px] sm:pt-[60px] pb-[80px] sm:pb-[120px] flex flex-col lg:flex-row gap-8 sm:gap-16">
+        <div className="max-w-[1240px] mx-auto px-4 sm:px-6 pt-4 sm:pt-[60px] pb-[80px] sm:pb-[120px] flex flex-col lg:flex-row gap-4 sm:gap-16">
           <aside className="w-full lg:w-[260px] shrink-0">
-            <div className="sticky top-[120px] space-y-12">
-              <div className="flex flex-col gap-2.5">
+            <div className="sticky top-[120px] space-y-6 lg:space-y-12">
+              <div className="flex flex-row lg:flex-col gap-2.5 overflow-x-auto pb-4 lg:pb-0 scrollbar-hide">
                 {[
                   { id: 'faq' as const, label: '자주 묻는 질문', icon: <MessageSquare size={19} /> },
                   { id: 'inquiry' as const, label: '1:1 문의하기', icon: <Plus size={19} /> },
@@ -744,13 +744,13 @@ export function SupportPage({ openAuth }: { openAuth: (mode: 'login' | 'signup',
                   <button
                     key={tab.id}
                     onClick={() => handleTabChange(tab.id)}
-                    className={`flex items-center justify-between group px-4 sm:px-6 py-4 sm:py-5 rounded-[18px] sm:rounded-[22px] transition-all duration-300 relative overflow-hidden ${activeTab === tab.id ? 'bg-[#1B4332] text-white shadow-2xl scale-[1.03]' : 'bg-[#f4f9f6] hover:bg-[#eaf4ee] text-[#5C6B68]'}`}
+                    className={`flex items-center justify-between group px-4 sm:px-6 py-2.5 sm:py-5 rounded-full sm:rounded-[22px] transition-all duration-300 relative overflow-hidden flex-shrink-0 min-w-[140px] lg:min-w-0 ${activeTab === tab.id ? 'bg-[#1B4332] text-white shadow-lg lg:shadow-2xl scale-[1.03]' : 'bg-[#f4f9f6] hover:bg-[#eaf4ee] text-[#5C6B68]'}`}
                   >
-                    <div className="flex items-center gap-4 relative z-10">
+                    <div className="flex items-center gap-2 sm:gap-4 relative z-10">
                       <span className={activeTab === tab.id ? 'text-[#52B788]' : 'text-[#5C6B68]/40 group-hover:text-[#52B788]'}>{tab.icon}</span>
-                      <span className="text-[15px] font-black tracking-tight">{tab.label}</span>
+                      <span className="text-[13px] sm:text-[15px] font-black tracking-tight">{tab.label}</span>
                     </div>
-                    <ArrowRight size={16} className={`relative z-10 transition-transform duration-500 ${activeTab === tab.id ? 'translate-x-0 opacity-100' : '-translate-x-6 opacity-0 group-hover:translate-x-0 group-hover:opacity-100'}`} />
+                    <ArrowRight size={16} className={`hidden lg:block relative z-10 transition-transform duration-500 ${activeTab === tab.id ? 'translate-x-0 opacity-100' : '-translate-x-6 opacity-0 group-hover:translate-x-0 group-hover:opacity-100'}`} />
                   </button>
                 ))}
               </div>
@@ -759,9 +759,9 @@ export function SupportPage({ openAuth }: { openAuth: (mode: 'login' | 'signup',
                 {activeTab === 'faq' && (
                   <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }} className="space-y-5">
                     <div className="flex items-center gap-2.5 px-3 text-[11px] font-black text-[#5C6B68]/40 uppercase tracking-[0.2em]"><Filter size={13} /> CATEGORIES</div>
-                    <div className="grid grid-cols-2 lg:flex lg:flex-col gap-2 px-1">
+                    <div className="flex flex-row lg:flex-col gap-2 overflow-x-auto pb-2 scrollbar-hide px-1">
                       {CATEGORIES.map((cat) => (
-                        <button key={cat} onClick={() => setActiveCategory(cat)} className={`px-5 py-3 rounded-2xl text-[14px] font-black text-left transition-all ${activeCategory === cat ? 'bg-[#52B788]/15 text-[#1B4332] shadow-sm' : 'bg-transparent text-[#5C6B68]/50 hover:text-[#1A2B27] hover:bg-[#f4f9f6]'}`}>
+                        <button key={cat} onClick={() => setActiveCategory(cat)} className={`px-4 sm:px-5 py-2 sm:py-3 rounded-full lg:rounded-2xl text-[12px] sm:text-[14px] font-black text-left transition-all flex-shrink-0 ${activeCategory === cat ? 'bg-[#52B788]/15 text-[#1B4332] shadow-sm' : 'bg-transparent text-[#5C6B68]/50 hover:text-[#1A2B27] hover:bg-[#f4f9f6]'}`}>
                           {cat}
                         </button>
                       ))}

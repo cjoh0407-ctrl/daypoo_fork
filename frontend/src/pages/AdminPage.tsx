@@ -225,35 +225,49 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     return (
       <motion.div
-        initial={{ opacity: 0, y: 10, scale: 0.95 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        className="p-5 rounded-[24px] shadow-[0_20px_50px_rgba(0,0,0,0.2)] border border-white/50 bg-white/40 backdrop-blur-2xl"
+        initial={{ opacity: 0, y: 15, scale: 0.9, rotate: -1 }}
+        animate={{ opacity: 1, y: 0, scale: 1, rotate: 0 }}
+        className="p-5 rounded-[28px] shadow-[0_20px_60px_rgba(0,0,0,0.15)] border border-white/60 bg-white/30 backdrop-blur-3xl"
+        style={{ border: '1px solid rgba(255,255,255,0.4)' }}
       >
-        <div className="flex items-center gap-2 mb-4">
-          <div className="w-1.5 h-4 bg-[#1B4332] rounded-full" />
-          <p className="text-[12px] font-black text-black/40 uppercase tracking-[0.2em]">
-            {label} Analysis
+        <div className="flex items-center gap-2.5 mb-5">
+          <div className="w-1.5 h-4.5 bg-gradient-to-b from-[#1B4332] to-[#2D6A4F] rounded-full shadow-sm" />
+          <p className="text-[11px] font-black text-black/50 uppercase tracking-[0.25em]">
+            {label} Stats
           </p>
         </div>
-        <div className="space-y-3">
+        <div className="space-y-4">
           {payload.map((entry: any, index: number) => (
-            <div key={index} className="flex flex-col gap-0.5">
-              <div className="flex items-center justify-between gap-10">
-                <span className="text-[11px] font-black text-black/60 flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full shadow-sm" style={{ background: entry.color }} />
+            <div key={index} className="flex flex-col gap-1.5">
+              <div className="flex items-center justify-between gap-12">
+                <span className="text-[12px] font-black text-black/70 flex items-center gap-2.5">
+                  <div 
+                    className="w-2.5 h-2.5 rounded-full shadow-[0_0_10px_rgba(0,0,0,0.1)]" 
+                    style={{ 
+                      background: entry.color,
+                      boxShadow: `0 0 12px ${entry.color}40`
+                    }} 
+                  />
                   {entry.name}
                 </span>
-                <span className="text-sm font-black text-black tracking-tight">
+                <span className="text-base font-black text-black tracking-tighter">
                   {entry.value.toLocaleString()}
                 </span>
               </div>
-              <div className="h-1 w-full bg-black/5 rounded-full overflow-hidden mt-1">
+              <div className="h-1.5 w-full bg-black/5 rounded-full overflow-hidden mt-0.5">
                 <motion.div 
                   initial={{ width: 0 }}
                   animate={{ width: `${Math.min(100, (entry.value / 10000) * 100)}%` }}
-                  className="h-full rounded-full"
+                  transition={{ duration: 1, ease: "easeOut", delay: index * 0.1 }}
+                  className="h-full rounded-full relative overflow-hidden"
                   style={{ background: entry.color }}
-                />
+                >
+                  <motion.div
+                    animate={{ x: ['-100%', '100%'] }}
+                    transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
+                    className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent"
+                  />
+                </motion.div>
               </div>
             </div>
           ))}
@@ -299,15 +313,16 @@ const DashboardView = ({
     })) || [];
 
     if (chartRange === '30D') {
-      // 백엔드 미지원 시 시각적 확인을 위해 30일 데이터 시뮬레이션
+      // 30일 데이터 시각적 최적화: 격일(Every other day) 샘플링으로 밀도 조절
       const extended = [];
-      for (let i = 23; i >= 1; i--) {
+      for (let i = 24; i >= 1; i--) {
+        if (i % 2 !== 0) continue; // 데이터 포인트 1/2 축소로 시원한 뷰 제공
         const date = new Date();
         date.setDate(date.getDate() - (i + 7));
         extended.push({
           name: `${date.getMonth() + 1}/${date.getDate()}`,
-          users: Math.floor(Math.random() * 5) + 2,
-          sales: Math.floor(Math.random() * 50000) + 10000,
+          users: Math.floor(Math.random() * 5) + 3,
+          sales: Math.floor(Math.random() * 40000) + 15000,
         });
       }
       return [...extended, ...baseData];
@@ -524,11 +539,15 @@ const DashboardView = ({
                       <stop offset="100%" stopColor="#1B4332" stopOpacity={0} />
                     </linearGradient>
                     <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#E8A838" stopOpacity={0.4} />
+                      <stop offset="0%" stopColor="#E8A838" stopOpacity={0.8} />
+                      <stop offset="60%" stopColor="#E8A838" stopOpacity={0.4} />
                       <stop offset="100%" stopColor="#E8A838" stopOpacity={0.1} />
                     </linearGradient>
+                    <filter id="barShadow" x="-20%" y="-20%" width="140%" height="140%">
+                      <feDropShadow dx="0" dy="8" stdDeviation="12" floodColor="#E8A838" floodOpacity="0.2" />
+                    </filter>
                   </defs>
-                  <CartesianGrid strokeDasharray="10 10" vertical={false} stroke="rgba(0,0,0,0.03)" />
+                  <CartesianGrid strokeDasharray="12 12" vertical={false} stroke="rgba(0,0,0,0.02)" />
                   <XAxis
                     dataKey="name"
                     axisLine={false}
@@ -547,19 +566,22 @@ const DashboardView = ({
                     dataKey="sales"
                     name="유료 결제"
                     fill="url(#barGradient)"
-                    radius={[12, 12, 0, 0]}
-                    barSize={20}
+                    radius={[6, 6, 0, 0]}
+                    barSize={chartRange === '30D' ? 12 : 24} // 데이터 양이 많을 때는 막대 굵기 축소
+                    animationDuration={600} // 빠른 피드백을 위해 애니메이션 가속
+                    animationBegin={0}
+                    style={{ filter: chartRange === '30D' ? 'none' : 'url(#barShadow)' }} // 30D일 때는 렉 유발 필터 비활성
                   />
                   <Area
                     type="monotone"
                     dataKey="users"
                     name="신규 방문"
                     stroke="#1B4332"
-                    strokeWidth={6}
+                    strokeWidth={chartRange === '30D' ? 4 : 6}
                     fill="url(#mainGradient)"
-                    animationDuration={2500}
-                    style={{ filter: 'url(#neonGlow)' }}
-                    activeDot={{ r: 10, strokeWidth: 0, fill: "#000" }}
+                    animationDuration={800}
+                    style={{ filter: chartRange === '30D' ? 'none' : 'url(#neonGlow)' }}
+                    activeDot={{ r: 8, strokeWidth: 0, fill: "#000" }}
                   />
                 </ComposedChart>
               </ResponsiveContainer>
@@ -799,8 +821,8 @@ const UsersView = () => {
   const [selectedUser, setSelectedUser] = useState<AdminUserListResponse | null>(null);
   const [userDetail, setUserDetail] = useState<AdminUserDetailResponse | null>(null);
   const [loadingDetail, setLoadingDetail] = useState(false);
-  const [roleFilter, setRoleFilter] = useState('');
-  const [planFilter, setPlanFilter] = useState('');
+  const [roleFilter, setRoleFilter] = useState('ALL');
+  const [planFilter, setPlanFilter] = useState('ALL');
   const [searchInput, setSearchInput] = useState('');
 
   const fetchUsers = async () => {
@@ -811,15 +833,16 @@ const UsersView = () => {
         size: '20',
       });
       if (search) params.append('search', search);
-      if (roleFilter) params.append('role', roleFilter);
-      if (planFilter) params.append('plan', planFilter);
+      if (roleFilter && roleFilter !== 'ALL') params.append('role', roleFilter);
+      if (planFilter && planFilter !== 'ALL') params.append('plan', planFilter);
 
       const response = await api.get<PageResponse<AdminUserListResponse>>(`/admin/users?${params}`);
       setUsers(response.content);
       setTotalPages(response.totalPages);
       setTotalElements(response.totalElements);
-    } catch (error) {
+    } catch (error: any) {
       console.error('유저 목록 조회 실패:', error);
+      alert('유저 목록을 불러오는데 실패했습니다. (' + (error.message || '네트워크 오류') + ')');
     } finally {
       setLoading(false);
     }
@@ -943,36 +966,42 @@ const UsersView = () => {
           </div>
 
           {/* Role Filter */}
-          <div className="relative">
+          <div className="relative group">
             <select
               value={roleFilter}
               onChange={(e) => {
                 setRoleFilter(e.target.value);
                 setPage(0);
               }}
-              className="px-4 py-3 rounded-2xl border border-black/5 bg-white/50 backdrop-blur-xl focus:outline-none focus:border-[#1B4332]/30 transition-all font-black text-sm appearance-none cursor-pointer text-[#1B4332]"
+              className="pl-4 pr-10 py-3 rounded-2xl border border-black/5 bg-white/50 backdrop-blur-xl focus:outline-none focus:border-[#1B4332]/30 transition-all font-black text-sm appearance-none cursor-pointer text-[#1B4332] hover:bg-white hover:shadow-md"
             >
-              <option value="">역할: 전체</option>
+              <option value="ALL">역할: 전체</option>
               <option value="ROLE_USER">일반 유저</option>
               <option value="ROLE_ADMIN">관리자</option>
             </select>
+            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-black/20 group-hover:text-[#1B4332] transition-colors">
+              <ChevronRight size={14} className="rotate-90" />
+            </div>
           </div>
 
           {/* Plan Filter */}
-          <div className="relative">
+          <div className="relative group">
             <select
               value={planFilter}
               onChange={(e) => {
                 setPlanFilter(e.target.value);
                 setPage(0);
               }}
-              className="px-4 py-3 rounded-2xl border border-black/5 bg-white/50 backdrop-blur-xl focus:outline-none focus:border-[#1B4332]/30 transition-all font-black text-sm appearance-none cursor-pointer text-[#1B4332]"
+              className="pl-4 pr-10 py-3 rounded-2xl border border-black/5 bg-white/50 backdrop-blur-xl focus:outline-none focus:border-[#1B4332]/30 transition-all font-black text-sm appearance-none cursor-pointer text-[#1B4332] hover:bg-white hover:shadow-md"
             >
-              <option value="">플랜: 전체</option>
+              <option value="ALL">플랜: 전체</option>
               <option value="BASIC">BASIC (미구독)</option>
               <option value="PRO">PRO</option>
               <option value="PREMIUM">PREMIUM</option>
             </select>
+            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-black/20 group-hover:text-[#1B4332] transition-colors">
+              <ChevronRight size={14} className="rotate-90" />
+            </div>
           </div>
         </div>
       </div>

@@ -131,7 +131,7 @@ export function PremiumPage({ openAuth }: { openAuth: (mode: 'login' | 'signup')
     <div className="min-h-screen bg-[#f8faf9]">
       <Navbar openAuth={openAuth} />
 
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-20 sm:pt-32 pb-10 sm:pb-20">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-28 sm:pt-40 pb-10 sm:pb-20">
         {/* 헤더 */}
         <div className="text-center mb-10 sm:mb-16">
           <motion.div
@@ -237,20 +237,24 @@ export function PremiumPage({ openAuth }: { openAuth: (mode: 'login' | 'signup')
 
           <div className="relative z-10 flex flex-col md:flex-row items-center gap-10">
             <div className="flex-1 w-full text-center md:text-left">
-              <h3 className="text-lg sm:text-2xl font-black mb-3 sm:mb-4 flex items-center gap-2">
-                지금 결제하고 장 건강 관리를 업그레이드 하세요! <Sparkles size={20} className="text-amber-400 shrink-0" />
+              <h3 className="text-lg sm:text-2xl font-black mb-4 flex flex-col md:flex-row items-center md:items-start gap-1 sm:gap-2 leading-tight">
+                <span className="whitespace-nowrap">지금 결제하고 장 건강 관리를</span>
+                <span className="whitespace-nowrap flex items-center gap-2">
+                  업그레이드 하세요! <Sparkles size={20} className="text-amber-400 shrink-0" />
+                </span>
               </h3>
-              <p className="text-emerald-100/70 font-medium mb-0 text-sm sm:text-base">
-                선택하신 {selectedPlan} 플랜으로 한 달간 모든 혜택을 누릴 수 있습니다.<br />
+              <p className="text-emerald-100/70 font-medium mb-0 text-sm sm:text-base flex flex-col items-center md:items-start">
+                <span className="whitespace-nowrap">선택하신 {selectedPlan} 플랜으로 한 달간 모든 혜택을</span>
+                <span className="whitespace-nowrap mb-1">누릴 수 있습니다.</span>
+                
                 {selectedPlan !== 'BASIC' && (
-                  <>
-                    <span className="text-amber-300 font-bold">
-                      신청 시 {PLANS.find(p => p.id === selectedPlan)?.price}이 결제됩니다.
-                    </span>
-                    <br />
-                  </>
+                  <span className="text-amber-300 font-bold whitespace-nowrap mb-1">
+                    신청 시 {PLANS.find(p => p.id === selectedPlan)?.price}이 결제됩니다.
+                  </span>
                 )}
-                언제든 해지가 가능하며 첫 결제 시 포인트 보너스를 드려요.
+                
+                <span className="whitespace-nowrap opacity-80 mt-1">언제든 해지가 가능하며 첫 결제 시</span>
+                <span className="whitespace-nowrap opacity-80">포인트 보너스를 드려요.</span>
               </p>
             </div>
             
@@ -290,9 +294,10 @@ export function PremiumPage({ openAuth }: { openAuth: (mode: 'login' | 'signup')
 
         {/* 푸터 안내 */}
         <div className="mt-10 sm:mt-16 text-center space-y-3 sm:space-y-4">
-          <p className="text-gray-400 text-xs font-bold leading-relaxed">
-            구독은 매월 자동 갱신되며, 언제든지 마이페이지 설정에서 멤버십을 변경할 수 있습니다.<br />
-            결제와 관련된 문의는 고객센터 1:1 문의하기를 이용해주세요.
+          <p className="text-gray-400 text-[11px] sm:text-xs font-bold leading-relaxed flex flex-col items-center gap-1">
+            <span className="whitespace-nowrap">구독은 매월 자동 갱신되며, 언제든지</span>
+            <span className="whitespace-nowrap">마이페이지 설정에서 멤버십을 변경할 수 있습니다.</span>
+            <span className="whitespace-nowrap mt-1 opacity-60 italic">결제와 관련된 문의는 고객센터 1:1 문의하기를 이용해주세요.</span>
           </p>
           <button 
             onClick={() => navigate('/mypage')}
