@@ -99,6 +99,34 @@ export interface CheckInResponse {
 }
 
 /**
+ * 방문인증 생성 요청 (위치 인증 전용)
+ */
+export interface VisitRecordRequest {
+  toiletId: number;
+  latitude: number;
+  longitude: number;
+}
+
+/**
+ * 건강 기록 생성 요청 (배변 데이터 전용)
+ * imageBase64: 전송 후 서버에서 즉시 폐기 (In-memory pipeline, DB 미저장)
+ */
+export interface HealthRecordRequest {
+  toiletId?: number;
+  bristolScale?: number; // 미입력 시 AI 자동 분석
+  color?: string;
+  conditionTags: string[];
+  dietTags: string[];
+  imageBase64?: string;
+}
+
+/**
+ * 방문인증 + 건강 기록 통합 생성 요청 (POST /records)
+ * 현재 백엔드 단일 엔드포인트 대응용 — 추후 엔드포인트 분리 시 제거 예정
+ */
+export type CreateRecordRequest = VisitRecordRequest & HealthRecordRequest;
+
+/**
  * 알림 정보
  */
 export interface NotificationDto {

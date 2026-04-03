@@ -1,40 +1,46 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { m, AnimatePresence } from 'framer-motion';
-import { X, ChevronRight, ChevronLeft, Check, AlertTriangle, Camera, Zap, RotateCcw, Loader2, Sparkles } from 'lucide-react';
+import { X, Check, AlertTriangle, Camera, Zap, RotateCcw, Loader2, Sparkles } from 'lucide-react';
 import WaveButtonComponent from '../WaveButton';
-import {
-  ToiletData, VisitRecord, PoopColor, ConditionTag, FoodTag,
-  BRISTOL_TYPES, POOP_COLORS, CONDITION_TAGS, FOOD_TAGS,
-} from '../../types/toilet';
-import { api } from '../../services/apiClient';
-import { AiAnalysisResponse } from '../../types/api';
+import { ToiletData, PoopColor, ConditionTag, FoodTag } from '../../types/toilet';
+import { HealthLogModal, HealthLogResult } from './HealthLogModal';
+
+// 방문 인증 결과 타입
+// bristolType / color: 건강 기록 추가 시 채워짐, 건너뛰기 시 null
+export interface VisitModalResult {
+  toiletId: string;
+  bristolType: number | null;
+  color: PoopColor | null;
+  conditionTags: ConditionTag[];
+  foodTags: FoodTag[];
+  imageBase64: string | null;
+  createdAt: string; // ISO 8601
+}
 
 interface VisitModalProps {
   toilet: ToiletData;
   onClose: () => void;
-  onComplete: (record: any) => Promise<void>;
+  onComplete: (result: VisitModalResult) => Promise<void>;
   checkInTime: number | null;
 }
 
-const STEPS = ['AI 분석', '모양 선택', '색상 선택', '추가 정보'];
-
 export function VisitModal({ toilet, onClose, onComplete, checkInTime }: VisitModalProps) {
-  const [step, setStep] = useState(0);
-  const [bristolType, setBristolType] = useState<number | null>(null);
-  const [color, setColor] = useState<PoopColor | null>(null);
-  const [conditions, setConditions] = useState<ConditionTag[]>([]);
-  const [foods, setFoods] = useState<FoodTag[]>([]);
+  // 방문 인증 완료 여부 (API 미호출 상태, 선택 화면 표시)
+  const [visitDone, setVisitDone] = useState(false);
+  // 건강 기록 모달 표시 여부
+  const [showHealthLog, setShowHealthLog] = useState(false);
   const [showCloseConfirm, setShowCloseConfirm] = useState(false);
+  // 인증 완료 시각 (onComplete 호출 시 사용)
+  const completedAtRef = useRef<string>('');
 
-  // AI 관련 상태
+  // 카메라 관련
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const [isCameraActive, setIsCameraActive] = useState(false);
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
 
-  // 타이머 관련 상태
+  // 타이머
   const [remainingSeconds, setRemainingSeconds] = useState(() => {
     if (!checkInTime) return 60;
     const elapsed = Math.floor((Date.now() - checkInTime) / 1000);
@@ -58,12 +64,12 @@ export function VisitModal({ toilet, onClose, onComplete, checkInTime }: VisitMo
 
   const startCamera = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { facingMode: 'environment' }, 
-        audio: false 
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'environment' },
+        audio: false,
       });
       streamRef.current = stream;
-      setIsCameraActive(true); // video 요소를 DOM에 마운트하여 useEffect에서 연결되도록 함
+      setIsCameraActive(true);
     } catch (err) {
       console.error('카메라 시작 실패:', err);
       alert('카메라 권한이 필요합니다.');
@@ -72,7 +78,7 @@ export function VisitModal({ toilet, onClose, onComplete, checkInTime }: VisitMo
 
   const stopCamera = useCallback(() => {
     if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => {
+      streamRef.current.getTracks().forEach((track) => {
         track.stop();
         streamRef.current?.removeTrack(track);
       });
@@ -84,104 +90,93 @@ export function VisitModal({ toilet, onClose, onComplete, checkInTime }: VisitMo
     setIsCameraActive(false);
   }, []);
 
-  const captureAndAnalyze = async () => {
+  const captureImage = () => {
     if (!videoRef.current || !canvasRef.current) return;
-
     const canvas = canvasRef.current;
     const video = videoRef.current;
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
     canvas.getContext('2d')?.drawImage(video, 0, 0);
-
-    const base64 = canvas.toDataURL('image/jpeg', 0.8);
-    setCapturedImage(base64);
+    setCapturedImage(canvas.toDataURL('image/jpeg', 0.8));
     stopCamera();
-
-    // AI 분석은 제출 시 백엔드에서 자동 수행됨 (Fast-Track 방식)
   };
 
-  const handleNext = async () => {
-    // 체류 시간 검증 (항상 필요)
-    if (!canComplete) {
-      alert(`⌛ 최소 ${remainingSeconds}초 더 체류가 필요합니다.`);
-      return;
-    }
-
-    // Step 0에서 사진이 있으면 바로 완료 가능 (AI가 백그라운드에서 자동 분석)
-    if (step === 0 && capturedImage) {
-      try {
-        await onComplete({
-          toiletId: toilet.id,
-          bristolType: null,
-          color: null,
-          conditionTags: [],
-          foodTags: [],
-          imageBase64: capturedImage,
-          createdAt: new Date().toISOString(),
-        });
-      } catch (e: any) {
-        if (e.code === 'R007') {
-          alert('똥 사진이 아닌 것 같아요!\n변기 안의 변을 다시 촬영해주세요. 💩');
-          setCapturedImage(null);
-          await startCamera();
-        }
-      }
-      return;
-    }
-
-    // 일반 흐름
-    if (step < 3) {
-      setStep(step + 1);
-    } else {
-      try {
-        await onComplete({
-          toiletId: toilet.id,
-          bristolType: bristolType!,
-          color: color!,
-          conditionTags: conditions,
-          foodTags: foods,
-          imageBase64: capturedImage,
-          createdAt: new Date().toISOString(),
-        });
-      } catch (e: any) {
-        if (e.code === 'R007') {
-          alert('똥 사진이 아닌 것 같아요!\n변기 안의 변을 다시 촬영해주세요. 💩');
-          setCapturedImage(null);
-          setStep(0);
-          await startCamera();
-        }
-      }
-    }
-  };
-
-  // ★ 백드롭 클릭 시 확인 후 닫기 (실수 방지)
-  const handleBackdropClick = () => {
-    if (step > 0 || bristolType !== null) {
-      // 이미 작성 중이면 확인 모달 표시
-      setShowCloseConfirm(true);
-    } else {
-      onClose();
-    }
-  };
-
-  // isCameraActive가 true가 되면 (video DOM 마운트 후) srcObject 할당
   useEffect(() => {
     if (isCameraActive && videoRef.current && streamRef.current) {
       videoRef.current.srcObject = streamRef.current;
     }
   }, [isCameraActive]);
 
-  // 카메라 종료 정리
   useEffect(() => {
     return () => stopCamera();
   }, [stopCamera]);
 
+  // VisitModalResult 생성 (건강 기록 병합 옵션)
+  const buildResult = (healthData?: HealthLogResult): VisitModalResult => ({
+    toiletId: toilet.id,
+    bristolType: healthData?.bristolType ?? null,
+    color: healthData?.color ?? null,
+    conditionTags: healthData?.conditionTags ?? [],
+    foodTags: healthData?.foodTags ?? [],
+    imageBase64: capturedImage,
+    createdAt: completedAtRef.current,
+  });
+
+  // 방문 인증 완료 (API 호출 없음)
+  const handleComplete = () => {
+    if (!canComplete) {
+      alert(`⌛ 최소 ${remainingSeconds}초 더 체류가 필요합니다.`);
+      return;
+    }
+    completedAtRef.current = new Date().toISOString();
+    setVisitDone(true);
+  };
+
+  // 건너뛰기: 건강 기록 없이 방문만 POST
+  const handleSkipHealthLog = async () => {
+    setShowCloseConfirm(false);
+    try {
+      await onComplete(buildResult());
+    } catch (e: any) {
+      if (e.code === 'R007') {
+        alert('똥 사진이 아닌 것 같아요!\n변기 안의 변을 다시 촬영해주세요. 💩');
+        setCapturedImage(null);
+        setVisitDone(false);
+        await startCamera();
+      }
+    }
+  };
+
+  // 건강 기록 완료: 방문 + 건강 데이터 합쳐서 POST
+  const handleHealthLogComplete = async (healthResult: HealthLogResult) => {
+    try {
+      await onComplete(buildResult(healthResult));
+    } catch (e: any) {
+      if (e.code === 'R007') {
+        alert('똥 사진이 아닌 것 같아요!\n변기 안의 변을 다시 촬영해주세요. 💩');
+        setCapturedImage(null);
+        setVisitDone(false);
+        setShowHealthLog(false);
+        await startCamera();
+      }
+    }
+  };
+
+  const handleBackdropClick = () => {
+    if (visitDone || capturedImage) {
+      setShowCloseConfirm(true);
+    } else {
+      onClose();
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-[2000] flex items-center justify-center p-4">
       <canvas ref={canvasRef} className="hidden" />
+
       <m.div
-        initial={{ opacity: 0 }} 
-        animate={{ opacity: 1 }} 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         onClick={handleBackdropClick}
         className="absolute inset-0 bg-black/60 backdrop-blur-sm"
@@ -195,53 +190,99 @@ export function VisitModal({ toilet, onClose, onComplete, checkInTime }: VisitMo
         style={{ maxHeight: 'calc(100vh - 80px)' }}
         onClick={(e) => e.stopPropagation()}
       >
+        {/* Header */}
         <div className="flex items-center justify-between px-6 py-5 border-b border-[#eef5f0]">
           <div>
-            <p className="text-[10px] font-bold text-[#7a9e8a] uppercase tracking-wider">{toilet.name}</p>
-            <h2 className="font-black text-xl text-[#1a2b22] flex items-center gap-2">방문 인증 {remainingSeconds > 0 && <span className="text-sm font-bold text-amber-500 bg-amber-50 px-2 py-0.5 rounded-lg border border-amber-100 flex items-center gap-1"><Loader2 size={12} className="animate-spin" /> {remainingSeconds}s</span>}</h2>
+            <p className="text-[10px] font-bold text-[#7a9e8a] uppercase tracking-wider">
+              {toilet.name}
+            </p>
+            <h2 className="font-black text-xl text-[#1a2b22] flex items-center gap-2">
+              {visitDone ? (
+                <>
+                  방문 인증 완료 <Check size={20} className="text-emerald-500" />
+                </>
+              ) : (
+                <>
+                  방문 인증
+                  {remainingSeconds > 0 && (
+                    <span className="text-sm font-bold text-amber-500 bg-amber-50 px-2 py-0.5 rounded-lg border border-amber-100 flex items-center gap-1">
+                      <Loader2 size={12} className="animate-spin" /> {remainingSeconds}s
+                    </span>
+                  )}
+                </>
+              )}
+            </h2>
           </div>
-          <button onClick={handleBackdropClick} className="w-10 h-10 rounded-full bg-[#f4faf6] text-[#7a9e8a] flex items-center justify-center hover:bg-[#e8f3ec] transition-colors">
+          <button
+            onClick={handleBackdropClick}
+            className="w-10 h-10 rounded-full bg-[#f4faf6] text-[#7a9e8a] flex items-center justify-center hover:bg-[#e8f3ec] transition-colors"
+          >
             <X size={20} />
           </button>
         </div>
 
-        <div className="flex items-center px-6 py-4 gap-1.5 bg-[#fcfdfc] border-b border-[#eef5f0]">
-          {STEPS.map((_, i) => (
-            <div key={i} className="flex-1 h-1.5 rounded-full overflow-hidden bg-[#eef5f0]">
-              <m.div 
-                initial={false}
-                animate={{ scaleX: i <= step ? 1 : 0 }}
-                style={{ transformOrigin: 'left' }}
-                className="h-full bg-[#1B4332] w-full"
-              />
-            </div>
-          ))}
-        </div>
-
-        <div className="flex-1 overflow-y-auto px-6 py-6 custom-scrollbar" style={{ minHeight: '320px' }}>
+        {/* Content */}
+        <div
+          className="flex-1 overflow-y-auto px-6 py-6 custom-scrollbar"
+          style={{ minHeight: '320px' }}
+        >
           <AnimatePresence mode="wait">
             <m.div
-              key={step}
-              initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }}
+              key={visitDone ? 'done' : 'camera'}
+              initial={{ opacity: 0, x: visitDone ? 20 : 0 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -10 }}
               transition={{ duration: 0.2 }}
             >
-              {step === 0 && (
+              {visitDone ? (
+                /* ── 방문 인증 완료: 건강 기록 추가 여부 선택 ── */
+                <div className="flex flex-col items-center justify-center py-6 space-y-6">
+                  <div className="w-24 h-24 rounded-full bg-emerald-50 flex items-center justify-center">
+                    <Check size={48} className="text-emerald-500" />
+                  </div>
+                  <div className="text-center space-y-2">
+                    <p className="font-black text-2xl text-[#1a2b22]">방문 인증 완료!</p>
+                    <p className="text-sm text-[#7a9e8a]">배변 건강 기록도 남겨볼까요?</p>
+                    <p className="text-xs text-[#b5c9bc]">기록하면 장 건강 리포트에 반영됩니다.</p>
+                  </div>
+                  <div className="w-full space-y-3 pt-2">
+                    <WaveButtonComponent
+                      onClick={() => setShowHealthLog(true)}
+                      variant="primary"
+                      size="lg"
+                      className="w-full shadow-lg"
+                      icon={<Sparkles size={20} />}
+                    >
+                      건강 기록 추가하기
+                    </WaveButtonComponent>
+                    <button
+                      onClick={handleSkipHealthLog}
+                      className="w-full py-3 text-[#7a9e8a] font-bold text-sm hover:underline"
+                    >
+                      건너뛰기
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                /* ── 카메라 / AI 촬영 화면 ── */
                 <div className="space-y-6">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="font-black text-lg text-[#1a2b22]">AI 간편 촬영 분석</p>
-                      <p className="text-xs text-[#7a9e8a] mt-1">상태를 촬영하면 AI가 자동으로 분석해드립니다.</p>
+                      <p className="text-xs text-[#7a9e8a] mt-1">
+                        상태를 촬영하면 AI가 자동으로 분석해드립니다.
+                      </p>
                     </div>
                     <Sparkles className="text-amber-500 animate-pulse" size={24} />
                   </div>
-                  
-                  <div className="relative aspect-square w-full bg-gray-900 rounded-[28px] overflow-hidden group shadow-2xl border-4 border-gray-100">
+
+                  <div className="relative aspect-square w-full bg-gray-900 rounded-[28px] overflow-hidden shadow-2xl border-4 border-gray-100">
                     {!isCameraActive && !capturedImage && (
                       <div className="absolute inset-0 flex flex-col items-center justify-center gap-4">
                         <div className="w-20 h-20 rounded-full bg-white/10 flex items-center justify-center backdrop-blur-md">
                           <Camera className="text-white" size={40} />
                         </div>
-                        <WaveButtonComponent 
+                        <WaveButtonComponent
                           onClick={startCamera}
                           variant="light"
                           size="md"
@@ -255,17 +296,21 @@ export function VisitModal({ toilet, onClose, onComplete, checkInTime }: VisitMo
 
                     {isCameraActive && (
                       <>
-                        <video ref={videoRef} autoPlay playsInline className="w-full h-full object-cover scale-x-[-1]" />
+                        <video
+                          ref={videoRef}
+                          autoPlay
+                          playsInline
+                          className="w-full h-full object-cover scale-x-[-1]"
+                        />
                         <div className="absolute inset-0 border-[20px] border-black/20 pointer-events-none">
                           <div className="w-full h-full border-2 border-white/50 rounded-2xl border-dashed" />
                         </div>
-                        <div className="absolute bottom-6 left-0 right-0 flex justify-center gap-4 px-6">
-                          <button 
-                            onClick={captureAndAnalyze}
-                            disabled={isAnalyzing}
-                            className="w-20 h-20 rounded-full bg-white flex items-center justify-center shadow-2xl border-8 border-gray-100/30 active:scale-90 transition-all disabled:opacity-50"
+                        <div className="absolute bottom-6 left-0 right-0 flex justify-center">
+                          <button
+                            onClick={captureImage}
+                            className="w-20 h-20 rounded-full bg-white flex items-center justify-center shadow-2xl border-8 border-gray-100/30 active:scale-90 transition-all"
                           >
-                            {isAnalyzing ? <Loader2 className="animate-spin text-[#1B4332]" /> : <Zap className="text-[#1B4332] fill-[#1B4332]" size={36} />}
+                            <Zap className="text-[#1B4332] fill-[#1B4332]" size={36} />
                           </button>
                         </div>
                       </>
@@ -273,196 +318,87 @@ export function VisitModal({ toilet, onClose, onComplete, checkInTime }: VisitMo
 
                     {capturedImage && (
                       <div className="absolute inset-0">
-                        <img src={capturedImage} alt="Capture" className="w-full h-full object-cover" />
+                        <img
+                          src={capturedImage}
+                          alt="Capture"
+                          className="w-full h-full object-cover"
+                        />
                         <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center gap-4 backdrop-blur-[2px]">
                           <div className="flex items-center gap-2 text-white font-black text-xl">
-                            {isAnalyzing ? <><Loader2 className="animate-spin" /> 사진 처리 중...</> : <><Check className="text-emerald-400" /> 촬영 완료!</>}
+                            <Check className="text-emerald-400" /> 촬영 완료!
                           </div>
-                          {!isAnalyzing && (
-                            <button 
-                              onClick={() => { setCapturedImage(null); startCamera(); }}
-                              className="flex items-center gap-2 px-5 py-2.5 bg-white/20 hover:bg-white/30 text-white rounded-xl backdrop-blur-md font-bold transition-all"
-                            >
-                              <RotateCcw size={16} /> 다시 찍기
-                            </button>
-                          )}
+                          <button
+                            onClick={() => {
+                              setCapturedImage(null);
+                              startCamera();
+                            }}
+                            className="flex items-center gap-2 px-5 py-2.5 bg-white/20 hover:bg-white/30 text-white rounded-xl backdrop-blur-md font-bold transition-all"
+                          >
+                            <RotateCcw size={16} /> 다시 찍기
+                          </button>
                         </div>
                       </div>
                     )}
                   </div>
 
-                  {/* AI 촬영 완료 시 바로 완료 또는 수동 수정 선택 */}
-                  {capturedImage && !isAnalyzing ? (
+                  {capturedImage ? (
+                    /* 사진 촬영 완료 → 인라인 완료 버튼 */
                     <div className="space-y-3">
                       <div className="flex items-center gap-2 justify-center text-emerald-600 bg-emerald-50 px-4 py-3 rounded-2xl">
                         <Sparkles size={16} />
                         <span className="text-sm font-bold">사진 촬영이 완료되었습니다!</span>
                       </div>
-                      <div className="grid grid-cols-2 gap-3">
-                        <WaveButtonComponent
-                          onClick={() => setStep(1)}
-                          variant="ghost"
-                          size="sm"
-                          className="border border-[#eef5f0]"
-                        >
-                          데이터 수정하기
-                        </WaveButtonComponent>
-                        <WaveButtonComponent
-                          onClick={handleNext}
-                          disabled={!canComplete}
-                          variant="primary"
-                          size="sm"
-                        >
-                          {canComplete ? '바로 인증 완료 ✨' : `${remainingSeconds}초 대기`}
-                        </WaveButtonComponent>
-                      </div>
+                      <WaveButtonComponent
+                        onClick={handleComplete}
+                        disabled={!canComplete}
+                        variant="primary"
+                        size="md"
+                        className="w-full"
+                      >
+                        {canComplete ? '인증 완료하기 ✨' : `${remainingSeconds}초 대기`}
+                      </WaveButtonComponent>
                     </div>
                   ) : (
-                    <button
-                      onClick={() => setStep(1)}
-                      className="w-full py-4 text-[#7a9e8a] font-bold text-sm hover:underline"
-                    >
-                      촬영 없이 수동으로 입력할게요
-                    </button>
-                  )}
-                </div>
-              )}
-
-              {step === 1 && (
-                <div className="space-y-4">
-                  <div>
-                    <p className="font-black text-lg text-[#1a2b22] flex items-center gap-2">
-                       모양 선택 {capturedImage && <span className="text-[10px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-bold">AI 추정됨</span>}
+                    <p className="text-center text-[#7a9e8a] text-sm font-bold">
+                      촬영은 선택 사항입니다
                     </p>
-                    <p className="text-xs text-[#7a9e8a] mt-1">브리스톨 척도 1~7번 중 선택해주세요.</p>
-                  </div>
-                  <div className="grid gap-2.5 pb-2">
-                    {BRISTOL_TYPES.map((b) => (
-                      <button
-                        key={b.type}
-                        onClick={() => setBristolType(b.type)}
-                        className={`flex items-center gap-4 p-4 rounded-2xl border-2 transition-all ${
-                          bristolType === b.type ? 'border-[#1B4332] bg-[#f4faf6]' : 'border-[#eef5f0] bg-white'
-                        }`}
-                      >
-                        <span className="text-3xl">{b.emoji}</span>
-                        <div className="text-left flex-1">
-                          <p className={`text-sm font-bold ${bristolType === b.type ? 'text-[#1B4332]' : 'text-[#1a2b22]'}`}>
-                            {b.type}형 · {b.label}
-                          </p>
-                          <p className="text-[11px] text-[#7a9e8a] leading-tight mt-0.5">{b.desc}</p>
-                        </div>
-                        {bristolType === b.type && <Check size={18} className="text-[#1B4332]" />}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {step === 2 && (
-                <div className="space-y-6">
-                  <div>
-                    <p className="font-black text-lg text-[#1a2b22]">색상을 골라주세요</p>
-                    <p className="text-xs text-[#7a9e8a] mt-1">가장 가까운 색 하나를 선택합니다.</p>
-                  </div>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                    {(Object.entries(POOP_COLORS) as [PoopColor, { hex: string; label: string }][]).map(([key, val]) => (
-                      <button
-                        key={key}
-                        onClick={() => setColor(key)}
-                        className={`flex flex-col items-center gap-3 p-4 rounded-2xl border-2 transition-all ${
-                          color === key ? 'border-[#1B4332] bg-[#f4faf6]' : 'border-[#eef5f0] bg-white'
-                        }`}
-                      >
-                        <div className="w-12 h-12 rounded-full shadow-inner" style={{ background: val.hex }} />
-                        <span className="text-sm font-bold text-[#1a2b22]">{val.label}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {step === 3 && (
-                <div className="space-y-8">
-                  <div className="space-y-4">
-                    <p className="font-black text-lg text-[#1a2b22]">상태는 어떠셨나요?</p>
-                    <div className="flex flex-wrap gap-2">
-                      {CONDITION_TAGS.map((tag) => (
-                        <button
-                          key={tag}
-                          onClick={() => setConditions(prev => prev.includes(tag) ? prev.filter(t=>t!==tag) : [...prev, tag])}
-                          className={`px-5 py-2.5 rounded-full text-sm font-bold border-2 transition-all ${
-                            conditions.includes(tag) ? 'bg-[#1B4332] border-[#1B4332] text-white' : 'bg-white border-[#eef5f0] text-[#1B4332]'
-                          }`}
-                        >
-                          #{tag}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="space-y-4">
-                    <p className="font-black text-lg text-[#1a2b22]">최근 드신 음식은?</p>
-                    <div className="flex flex-wrap gap-2">
-                      {FOOD_TAGS.map((tag) => (
-                        <button
-                          key={tag}
-                          onClick={() => setFoods(prev => prev.includes(tag) ? prev.filter(t=>t!==tag) : [...prev, tag])}
-                          className={`px-5 py-2.5 rounded-full text-sm font-bold border-2 transition-all ${
-                            foods.includes(tag) ? 'bg-[#E8A838] border-[#E8A838] text-white' : 'bg-white border-[#eef5f0] text-[#b5810f]'
-                          }`}
-                        >
-                          #{tag}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
+                  )}
                 </div>
               )}
             </m.div>
           </AnimatePresence>
         </div>
 
-        {/* 푸터 버튼 (Step 0에서 사진이 있을 때는 숨김) */}
-        {!(step === 0 && capturedImage && !isAnalyzing) && (
-          <div className="px-6 py-6 bg-[#fcfdfc] border-t border-[#eef5f0] flex gap-3">
-            {step > 0 && (
-              <button
-                onClick={() => setStep(step - 1)}
-                className="flex items-center justify-center w-14 h-14 rounded-2xl border-2 border-[#eef5f0] text-[#7a9e8a] hover:bg-[#f4faf6]"
-              >
-                <ChevronLeft size={24} />
-              </button>
-            )}
+        {/* Footer: 카메라 단계 + 사진 미촬영 시만 표시 */}
+        {!visitDone && !capturedImage && (
+          <div className="px-6 py-6 bg-[#fcfdfc] border-t border-[#eef5f0]">
             <WaveButtonComponent
-              onClick={handleNext}
-              disabled={
-                step === 0 ? false : 
-                step === 1 ? !bristolType :
-                step === 2 ? !color :
-                false
-              }
+              onClick={handleComplete}
+              disabled={!canComplete}
               variant="primary"
               size="lg"
-              className="flex-1 shadow-lg"
-              icon={step === 3 ? <Sparkles size={20} /> : <ChevronRight size={20} />}
+              className="w-full shadow-lg"
+              icon={<Sparkles size={20} />}
             >
-              {step === 3 ? '인증 완료하기 ✨' : '다음 단계로'}
+              {canComplete ? '인증 완료하기 ✨' : `${remainingSeconds}초 대기 중`}
             </WaveButtonComponent>
           </div>
         )}
       </m.div>
 
-      {/* ★ 닫기 확인 모달 (실수로 밖을 터치했을 때) */}
+      {/* 닫기 확인 모달 */}
       <AnimatePresence>
         {showCloseConfirm && (
           <m.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[2100] flex items-center justify-center p-6"
+            className="fixed inset-0 z-[2050] flex items-center justify-center p-6"
           >
-            <div className="absolute inset-0 bg-black/40" onClick={() => setShowCloseConfirm(false)} />
+            <div
+              className="absolute inset-0 bg-black/40"
+              onClick={() => setShowCloseConfirm(false)}
+            />
             <m.div
               initial={{ scale: 0.9 }}
               animate={{ scale: 1 }}
@@ -473,9 +409,13 @@ export function VisitModal({ toilet, onClose, onComplete, checkInTime }: VisitMo
               <div className="w-14 h-14 rounded-full bg-[#FFF3E0] flex items-center justify-center mx-auto mb-4">
                 <AlertTriangle size={28} className="text-[#E8A838]" />
               </div>
-              <h3 className="font-black text-lg text-[#1a2b22] mb-2">작성을 중단할까요?</h3>
+              <h3 className="font-black text-lg text-[#1a2b22] mb-2">
+                {visitDone ? '건강 기록을 건너뛸까요?' : '작성을 중단할까요?'}
+              </h3>
               <p className="text-sm text-[#7a9e8a] mb-6">
-                지금까지 입력한 내용이 사라집니다.
+                {visitDone
+                  ? '건강 기록은 저장되지 않지만, 방문 인증은 완료됩니다.'
+                  : '지금까지 입력한 내용이 사라집니다.'}
               </p>
               <div className="flex gap-3">
                 <WaveButtonComponent
@@ -487,16 +427,32 @@ export function VisitModal({ toilet, onClose, onComplete, checkInTime }: VisitMo
                   계속 작성
                 </WaveButtonComponent>
                 <WaveButtonComponent
-                  onClick={onClose}
+                  onClick={visitDone ? handleSkipHealthLog : onClose}
                   variant="error"
                   size="md"
                   className="flex-1"
                 >
-                  나가기
+                  {visitDone ? '저장 후 나가기' : '나가기'}
                 </WaveButtonComponent>
               </div>
             </m.div>
           </m.div>
+        )}
+      </AnimatePresence>
+
+      {/* 건강 기록 모달 (visitDone 이후에만 마운트) */}
+      <AnimatePresence>
+        {showHealthLog && (
+          <HealthLogModal
+            toilet={toilet}
+            // TODO: /ai/analyze 엔드포인트 구현 후 capturedImage를 전달해 AI 초기값 적용
+            // initialBristolType={aiResult?.bristolScale ?? null}
+            // initialColor={aiResult?.color as PoopColor ?? null}
+            initialBristolType={null}
+            initialColor={null}
+            onClose={() => setShowHealthLog(false)}
+            onComplete={handleHealthLogComplete}
+          />
         )}
       </AnimatePresence>
 

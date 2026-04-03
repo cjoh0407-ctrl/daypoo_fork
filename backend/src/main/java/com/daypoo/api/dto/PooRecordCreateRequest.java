@@ -1,17 +1,17 @@
 package com.daypoo.api.dto;
 
-import jakarta.validation.constraints.NotNull;
 import java.util.List;
 import lombok.Builder;
 
+/** 배변 기록 생성 요청 DTO (방문 인증 통합 대응) toiletId, latitude, longitude가 null이면 방문 인증 없이 건강 기록만 수행합니다. */
 @Builder
 public record PooRecordCreateRequest(
-    @NotNull(message = "화장실 정보는 필수입니다.") Long toiletId,
+    Long toiletId,
     Integer bristolScale,
     String color,
     List<String> conditionTags,
     List<String> dietTags,
-    @NotNull(message = "위도는 필수입니다.") double latitude,
-    @NotNull(message = "경도는 필수입니다.") double longitude,
+    Double latitude,
+    Double longitude,
     String imageBase64 // AI 분석용 (Optional)
     ) {}

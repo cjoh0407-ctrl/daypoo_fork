@@ -103,7 +103,7 @@ graph TB
 - **AI 마이크로서비스 영구 분리**: AI 서비스 로직을 Spring Boot 하위 모듈이 아닌 Python(FastAPI) 독립 서버로 완전 분리. LangChain 등 최신 AI 생태계의 풍부한 오픈소스를 직접 활용하고 리소스 스케일아웃을 분리하기 위함.
 - **표준 MVC 아키텍처 채택**: 개발 속도와 직관적인 구조를 위해 표준 Layered MVC 패턴을 적용. `com.daypoo.api` 하위에 `controller`, `service`, `repository`, `entity` 구조를 명확히 분리하여 유지보수성 확보.
 - **Design-First API 문서화**: 코드를 작성하기 전 `openapi.yaml`을 통해 API 명세를 선행 설계하고, 이를 Swagger UI로 시각화하여 프론트엔드와 협업 효율성 극대화.
-- **PostgreSQL/PostGIS 전환**: 초기 MySQL 계획에서 공간 데이터 처리에 특화된 PostgreSQL 및 PostGIS 확장 도입으로 결정. 약 7만 건 이상의 전국 화장실 데이터를 효율적으로 쿼리 가능.
+- **PostgreSQL/PostGIS 전환**: 초기 MySQL 계획에서 공간 데이터 처리에 특화된 PostgreSQL 및 PostGIS 확장 도입으로 결정. 5만 건 이상의 전국 화장실 데이터를 효율적으로 쿼리 가능.
 - **인프라 간소화**: 로컬 개발 환경의 오버헤드를 줄이기 위해 pgAdmin 서비스를 제거하고, **디비버(DBeaver)** 등 외부 범용 GUI 도구 사용을 적극 권장.
 - **디자인 시스템 독립성 (CSS)**: Tailwind 등에 종속되지 않고 Vanilla CSS 기반으로 구축. 사용자에게 WOU(Wow) 모먼트를 주어야 하는 프리미엄 급의 마이크로 애니메이션과 독자적인 다이내믹 UI(Aesthetics)를 타협 없이 완성.
 - **소프트웨어 기반 GPS 검증**: 하드웨어적(NFC/QR) 한계를 인지하고 100% 소프트웨어 검증(**가변 반경 150m** + **최소 체류 1분**)으로 선회하되, Redis의 Rate Limiter 알고리즘을 추가하여 어뷰징(매크로 및 GPS 스푸핑 기기)을 방어하는 다중 보안 채택.
@@ -445,7 +445,7 @@ erDiagram
 1. **DB/Infra**: PostgreSQL PostGIS 및 `pgAdmin4` GUI 연동 설정, Redis Cluster Docker 구축.
 2. **Architecture**: 계층형 MVC 구조 디렉터리 세팅 및 `MapStruct`, `QueryDSL` 등 핵심 라이브러리 초기화.
 3. **Auth**: Spring Security + OAuth2 + JWT (3초 가입) 초기 프레임워크 구현.
-4. **Common**: 외부 API(`전국공중화장실표준데이터`) 연동을 통한 공공데이터(화장실 7만건) 벌크 인서트 모듈 및 PostGIS 공간 인덱싱 적용.
+4. **Common**: 외부 API(`전국공중화장실표준데이터`) 연동을 통한 공공데이터(화장실 5만건) 벌크 인서트 모듈 및 PostGIS 공간 인덱싱 적용.
 
 ### Phase 2: 핵심 비즈니스 로직 (Must Have)
 

@@ -1,7 +1,6 @@
 package com.daypoo.api.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
@@ -12,6 +11,7 @@ import com.daypoo.api.dto.PooRecordResponse;
 import com.daypoo.api.entity.PooRecord;
 import com.daypoo.api.entity.Toilet;
 import com.daypoo.api.entity.User;
+import com.daypoo.api.event.PooRecordCreatedEvent;
 import com.daypoo.api.mapper.PooRecordMapper;
 import com.daypoo.api.repository.PooRecordRepository;
 import com.daypoo.api.repository.ToiletRepository;
@@ -95,6 +95,7 @@ class PooRecordServiceTest {
     ReflectionTestUtils.setField(savedRecord, "id", 500L);
 
     given(recordRepository.save(any(PooRecord.class))).willReturn(savedRecord);
+    given(userRepository.save(any(User.class))).willReturn(testUser);
 
     PooRecordResponse mockResponse =
         PooRecordResponse.builder().toiletName("강남역 화장실").bristolScale(4).color("Brown").build();
@@ -153,8 +154,9 @@ class PooRecordServiceTest {
             .bristolScale(5)
             .color("Golden")
             .build();
-    ReflectionTestUtils.setField(savedRecord, "id", 501L);
+    ReflectionTestUtils.setField(savedRecord, "id", 502L);
     given(recordRepository.save(any(PooRecord.class))).willReturn(savedRecord);
+    given(userRepository.save(any(User.class))).willReturn(testUser);
 
     PooRecordResponse mockResponseAi =
         PooRecordResponse.builder().bristolScale(5).color("Golden").build();

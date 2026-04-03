@@ -7,7 +7,8 @@ import { ToiletPopup } from '../components/map/ToiletPopup';
 import { useToilets } from '../hooks/useToilets';
 import { useGeoTracking } from '../hooks/useGeoTracking';
 import { ToiletData } from '../types/toilet';
-import { VisitModal } from '../components/map/VisitModal';
+import { VisitModal, VisitModalResult } from '../components/map/VisitModal';
+import { CreateRecordRequest } from '../types/api';
 import { api } from '../services/apiClient';
 import { useAuth } from '../context/AuthContext';
 import { MapView, MapViewHandle } from '../components/map/MapView';
@@ -44,19 +45,16 @@ export function MapPage({ openAuth }: { openAuth: (mode: 'login' | 'signup') => 
 
   // ── 비즈니스 로직 ──────────────────────────────────────────
 
-  const handleSelectToilet = useCallback(
-    (toilet: ToiletData | null) => {
-      if (toilet) {
-        // useToilets 훅에서 관리하는 toilets 배열은 MapPage 컨텍스트 내에서 이미 hooks/useToilets를 통해 업데이트되고 있음
-        setSelectedToilet(toilet);
-        sessionStorage.setItem('lastSelectedToilet', JSON.stringify(toilet));
-      } else {
-        setSelectedToilet(null);
-        sessionStorage.removeItem('lastSelectedToilet');
-      }
-    },
-    [],
-  );
+  const handleSelectToilet = useCallback((toilet: ToiletData | null) => {
+    if (toilet) {
+      // useToilets 훅에서 관리하는 toilets 배열은 MapPage 컨텍스트 내에서 이미 hooks/useToilets를 통해 업데이트되고 있음
+      setSelectedToilet(toilet);
+      sessionStorage.setItem('lastSelectedToilet', JSON.stringify(toilet));
+    } else {
+      setSelectedToilet(null);
+      sessionStorage.removeItem('lastSelectedToilet');
+    }
+  }, []);
 
   const handleFavoriteToggle = useCallback(
     async (id: string) => {
@@ -185,7 +183,9 @@ export function MapPage({ openAuth }: { openAuth: (mode: 'login' | 'signup') => 
     const timer = setTimeout(async () => {
       try {
         const locationParams = pos ? `&latitude=${pos.lat}&longitude=${pos.lng}` : '';
-        const data = await api.get<any[]>(`/toilets/search?q=${encodeURIComponent(trimmed)}&size=20${locationParams}`);
+        const data = await api.get<any[]>(
+          `/toilets/search?q=${encodeURIComponent(trimmed)}&size=20${locationParams}`,
+        );
         const results: ToiletData[] = (data || []).map((item: any) => ({
           id: String(item.id),
           name: item.name || '이름없음',
@@ -217,7 +217,9 @@ export function MapPage({ openAuth }: { openAuth: (mode: 'login' | 'signup') => 
       const findAndOpenNearest = async () => {
         try {
           // 현재 위치 기준 5km 반경 화장실 검색 (API 사용)
-          const data = await api.get<any[]>(`/toilets?latitude=${pos.lat}&longitude=${pos.lng}&radius=5000`);
+          const data = await api.get<any[]>(
+            `/toilets?latitude=${pos.lat}&longitude=${pos.lng}&radius=5000`,
+          );
           if (data && data.length > 0) {
             const mappedToilets: ToiletData[] = data.map((item: any) => ({
               id: String(item.id),
@@ -237,8 +239,8 @@ export function MapPage({ openAuth }: { openAuth: (mode: 'login' | 'signup') => 
             // 가장 가까운 화장실 계산
             let nearest = mappedToilets[0];
             let minD = calculateDistance(pos.lat, pos.lng, nearest.lat, nearest.lng);
-            
-            mappedToilets.forEach(t => {
+
+            mappedToilets.forEach((t) => {
               const d = calculateDistance(pos.lat, pos.lng, t.lat, t.lng);
               if (d < minD) {
                 minD = d;
@@ -295,36 +297,26 @@ export function MapPage({ openAuth }: { openAuth: (mode: 'login' | 'signup') => 
   }, [selectedToilet, openAuth, pos, handleSelectToilet, isAuthenticated, refreshUser]);
 
   const handleVisitComplete = useCallback(
-    async (recordData: any) => {
-      if (!pos) return;
+    async (result: VisitModalResult) => {
       try {
-        const payload: any = {
-          toiletId: Number(recordData.toiletId),
-          conditionTags: recordData.conditionTags || [],
-          dietTags: recordData.foodTags || [],
-          latitude: pos.lat,
-          longitude: pos.lng,
+        const payload: CreateRecordRequest = {
+          toiletId: Number(result.toiletId),
+          conditionTags: result.conditionTags,
+          dietTags: result.foodTags,
+          // 위치 정보가 있으면 포함, 없으면 제외 (백엔드 처리 대응)
+          ...(pos && { latitude: pos.lat, longitude: pos.lng }),
+          // Fast-Track: bristolType / color가 null이면 AI 자동 분석
+          ...(result.bristolType !== null && { bristolScale: result.bristolType }),
+          ...(result.color !== null && { color: result.color }),
+          ...(result.imageBase64 && { imageBase64: result.imageBase64 }),
         };
-
-        // Fast-Track 방식: bristolType, color가 null이 아닐 때만 포함
-        if (recordData.bristolType !== null) {
-          payload.bristolScale = recordData.bristolType;
-        }
-        if (recordData.color !== null) {
-          payload.color = recordData.color;
-        }
-
-        // AI 촬영 인증: imageBase64가 있으면 포함
-        if (recordData.imageBase64) {
-          payload.imageBase64 = recordData.imageBase64;
-        }
 
         await api.post('/records', payload);
         await refreshUser();
-        markVisited(String(recordData.toiletId));
+        markVisited(String(result.toiletId));
         setVisitCounts((prev) => ({
           ...prev,
-          [String(recordData.toiletId)]: (prev[String(recordData.toiletId)] || 0) + 1,
+          [String(result.toiletId)]: (prev[String(result.toiletId)] || 0) + 1,
         }));
         setTargetForVisit(null);
         alert('방문 인증이 완료되었습니다! 💩✨');
@@ -355,17 +347,18 @@ export function MapPage({ openAuth }: { openAuth: (mode: 'login' | 'signup') => 
   }));
 
   // 검색어가 있으면 ES 결과 사용, 없으면 지도 반경 내 화장실에 필터만 적용
-  const filteredToilets = searchQuery.trim() !== ''
-    ? searchResults
-    : toiletsWithVisitCount.filter((t) =>
-        filter === 'all'
-          ? true
-          : filter === 'favorite'
-            ? t.isFavorite
-            : filter === 'visited'
-              ? t.isVisited
-              : true,
-      );
+  const filteredToilets =
+    searchQuery.trim() !== ''
+      ? searchResults
+      : toiletsWithVisitCount.filter((t) =>
+          filter === 'all'
+            ? true
+            : filter === 'favorite'
+              ? t.isFavorite
+              : filter === 'visited'
+                ? t.isVisited
+                : true,
+        );
 
   if (!pos) {
     return (
@@ -438,15 +431,17 @@ export function MapPage({ openAuth }: { openAuth: (mode: 'login' | 'signup') => 
                       <div className="flex items-start gap-3">
                         <div className="text-2xl flex-shrink-0">🚽</div>
                         <div className="flex-1 min-w-0">
-                          <p className="font-bold text-[#1A2B27] mb-1 truncate">
-                            {toilet.name}
-                          </p>
+                          <p className="font-bold text-[#1A2B27] mb-1 truncate">{toilet.name}</p>
                           <p className="text-xs text-gray-500 truncate">
                             {toilet.roadAddress || toilet.jibunAddress}
                           </p>
                           {pos && (
                             <p className="text-xs text-[#7a9e8a] mt-1">
-                              내 위치에서 {Math.round(calculateDistance(pos.lat, pos.lng, toilet.lat, toilet.lng))}m
+                              내 위치에서{' '}
+                              {Math.round(
+                                calculateDistance(pos.lat, pos.lng, toilet.lat, toilet.lng),
+                              )}
+                              m
                             </p>
                           )}
                         </div>
@@ -471,9 +466,7 @@ export function MapPage({ openAuth }: { openAuth: (mode: 'login' | 'signup') => 
         <AnimatePresence>
           {selectedToilet && pos && (
             <div className="absolute inset-0 z-[1001] pointer-events-none flex items-end sm:items-center justify-center">
-              <div
-                className="pointer-events-auto w-full sm:w-auto p-4 sm:p-0"
-              >
+              <div className="pointer-events-auto w-full sm:w-auto p-4 sm:p-0">
                 <ToiletPopup
                   toilet={selectedToilet}
                   onClose={() => handleSelectToilet(null)}
