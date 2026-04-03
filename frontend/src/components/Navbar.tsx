@@ -1,11 +1,26 @@
 import { m, useScroll, useTransform, useMotionValueEvent, AnimatePresence } from 'framer-motion';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Bell, User, LogOut, Menu, X, Map, Trophy, HelpCircle, Crown, Home } from 'lucide-react';
+import {
+  Bell,
+  User,
+  LogOut,
+  Menu,
+  X,
+  Map,
+  Trophy,
+  HelpCircle,
+  Crown,
+  Home,
+  Plus,
+} from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { AnimatedUnderlink } from './AnimatedUnderlink';
 import { useAuth } from '../context/AuthContext';
 import { useNotification } from '../context/NotificationContext';
 import { NotificationPanel } from './NotificationPanel';
+import { HealthLogModal, HealthLogResult } from './map/HealthLogModal';
+import { api } from '../services/apiClient';
+import { HealthRecordRequest } from '../types/api';
 
 const NAV_LINKS = [
   { label: '지도', path: '/map', icon: Map, variant: 0 },
@@ -21,6 +36,7 @@ export function Navbar({ openAuth }: { openAuth: (mode: 'login' | 'signup') => v
   const { unreadCount, fetchNotifications } = useNotification();
   const [notifOpen, setNotifOpen] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [showHealthLog, setShowHealthLog] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -33,26 +49,25 @@ export function Navbar({ openAuth }: { openAuth: (mode: 'login' | 'signup') => v
     }
   });
 
-  // 초기 알림 데이터 로드
   useEffect(() => {
     if (isAuthenticated) {
       fetchNotifications();
     }
   }, [isAuthenticated, fetchNotifications]);
 
-  // 페이지 이동 시 드로어 닫기
   useEffect(() => {
     setDrawerOpen(false);
   }, [location.pathname]);
 
-  // 드로어 열릴 때 body 스크롤 잠금
   useEffect(() => {
     if (drawerOpen) {
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = '';
     }
-    return () => { document.body.style.overflow = ''; };
+    return () => {
+      document.body.style.overflow = '';
+    };
   }, [drawerOpen]);
 
   const handleLogout = () => {
@@ -61,13 +76,28 @@ export function Navbar({ openAuth }: { openAuth: (mode: 'login' | 'signup') => v
     navigate('/main');
   };
 
-  const handleLogoClick = (e: React.MouseEvent) => {
+  const handleLogoClick = () => {
     if (window.location.pathname.endsWith('/main') || window.location.pathname.endsWith('/')) {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
   const isActivePath = (path: string) => location.pathname === path;
+
+  const handleHealthLogComplete = async (result: HealthLogResult) => {
+    try {
+      const payload: HealthRecordRequest = {
+        conditionTags: result.conditionTags,
+        dietTags: result.foodTags,
+        ...(result.bristolType !== null && { bristolScale: result.bristolType }),
+        ...(result.color !== null && { color: result.color }),
+      };
+      await api.post('/records', payload);
+      setShowHealthLog(false);
+    } catch (e: any) {
+      alert(`기록 저장 실패: ${e.message || '서버 오류'}`);
+    }
+  };
 
   return (
     <>
@@ -122,10 +152,16 @@ export function Navbar({ openAuth }: { openAuth: (mode: 'login' | 'signup') => v
           </Link>
 
           {/* 구분선 - 데스크톱 */}
-          <div className="hidden md:block" style={{ width: '1px', height: '16px', background: 'rgba(255,255,255,0.15)' }} />
+          <div
+            className="hidden md:block"
+            style={{ width: '1px', height: '16px', background: 'rgba(255,255,255,0.15)' }}
+          />
 
           {/* 네비 링크 - 데스크톱 */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }} className="hidden md:flex flex-nowrap">
+          <div
+            style={{ display: 'flex', alignItems: 'center', gap: '16px' }}
+            className="hidden md:flex flex-nowrap"
+          >
             {NAV_LINKS.map((link) => (
               <div key={link.path} className="whitespace-nowrap flex-shrink-0">
                 <AnimatedUnderlink
@@ -139,12 +175,25 @@ export function Navbar({ openAuth }: { openAuth: (mode: 'login' | 'signup') => v
           </div>
 
           {/* 구분선 - 데스크톱 */}
-          <div className="hidden md:block" style={{ width: '1px', height: '16px', background: 'rgba(255,255,255,0.15)' }} />
+          <div
+            className="hidden md:block"
+            style={{ width: '1px', height: '16px', background: 'rgba(255,255,255,0.15)' }}
+          />
 
           {/* 우측 — 데스크톱 인증 버튼 */}
           <div className="hidden md:flex" style={{ alignItems: 'center', gap: '12px' }}>
             {isAuthenticated ? (
               <>
+                {/* 글로벌 기록하기 버튼 (로그인 시에만) */}
+                <button
+                  onClick={() => setShowHealthLog(true)}
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-bold transition-all hover:opacity-90 active:scale-95"
+                  style={{ background: '#E8A838', color: '#1A2B27', border: 'none', flexShrink: 0 }}
+                >
+                  <Plus size={14} />
+                  기록하기
+                </button>
+
                 <Link
                   to="/mypage"
                   className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold transition-all hover:bg-white/10"
@@ -220,7 +269,6 @@ export function Navbar({ openAuth }: { openAuth: (mode: 'login' | 'signup') => v
       <AnimatePresence>
         {drawerOpen && (
           <>
-            {/* 백드롭 */}
             <m.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -230,7 +278,6 @@ export function Navbar({ openAuth }: { openAuth: (mode: 'login' | 'signup') => v
               className="fixed inset-0 z-[150] bg-black/50 backdrop-blur-sm md:hidden"
             />
 
-            {/* 드로어 패널 */}
             <m.div
               initial={{ x: '100%' }}
               animate={{ x: 0 }}
@@ -263,7 +310,6 @@ export function Navbar({ openAuth }: { openAuth: (mode: 'login' | 'signup') => v
                 </button>
               </div>
 
-              {/* 구분선 */}
               <div className="mx-6 h-px bg-white/10" />
 
               {/* 네비 링크 */}
@@ -321,6 +367,25 @@ export function Navbar({ openAuth }: { openAuth: (mode: 'login' | 'signup') => v
                   </Link>
                 )}
 
+                {/* 글로벌 기록하기 버튼 — 로그인 시에만 표시 */}
+                {isAuthenticated && (
+                  <button
+                    onClick={() => {
+                      setDrawerOpen(false);
+                      setShowHealthLog(true);
+                    }}
+                    className="flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all w-full"
+                    style={{
+                      background: 'rgba(232,168,56,0.12)',
+                      border: 'none',
+                      color: '#E8A838',
+                    }}
+                  >
+                    <Plus size={20} />
+                    <span className="text-[15px] font-bold">기록하기</span>
+                  </button>
+                )}
+
                 <Link
                   to="/premium"
                   onClick={() => setDrawerOpen(false)}
@@ -341,8 +406,12 @@ export function Navbar({ openAuth }: { openAuth: (mode: 'login' | 'signup') => v
                 {isAuthenticated ? (
                   <div className="space-y-3">
                     <div className="px-4 py-2">
-                      <p className="text-[11px] font-bold text-white/30 uppercase tracking-widest mb-1">로그인 중</p>
-                      <p className="text-sm font-bold text-white/80 truncate">{user?.nickname || user?.email}</p>
+                      <p className="text-[11px] font-bold text-white/30 uppercase tracking-widest mb-1">
+                        로그인 중
+                      </p>
+                      <p className="text-sm font-bold text-white/80 truncate">
+                        {user?.nickname || user?.email}
+                      </p>
                     </div>
                     <button
                       onClick={handleLogout}
@@ -356,7 +425,10 @@ export function Navbar({ openAuth }: { openAuth: (mode: 'login' | 'signup') => v
                 ) : (
                   <div className="space-y-2">
                     <button
-                      onClick={() => { setDrawerOpen(false); openAuth('login'); }}
+                      onClick={() => {
+                        setDrawerOpen(false);
+                        openAuth('login');
+                      }}
                       className="w-full py-3 rounded-2xl text-sm font-bold transition-all"
                       style={{
                         background: 'rgba(255,255,255,0.08)',
@@ -367,7 +439,10 @@ export function Navbar({ openAuth }: { openAuth: (mode: 'login' | 'signup') => v
                       로그인
                     </button>
                     <button
-                      onClick={() => { setDrawerOpen(false); openAuth('signup'); }}
+                      onClick={() => {
+                        setDrawerOpen(false);
+                        openAuth('signup');
+                      }}
                       className="w-full py-3 rounded-2xl text-sm font-bold transition-all"
                       style={{
                         background: '#E8A838',
@@ -386,6 +461,16 @@ export function Navbar({ openAuth }: { openAuth: (mode: 'login' | 'signup') => v
       </AnimatePresence>
 
       <NotificationPanel isOpen={notifOpen} onClose={() => setNotifOpen(false)} />
+
+      {/* 글로벌 건강 기록 모달 */}
+      <AnimatePresence>
+        {showHealthLog && (
+          <HealthLogModal
+            onClose={() => setShowHealthLog(false)}
+            onComplete={handleHealthLogComplete}
+          />
+        )}
+      </AnimatePresence>
     </>
   );
 }

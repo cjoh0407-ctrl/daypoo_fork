@@ -107,36 +107,38 @@ public class PooRecordService {
     return new PooCheckInResponse(toiletId, firstArrivalTime, elapsedSeconds, remainedSeconds);
   }
 
+  /** 배변 기록 생성 및 방문 인증 처리 toiletId 유무에 따라 방문 인증 통합 여부를 결정합니다. */
   @Transactional
   public PooRecordResponse createRecord(String email, PooRecordCreateRequest request) {
-    // 1. 엔티티 검증
-    if (request.toiletId() == null) {
-      throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
-    }
     User user = userService.getByEmail(email);
-    Toilet toilet =
-        toiletRepository
-            .findById(request.toiletId())
-            .orElseThrow(() -> new BusinessException(ErrorCode.ENTITY_NOT_FOUND));
+    boolean isVisitAuth = request.toiletId() != null;
 
-    // 2. 위치 및 체류 시간 검증
-    validateLocationAndTime(user, toilet, request.latitude(), request.longitude());
+    Toilet toilet = null;
+    if (isVisitAuth) {
+      toilet =
+          toiletRepository
+              .findById(request.toiletId())
+              .orElseThrow(() -> new BusinessException(ErrorCode.ENTITY_NOT_FOUND));
 
-    // 3. AI 분석 or 수동 입력값 결정
+      // 방문 인증 시에만 위치 및 체류 시간 검증
+      if (request.latitude() == null || request.longitude() == null) {
+        throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
+      }
+      validateLocationAndTime(user, toilet, request.latitude(), request.longitude());
+
+      // 방문 타이머 리셋
+      locationVerificationService.resetArrivalTime(user.getId(), toilet.getId());
+    }
+
+    // AI 분석 or 수동 입력값 결정
     PoopAttributes attrs = resolvePoopAttributes(request);
 
-    // 4. 지역명 추출: 화장실 주소 파싱 우선, 주소 없으면 역지오코딩 fallback
-    String regionName = extractRegionFromAddress(toilet.getAddress());
-    if ("기타".equals(regionName)) {
-      regionName = geocodingService.reverseGeocode(request.latitude(), request.longitude());
-    }
+    // 지역명 추출 (화장실 주소 우선, 없을 경우 좌표 기반 역지오코딩)
+    String regionName = determineRegion(toilet, request.latitude(), request.longitude());
     user.updateHomeRegion(regionName);
     userRepository.save(user);
 
-    // 5. arrival 키 삭제 → 재인증 시 60초 타이머 리셋 허용
-    locationVerificationService.resetArrivalTime(user.getId(), toilet.getId());
-
-    // 6. 기록 저장
+    // 기록 저장
     PooRecord saved =
         recordRepository.save(
             PooRecord.builder()
@@ -150,18 +152,45 @@ public class PooRecordService {
                 .regionName(regionName)
                 .build());
 
-    // 7. 보상 · 랭킹 · 칭호 비동기 처리 이벤트 발행 (같은 화장실 하루 3회 초과 시 포인트 미지급)
-    LocalDateTime todayStart = LocalDate.now().atStartOfDay();
-    LocalDateTime todayEnd = todayStart.plusDays(1);
-    long todayCount =
-        visitLogRepository.countByUserAndToiletAndEventTypeAndCreatedAtBetween(
-            user, toilet, VisitEventType.RECORD_CREATED, todayStart, todayEnd);
-    int rewardPoints = todayCount < DAILY_POINT_LIMIT_PER_TOILET ? REWARD_POINTS : 0;
+    // 보상 처리 (방문 인증 시에만 포인트 지급 검토)
+    processRewards(user, toilet, regionName);
+
+    // Visit Log 기록 (방문 인증 시에만)
+    if (isVisitAuth) {
+      logVisitOnSuccess(user, toilet, request, saved);
+    }
+
+    return recordMapper.toResponse(saved);
+  }
+
+  private String determineRegion(Toilet toilet, Double lat, Double lon) {
+    if (toilet != null && toilet.getAddress() != null) {
+      String region = extractRegionFromAddress(toilet.getAddress());
+      if (!"기타".equals(region)) return region;
+    }
+    if (lat != null && lon != null) {
+      return geocodingService.reverseGeocode(lat, lon);
+    }
+    return "기타";
+  }
+
+  private void processRewards(User user, Toilet toilet, String regionName) {
+    int rewardPoints = 0;
+    if (toilet != null) {
+      LocalDateTime todayStart = LocalDate.now().atStartOfDay();
+      LocalDateTime todayEnd = todayStart.plusDays(1);
+      long todayCount =
+          visitLogRepository.countByUserAndToiletAndEventTypeAndCreatedAtBetween(
+              user, toilet, VisitEventType.RECORD_CREATED, todayStart, todayEnd);
+      rewardPoints = todayCount < DAILY_POINT_LIMIT_PER_TOILET ? REWARD_POINTS : 0;
+    }
 
     eventPublisher.publishEvent(
         new PooRecordCreatedEvent(user.getEmail(), regionName, REWARD_EXP, rewardPoints));
+  }
 
-    // 8. Visit Log 기록 완료
+  private void logVisitOnSuccess(
+      User user, Toilet toilet, PooRecordCreateRequest request, PooRecord saved) {
     long arrivalTimeMillis =
         locationVerificationService.getOrSetArrivalTime(user.getId(), toilet.getId(), null);
     LocalDateTime arrivalAt =
@@ -178,15 +207,6 @@ public class PooRecordService {
         null,
         saved,
         null);
-
-    log.info(
-        "User {} earned {} EXP and {} Points for recording toilet {}.",
-        email,
-        REWARD_EXP,
-        REWARD_POINTS,
-        toilet.getId());
-
-    return recordMapper.toResponse(saved);
   }
 
   private void validateLocationAndTime(User user, Toilet toilet, double lat, double lon) {
@@ -352,24 +372,18 @@ public class PooRecordService {
     return recordMapper.toResponse(record);
   }
 
-  /**
-   * 주소 문자열에서 구/군/시 단위 지역명을 추출합니다. 예: "서울특별시 강동구 천호대로157길 14" → "강동구" "경기도 안양시 동안구 부림로 156" → "동안구"
-   * "전북특별자치도 군산시 성산면 철새로 25" → "군산시"
-   */
+  /** 주소 문자열에서 구/군/시 단위 지역명을 추출합니다. */
   private String extractRegionFromAddress(String address) {
     if (address == null || address.isBlank()) {
       return "기타";
     }
     String[] parts = address.split("\\s+");
-    // 주소 토큰에서 구/군/시 단위를 찾음 (시·도 다음에 오는 세부 행정구역)
     for (int i = 1; i < parts.length; i++) {
       String part = parts[i];
       if (part.endsWith("구") || part.endsWith("군")) {
         return part;
       }
-      // "안양시", "군산시" 등 시 단위 (첫 번째 토큰의 광역시/도가 아닌 경우)
       if (part.endsWith("시") && i >= 1) {
-        // 다음 토큰이 구로 끝나면 그걸 반환 (예: "안양시 동안구" → "동안구")
         if (i + 1 < parts.length && parts[i + 1].endsWith("구")) {
           return parts[i + 1];
         }

@@ -67,30 +67,33 @@ graph TB
 
 ## 🛠️ 기술 스택 (Technology Stack)
 
-| 파트           | 기술                           | 설명                                                 |
-| :------------- | :----------------------------- | :--------------------------------------------------- |
-| **Frontend**   | React 18+, TypeScript, Vite    | WebRTC 기반 무음 캡처 및 고성능 지도 UI 구현 (Port: 5173) |
-| **Backend**    | Spring Boot 3.4.3 (Java 21)    | **가상 스레드(Virtual Threads)** 기반 고성능 병렬 처리 |
-|                | QueryDSL 5.0 / Flyway          | 타입 세이프한 쿼리 작성 및 DB 형상 관리 자동화       |
-| **AI Service** | FastAPI (Python 3.12)          | **In-Memory Pipeline** 기반 무저장 이미지 분석       |
-|                | OpenAI GPT-4o Vision           | 브리스톨 척도 및 건강 지표 정밀 분석                 |
-| **Data Layer** | PostgreSQL 16 + PostGIS        | 50만 건 공간 데이터 처리 및 공간 인덱싱(GIST)        |
-|                | Redis (Geo, ZSET, Cache)       | **지역별 실시간 랭킹** 및 JWT 세션 관리              |
-| **DevOps**     | Terraform (IaC), Docker        | 코드형 인프라 관리 및 컨테이너 기반 운영             |
+| 파트           | 기술                        | 설명                                                      |
+| :------------- | :-------------------------- | :-------------------------------------------------------- |
+| **Frontend**   | React 18+, TypeScript, Vite | WebRTC 기반 무음 캡처 및 고성능 지도 UI 구현 (Port: 5173) |
+| **Backend**    | Spring Boot 3.4.3 (Java 21) | **가상 스레드(Virtual Threads)** 기반 고성능 병렬 처리    |
+|                | QueryDSL 5.0 / Flyway       | 타입 세이프한 쿼리 작성 및 DB 형상 관리 자동화            |
+| **AI Service** | FastAPI (Python 3.12)       | **In-Memory Pipeline** 기반 무저장 이미지 분석            |
+|                | OpenAI GPT-4o Vision        | 브리스톨 척도 및 건강 지표 정밀 분석                      |
+| **Data Layer** | PostgreSQL 16 + PostGIS     | 50만 건 공간 데이터 처리 및 공간 인덱싱(GIST)             |
+|                | Redis (Geo, ZSET, Cache)    | **지역별 실시간 랭킹** 및 JWT 세션 관리                   |
+| **DevOps**     | Terraform (IaC), Docker     | 코드형 인프라 관리 및 컨테이너 기반 운영                  |
 
 ---
 
 ## ✨ 핵심 차별점 (Core Strengths)
 
 ### 1. 🚀 가상 스레드 기반 동기화 및 시뮬레이션
+
 - **동기화 엔진**: 50만 건 이상의 데이터를 수 분 내에 동기화하는 가상 스레드 기반 배치 프로세스.
 - **시뮬레이션 모드**: 수만 명의 가상 유저와 수십만 개의 배변 기록을 생성하여 부하를 테스트하는 엔진 내장.
 
 ### 2. 🛡️ 보안 및 개인정보 보호 (Privacy-First)
+
 - **무저장 AI 분석**: 배변 이미지를 서버 DB에 저장하지 않고 AI 분석 즉시 메모리에서 폐기하여 민감 정보 보호.
 - **Maintenance Filter**: 시스템 점검 시 어드민을 제외한 접근을 일괄 제어하는 전역 필터 적용.
 
 ### 3. 🗺️ 정밀 공간 데이터 처리
+
 - **PostGIS 최적화**: 단순 거리 계산을 넘어 `Geography` 타입을 활용한 정밀한 위치 검증 및 근처 화장실 추천.
 
 ---
@@ -119,9 +122,12 @@ cp .env.example .env
 
 ### 2단계: 로컬 개발 실행
 
-- **Frontend**: `cd frontend && npm install && npm run dev` (URL: `http://localhost:5173`)
+- **Docker** (DB/인프라): `docker-compose up -d`
 - **Backend**: `cd backend && ./gradlew bootRun` (URL: `http://localhost:8080`)
 - **AI Service**: `cd ai-service && python main.py` (URL: `http://localhost:8000`)
+- **Frontend**: `cd frontend && npm install && npm run dev` (URL: `http://localhost:5173`)
+
+> 순서대로 실행 권장 — Docker(DB) → Backend → AI Service → Frontend
 
 ---
 
@@ -161,4 +167,5 @@ daypoo/
 이 프로젝트는 [ISC License](./LICENSE)를 따릅니다.
 
 ---
+
 > **최종 업데이트**: 2026-04-02 17:15 (KST)

@@ -6,19 +6,24 @@
 
     <!-- ── 기본 SEO ──────────────────────────────────────── -->
     <title>Day.Poo — AI 장 건강 분석 & 화장실 지도</title>
-    <meta name="description" content="AI 닥터 푸가 분석하는 나만의 배변 건강 리포트. 전국 7만 개 화장실 실시간 지도와 함께." />
+    <meta
+      name="description"
+      content="데이푸가 분석하는 나만의 배변 건강 리포트. 전국 5만 개 화장실 실시간 지도와 함께."
+    />
     <meta name="keywords" content="배변, 건강, AI, 화장실, 장 건강, 헬스케어" />
     <meta name="author" content="Day.Poo" />
 
     <!-- ── 파비콘 ────────────────────────────────────────── -->
     <link rel="icon" href="/icons/favicon.ico" sizes="any" />
     <link rel="icon" href="/icons/icon.svg" type="image/svg+xml" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/icons/icon-96x96.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/icons/icon-72x72.png" />
 
     <!-- ── PWA & Mobile Optimization ───────────────────── -->
     <link rel="manifest" href="/manifest.json" />
     <meta name="theme-color" content="#111E18" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="DayPoo" />
 
     <!-- iOS용 Apple Touch Icon -->
@@ -27,26 +32,30 @@
     <link rel="apple-touch-icon" sizes="180x180" href="/icons/icon-192x192.png" />
     <link rel="apple-touch-icon" sizes="167x167" href="/icons/icon-192x192.png" />
 
-    <!-- Favicon & Icons -->
-    <link rel="icon" type="image/png" sizes="32x32" href="/icons/icon-96x96.png" />
-    <link rel="icon" type="image/png" sizes="16x16" href="/icons/icon-72x72.png" />
-    <link rel="icon" href="/favicon.png" type="image/png" />
-
-
     <!-- ── Open Graph ────────────────────────────────────── -->
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Day.Poo" />
     <meta property="og:title" content="Day.Poo — AI 장 건강 분석 & 화장실 지도" />
-    <meta property="og:description" content="AI 닥터 푸가 분석하는 나만의 배변 건강 리포트. 전국 7만 개 화장실 실시간 지도와 함께." />
+    <meta
+      property="og:description"
+      content="데이푸가 분석하는 나만의 배변 건강 리포트. 전국 5만 개 화장실 실시간 지도와 함께."
+    />
     <meta property="og:url" content="https://daypoo.8o2.site" />
+    <meta property="og:image" content="https://daypoo.8o2.site/icons/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
 
     <!-- ── Twitter Card ──────────────────────────────────── -->
-    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="Day.Poo" />
     <meta name="twitter:description" content="AI 기반 배변 건강 분석 & 전국 화장실 실시간 지도" />
+    <meta name="twitter:image" content="https://daypoo.8o2.site/icons/og-image.png" />
 
     <!-- ── Kakao Map SDK ─────────────────────────────────── -->
-    <script type="text/javascript" src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=09664cc25ced9ec3fc62e230b833aeba&libraries=services,clusterer"></script>
+    <script
+      type="text/javascript"
+      src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=09664cc25ced9ec3fc62e230b833aeba&libraries=services,clusterer"
+    ></script>
   </head>
   <body>
     <div id="root"></div>

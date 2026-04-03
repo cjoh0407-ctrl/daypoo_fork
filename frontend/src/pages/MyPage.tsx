@@ -1,7 +1,12 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence, useInView } from 'framer-motion';
-import { generateProfileAvatar, generateItemAvatar, parseDicebearUrl, isEmoji } from '../utils/avatar';
+import {
+  generateProfileAvatar,
+  generateItemAvatar,
+  parseDicebearUrl,
+  isEmoji,
+} from '../utils/avatar';
 import { Navbar } from '../components/Navbar';
 import {
   ShoppingBag,
@@ -31,6 +36,7 @@ import {
   Waves,
   Droplets,
   AlertCircle,
+  Plus,
 } from 'lucide-react';
 import { loadTossPayments } from '@tosspayments/payment-sdk';
 import { api } from '../services/apiClient';
@@ -39,7 +45,8 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { MyPageSkeleton } from '../components/LoadingSkeleton';
 import WaveButtonComponent from '../components/WaveButton';
-import { UserResponse } from '../types/api';
+import { UserResponse, HealthRecordRequest } from '../types/api';
+import { HealthLogModal, HealthLogResult } from '../components/map/HealthLogModal';
 
 // ── 타입 ──────────────────────────────────────────────────────────────
 type TabKey = 'home' | 'collection' | 'report' | 'settings';
@@ -63,7 +70,6 @@ const DEFAULT_AVATAR_URL = '/assets/default-avatar.svg';
 // ── 공통 헬퍼 함수 ───────────────────────────────────────────────────────
 
 // [CLEANUP] 하드코딩된 FALLBACK 데이터와 BRISTOL_DATA는 백엔드 연동이 완료되었으므로 제거합니다.
-
 
 // ── 카운트업 ──────────────────────────────────────────────────────────
 function CountUp({ target, suffix = '' }: { target: number; suffix?: string }) {
@@ -582,8 +588,16 @@ function AvatarEffect({ emoji, size = 110 }: { emoji: string; size?: number }) {
               fontSize: '14px',
             }}
             animate={{
-              x: [0, Math.cos((angle * Math.PI) / 180) * (radius - 8), Math.cos((angle * Math.PI) / 180) * radius],
-              y: [0, Math.sin((angle * Math.PI) / 180) * (radius - 8), Math.sin((angle * Math.PI) / 180) * radius],
+              x: [
+                0,
+                Math.cos((angle * Math.PI) / 180) * (radius - 8),
+                Math.cos((angle * Math.PI) / 180) * radius,
+              ],
+              y: [
+                0,
+                Math.sin((angle * Math.PI) / 180) * (radius - 8),
+                Math.sin((angle * Math.PI) / 180) * radius,
+              ],
               opacity: [0, 1, 0],
               scale: [0.3, 1, 0.4],
             }}
@@ -643,9 +657,7 @@ function HeroBanner({
           >
             {/* 아바타 */}
             <motion.div variants={fadeUp(0)} className="relative flex-shrink-0">
-              {equippedEffect?.emoji && (
-                <AvatarEffect emoji={equippedEffect.emoji} />
-              )}
+              {equippedEffect?.emoji && <AvatarEffect emoji={equippedEffect.emoji} />}
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
@@ -664,11 +676,21 @@ function HeroBanner({
                   }}
                 >
                   {equippedItem?.id ? (
-                    equippedItem.imageUrl && (isEmoji(equippedItem.imageUrl) || (!equippedItem.imageUrl.includes(':') && !equippedItem.imageUrl.startsWith('http') && !equippedItem.imageUrl.startsWith('/'))) ? (
-                      <span className="text-5xl select-none leading-none">{equippedItem.imageUrl}</span>
+                    equippedItem.imageUrl &&
+                    (isEmoji(equippedItem.imageUrl) ||
+                      (!equippedItem.imageUrl.includes(':') &&
+                        !equippedItem.imageUrl.startsWith('http') &&
+                        !equippedItem.imageUrl.startsWith('/'))) ? (
+                      <span className="text-5xl select-none leading-none">
+                        {equippedItem.imageUrl}
+                      </span>
                     ) : (
                       <img
-                        src={parseDicebearUrl(equippedItem.imageUrl, equippedItem.id, equippedItem.rawType || 'AVATAR')}
+                        src={parseDicebearUrl(
+                          equippedItem.imageUrl,
+                          equippedItem.id,
+                          equippedItem.rawType || 'AVATAR',
+                        )}
                         alt={equippedItem.name}
                         className="w-full h-full object-cover"
                       />
@@ -713,7 +735,10 @@ function HeroBanner({
                     border: '1px solid rgba(232,168,56,0.2)',
                   }}
                 >
-                  <Trophy size={9} /> {(user?.equippedTitleName && user.equippedTitleName !== '새내기 쾌변러') ? user.equippedTitleName : '보유 칭호 없음'}
+                  <Trophy size={9} />{' '}
+                  {user?.equippedTitleName && user.equippedTitleName !== '새내기 쾌변러'
+                    ? user.equippedTitleName
+                    : '보유 칭호 없음'}
                 </span>
               </motion.div>
 
@@ -739,7 +764,11 @@ function HeroBanner({
                     <>
                       <div
                         className="relative overflow-hidden rounded-full"
-                        style={{ width: 'min(160px, 30vw)', height: '6px', background: 'rgba(26,43,39,0.08)' }}
+                        style={{
+                          width: 'min(160px, 30vw)',
+                          height: '6px',
+                          background: 'rgba(26,43,39,0.08)',
+                        }}
                       >
                         <motion.div
                           initial={{ width: 0 }}
@@ -899,8 +928,12 @@ function NicknameSetupBanner({ onSettingsClick }: { onSettingsClick: () => void 
           <Sparkles size={24} />
         </div>
         <div className="min-w-0">
-          <p className="text-sm sm:text-base font-black text-amber-900 leading-tight">아아, 쾌변러님! 잠시만요!</p>
-          <p className="text-xs sm:text-sm font-bold text-amber-700/80 mt-1 truncate">나만의 닉네임을 설정하면 랭킹에서 더욱 빛날 수 있어요.</p>
+          <p className="text-sm sm:text-base font-black text-amber-900 leading-tight">
+            아아, 쾌변러님! 잠시만요!
+          </p>
+          <p className="text-xs sm:text-sm font-bold text-amber-700/80 mt-1 truncate">
+            나만의 닉네임을 설정하면 랭킹에서 더욱 빛날 수 있어요.
+          </p>
         </div>
       </div>
       <button
@@ -964,16 +997,24 @@ function HomeTab({
     id: item.id,
     emoji: item.emoji,
     label: item.name,
-    sublabel: item.owned
-      ? equipped?.id === item.id || preview?.id === item.id
-        ? '착용 중'
-        : item.type
-      : item.discountPrice != null ? (
-          <div className="flex items-center justify-center gap-1.5 leading-none">
-            <span className="line-through opacity-30 text-[10px] scale-90">{item.price?.toLocaleString()}P</span>
-            <span className="font-black" style={{ color: '#E85D5D' }}>{item.discountPrice.toLocaleString()}P</span>
-          </div>
-        ) : `${item.price?.toLocaleString()}P`,
+    sublabel: item.owned ? (
+      equipped?.id === item.id || preview?.id === item.id ? (
+        '착용 중'
+      ) : (
+        item.type
+      )
+    ) : item.discountPrice != null ? (
+      <div className="flex items-center justify-center gap-1.5 leading-none">
+        <span className="line-through opacity-30 text-[10px] scale-90">
+          {item.price?.toLocaleString()}P
+        </span>
+        <span className="font-black" style={{ color: '#E85D5D' }}>
+          {item.discountPrice.toLocaleString()}P
+        </span>
+      </div>
+    ) : (
+      `${item.price?.toLocaleString()}P`
+    ),
     accent: item.owned ? '#2D6A4F' : '#E8A838',
     selected: preview?.id === item.id || (!preview && equipped?.id === item.id),
   }));
@@ -1119,204 +1160,222 @@ function HomeTab({
         {/* 인벤토리 메인 영역 */}
         <div className="flex-1 flex flex-col">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-0 px-4 sm:px-10 pt-6 sm:pt-10 pb-4 sm:pb-8">
-          <div>
-            <p className="text-xs sm:text-sm font-black text-gray-400 uppercase tracking-widest mb-1.5">
-              Avatar Customizing
-            </p>
-            <div className="flex items-center gap-2 sm:gap-4">
-              <span className="text-xl sm:text-3xl font-black text-[#1A2B27] tracking-tight">
-                {shopTab === 'inventory' ? '보유 아이템' : '프리미엄 상점'}
-              </span>
-              {shopTab === 'shop' && (
-                <motion.span
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className="inline-flex items-center gap-2 px-5 py-2 rounded-full text-base font-black shadow-inner"
-                  style={{
-                    background: 'rgba(232,168,56,0.1)',
-                    color: '#E8A838',
-                    border: '1.5px solid rgba(232,168,56,0.15)',
+            <div>
+              <p className="text-xs sm:text-sm font-black text-gray-400 uppercase tracking-widest mb-1.5">
+                Avatar Customizing
+              </p>
+              <div className="flex items-center gap-2 sm:gap-4">
+                <span className="text-xl sm:text-3xl font-black text-[#1A2B27] tracking-tight">
+                  {shopTab === 'inventory' ? '보유 아이템' : '프리미엄 상점'}
+                </span>
+                {shopTab === 'shop' && (
+                  <motion.span
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="inline-flex items-center gap-2 px-5 py-2 rounded-full text-base font-black shadow-inner"
+                    style={{
+                      background: 'rgba(232,168,56,0.1)',
+                      color: '#E8A838',
+                      border: '1.5px solid rgba(232,168,56,0.15)',
+                    }}
+                  >
+                    <Sparkles size={16} /> {(user?.points ?? 0).toLocaleString()}P
+                  </motion.span>
+                )}
+              </div>
+            </div>
+            <div className="flex rounded-[16px] sm:rounded-[24px] p-1.5 sm:p-2 bg-gray-50 border border-gray-100 shadow-sm">
+              {(['inventory', 'shop'] as const).map((t) => (
+                <button
+                  key={t}
+                  onClick={() => {
+                    setShopTab(t);
+                    setPreview(null);
                   }}
+                  className="relative px-4 sm:px-8 py-2.5 sm:py-3.5 rounded-[12px] sm:rounded-[18px] text-sm sm:text-base font-black transition-all"
+                  style={{ color: shopTab === t ? '#ffffff' : 'rgba(26,43,39,0.4)' }}
                 >
-                  <Sparkles size={16} /> {(user?.points ?? 0).toLocaleString()}P
-                </motion.span>
-              )}
+                  {shopTab === t && (
+                    <motion.div
+                      layoutId="shopTab"
+                      className="absolute inset-0 rounded-[18px]"
+                      style={{ background: '#1B4332' }}
+                      transition={{ type: 'spring', stiffness: 400, damping: 32 }}
+                    />
+                  )}
+                  <span className="relative z-10 flex items-center gap-2.5">
+                    {t === 'inventory' ? (
+                      <>
+                        <Package size={20} /> 인벤토리
+                      </>
+                    ) : (
+                      <>
+                        <ShoppingBag size={20} /> 상점
+                      </>
+                    )}
+                  </span>
+                </button>
+              ))}
             </div>
           </div>
-          <div className="flex rounded-[16px] sm:rounded-[24px] p-1.5 sm:p-2 bg-gray-50 border border-gray-100 shadow-sm">
-            {(['inventory', 'shop'] as const).map((t) => (
-              <button
-                key={t}
-                onClick={() => {
-                  setShopTab(t);
-                  setPreview(null);
-                }}
-                className="relative px-4 sm:px-8 py-2.5 sm:py-3.5 rounded-[12px] sm:rounded-[18px] text-sm sm:text-base font-black transition-all"
-                style={{ color: shopTab === t ? '#ffffff' : 'rgba(26,43,39,0.4)' }}
+
+          <div className="px-3 sm:px-6 pb-4 sm:pb-6">
+            {/* 카테고리 필터 (전체 / 아바타 / 오라효과) */}
+            <div className="flex gap-2 mb-4">
+              {[
+                { key: 'all' as const, label: '전체' },
+                { key: 'AVATAR' as const, label: '아바타' },
+                { key: 'EFFECT' as const, label: '오라효과' },
+              ].map((cat) => (
+                <button
+                  key={cat.key}
+                  onClick={() => setCategoryFilter(cat.key)}
+                  className={`px-4 py-1.5 rounded-full text-xs sm:text-sm font-bold transition-all ${
+                    categoryFilter === cat.key
+                      ? 'bg-[#1B4332] text-white shadow-md'
+                      : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                  }`}
+                >
+                  {cat.label}
+                </button>
+              ))}
+            </div>
+
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={`${shopTab}-${categoryFilter}`}
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -12 }}
+                transition={{ duration: 0.25 }}
               >
-                {shopTab === t && (
-                  <motion.div
-                    layoutId="shopTab"
-                    className="absolute inset-0 rounded-[18px]"
-                    style={{ background: '#1B4332' }}
-                    transition={{ type: 'spring', stiffness: 400, damping: 32 }}
-                  />
-                )}
-                <span className="relative z-10 flex items-center gap-2.5">
-                  {t === 'inventory' ? (
-                    <>
-                      <Package size={20} /> 인벤토리
-                    </>
-                  ) : (
-                    <>
-                      <ShoppingBag size={20} /> 상점
-                    </>
-                  )}
-                </span>
-              </button>
-            ))}
-          </div>
-        </div>
+                {items.length > 0 ? (
+                  <>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 mb-8">
+                      {items
+                        .slice(currentPage * itemsPerPage, (currentPage + 1) * itemsPerPage)
+                        .map((item, idx) => {
+                          const avatarType = item.rawType || 'AVATAR';
+                          const isSelected = preview?.id === item.id;
+                          const isOwned = item.owned;
+                          const color = isOwned ? '#2D6A4F' : '#E8A838';
 
-        <div className="px-3 sm:px-6 pb-4 sm:pb-6">
-          {/* 카테고리 필터 (전체 / 아바타 / 오라효과) */}
-          <div className="flex gap-2 mb-4">
-            {([
-              { key: 'all' as const, label: '전체' },
-              { key: 'AVATAR' as const, label: '아바타' },
-              { key: 'EFFECT' as const, label: '오라효과' },
-            ]).map((cat) => (
-              <button
-                key={cat.key}
-                onClick={() => setCategoryFilter(cat.key)}
-                className={`px-4 py-1.5 rounded-full text-xs sm:text-sm font-bold transition-all ${
-                  categoryFilter === cat.key
-                    ? 'bg-[#1B4332] text-white shadow-md'
-                    : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
-                }`}
-              >
-                {cat.label}
-              </button>
-            ))}
-          </div>
-
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={`${shopTab}-${categoryFilter}`}
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -12 }}
-              transition={{ duration: 0.25 }}
-            >
-              {items.length > 0 ? (
-                <>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 mb-8">
-                    {items
-                      .slice(currentPage * itemsPerPage, (currentPage + 1) * itemsPerPage)
-                      .map((item, idx) => {
-                        const avatarType = item.rawType || 'AVATAR';
-                        const isSelected = preview?.id === item.id;
-                        const isOwned = item.owned;
-                        const color = isOwned ? '#2D6A4F' : '#E8A838';
-
-                        return (
-                          <motion.div
-                            key={item.id}
-                            initial={{ opacity: 0, scale: 0.95 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            transition={{ delay: idx * 0.03 }}
-                            onClick={() => setPreview(item)}
-                            className={`group cursor-pointer rounded-[24px] border-2 transition-all overflow-hidden ${
-                              isSelected
-                                ? 'border-emerald-500 shadow-2xl shadow-emerald-500/20'
-                                : 'border-gray-100 hover:border-emerald-200 hover:shadow-xl'
-                            }`}
-                            style={{ background: '#fff' }}
-                          >
-                            <div className="aspect-square bg-black/[0.02] flex items-center justify-center relative overflow-hidden p-4">
-                              <div
-                                className="w-12 h-12 rounded-full blur-2xl opacity-20 absolute"
-                                style={{ background: color }}
-                              />
-                              {item.imageUrl && (isEmoji(item.imageUrl) || (!item.imageUrl.includes(':') && !item.imageUrl.startsWith('http') && !item.imageUrl.startsWith('/'))) ? (
-                                <span className="text-6xl transition-transform group-hover:scale-110 duration-500 select-none leading-none">
-                                  {item.imageUrl}
-                                </span>
-                              ) : (
-                                <img
-                                  src={parseDicebearUrl(item.imageUrl, item.id, avatarType)}
-                                  alt={item.name}
-                                  className="w-full h-full object-contain transition-transform group-hover:scale-110 duration-500"
+                          return (
+                            <motion.div
+                              key={item.id}
+                              initial={{ opacity: 0, scale: 0.95 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              transition={{ delay: idx * 0.03 }}
+                              onClick={() => setPreview(item)}
+                              className={`group cursor-pointer rounded-[24px] border-2 transition-all overflow-hidden ${
+                                isSelected
+                                  ? 'border-emerald-500 shadow-2xl shadow-emerald-500/20'
+                                  : 'border-gray-100 hover:border-emerald-200 hover:shadow-xl'
+                              }`}
+                              style={{ background: '#fff' }}
+                            >
+                              <div className="aspect-square bg-black/[0.02] flex items-center justify-center relative overflow-hidden p-4">
+                                <div
+                                  className="w-12 h-12 rounded-full blur-2xl opacity-20 absolute"
+                                  style={{ background: color }}
                                 />
-                              )}
-                              {isOwned && (
-                                <div className="absolute top-2 right-2 w-7 h-7 rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-lg">
-                                  <Check size={14} strokeWidth={3} />
-                                </div>
-                              )}
-                            </div>
-                            <div className="p-3 border-t border-gray-100">
-                              <h5 className="font-black text-sm mb-1 text-black truncate">{item.name}</h5>
-                              <div className="flex items-center justify-between">
-                                <span className="text-[10px] font-bold text-gray-400 uppercase">{item.type}</span>
-                                <span className="font-black text-sm" style={{ color }}>
-                                  {item.isEquipped ? (
-                                    <span className="flex items-center gap-1 text-emerald-600">
-                                      <CheckCircle2 size={12} strokeWidth={3} />
-                                      장착중
-                                    </span>
-                                  ) : isOwned ? (
-                                    '보유중'
-                                  ) : item.discountPrice != null ? (
-                                    <span className="flex items-center gap-1.5">
-                                      <span className="text-[10px] line-through text-gray-300">{item.price?.toLocaleString()}P</span>
-                                      <span className="text-red-500">{item.discountPrice.toLocaleString()}P</span>
-                                    </span>
-                                  ) : (
-                                    `${item.price?.toLocaleString()}P`
-                                  )}
-                                </span>
+                                {item.imageUrl &&
+                                (isEmoji(item.imageUrl) ||
+                                  (!item.imageUrl.includes(':') &&
+                                    !item.imageUrl.startsWith('http') &&
+                                    !item.imageUrl.startsWith('/'))) ? (
+                                  <span className="text-6xl transition-transform group-hover:scale-110 duration-500 select-none leading-none">
+                                    {item.imageUrl}
+                                  </span>
+                                ) : (
+                                  <img
+                                    src={parseDicebearUrl(item.imageUrl, item.id, avatarType)}
+                                    alt={item.name}
+                                    className="w-full h-full object-contain transition-transform group-hover:scale-110 duration-500"
+                                  />
+                                )}
+                                {isOwned && (
+                                  <div className="absolute top-2 right-2 w-7 h-7 rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-lg">
+                                    <Check size={14} strokeWidth={3} />
+                                  </div>
+                                )}
                               </div>
-                            </div>
-                          </motion.div>
-                        );
-                      })}
-                  </div>
-
-                  {/* 페이징 */}
-                  {Math.ceil(items.length / itemsPerPage) > 1 && (
-                    <div className="flex items-center justify-center gap-2">
-                      <button
-                        onClick={() => setCurrentPage(Math.max(0, currentPage - 1))}
-                        disabled={currentPage === 0}
-                        className="px-4 py-2 rounded-xl font-bold text-sm transition-all disabled:opacity-30 disabled:cursor-not-allowed bg-gray-100 text-gray-700 hover:bg-gray-200"
-                      >
-                        이전
-                      </button>
-                      <span className="text-sm font-bold text-gray-400 px-4">
-                        {currentPage + 1} / {Math.ceil(items.length / itemsPerPage)}
-                      </span>
-                      <button
-                        onClick={() => setCurrentPage(Math.min(Math.ceil(items.length / itemsPerPage) - 1, currentPage + 1))}
-                        disabled={currentPage >= Math.ceil(items.length / itemsPerPage) - 1}
-                        className="px-4 py-2 rounded-xl font-bold text-sm transition-all disabled:opacity-30 disabled:cursor-not-allowed bg-gray-100 text-gray-700 hover:bg-gray-200"
-                      >
-                        다음
-                      </button>
+                              <div className="p-3 border-t border-gray-100">
+                                <h5 className="font-black text-sm mb-1 text-black truncate">
+                                  {item.name}
+                                </h5>
+                                <div className="flex items-center justify-between">
+                                  <span className="text-[10px] font-bold text-gray-400 uppercase">
+                                    {item.type}
+                                  </span>
+                                  <span className="font-black text-sm" style={{ color }}>
+                                    {item.isEquipped ? (
+                                      <span className="flex items-center gap-1 text-emerald-600">
+                                        <CheckCircle2 size={12} strokeWidth={3} />
+                                        장착중
+                                      </span>
+                                    ) : isOwned ? (
+                                      '보유중'
+                                    ) : item.discountPrice != null ? (
+                                      <span className="flex items-center gap-1.5">
+                                        <span className="text-[10px] line-through text-gray-300">
+                                          {item.price?.toLocaleString()}P
+                                        </span>
+                                        <span className="text-red-500">
+                                          {item.discountPrice.toLocaleString()}P
+                                        </span>
+                                      </span>
+                                    ) : (
+                                      `${item.price?.toLocaleString()}P`
+                                    )}
+                                  </span>
+                                </div>
+                              </div>
+                            </motion.div>
+                          );
+                        })}
                     </div>
-                  )}
-                </>
-              ) : (
-                <div className="flex items-center justify-center h-52 text-lg font-bold text-gray-300">
-                  {shopTab === 'inventory' ? '보유한 아이템이 없어요' : '판매 중인 아이템이 없어요'}
-                </div>
-              )}
-            </motion.div>
-          </AnimatePresence>
-        </div>
-      </div>
 
-      <p className="text-center text-sm font-semibold text-gray-300 py-4 italic tracking-wide">
+                    {/* 페이징 */}
+                    {Math.ceil(items.length / itemsPerPage) > 1 && (
+                      <div className="flex items-center justify-center gap-2">
+                        <button
+                          onClick={() => setCurrentPage(Math.max(0, currentPage - 1))}
+                          disabled={currentPage === 0}
+                          className="px-4 py-2 rounded-xl font-bold text-sm transition-all disabled:opacity-30 disabled:cursor-not-allowed bg-gray-100 text-gray-700 hover:bg-gray-200"
+                        >
+                          이전
+                        </button>
+                        <span className="text-sm font-bold text-gray-400 px-4">
+                          {currentPage + 1} / {Math.ceil(items.length / itemsPerPage)}
+                        </span>
+                        <button
+                          onClick={() =>
+                            setCurrentPage(
+                              Math.min(Math.ceil(items.length / itemsPerPage) - 1, currentPage + 1),
+                            )
+                          }
+                          disabled={currentPage >= Math.ceil(items.length / itemsPerPage) - 1}
+                          className="px-4 py-2 rounded-xl font-bold text-sm transition-all disabled:opacity-30 disabled:cursor-not-allowed bg-gray-100 text-gray-700 hover:bg-gray-200"
+                        >
+                          다음
+                        </button>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div className="flex items-center justify-center h-52 text-lg font-bold text-gray-300">
+                    {shopTab === 'inventory'
+                      ? '보유한 아이템이 없어요'
+                      : '판매 중인 아이템이 없어요'}
+                  </div>
+                )}
+              </motion.div>
+            </AnimatePresence>
+          </div>
+        </div>
+
+        <p className="text-center text-sm font-semibold text-gray-300 py-4 italic tracking-wide">
           클릭하거나 드래그해서 아바타를 꾸며보세요
         </p>
       </motion.div>
@@ -1330,23 +1389,31 @@ function HomeTab({
             exit={{ opacity: 0, y: 100 }}
             className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[200] w-[90%] max-w-[500px]"
           >
-            <div 
+            <div
               className="flex items-center gap-5 p-4 rounded-[32px] border border-white/40 shadow-[0_30px_90px_rgba(0,0,0,0.2)] backdrop-blur-2xl"
               style={{ background: 'rgba(255,255,255,0.92)' }}
             >
               <div className="w-14 h-14 rounded-2xl bg-emerald-50 flex-shrink-0 relative overflow-hidden group flex items-center justify-center">
-                {preview.imageUrl && (isEmoji(preview.imageUrl) || (!preview.imageUrl.includes(':') && !preview.imageUrl.startsWith('http') && !preview.imageUrl.startsWith('/'))) ? (
+                {preview.imageUrl &&
+                (isEmoji(preview.imageUrl) ||
+                  (!preview.imageUrl.includes(':') &&
+                    !preview.imageUrl.startsWith('http') &&
+                    !preview.imageUrl.startsWith('/'))) ? (
                   <span className="text-3xl select-none leading-none">{preview.imageUrl}</span>
                 ) : (
                   <img
-                    src={parseDicebearUrl(preview.imageUrl, preview.id, preview.rawType || 'AVATAR')}
+                    src={parseDicebearUrl(
+                      preview.imageUrl,
+                      preview.id,
+                      preview.rawType || 'AVATAR',
+                    )}
                     className="w-full h-full object-contain p-1.5 transition-transform group-hover:scale-110"
                     alt={preview.name}
                   />
                 )}
                 <div className="absolute inset-0 bg-emerald-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
               </div>
-              
+
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-0.5">
                   <span className="text-[9px] font-black text-emerald-600 bg-emerald-100/50 px-2 py-0.5 rounded-full uppercase tracking-tighter">
@@ -1355,9 +1422,22 @@ function HomeTab({
                 </div>
                 <h4 className="text-base font-black text-[#1A2B27] truncate">{preview.name}</h4>
                 <p className="text-[10px] font-bold text-gray-400">
-                  {preview.owned ? (equipped?.id === preview.id ? '현재 장착 중' : '보유 중인 아이템') : preview.discountPrice != null ? (
-                    <span><span className="line-through mr-1">{preview.price?.toLocaleString()}P</span><span className="text-red-500 font-black">{preview.discountPrice.toLocaleString()}P 필요</span></span>
-                  ) : `${preview.price?.toLocaleString()}P 필요`}
+                  {preview.owned ? (
+                    equipped?.id === preview.id ? (
+                      '현재 장착 중'
+                    ) : (
+                      '보유 중인 아이템'
+                    )
+                  ) : preview.discountPrice != null ? (
+                    <span>
+                      <span className="line-through mr-1">{preview.price?.toLocaleString()}P</span>
+                      <span className="text-red-500 font-black">
+                        {preview.discountPrice.toLocaleString()}P 필요
+                      </span>
+                    </span>
+                  ) : (
+                    `${preview.price?.toLocaleString()}P 필요`
+                  )}
                 </p>
               </div>
 
@@ -1371,7 +1451,7 @@ function HomeTab({
                 >
                   {saved ? '저장됨' : preview.owned ? '장착하기' : '구매하기'}
                 </WaveButtonComponent>
-                <button 
+                <button
                   onClick={() => setPreview(null)}
                   className="w-11 h-11 flex items-center justify-center rounded-[18px] bg-gray-50 text-gray-300 hover:bg-gray-100 hover:text-gray-900 transition-all"
                 >
@@ -1420,17 +1500,21 @@ function HomeTab({
                 <br />
                 원하시는 충전 금액을 입력하고 결제를 진행해보세요.
               </p>
-              
+
               <div className="mb-8 relative max-w-[240px] mx-auto">
-                <input 
+                <input
                   type="number"
                   min="1000"
                   step="1000"
                   value={chargeAmount}
-                  onChange={(e) => setChargeAmount(e.target.value === '' ? '' : Number(e.target.value))}
+                  onChange={(e) =>
+                    setChargeAmount(e.target.value === '' ? '' : Number(e.target.value))
+                  }
                   className="w-full text-center text-4xl font-black py-2 border-b-4 border-emerald-500 focus:outline-none focus:border-amber-400 bg-transparent transition-colors text-[#1B4332] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 />
-                <span className="absolute right-2 bottom-3 text-xl font-bold text-gray-400">원</span>
+                <span className="absolute right-2 bottom-3 text-xl font-bold text-gray-400">
+                  원
+                </span>
               </div>
 
               <div className="flex flex-col gap-4">
@@ -1558,7 +1642,8 @@ function CollectionTab({
                 보유한 칭호
               </p>
               <p className="text-xl sm:text-3xl font-black text-[#1B4332]">
-                {earnedCount} <span className="text-sm sm:text-lg text-gray-300">/ {titles.length}</span>
+                {earnedCount}{' '}
+                <span className="text-sm sm:text-lg text-gray-300">/ {titles.length}</span>
               </p>
             </div>
             <div className="p-4 sm:p-6 rounded-[20px] sm:rounded-[28px] bg-gray-50 border border-gray-100 shadow-inner">
@@ -1748,7 +1833,15 @@ function CollectionTab({
 }
 
 // ── 리포트 탭 ─────────────────────────────────────────────────────────
-function ReportTab({ records = [], reportCacheRef }: { records?: any[]; reportCacheRef: React.MutableRefObject<Record<string, any>> }) {
+function ReportTab({
+  records = [],
+  reportCacheRef,
+  onAddRecord,
+}: {
+  records?: any[];
+  reportCacheRef: React.MutableRefObject<Record<string, any>>;
+  onAddRecord?: () => void;
+}) {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [reportOpen, setReportOpen] = useState(false);
@@ -1784,39 +1877,40 @@ function ReportTab({ records = [], reportCacheRef }: { records?: any[]; reportCa
   const [isFetchLoading, setIsFetchLoading] = useState(false);
   const [showPremiumModal, setShowPremiumModal] = useState(false);
 
+  const fetchReport = useCallback(
+    async (type: string) => {
+      // 탭 전환 시 데이터 초기화 및 로딩 가림 방지
+      setReportData(null);
 
-
-  const fetchReport = useCallback(async (type: string) => {
-    // 탭 전환 시 데이터 초기화 및 로딩 가림 방지
-    setReportData(null);
-
-    // 일반회원은 weekly/monthly AI 분석 호출 자체를 막음
-    if (!isPro && type !== 'daily') {
-      setIsFetchLoading(false);
-      return;
-    }
-
-    // 이미 불러온 데이터가 있으면 즉시 표시 (DAILY는 항상 새로 요청)
-    if (type !== 'daily' && reportCacheRef.current[type]) {
-      setReportData(reportCacheRef.current[type]);
-      return;
-    }
-
-    setIsFetchLoading(true);
-    try {
-      const res = await api.get(`/reports/${type.toUpperCase()}`);
-      reportCacheRef.current[type] = res;
-      setReportData(res);
-    } catch (err: any) {
-      console.error('리포트 조회 실패:', err);
-      if (err.message?.includes('포인트')) {
-        alert('포인트가 부족하여 리포트를 생성할 수 없습니다. 포인트를 충전해주세요!');
-        setActiveSubTab('daily');
+      // 일반회원은 weekly/monthly AI 분석 호출 자체를 막음
+      if (!isPro && type !== 'daily') {
+        setIsFetchLoading(false);
+        return;
       }
-    } finally {
-      setIsFetchLoading(false);
-    }
-  }, [isPro]);
+
+      // 이미 불러온 데이터가 있으면 즉시 표시 (DAILY는 항상 새로 요청)
+      if (type !== 'daily' && reportCacheRef.current[type]) {
+        setReportData(reportCacheRef.current[type]);
+        return;
+      }
+
+      setIsFetchLoading(true);
+      try {
+        const res = await api.get(`/reports/${type.toUpperCase()}`);
+        reportCacheRef.current[type] = res;
+        setReportData(res);
+      } catch (err: any) {
+        console.error('리포트 조회 실패:', err);
+        if (err.message?.includes('포인트')) {
+          alert('포인트가 부족하여 리포트를 생성할 수 없습니다. 포인트를 충전해주세요!');
+          setActiveSubTab('daily');
+        }
+      } finally {
+        setIsFetchLoading(false);
+      }
+    },
+    [isPro],
+  );
 
   useEffect(() => {
     fetchReport(activeSubTab);
@@ -1833,6 +1927,20 @@ function ReportTab({ records = [], reportCacheRef }: { records?: any[]; reportCa
       animate={inView ? 'show' : 'hidden'}
       className="flex flex-col gap-8"
     >
+      {/* 기록 추가 버튼 */}
+      {onAddRecord && (
+        <div className="flex justify-end">
+          <WaveButtonComponent
+            onClick={onAddRecord}
+            variant="primary"
+            size="md"
+            icon={<Plus size={16} />}
+          >
+            기록 추가하기
+          </WaveButtonComponent>
+        </div>
+      )}
+
       {/* 서브 탭 내비게이션 (AI 가이드 연동) */}
       <div className="flex p-1.5 sm:p-2 bg-gray-100 rounded-[16px] sm:rounded-[24px] w-full sm:w-fit mx-auto mb-4 mt-3 border border-gray-200 shadow-inner overflow-x-auto scrollbar-hide">
         {[
@@ -1925,11 +2033,13 @@ function ReportTab({ records = [], reportCacheRef }: { records?: any[]; reportCa
                         현재 장 상태
                       </p>
                       <p className="text-lg sm:text-2xl font-black text-[#1B4332] flex items-center gap-1.5 sm:gap-2.5">
-                        {!hasData ? '분석 데이터 없음' : (reportData?.healthScore > 80
-                          ? '아주 좋음'
-                          : reportData?.healthScore > 60
-                            ? '좋음'
-                            : '보통')}
+                        {!hasData
+                          ? '분석 데이터 없음'
+                          : reportData?.healthScore > 80
+                            ? '아주 좋음'
+                            : reportData?.healthScore > 60
+                              ? '좋음'
+                              : '보통'}
                         <Sparkles size={22} className="text-amber-400" />
                       </p>
                     </div>
@@ -1983,7 +2093,9 @@ function ReportTab({ records = [], reportCacheRef }: { records?: any[]; reportCa
             className="relative min-h-[600px] sm:min-h-[800px]"
           >
             {/* 정밀 분석 UI (비PRO 회원은 블러 처리 및 클릭 방지) */}
-            <div className={`space-y-6 ${!isPro ? 'blur-[8px] opacity-40 pointer-events-none select-none' : ''}`}>
+            <div
+              className={`space-y-6 ${!isPro ? 'blur-[8px] opacity-40 pointer-events-none select-none' : ''}`}
+            >
               {isPro && isFetchLoading ? (
                 <div className="rounded-[24px] sm:rounded-[40px] p-6 sm:p-12 bg-white border border-gray-100 shadow-sm flex items-center justify-center py-20 sm:py-32">
                   <div className="text-center">
@@ -2009,7 +2121,12 @@ function ReportTab({ records = [], reportCacheRef }: { records?: any[]; reportCa
 
                   <div className="flex justify-center mb-8 sm:mb-12">
                     <div className="relative">
-                      <svg width="160" height="160" viewBox="0 0 200 200" className="sm:w-[200px] sm:h-[200px]">
+                      <svg
+                        width="160"
+                        height="160"
+                        viewBox="0 0 200 200"
+                        className="sm:w-[200px] sm:h-[200px]"
+                      >
                         <circle
                           cx="100"
                           cy="100"
@@ -2138,7 +2255,9 @@ function ReportTab({ records = [], reportCacheRef }: { records?: any[]; reportCa
                   {(activeSubTab === 'monthly' || !isPro) && (
                     <div className="mt-5 sm:mt-8 p-4 sm:p-8 rounded-[20px] sm:rounded-[40px] bg-gray-50 border border-gray-100 shadow-inner">
                       <div className="flex items-center justify-between mb-5 sm:mb-8">
-                        <h4 className="text-base sm:text-lg font-black text-[#1A2B27]">30일 심층 트렌드</h4>
+                        <h4 className="text-base sm:text-lg font-black text-[#1A2B27]">
+                          30일 심층 트렌드
+                        </h4>
                         <div className="flex items-center gap-2">
                           {reportData?.improvementTrend === 'IMPROVING' ? (
                             <span className="px-3 py-1.5 rounded-full bg-emerald-100 text-emerald-600 text-xs font-black flex items-center gap-1">
@@ -2251,7 +2370,12 @@ function ReportTab({ records = [], reportCacheRef }: { records?: any[]; reportCa
                   <motion.div
                     className="w-16 h-16 sm:w-20 sm:h-20 bg-amber-100 rounded-[24px] sm:rounded-[32px] flex items-center justify-center mx-auto mb-4 sm:mb-6 shadow-inner"
                     animate={{ rotate: [0, -15, 15, -10, 10, -5, 5, 0] }}
-                    transition={{ duration: 0.8, repeat: Infinity, repeatDelay: 2, ease: 'easeInOut' }}
+                    transition={{
+                      duration: 0.8,
+                      repeat: Infinity,
+                      repeatDelay: 2,
+                      ease: 'easeInOut',
+                    }}
                   >
                     <Lock size={36} className="text-amber-500" />
                   </motion.div>
@@ -2259,7 +2383,8 @@ function ReportTab({ records = [], reportCacheRef }: { records?: any[]; reportCa
                     정밀 분석 리포트 잠금
                   </h3>
                   <p className="text-gray-500 font-bold text-sm sm:text-base mb-6 sm:mb-10 leading-relaxed">
-                    {activeSubTab === 'weekly' ? '7일간의' : '30일간의'} 누적 기록을 바탕으로 산출되는 <br />
+                    {activeSubTab === 'weekly' ? '7일간의' : '30일간의'} 누적 기록을 바탕으로
+                    산출되는 <br />
                     <span className="text-emerald-700">장 건강 점수</span>와{' '}
                     <span className="text-emerald-700">AI 푸의 맞춤 가이드</span>는<br />
                     <span className="text-[#1B4332] font-black">
@@ -2320,7 +2445,7 @@ function ReportTab({ records = [], reportCacheRef }: { records?: any[]; reportCa
                       주간 진단서
                     </span>
                     <KnockoutWobble
-                      text="닥터 푸의 주간 리포트"
+                      text="데이푸의 주간 리포트"
                       gradient="linear-gradient(135deg, #1B4332 0%, #2D6A4F 50%, #E8A838 100%)"
                       fontSize="18px"
                       fontWeight={900}
@@ -2416,114 +2541,125 @@ function ReportTab({ records = [], reportCacheRef }: { records?: any[]; reportCa
                   </>
                 )}
                 <div className="flex gap-2.5">
-                    <motion.button
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.97 }}
-                      onClick={() => setReportOpen(false)}
-                      className="flex-1 py-4 rounded-2xl font-black text-sm"
-                      style={{ background: '#1B4332', color: '#fff' }}
-                    >
-                      닫기
-                    </motion.button>
-                  </div>
-                </div>
-              </motion.div>
-            </>
-          )}
-        </AnimatePresence>
-
-        {/* 프리미엄 전용 정밀 분석 모달 */}
-        <AnimatePresence>
-          {showPremiumModal && (
-            <div className="fixed inset-0 z-[1000] flex items-center justify-center p-6 md:p-12">
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                onClick={() => setShowPremiumModal(false)}
-                className="absolute inset-0 bg-black/70 backdrop-blur-xl"
-              />
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9, y: 40 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.9, y: 20 }}
-                className="relative w-full max-w-4xl bg-white rounded-[40px] shadow-3xl overflow-hidden flex flex-col max-h-[90dvh] border border-white/20"
-              >
-                <div className="sticky top-0 z-10 px-10 py-8 bg-gradient-to-r from-amber-50 to-amber-100/50 border-b border-amber-100 flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-2xl bg-amber-400 flex items-center justify-center shadow-lg shadow-amber-500/20">
-                      <Crown size={24} className="text-amber-950" />
-                    </div>
-                    <div>
-                      <h3 className="text-xl font-black text-[#1A2B27] tracking-tight">AI 맞춤 프리미엄 솔루션</h3>
-                      <p className="text-[11px] font-black text-amber-600 uppercase tracking-widest mt-0.5">AI Poo Premium Guide</p>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => setShowPremiumModal(false)}
-                    className="w-12 h-12 rounded-full bg-white/80 flex items-center justify-center text-gray-400 hover:text-gray-600 transition-colors shadow-sm"
-                  >
-                    <X size={24} />
-                  </button>
-                </div>
-
-                <div className="flex-1 overflow-y-auto p-10 space-y-8 custom-scrollbar text-left font-['Pretendard']">
-                  <div className="rounded-[32px] bg-emerald-50/50 border border-emerald-100 p-8 shadow-inner">
-                    <div className="flex items-center gap-2 mb-4">
-                      <Sparkles size={18} className="text-emerald-500" />
-                      <span className="text-sm font-black text-emerald-700 uppercase tracking-widest">분석가 조언</span>
-                    </div>
-                    <p className="text-lg font-bold text-emerald-900 leading-relaxed italic">
-                      "{reportData?.solution}"
-                    </p>
-                  </div>
-
-                  <div className="space-y-6">
-                    <div className="flex items-center gap-2 px-2">
-                      <Activity size={20} className="text-amber-500" />
-                      <span className="text-sm font-black text-gray-400 uppercase tracking-widest">상세 분석 데이터</span>
-                    </div>
-                    <div className="bg-gray-50/50 rounded-[32px] border border-gray-100 p-8 shadow-sm overflow-x-auto custom-scrollbar">
-                      <div className="prose prose-emerald max-w-none text-gray-700 font-medium leading-extra-relaxed text-sm md:text-base prose-headings:font-black prose-headings:text-[#1A2B27] prose-p:text-gray-600 prose-li:text-gray-600 prose-strong:text-emerald-700 prose-table:break-keep">
-                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                          {reportData?.premiumSolution || "정밀 분석 결과를 불러오는 중입니다..."}
-                        </ReactMarkdown>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="p-8 rounded-[32px] bg-[#1A2B27] text-white flex items-center justify-between gap-6 shadow-2xl">
-                    <div>
-                      <p className="text-amber-400 font-black text-sm mb-1">PREMIUM Membership Benefit</p>
-                      <p className="text-white/60 text-xs font-bold leading-relaxed">
-                        이 분석은 오직 프리미엄 회원에게만 <br />제공되는 전문적인 건강 가이드입니다.
-                      </p>
-                    </div>
-                    <div className="w-14 h-14 rounded-2xl bg-white/10 flex items-center justify-center shrink-0 border border-white/5">
-                      <CheckCircle2 className="text-amber-400" size={28} />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="p-8 bg-gray-50 border-t border-gray-100 flex gap-3">
-                  <button
-                    onClick={() => setShowPremiumModal(false)}
-                    className="flex-1 py-4 bg-white border border-gray-200 text-gray-400 font-black rounded-2xl hover:bg-gray-100 transition-all shadow-sm"
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.97 }}
+                    onClick={() => setReportOpen(false)}
+                    className="flex-1 py-4 rounded-2xl font-black text-sm"
+                    style={{ background: '#1B4332', color: '#fff' }}
                   >
                     닫기
-                  </button>
-                  <button
-                    onClick={() => setShowPremiumModal(false)}
-                    className="flex-1 py-4 bg-[#1B4332] text-white font-black rounded-2xl shadow-xl shadow-emerald-900/10 hover:shadow-emerald-900/30 transition-all"
-                  >
-                    확인 완료
-                  </button>
+                  </motion.button>
                 </div>
-              </motion.div>
-            </div>
-          )}
-        </AnimatePresence>
-      </motion.div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* 프리미엄 전용 정밀 분석 모달 */}
+      <AnimatePresence>
+        {showPremiumModal && (
+          <div className="fixed inset-0 z-[1000] flex items-center justify-center p-6 md:p-12">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowPremiumModal(false)}
+              className="absolute inset-0 bg-black/70 backdrop-blur-xl"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 40 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="relative w-full max-w-4xl bg-white rounded-[40px] shadow-3xl overflow-hidden flex flex-col max-h-[90dvh] border border-white/20"
+            >
+              <div className="sticky top-0 z-10 px-10 py-8 bg-gradient-to-r from-amber-50 to-amber-100/50 border-b border-amber-100 flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-2xl bg-amber-400 flex items-center justify-center shadow-lg shadow-amber-500/20">
+                    <Crown size={24} className="text-amber-950" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-black text-[#1A2B27] tracking-tight">
+                      AI 맞춤 프리미엄 솔루션
+                    </h3>
+                    <p className="text-[11px] font-black text-amber-600 uppercase tracking-widest mt-0.5">
+                      AI Poo Premium Guide
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowPremiumModal(false)}
+                  className="w-12 h-12 rounded-full bg-white/80 flex items-center justify-center text-gray-400 hover:text-gray-600 transition-colors shadow-sm"
+                >
+                  <X size={24} />
+                </button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto p-10 space-y-8 custom-scrollbar text-left font-['Pretendard']">
+                <div className="rounded-[32px] bg-emerald-50/50 border border-emerald-100 p-8 shadow-inner">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Sparkles size={18} className="text-emerald-500" />
+                    <span className="text-sm font-black text-emerald-700 uppercase tracking-widest">
+                      분석가 조언
+                    </span>
+                  </div>
+                  <p className="text-lg font-bold text-emerald-900 leading-relaxed italic">
+                    "{reportData?.solution}"
+                  </p>
+                </div>
+
+                <div className="space-y-6">
+                  <div className="flex items-center gap-2 px-2">
+                    <Activity size={20} className="text-amber-500" />
+                    <span className="text-sm font-black text-gray-400 uppercase tracking-widest">
+                      상세 분석 데이터
+                    </span>
+                  </div>
+                  <div className="bg-gray-50/50 rounded-[32px] border border-gray-100 p-8 shadow-sm overflow-x-auto custom-scrollbar">
+                    <div className="prose prose-emerald max-w-none text-gray-700 font-medium leading-extra-relaxed text-sm md:text-base prose-headings:font-black prose-headings:text-[#1A2B27] prose-p:text-gray-600 prose-li:text-gray-600 prose-strong:text-emerald-700 prose-table:break-keep">
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                        {reportData?.premiumSolution || '정밀 분석 결과를 불러오는 중입니다...'}
+                      </ReactMarkdown>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-8 rounded-[32px] bg-[#1A2B27] text-white flex items-center justify-between gap-6 shadow-2xl">
+                  <div>
+                    <p className="text-amber-400 font-black text-sm mb-1">
+                      PREMIUM Membership Benefit
+                    </p>
+                    <p className="text-white/60 text-xs font-bold leading-relaxed">
+                      이 분석은 오직 프리미엄 회원에게만 <br />
+                      제공되는 전문적인 건강 가이드입니다.
+                    </p>
+                  </div>
+                  <div className="w-14 h-14 rounded-2xl bg-white/10 flex items-center justify-center shrink-0 border border-white/5">
+                    <CheckCircle2 className="text-amber-400" size={28} />
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-8 bg-gray-50 border-t border-gray-100 flex gap-3">
+                <button
+                  onClick={() => setShowPremiumModal(false)}
+                  className="flex-1 py-4 bg-white border border-gray-200 text-gray-400 font-black rounded-2xl hover:bg-gray-100 transition-all shadow-sm"
+                >
+                  닫기
+                </button>
+                <button
+                  onClick={() => setShowPremiumModal(false)}
+                  className="flex-1 py-4 bg-[#1B4332] text-white font-black rounded-2xl shadow-xl shadow-emerald-900/10 hover:shadow-emerald-900/30 transition-all"
+                >
+                  확인 완료
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+    </motion.div>
   );
 }
 
@@ -2972,6 +3108,7 @@ export function MyPage({ openAuth }: { openAuth: (mode: 'login' | 'signup') => v
   const location = useLocation();
   const { user, loading, refreshUser, isAuthenticated, logout, deleteMe } = useAuth();
   const [records, setRecords] = useState<any[]>([]);
+  const [showHealthLog, setShowHealthLog] = useState(false);
   const [activeTab, setActiveTab] = useState<TabKey>('home');
   const [prevTab, setPrevTab] = useState<TabKey>('home');
   const reportCacheRef = useRef<Record<string, any>>({});
@@ -2979,6 +3116,27 @@ export function MyPage({ openAuth }: { openAuth: (mode: 'login' | 'signup') => v
   const [titles, setTitles] = useState<any[]>([]);
   const [equipped, setEquipped] = useState<AvatarItem | null>(null);
   const [equippedEffect, setEquippedEffect] = useState<AvatarItem | null>(null);
+
+  const handleStandaloneHealthLog = useCallback(
+    async (result: HealthLogResult) => {
+      try {
+        const payload: HealthRecordRequest = {
+          conditionTags: result.conditionTags,
+          dietTags: result.foodTags,
+          ...(result.bristolType !== null && { bristolScale: result.bristolType }),
+          ...(result.color !== null && { color: result.color }),
+        };
+        await api.post('/records', payload);
+        setShowHealthLog(false);
+        await fetchRecords();
+        await refreshUser();
+      } catch (e: any) {
+        alert(`기록 저장 실패: ${e.message || '서버 오류'}`);
+      }
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    },
+    [refreshUser],
+  );
 
   const fetchRecords = useCallback(async () => {
     try {
@@ -3140,7 +3298,10 @@ export function MyPage({ openAuth }: { openAuth: (mode: 'login' | 'signup') => v
       { icon: <Brain size={18} />, text: 'AI 건강 리포트' },
     ];
     return (
-      <div className="min-h-screen relative overflow-hidden flex items-center justify-center" style={{ background: '#f0f7f4' }}>
+      <div
+        className="min-h-screen relative overflow-hidden flex items-center justify-center"
+        style={{ background: '#f0f7f4' }}
+      >
         {/* 배경 floating blobs */}
         {[...Array(6)].map((_, i) => (
           <motion.div
@@ -3158,13 +3319,24 @@ export function MyPage({ openAuth }: { openAuth: (mode: 'login' | 'signup') => v
               x: [0, 10, 0],
               scale: [1, 1.1, 1],
             }}
-            transition={{ duration: 5 + i * 1.2, repeat: Infinity, ease: 'easeInOut', delay: i * 0.8 }}
+            transition={{
+              duration: 5 + i * 1.2,
+              repeat: Infinity,
+              ease: 'easeInOut',
+              delay: i * 0.8,
+            }}
           />
         ))}
 
         {/* 흐릿한 마이페이지 미리보기 */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
-          <div className="w-full h-full opacity-10 blur-sm scale-105" style={{ background: 'repeating-linear-gradient(0deg, #d8f3dc 0px, #d8f3dc 2px, transparent 2px, transparent 40px), repeating-linear-gradient(90deg, #d8f3dc 0px, #d8f3dc 2px, transparent 2px, transparent 40px)' }} />
+          <div
+            className="w-full h-full opacity-10 blur-sm scale-105"
+            style={{
+              background:
+                'repeating-linear-gradient(0deg, #d8f3dc 0px, #d8f3dc 2px, transparent 2px, transparent 40px), repeating-linear-gradient(90deg, #d8f3dc 0px, #d8f3dc 2px, transparent 2px, transparent 40px)',
+            }}
+          />
         </div>
 
         {/* 메인 카드 */}
@@ -3174,14 +3346,27 @@ export function MyPage({ openAuth }: { openAuth: (mode: 'login' | 'signup') => v
           transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
           className="relative z-10 w-full max-w-sm mx-4"
         >
-          <div className="rounded-3xl overflow-hidden shadow-2xl" style={{ background: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(20px)', border: '1px solid rgba(82,183,136,0.2)' }}>
+          <div
+            className="rounded-3xl overflow-hidden shadow-2xl"
+            style={{
+              background: 'rgba(255,255,255,0.85)',
+              backdropFilter: 'blur(20px)',
+              border: '1px solid rgba(82,183,136,0.2)',
+            }}
+          >
             {/* 헤더 그라데이션 */}
-            <div className="relative h-32 flex items-center justify-center overflow-hidden" style={{ background: 'linear-gradient(135deg, #2D6A4F 0%, #52b788 100%)' }}>
+            <div
+              className="relative h-32 flex items-center justify-center overflow-hidden"
+              style={{ background: 'linear-gradient(135deg, #2D6A4F 0%, #52b788 100%)' }}
+            >
               <motion.div
                 className="absolute inset-0 opacity-30"
                 animate={{ backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'] }}
                 transition={{ duration: 8, repeat: Infinity }}
-                style={{ background: 'radial-gradient(circle at 30% 50%, #95d5b2 0%, transparent 60%), radial-gradient(circle at 70% 50%, #1b4332 0%, transparent 60%)' }}
+                style={{
+                  background:
+                    'radial-gradient(circle at 30% 50%, #95d5b2 0%, transparent 60%), radial-gradient(circle at 70% 50%, #1b4332 0%, transparent 60%)',
+                }}
               />
               {/* 자물쇠 아이콘 */}
               <motion.div
@@ -3189,7 +3374,11 @@ export function MyPage({ openAuth }: { openAuth: (mode: 'login' | 'signup') => v
                 animate={{ scale: 1, rotate: 0 }}
                 transition={{ delay: 0.3, type: 'spring', stiffness: 200 }}
                 className="relative z-10 w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg"
-                style={{ background: 'rgba(255,255,255,0.2)', backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.3)' }}
+                style={{
+                  background: 'rgba(255,255,255,0.2)',
+                  backdropFilter: 'blur(10px)',
+                  border: '1px solid rgba(255,255,255,0.3)',
+                }}
               >
                 <Lock size={28} color="white" strokeWidth={2} />
               </motion.div>
@@ -3328,7 +3517,13 @@ export function MyPage({ openAuth }: { openAuth: (mode: 'login' | 'signup') => v
                 onRefreshUser={refreshUser}
               />
             )}
-            {activeTab === 'report' && <ReportTab records={records} reportCacheRef={reportCacheRef} />}
+            {activeTab === 'report' && (
+              <ReportTab
+                records={records}
+                reportCacheRef={reportCacheRef}
+                onAddRecord={() => setShowHealthLog(true)}
+              />
+            )}
             {activeTab === 'settings' && (
               <SettingsTab
                 user={user}
@@ -3340,6 +3535,16 @@ export function MyPage({ openAuth }: { openAuth: (mode: 'login' | 'signup') => v
           </motion.div>
         </AnimatePresence>
       </div>
+
+      {/* 전역 건강 기록 모달 */}
+      <AnimatePresence>
+        {showHealthLog && (
+          <HealthLogModal
+            onClose={() => setShowHealthLog(false)}
+            onComplete={handleStandaloneHealthLog}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }
