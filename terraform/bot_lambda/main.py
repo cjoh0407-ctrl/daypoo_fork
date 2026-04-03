@@ -217,7 +217,7 @@ def lambda_handler(event, context):
         # 5. Toilet Review
         try:
             review_text = get_openai_review(bot_idx)
-            tags = ["CLEAN", "TISSUE"] if "깨끗" in review_text or "좋" in review_text else ["DIRTY", "SMELL"]
+            tags = ["clean", "tissue"] if "깨끗" in review_text or "좋" in review_text else ["dirty", "smell"]
             do_request("POST", f"/toilets/{toilet_id}/reviews", {
                 "rating": random.randint(1, 5),
                 "emojiTags": tags,
