@@ -24,16 +24,15 @@ public class RoleMigrationService implements CommandLineRunner {
   }
 
   /**
-   * ROLE_PRO, ROLE_PREMIUM 역할을 가진 유저들을 ROLE_USER로 일괄 마이그레이션합니다.
-   * 구독 정보는 이미 subscriptions 테이블에 존재하므로 role만 물리적으로 복구합니다.
+   * ROLE_PRO, ROLE_PREMIUM 역할을 가진 유저들을 ROLE_USER로 일괄 마이그레이션합니다. 구독 정보는 이미 subscriptions 테이블에 존재하므로
+   * role만 물리적으로 복구합니다.
    */
   public void migrateLegacyRoles() {
     log.info("Starting role migration: Moving ROLE_PRO/PREMIUM to ROLE_USER...");
 
     List<Role> targetRoles = List.of(Role.ROLE_PRO, Role.ROLE_PREMIUM);
-    List<User> legacyUsers = userRepository.findAll().stream()
-        .filter(u -> targetRoles.contains(u.getRole()))
-        .toList();
+    List<User> legacyUsers =
+        userRepository.findAll().stream().filter(u -> targetRoles.contains(u.getRole())).toList();
 
     if (legacyUsers.isEmpty()) {
       log.info("No legacy roles found. Migration skipped.");
