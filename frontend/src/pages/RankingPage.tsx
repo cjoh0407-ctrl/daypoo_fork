@@ -737,8 +737,7 @@ export function RankingPage({ openAuth }: { openAuth: (mode: 'login' | 'signup')
   }, []);
 
   return (
-    <GridFlipReveal rows={10} cols={12}>
-      <div className="min-h-screen" style={{ background: '#F8FAF9' }}>
+    <div className="min-h-screen" style={{ background: '#F8FAF9' }}>
         <Navbar openAuth={openAuth} />
 
         <div className="relative overflow-hidden" style={{ background: '#F8FAF9' }}>
@@ -1063,7 +1062,6 @@ export function RankingPage({ openAuth }: { openAuth: (mode: 'login' | 'signup')
           <ItemPopup user={selectedUser} onClose={() => setSelectedUser(null)} openAuth={openAuth} />
         )}
         <Footer />
-      </div>
-    </GridFlipReveal>
+    </div>
   );
 }

@@ -14,12 +14,14 @@ import { useAuth } from '../context/AuthContext';
 import { api } from '../services/apiClient';
 import { CreateRecordRequest } from '../types/api';
 import { motion, AnimatePresence, useReducedMotion, Variants } from "framer-motion";
+import { useTransitionContext } from '../context/TransitionContext';
 
 export function MainPage({ openAuth }: { openAuth: (mode: 'login' | 'signup') => void }) {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [showHealthLog, setShowHealthLog] = useState(false);
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
+  const { transitionTo } = useTransitionContext();
 
   const handleRecordClick = useCallback(() => {
     if (!isAuthenticated) {

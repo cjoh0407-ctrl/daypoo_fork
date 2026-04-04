@@ -104,6 +104,23 @@ export function HeroSection({ onCtaClick, openAuth }: HeroSectionProps) {
     return () => clearInterval(interval);
   }, []);
 
+  const [messageIndex, setMessageIndex] = useState(0);
+  const messages = [
+    toiletsLoading ? '데이터 동기화 중...' : `근처에서 가장 청결한 ${toilets.length}개의 화장실 발견`,
+    'AI가 분석한 오늘의 최적 쾌변 장소 추천',
+    '실시간으로 업데이트되는 깨끗한 한 칸 찾기',
+    '지금 내 주변 평점 높은 화장실 리스트',
+    '급할 때 가장 빠르게 가는 비밀 장소 공개',
+    '데이터로 확인하는 안심 화장실 네트워크'
+  ];
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setMessageIndex((prev) => (prev + 1) % messages.length);
+    }, 4000);
+    return () => clearInterval(timer);
+  }, [messages.length]);
+
   return (
     <>
       <section className="relative min-h-screen flex items-center justify-center bg-[#111E18] overflow-hidden px-4 sm:px-8 pt-24 pb-16 sm:pt-32 sm:pb-32">
@@ -286,16 +303,27 @@ export function HeroSection({ onCtaClick, openAuth }: HeroSectionProps) {
                 <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 group-hover:scale-110 transition-transform">
                   <MapPin size={28} />
                 </div>
-                <div className="flex-1 space-y-1">
+                <div className="flex-1 space-y-1 min-w-0">
                   <div className="text-sm font-black text-white flex items-center gap-2">
                     {locationName}
                     <m.span animate={{ opacity: [0, 1, 0] }} transition={{ duration: 2, repeat: Infinity }} className="text-emerald-400 text-[10px]">CURRENT</m.span>
                   </div>
-                  <div className="text-[11px] text-slate-500 font-medium">
-                    {toiletsLoading ? '데이터 동기화 중...' : `근처에서 가장 청결한 ${toilets.length}개의 화장실 발견`}
+                  <div className="relative h-6 overflow-hidden">
+                    <AnimatePresence mode="wait">
+                      <m.div
+                        key={messageIndex}
+                        initial={{ y: 15, opacity: 0 }}
+                        animate={{ y: 0, opacity: 1 }}
+                        exit={{ y: -15, opacity: 0 }}
+                        transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+                        className="text-[13px] text-slate-400 font-bold whitespace-nowrap absolute inset-0 flex items-center"
+                      >
+                        {messages[messageIndex]}
+                      </m.div>
+                    </AnimatePresence>
                   </div>
                 </div>
-                <div className="w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-500 opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0 transition-all">
+                <div className="w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-500 flex-shrink-0 transition-all duration-300 group-hover:scale-110">
                   <ChevronRight size={18} />
                 </div>
               </div>

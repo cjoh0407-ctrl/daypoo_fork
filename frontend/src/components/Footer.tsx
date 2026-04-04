@@ -30,12 +30,6 @@ export function Footer() {
   const { transitionTo } = useTransitionContext();
 
   const handleLinkClick = (e: React.MouseEvent, to: string) => {
-    if (to === '/ranking') {
-      e.preventDefault();
-      transitionTo(to);
-      return;
-    }
-
     if (to.includes('#')) {
       const [path, hash] = to.split('#');
       if (window.location.pathname === path || (path === '/main' && window.location.pathname === '/')) {
@@ -44,7 +38,14 @@ export function Footer() {
         if (element) {
           element.scrollIntoView({ behavior: 'smooth' });
         }
+        return;
       }
+    }
+
+    // Only ranking uses transition
+    if (to === '/ranking') {
+      e.preventDefault();
+      transitionTo(to);
     }
   };
 
