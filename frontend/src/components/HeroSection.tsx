@@ -252,12 +252,11 @@ export function HeroSection({ onCtaClick, openAuth }: HeroSectionProps) {
                         width: dot.size,
                         height: dot.size,
                         top: `${FLOW_LANES[dot.lane]}%`,
-                        left: 0,
                         background: '#34d399',
-                        willChange: 'transform, opacity',
+                        willChange: 'left, opacity',
                       }}
                       animate={{ 
-                        x: ['-10%', '110%'],
+                        left: ['0%', '100%'],
                         opacity: [0, 1, 1, 0],
                       }}
                       transition={{

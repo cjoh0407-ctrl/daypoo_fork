@@ -11,7 +11,7 @@ interface ToiletSearchBarProps {
 
 export function ToiletSearchBar({ searchQuery, onSearchChange, filter, onFilterChange }: ToiletSearchBarProps) {
   return (
-    <div className="absolute top-[80px] md:top-[100px] left-1/2 -translate-x-1/2 z-20 w-full px-4" style={{ maxWidth: '600px' }}>
+    <div className="absolute top-[110px] md:top-[130px] left-1/2 -translate-x-1/2 z-20 w-full px-4" style={{ maxWidth: '600px' }}>
       <div className="flex items-center gap-2 px-4 py-2.5 rounded-2xl" style={{ border: '1.5px solid transparent', background: '#fff', boxShadow: '0 4px 24px rgba(27,67,50,0.15)' }}>
         <SearchIcon size={16} style={{ color: '#7a9e8a' }} />
         <input
