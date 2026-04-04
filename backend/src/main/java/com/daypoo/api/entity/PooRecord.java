@@ -22,7 +22,7 @@ public class PooRecord extends BaseTimeEntity {
   private User user;
 
   @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "toilet_id", nullable = false)
+  @JoinColumn(name = "toilet_id", nullable = true)
   private Toilet toilet;
 
   @Column(name = "bristol_scale", nullable = false)

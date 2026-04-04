@@ -69,21 +69,29 @@ public class ShopService {
   }
 
   /** 아이템 구매 */
+  @Transactional
   public void purchaseItem(User user, Long itemId) {
+    // H3: 동시성 이슈 해결을 위해 비관적 락으로 유저 정보 재조회
+    User lockedUser =
+        userRepository
+            .findByIdForUpdate(user.getId())
+            .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
     Item item =
         itemRepository
             .findById(itemId)
             .orElseThrow(() -> new BusinessException(ErrorCode.ITEM_NOT_FOUND));
 
-    if (inventoryRepository.existsByUserAndItemId(user, itemId)) {
+    if (inventoryRepository.existsByUserAndItemId(lockedUser, itemId)) {
       throw new BusinessException(ErrorCode.ALREADY_OWNED_ITEM);
     }
 
-    user.deductPoints(item.getEffectivePrice());
-    // userRepository.save(user); // 더티 체킹에 의해 자동 반영됨
+    lockedUser.deductPoints(item.getEffectivePrice());
+    userRepository.save(lockedUser);
 
     try {
-      Inventory inventory = Inventory.builder().user(user).item(item).isEquipped(false).build();
+      Inventory inventory =
+          Inventory.builder().user(lockedUser).item(item).isEquipped(false).build();
       inventoryRepository.save(inventory);
       inventoryRepository.flush(); // 즉시 쿼리 실행하여 유니크 제약 위배 확인
     } catch (org.springframework.dao.DataIntegrityViolationException e) {
@@ -114,10 +122,11 @@ public class ShopService {
     Inventory inventory =
         inventoryRepository
             .findById(inventoryId)
-            .orElseThrow(() -> new IllegalArgumentException("인벤토리에 존재하지 않는 아이템입니다."));
+            .orElseThrow(() -> new BusinessException(ErrorCode.ITEM_NOT_FOUND));
 
     if (!inventory.getUser().getId().equals(user.getId())) {
-      throw new SecurityException("본인의 아이템만 장착할 수 있습니다.");
+      // H6: SecurityException 대신 글로벌 핸들러가 처리 가능한 BusinessException 사용
+      throw new BusinessException(ErrorCode.HANDLE_ACCESS_DENIED);
     }
 
     // 같은 타입의 다른 장착된 아이템이 있다면 해제 (아바타/마커 스킨은 하나만 장착 가능)

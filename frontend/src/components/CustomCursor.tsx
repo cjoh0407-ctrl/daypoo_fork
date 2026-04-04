@@ -14,6 +14,8 @@ export function CustomCursor() {
   const { position, isMobile } = useCursorPosition();
   const [ringPos, setRingPos] = useState({ x: 0, y: 0 });
   const lastPosRef = useRef({ x: 0, y: 0 });
+  const positionRef = useRef(position);
+  const isMagneticRef = useRef(false);
   const requestRef = useRef<number | null>(null);
 
   const [ripples, setRipples] = useState<Ripple[]>([]);
@@ -22,10 +24,18 @@ export function CustomCursor() {
   const [isMagnetic, setIsMagnetic] = useState(false);
 
   useEffect(() => {
+    positionRef.current = position;
+  }, [position]);
+
+  useEffect(() => {
+    isMagneticRef.current = isMagnetic;
+  }, [isMagnetic]);
+
+  useEffect(() => {
     const animate = () => {
-      const t = isMagnetic ? 0.5 : 0.35;
-      const nextX = lerp(lastPosRef.current.x, position.x, t);
-      const nextY = lerp(lastPosRef.current.y, position.y, t);
+      const t = isMagneticRef.current ? 0.5 : 0.35;
+      const nextX = lerp(lastPosRef.current.x, positionRef.current.x, t);
+      const nextY = lerp(lastPosRef.current.y, positionRef.current.y, t);
       lastPosRef.current = { x: nextX, y: nextY };
       setRingPos({ x: nextX, y: nextY });
       requestRef.current = window.requestAnimationFrame(animate);
@@ -38,7 +48,7 @@ export function CustomCursor() {
         window.cancelAnimationFrame(requestRef.current);
       }
     };
-  }, [position.x, position.y, isMagnetic]);
+  }, []);
 
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
@@ -59,11 +69,8 @@ export function CustomCursor() {
     }
 
     const rect = target.getBoundingClientRect();
-    const mx = position.x;
-    const my = position.y;
-
-    const dx = mx - (rect.left + rect.width / 2);
-    const dy = my - (rect.top + rect.height / 2);
+    const dx = position.x - (rect.left + rect.width / 2);
+    const dy = position.y - (rect.top + rect.height / 2);
     const distance = Math.sqrt(dx * dx + dy * dy);
 
     setIsMagnetic(distance < 120);

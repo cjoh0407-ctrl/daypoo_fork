@@ -541,7 +541,7 @@ public class AdminManagementService {
             .orElseGet(
                 () ->
                     userRepository.findAll().stream()
-                        .filter(u -> u.getRole() == Role.ROLE_USER)
+                        .filter(u -> u.getRole() != Role.ROLE_ADMIN)
                         .findFirst()
                         .orElseThrow(() -> new RuntimeException("테스트 문의를 생성할 유저가 없습니다.")));
 

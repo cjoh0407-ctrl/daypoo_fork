@@ -45,18 +45,19 @@ public class RateLimitAspect {
   }
 
   /**
-   * CloudFront / Nginx 등 리버스 프록시 환경에서 실제 클라이언트 IP를 추출한다. X-Forwarded-For 헤더가 존재하면 첫 번째 값(원본 클라이언트
-   * IP)을 사용하고, 없으면 RemoteAddr를 fallback으로 사용한다.
+   * CloudFront / Nginx 등 리버스 프록시 환경에서 실제 클라이언트 IP를 추출한다. CloudFront-Viewer-Address 헤더가 존재하면 이를 우선
+   * 사용하고(변조 어려움), 그 외에는 Spring의 forward-headers-strategy: native 설정에 의해 신뢰하는 프록시로부터 전달된
+   * getRemoteAddr()을 사용한다.
    */
   private String resolveClientIp(HttpServletRequest request) {
-    String forwarded = request.getHeader("X-Forwarded-For");
-    if (forwarded != null && !forwarded.isBlank()) {
-      return forwarded.split(",")[0].trim();
+    // CloudFront 전용 헤더 (IP:Port 형식)
+    String cfAddress = request.getHeader("CloudFront-Viewer-Address");
+    if (cfAddress != null && !cfAddress.isBlank()) {
+      return cfAddress.split(":")[0];
     }
-    String realIp = request.getHeader("X-Real-IP");
-    if (realIp != null && !realIp.isBlank()) {
-      return realIp.trim();
-    }
+
+    // Spring forward-headers-strategy: native 설정이 되어 있다면
+    // getRemoteAddr()은 이미 실제 클라이언트 IP를 반환함
     return request.getRemoteAddr();
   }
 }

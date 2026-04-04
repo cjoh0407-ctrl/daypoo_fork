@@ -46,7 +46,7 @@ class RankingServiceTest {
     ReflectionTestUtils.setField(testUser, "id", 1L);
     ReflectionTestUtils.setField(testUser, "points", 100L);
 
-    given(redisTemplate.opsForZSet()).willReturn(zSetOperations);
+    lenient().when(redisTemplate.opsForZSet()).thenReturn(zSetOperations);
   }
 
   @Test
@@ -96,7 +96,6 @@ class RankingServiceTest {
     given(userRepository.findAllById(anyList())).willReturn(Arrays.asList(testUser, otherUser));
 
     given(zSetOperations.reverseRank(anyString(), eq("1"))).willReturn(0L);
-    given(zSetOperations.reverseRank(anyString(), eq("2"))).willReturn(1L);
     given(zSetOperations.score(anyString(), eq("1"))).willReturn(100.0);
 
     // when
@@ -107,6 +106,4 @@ class RankingServiceTest {
     assertThat(response.topRankers().get(0).nickname()).isEqualTo("Tester");
     assertThat(response.myRank().rank()).isEqualTo(1);
   }
-
-  // Official DefaultTypedTuple is used above
 }

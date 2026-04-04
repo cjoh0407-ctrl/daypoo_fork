@@ -109,21 +109,18 @@ public class AuthService {
     // Calculate statistics
     Long totalAuthCount = pooRecordRepository.countByUser(user);
 
-    // Calculate unique visited toilets
+    // M7 최적화: N+1 문제 해결을 위해 DISTINCT COUNT 쿼리 사용
+    Long totalVisitCount = pooRecordRepository.countDistinctToiletsByUser(user);
+
+    // Calculate consecutive days - streaks are still calculated from records,
+    // but we limit it to recent records for efficiency if needed.
+    // For now, keeping the logic but using a more efficient query if possible.
     List<com.daypoo.api.entity.PooRecord> records =
         pooRecordRepository
             .findByUserOrderByCreatedAtDesc(
-                user, org.springframework.data.domain.Pageable.unpaged())
+                user, org.springframework.data.domain.PageRequest.of(0, 100))
             .getContent();
-    Long totalVisitCount =
-        records.stream()
-            .map(com.daypoo.api.entity.PooRecord::getToilet)
-            .filter(java.util.Objects::nonNull)
-            .map(com.daypoo.api.entity.Toilet::getId)
-            .distinct()
-            .count();
 
-    // Calculate consecutive days
     Integer consecutiveDays = 0;
     if (!records.isEmpty()) {
       int streak = 1;
@@ -161,6 +158,28 @@ public class AuthService {
         totalVisitCount,
         consecutiveDays,
         equippedAvatarUrl);
+  }
+
+  @Transactional
+  public TokenResponse exchangeCode(String code) {
+    String redisKey = "auth_code:" + code;
+    String value = redisTemplate.opsForValue().get(redisKey);
+
+    if (value == null) {
+      log.warn("Invalid or expired auth code: {}", code);
+      throw new BusinessException(ErrorCode.INVALID_TOKEN);
+    }
+
+    // 일회용이므로 즉시 삭제
+    redisTemplate.delete(redisKey);
+
+    String[] tokens = value.split(":");
+    if (tokens.length != 2) {
+      throw new BusinessException(ErrorCode.INVALID_TOKEN);
+    }
+
+    log.info("Auth code {} successfully exchanged for tokens", code);
+    return TokenResponse.builder().accessToken(tokens[0]).refreshToken(tokens[1]).build();
   }
 
   @Transactional

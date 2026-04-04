@@ -217,7 +217,7 @@ def lambda_handler(event, context):
         # 5. Toilet Review
         try:
             review_text = get_openai_review(bot_idx)
-            tags = ["CLEAN", "TISSUE"] if "깨끗" in review_text or "좋" in review_text else ["DIRTY", "SMELL"]
+            tags = ["clean", "tissue"] if "깨끗" in review_text or "좋" in review_text else ["dirty", "smell"]
             do_request("POST", f"/toilets/{toilet_id}/reviews", {
                 "rating": random.randint(1, 5),
                 "emojiTags": tags,
@@ -239,8 +239,8 @@ def lambda_handler(event, context):
             except Exception:
                 pass
                 
-        # API 과부하 방지 딜레이 (0.1~0.4초 무작위)
-        time.sleep(random.uniform(0.1, 0.4))
+        # API 과부하 방지 딜레이 (0.5~1.0초 무작위)
+        time.sleep(random.uniform(0.5, 1.0))
 
     print("AI Mega Simulation Bot Finished Execution")
     return {"statusCode": 200, "body": f"Successfully executed {active_bot_count} bots over Seoul."}

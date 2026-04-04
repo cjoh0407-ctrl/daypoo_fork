@@ -3,7 +3,6 @@ package com.daypoo.api.service;
 import com.daypoo.api.entity.Payment;
 import com.daypoo.api.entity.User;
 import com.daypoo.api.entity.enums.BillingCycle;
-import com.daypoo.api.entity.enums.Role;
 import com.daypoo.api.entity.enums.SubscriptionPlan;
 import com.daypoo.api.global.exception.BusinessException;
 import com.daypoo.api.global.exception.ErrorCode;
@@ -133,13 +132,6 @@ public class PaymentService {
           BillingCycle.MONTHLY, // 기본 월간 구독
           payment);
 
-      // Role 업데이트
-      if (plan == SubscriptionPlan.PRO) {
-        user.updateRole(Role.ROLE_PRO);
-      } else if (plan == SubscriptionPlan.PREMIUM) {
-        user.updateRole(Role.ROLE_PREMIUM);
-      }
-      userService.updateUser(user);
       log.info("✅ Subscription created: userId={}, plan={}", user.getId(), plan);
     } else {
       addPointsToUser(user, amount);

@@ -36,6 +36,7 @@ public class PublicDataSyncService {
   private final PlatformTransactionManager transactionManager;
   private final WebClient webClient;
   private final SystemLogService systemLogService;
+  private final ToiletRepository toiletRepository;
 
   @Value("${public-data.api-key}")
   private String apiKey;
@@ -79,6 +80,7 @@ public class PublicDataSyncService {
     this.transactionManager = transactionManager;
     this.webClient = WebClient.builder().baseUrl(apiUrl).build();
     this.systemLogService = systemLogService;
+    this.toiletRepository = toiletRepository;
   }
 
   /** 매일 새벽 3시에 공공데이터 전체 동기화를 실행합니다. 서버 시작 시에는 toilet 데이터가 없는 경우에만 소규모 동기화를 수행합니다. */
@@ -104,6 +106,20 @@ public class PublicDataSyncService {
     } catch (Exception e) {
       systemLogService.error("System", "Scheduled sync failed: " + e.getMessage());
       log.error("❌ [Scheduled] Daily sync failed: {}", e.getMessage());
+    }
+  }
+
+  /** 앱 기동 시 화장실 데이터가 하나도 없으면 1~50페이지까지 초기 동기화를 수행합니다. */
+  @org.springframework.context.event.EventListener(
+      org.springframework.boot.context.event.ApplicationReadyEvent.class)
+  public void initSyncOnStartup() {
+    long count = toiletRepository.count();
+    if (count == 0) {
+      log.info("ℹ️ DB에 화장실 데이터가 없습니다. 초기 동기화를 시작합니다 (1-100페이지)...");
+      systemLogService.info("System", "Initial toilet sync triggered on startup (DB empty)");
+      syncAllToiletsAsync(1, 100);
+    } else {
+      log.info("✅ DB에 {}개의 화장실 데이터가 존재합니다. 초기 동기화를 스킵합니다.", count);
     }
   }
 

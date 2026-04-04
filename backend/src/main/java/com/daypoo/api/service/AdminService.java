@@ -11,6 +11,7 @@ import com.daypoo.api.entity.enums.InquiryStatus;
 import com.daypoo.api.entity.enums.Role;
 import com.daypoo.api.repository.InquiryRepository;
 import com.daypoo.api.repository.PaymentRepository;
+import com.daypoo.api.repository.SubscriptionRepository;
 import com.daypoo.api.repository.ToiletRepository;
 import com.daypoo.api.repository.UserRepository;
 import java.time.LocalDate;
@@ -33,6 +34,7 @@ public class AdminService {
   private final ToiletRepository toiletRepository;
   private final InquiryRepository inquiryRepository;
   private final PaymentRepository paymentRepository;
+  private final SubscriptionRepository subscriptionRepository;
   private final SystemLogService systemLogService;
 
   @Transactional(readOnly = true)
@@ -45,8 +47,7 @@ public class AdminService {
     long totalRevenue = paymentRepository.findAll().stream().mapToLong(Payment::getAmount).sum();
 
     // 1. 유저 분포 통계 (PRO, BASIC, FREE)
-    // ROLE_PRO, ROLE_PREMIUM -> pro
-    long proUsersCount = userRepository.countByRoleIn(List.of(Role.ROLE_PRO, Role.ROLE_PREMIUM));
+    long proUsersCount = subscriptionRepository.countActiveSubscriptions(LocalDateTime.now());
     long freeUsersCount = allUsers - proUsersCount;
 
     UserDistribution distributionStats =
@@ -123,6 +124,7 @@ public class AdminService {
 
     User user =
         userRepository.findAll().stream()
+            .filter(u -> u.getRole() != Role.ROLE_ADMIN)
             .findFirst()
             .orElseThrow(() -> new RuntimeException("테스트 데이터를 생성할 유저가 없습니다."));
 

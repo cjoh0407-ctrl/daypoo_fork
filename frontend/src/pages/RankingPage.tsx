@@ -312,8 +312,8 @@ const FlipGlassCard = ({
     onClick={() => onSelect(user)}
     className="relative cursor-pointer group"
     style={{
-      width: isFirst ? 'min(190px, 45vw)' : 'min(160px, 40vw)',
-      height: isFirst ? 'min(260px, 62vw)' : 'min(220px, 55vw)',
+      width: isFirst ? 'min(190px, 34vw)' : 'min(160px, 30vw)',
+      height: isFirst ? 'min(260px, 48vw)' : 'min(220px, 42vw)',
       perspective: '1200px',
       zIndex: isHovered ? 50 : isFirst ? 20 : 10 
     }}
@@ -338,7 +338,7 @@ const FlipGlassCard = ({
     >
       {/* ── 앞면 (Front Face) ── */}
       <div 
-        className="absolute inset-0 w-full h-full rounded-[36px] overflow-hidden flex flex-col items-center p-5 pb-6 border border-white/40 shadow-xl"
+        className="absolute inset-0 w-full h-full rounded-[24px] sm:rounded-[36px] overflow-hidden flex flex-col items-center p-3 sm:p-5 pb-4 sm:pb-6 border border-white/40 shadow-xl"
         style={{ 
           backfaceVisibility: 'hidden',
           background: 'rgba(255,255,255,0.22)',
@@ -347,8 +347,8 @@ const FlipGlassCard = ({
       >
         <div className="absolute inset-0 bg-gradient-to-br from-white/30 to-transparent" />
         
-        <div className="relative mb-5 mt-4">
-          <div className="w-20 h-20 rounded-full flex items-center justify-center relative text-4xl bg-white shadow-2xl">
+        <div className="relative mb-3 sm:mb-5 mt-2 sm:mt-4">
+          <div className="w-12 h-12 sm:w-20 sm:h-20 rounded-full flex items-center justify-center relative text-2xl sm:text-4xl bg-white shadow-2xl">
             {user.effectEmoji && <RankAvatarEffect emoji={user.effectEmoji} size={80} />}
             <ConicGlow color={user.titleColor} thickness={4} borderRadius="50%" />
             <div className="absolute inset-[4px] rounded-full bg-white flex items-center justify-center z-10 overflow-hidden">
@@ -362,9 +362,9 @@ const FlipGlassCard = ({
           {isFirst && <div className="absolute -top-5 -right-2 text-amber-500 drop-shadow-lg scale-110"><Crown size={24} /></div>}
         </div>
 
-        <h3 className="font-black text-[#1A2B27] text-[16px] mb-1 truncate w-full text-center">{user.nick}</h3>
-        <p className="font-black text-xl" style={{ color: '#52b788' }}>
-          {user.score.toLocaleString()}<span className="text-[10px] uppercase font-bold text-gray-400 ml-0.5">{user.scoreLabel}</span>
+        <h3 className="font-black text-[#1A2B27] text-[11px] sm:text-[16px] mb-0.5 sm:mb-1 truncate w-full text-center">{user.nick}</h3>
+        <p className="font-black text-sm sm:text-xl" style={{ color: '#52b788' }}>
+          {user.score.toLocaleString()}<span className="text-[8px] sm:text-[10px] uppercase font-bold text-gray-400 ml-0.5">{user.scoreLabel}</span>
         </p>
       </div>
 
@@ -450,7 +450,7 @@ function Podium({ users, onSelect }: { users: RankUser[]; onSelect: (u: RankUser
   };
 
   return (
-    <div className="relative flex flex-col sm:flex-row items-center justify-center gap-6 sm:gap-10 lg:gap-16 mt-8 pt-12 sm:pt-24 pb-16 px-4">
+    <div className="relative flex flex-row items-end justify-center gap-2 sm:gap-10 lg:gap-16 mt-8 pt-12 sm:pt-24 pb-16 px-4">
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] pointer-events-none" style={{ zIndex: 0 }}>
         <motion.div
           animate={{ scale: [1, 1.15, 1], opacity: [0.2, 0.3, 0.2] }}
@@ -880,7 +880,7 @@ export function RankingPage({ openAuth }: { openAuth: (mode: 'login' | 'signup')
                       </motion.div>
 
                       {/* 타이틀 */}
-                      <h3 className="text-2xl sm:text-3xl font-black mb-3 relative z-10"
+                      <h3 className="text-xl sm:text-2xl font-black mb-3 relative z-10 leading-tight text-center"
                         style={{
                           background: 'linear-gradient(135deg, #1B4332 0%, #2D6A4F 50%, #E8A838 100%)',
                           WebkitBackgroundClip: 'text',

@@ -67,11 +67,40 @@ class ApiClient {
       if (response.status === 401 && !endpoint.includes('/auth/login')) {
         const refreshed = await this.tryRefreshToken();
         if (refreshed) {
-          // 리프레시 성공 시 재요청
+          // 리프레시 성공 시 새 토큰으로 재요청
           return this.request<T>(method, endpoint, body, timeout);
         } else {
-          // 리프레시 실패 시 (만료된 리프레시 토큰 등)
+          // 리프레시 실패 시 (만료된 리프레시 토큰 등) 또는 리프레시 토큰이 아예 없을 때
           removeTokens();
+
+          // 이미 Authorization 없이 보냈는데도 401이 났다면 바로 에러 (서버가 무조건 인증 요구하는 경로)
+          if (!headers['Authorization']) {
+            const error = new Error('인증이 필요합니다.') as ApiError;
+            error.code = 'AUTHENTICATION_REQUIRED';
+            error.status = 401;
+            throw error;
+          }
+
+          // 💡 핵심: 토큰이 잘못되었거나 만료되어 401이 났을 때, 토큰 제거 후 게스트 권한으로 한 번 더 시도
+          // 이로 인해 게스트 접근이 가능한 API(예: 화장실 조회)는 중단 없이 정상적으로 로딩됨
+          try {
+            const guestHeaders: Record<string, string> = { ...headers };
+            delete guestHeaders['Authorization'];
+            
+            const guestResponse = await fetch(`${this.baseUrl}${endpoint}`, {
+              method,
+              headers: guestHeaders,
+              body: body ? JSON.stringify(body) : undefined,
+              signal: controller.signal,
+            });
+
+            if (guestResponse.ok) {
+              return await this.parseResponse<T>(guestResponse);
+            }
+          } catch (retryErr) {
+            console.error('Guest fallback retry failed:', retryErr);
+          }
+
           const error = new Error('인증이 만료되었습니다.') as ApiError;
           error.code = 'AUTHENTICATION_REQUIRED';
           error.status = 401;
@@ -79,29 +108,15 @@ class ApiClient {
         }
       }
 
-      const contentType = response.headers.get('content-type');
-      let data: any;
-      if (contentType && contentType.includes('application/json')) {
-        const textData = await response.text();
-        try {
-          data = textData ? JSON.parse(textData) : {};
-        } catch (e) {
-          // JSON 파싱 실패 시 원본 문자열을 그대로 사용 (예: "사용 가능한 이메일입니다.")
-          data = textData;
-        }
-      } else {
-        data = await response.text();
-      }
-
       if (!response.ok) {
+        const data = await this.parseResponse<any>(response);
         const error = new Error(typeof data === 'object' && data.message ? data.message : '요청 처리에 실패했습니다.') as ApiError;
         error.code = typeof data === 'object' ? (data.code || 'UNKNOWN') : 'UNKNOWN';
         error.status = response.status;
         throw error;
       }
 
-      // data가 { data: T, ... } 구조일 경우 data.data 반환, 아니면 data 전체 반환
-      return (data && typeof data === 'object' && 'data' in data) ? data.data : data;
+      return await this.parseResponse<T>(response);
     } catch (err: any) {
       clearTimeout(timeoutId);
 
@@ -124,6 +139,26 @@ class ApiClient {
       throw err;
     }
   }
+
+  private async parseResponse<T>(response: Response): Promise<T> {
+    const contentType = response.headers.get('content-type');
+    let data: any;
+
+    if (contentType && contentType.includes('application/json')) {
+      const textData = await response.text();
+      try {
+        data = textData ? JSON.parse(textData) : {};
+      } catch (e) {
+        data = textData;
+      }
+    } else {
+      data = await response.text();
+    }
+
+    // data가 { data: T, ... } 구조일 경우 data.data 반환, 아니면 data 전체 반환
+    return data && typeof data === 'object' && 'data' in data ? data.data : data;
+  }
+
 
   private async tryRefreshToken(): Promise<boolean> {
     // F3: 뮤텍스 패턴 - 이미 리프레시 중이면 기존 Promise 재사용

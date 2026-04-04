@@ -52,8 +52,6 @@ public class SecurityConfig {
             auth ->
                 auth.requestMatchers(HttpMethod.OPTIONS, "/**")
                     .permitAll()
-                    .requestMatchers("/api/v1/admin/toilets/reindex", "/api/v1/admin/toilets/count")
-                    .permitAll()
                     .requestMatchers("/api/v1/admin/**")
                     .hasRole("ADMIN")
                     .requestMatchers(
@@ -71,7 +69,11 @@ public class SecurityConfig {
                     .permitAll()
                     .requestMatchers("/api/v1/notifications/subscribe")
                     .permitAll()
-                    .requestMatchers(HttpMethod.GET, "/api/v1/toilets/**", "/api/v1/support/faqs")
+                    .requestMatchers(
+                        HttpMethod.GET,
+                        "/api/v1/toilets",
+                        "/api/v1/toilets/**",
+                        "/api/v1/support/faqs")
                     .permitAll()
                     .requestMatchers("/api/v1/support/inquiries", "/api/v1/support/inquiries/**")
                     .authenticated()

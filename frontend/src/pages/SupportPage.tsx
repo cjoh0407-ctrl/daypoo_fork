@@ -1,13 +1,7 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import type React from 'react';
-import {
-  motion,
-  AnimatePresence,
-  useInView,
-  useMotionValue,
-  useSpring,
-} from 'framer-motion';
+import { motion, AnimatePresence, useInView, useMotionValue, useSpring } from 'framer-motion';
 import { Navbar } from '../components/Navbar';
 import { Footer } from '../components/Footer';
 import { WaveDivider } from '../components/WaveDivider';
@@ -128,10 +122,10 @@ const containerVariants = {
 
 const listItemVariants = {
   initial: { opacity: 0, y: 20 },
-  animate: { 
-    opacity: 1, 
-    y: 0, 
-    transition: { type: 'spring' as const, stiffness: 150, damping: 15 } 
+  animate: {
+    opacity: 1,
+    y: 0,
+    transition: { type: 'spring' as const, stiffness: 150, damping: 15 },
   },
 };
 
@@ -164,7 +158,7 @@ function ModernSearch({ value, onChange }: { value: string; onChange: (v: string
   }
 
   return (
-    <div className="relative w-full max-w-2xl mx-auto mb-8">
+    <div className="relative w-full max-w-2xl mx-auto mb-4 sm:mb-8">
       <motion.div
         ref={searchRef}
         onMouseMove={handleMouseMove}
@@ -283,16 +277,12 @@ function TrendyFaqItem({
           boxShadow: isHovered
             ? '0 20px 60px rgba(27, 67, 50, 0.15)'
             : isOpen
-            ? '0 10px 40px rgba(27, 67, 50, 0.1)'
-            : '0 2px 8px rgba(0, 0, 0, 0.04)',
+              ? '0 10px 40px rgba(27, 67, 50, 0.1)'
+              : '0 2px 8px rgba(0, 0, 0, 0.04)',
         }}
         transition={{ type: 'spring', stiffness: 300, damping: 30 }}
         className={`relative z-10 bg-white rounded-[26px] border overflow-hidden ${
-          isOpen
-            ? 'border-[#52B788]/40'
-            : isHovered
-            ? 'border-[#52B788]/20'
-            : 'border-black/[0.04]'
+          isOpen ? 'border-[#52B788]/40' : isHovered ? 'border-[#52B788]/20' : 'border-black/[0.04]'
         }`}
       >
         <button
@@ -304,7 +294,9 @@ function TrendyFaqItem({
           >
             <Hash size={14} className={isOpen ? 'opacity-100' : 'opacity-40'} />
           </div>
-          <span className={`flex-1 text-[14px] sm:text-[16px] font-bold ${isOpen ? 'text-[#1B4332]' : 'text-[#1A2B27]'}`}>
+          <span
+            className={`flex-1 text-[14px] sm:text-[16px] font-bold ${isOpen ? 'text-[#1B4332]' : 'text-[#1A2B27]'}`}
+          >
             {item.q}
           </span>
           <motion.div
@@ -382,7 +374,9 @@ function ModernInquiryForm({ onSuccess }: { onSuccess: () => void }) {
 
         <form onSubmit={submit} className="space-y-10">
           <div className="space-y-4">
-            <label className="text-[12px] font-black text-[#5C6B68]/50 uppercase tracking-[0.2em] ml-2">문의 유형</label>
+            <label className="text-[12px] font-black text-[#5C6B68]/50 uppercase tracking-[0.2em] ml-2">
+              문의 유형
+            </label>
             <div className="flex flex-wrap gap-2.5">
               {CATEGORY_OPTIONS.map((cat) => (
                 <button
@@ -398,7 +392,9 @@ function ModernInquiryForm({ onSuccess }: { onSuccess: () => void }) {
           </div>
 
           <div className="space-y-4">
-            <label className="text-[12px] font-black text-[#5C6B68]/50 uppercase tracking-[0.2em] ml-2">문의 제목</label>
+            <label className="text-[12px] font-black text-[#5C6B68]/50 uppercase tracking-[0.2em] ml-2">
+              문의 제목
+            </label>
             <input
               type="text"
               value={formData.title}
@@ -409,7 +405,9 @@ function ModernInquiryForm({ onSuccess }: { onSuccess: () => void }) {
           </div>
 
           <div className="space-y-4">
-            <label className="text-[12px] font-black text-[#5C6B68]/50 uppercase tracking-[0.2em] ml-2">내용</label>
+            <label className="text-[12px] font-black text-[#5C6B68]/50 uppercase tracking-[0.2em] ml-2">
+              내용
+            </label>
             <textarea
               value={formData.content}
               onChange={(e) => setFormData((prev) => ({ ...prev, content: e.target.value }))}
@@ -418,7 +416,9 @@ function ModernInquiryForm({ onSuccess }: { onSuccess: () => void }) {
               className="w-full bg-[#f8faf9] border border-black/[0.04] rounded-[24px] sm:rounded-[30px] p-5 sm:p-7 text-[15px] sm:text-[17px] font-bold text-[#1A2B27] outline-none focus:border-[#52B788]/50 focus:bg-white transition-all shadow-inner resize-none"
             />
             <div className="flex justify-between items-center px-2 text-[12px] font-bold">
-              <span className={formData.content.length < 10 ? 'text-red-400' : 'text-[#52B788]'}>{formData.content.length}자</span>
+              <span className={formData.content.length < 10 ? 'text-red-400' : 'text-[#52B788]'}>
+                {formData.content.length}자
+              </span>
               <span className="text-[#5C6B68]/30">평일 기준 24시간 내 순차적 답변</span>
             </div>
           </div>
@@ -431,7 +431,13 @@ function ModernInquiryForm({ onSuccess }: { onSuccess: () => void }) {
             disabled={loading || !formData.title || formData.content.length < 10}
             className={`w-full py-6 rounded-3xl font-black text-[19px] shadow-2xl flex items-center justify-center gap-4 transition-all ${loading || !formData.title || formData.content.length < 10 ? 'bg-[#f4f9f6] text-[#5C6B68]/30 cursor-not-allowed' : 'bg-[#1B4332] text-white hover:bg-[#2D6A4F] shadow-emerald-900/10'}`}
           >
-            {loading ? <div className="w-6 h-6 border-3 border-white/30 border-t-white rounded-full animate-spin" /> : <><Send size={24} /> 문의 보내기</>}
+            {loading ? (
+              <div className="w-6 h-6 border-3 border-white/30 border-t-white rounded-full animate-spin" />
+            ) : (
+              <>
+                <Send size={24} /> 문의 보내기
+              </>
+            )}
           </motion.button>
         </form>
       </div>
@@ -476,7 +482,7 @@ function ModernHistory() {
     if (!window.confirm('정말 이 문의를 삭제(취소)하시겠습니까?')) return;
     try {
       await api.delete(`/support/inquiries/${id}`);
-      setInquiries(prev => prev.filter(inq => inq.id !== id));
+      setInquiries((prev) => prev.filter((inq) => inq.id !== id));
     } catch (err) {
       alert('삭제 중 오류가 발생했습니다.');
     }
@@ -487,14 +493,29 @@ function ModernHistory() {
     fetchInquiries();
   };
 
-  if (loading) return <div className="py-20 text-center flex flex-col items-center gap-4"><div className="w-12 h-12 border-4 border-[#52B788]/20 border-t-[#52B788] rounded-full animate-spin" /><p className="text-sm font-black text-[#5C6B68]/30 tracking-widest uppercase">Fetching Data...</p></div>;
+  if (loading)
+    return (
+      <div className="py-20 text-center flex flex-col items-center gap-4">
+        <div className="w-12 h-12 border-4 border-[#52B788]/20 border-t-[#52B788] rounded-full animate-spin" />
+        <p className="text-sm font-black text-[#5C6B68]/30 tracking-widest uppercase">
+          Fetching Data...
+        </p>
+      </div>
+    );
 
   return (
     <>
-      <motion.div variants={containerVariants} initial="initial" animate="animate" className="grid gap-6 max-w-3xl mx-auto">
+      <motion.div
+        variants={containerVariants}
+        initial="initial"
+        animate="animate"
+        className="grid gap-6 max-w-3xl mx-auto"
+      >
         {inquiries.length === 0 ? (
           <div className="py-32 text-center bg-white rounded-[44px] border border-black/[0.02] shadow-sm">
-            <div className="w-24 h-24 bg-[#f4f9f6] rounded-[36px] mx-auto mb-8 flex items-center justify-center text-5xl">📫</div>
+            <div className="w-24 h-24 bg-[#f4f9f6] rounded-[36px] mx-auto mb-8 flex items-center justify-center text-5xl">
+              📫
+            </div>
             <p className="text-[#5C6B68]/40 text-lg font-black">아직 등록된 문의 내역이 없어요</p>
           </div>
         ) : (
@@ -506,20 +527,26 @@ function ModernHistory() {
             >
               <div className="flex justify-between items-start mb-6">
                 <div className="flex items-center gap-3">
-                  <span className={`px-5 py-2 rounded-xl text-[11px] font-black uppercase tracking-wider ${inq.status === '답변 완료' ? 'bg-[#52B788]/10 text-[#2D6A4F]' : 'bg-[#E8A838]/10 text-[#B5810F]'}`}>{inq.status}</span>
-                  <span className="text-[13px] font-bold text-[#5C6B68]/30">{formatInquiryDate(inq.createdAt)}</span>
+                  <span
+                    className={`px-5 py-2 rounded-xl text-[11px] font-black uppercase tracking-wider ${inq.status === '답변 완료' ? 'bg-[#52B788]/10 text-[#2D6A4F]' : 'bg-[#E8A838]/10 text-[#B5810F]'}`}
+                  >
+                    {inq.status}
+                  </span>
+                  <span className="text-[13px] font-bold text-[#5C6B68]/30">
+                    {formatInquiryDate(inq.createdAt)}
+                  </span>
                 </div>
-                
+
                 {inq.status === '답변 대기' && (
                   <div className="flex items-center gap-2">
-                    <button 
+                    <button
                       onClick={() => setEditingInquiry(inq)}
                       className="p-2 text-[#5C6B68]/30 hover:text-[#52B788] hover:bg-[#52B788]/5 rounded-lg transition-all"
                       title="수정"
                     >
                       <Edit3 size={18} />
                     </button>
-                    <button 
+                    <button
                       onClick={() => handleDelete(inq.id)}
                       className="p-2 text-[#5C6B68]/30 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
                       title="삭제"
@@ -529,14 +556,24 @@ function ModernHistory() {
                   </div>
                 )}
               </div>
-              
-              <h3 className="text-[18px] sm:text-[22px] font-black text-[#1A2B27] mb-4 group-hover:text-[#52B788] transition-colors">{inq.title}</h3>
-              <p className="text-[16px] text-[#5C6B68]/70 line-clamp-2 leading-relaxed font-medium whitespace-pre-wrap">{inq.content}</p>
-              
+
+              <h3 className="text-[18px] sm:text-[22px] font-black text-[#1A2B27] mb-4 group-hover:text-[#52B788] transition-colors">
+                {inq.title}
+              </h3>
+              <p className="text-[16px] text-[#5C6B68]/70 line-clamp-2 leading-relaxed font-medium whitespace-pre-wrap">
+                {inq.content}
+              </p>
+
               {inq.answer && (
                 <div className="mt-10 pt-8 border-t border-black/[0.03] flex items-start gap-6">
-                  <div className="w-12 h-12 rounded-2xl bg-[#1B4332] flex items-center justify-center text-white shrink-0 shadow-lg"><Sparkles size={22} /></div>
-                  <div className="flex-1 bg-[#f4f9f6] p-7 rounded-[32px]"><p className="text-[16px] font-bold text-[#1B4332] leading-relaxed">" {inq.answer} "</p></div>
+                  <div className="w-12 h-12 rounded-2xl bg-[#1B4332] flex items-center justify-center text-white shrink-0 shadow-lg">
+                    <Sparkles size={22} />
+                  </div>
+                  <div className="flex-1 bg-[#f4f9f6] p-7 rounded-[32px]">
+                    <p className="text-[16px] font-bold text-[#1B4332] leading-relaxed">
+                      " {inq.answer} "
+                    </p>
+                  </div>
                 </div>
               )}
             </motion.div>
@@ -564,15 +601,19 @@ function ModernHistory() {
               <div className="p-8 sm:p-12">
                 <div className="flex justify-between items-center mb-10">
                   <h3 className="text-[26px] font-black text-[#1A2B27]">문의 내용 수정</h3>
-                  <button 
+                  <button
                     onClick={() => setEditingInquiry(null)}
                     className="w-10 h-10 flex items-center justify-center bg-black/5 rounded-full hover:bg-black/10 transition-colors"
                   >
                     <ChevronDown size={24} className="rotate-180" />
                   </button>
                 </div>
-                
-                <EditInquiryForm inq={editingInquiry} onCancel={() => setEditingInquiry(null)} onSuccess={handleEditSuccess} />
+
+                <EditInquiryForm
+                  inq={editingInquiry}
+                  onCancel={() => setEditingInquiry(null)}
+                  onSuccess={handleEditSuccess}
+                />
               </div>
             </motion.div>
           </div>
@@ -583,7 +624,15 @@ function ModernHistory() {
 }
 
 // ── 문의 수정 폼 ───────────────────────────────────────────────────
-function EditInquiryForm({ inq, onCancel, onSuccess }: { inq: Inquiry, onCancel: () => void, onSuccess: () => void }) {
+function EditInquiryForm({
+  inq,
+  onCancel,
+  onSuccess,
+}: {
+  inq: Inquiry;
+  onCancel: () => void;
+  onSuccess: () => void;
+}) {
   const [formData, setFormData] = useState({
     category: inq.category,
     title: inq.title,
@@ -611,7 +660,9 @@ function EditInquiryForm({ inq, onCancel, onSuccess }: { inq: Inquiry, onCancel:
   return (
     <form onSubmit={submit} className="space-y-8">
       <div className="space-y-3">
-        <label className="text-[11px] font-black text-[#5C6B68]/40 uppercase tracking-[0.2em] ml-2">문의 유형</label>
+        <label className="text-[11px] font-black text-[#5C6B68]/40 uppercase tracking-[0.2em] ml-2">
+          문의 유형
+        </label>
         <div className="flex flex-wrap gap-2">
           {CATEGORY_OPTIONS.map((cat) => (
             <button
@@ -627,7 +678,9 @@ function EditInquiryForm({ inq, onCancel, onSuccess }: { inq: Inquiry, onCancel:
       </div>
 
       <div className="space-y-3">
-        <label className="text-[11px] font-black text-[#5C6B68]/40 uppercase tracking-[0.2em] ml-2">문의 제목</label>
+        <label className="text-[11px] font-black text-[#5C6B68]/40 uppercase tracking-[0.2em] ml-2">
+          문의 제목
+        </label>
         <input
           type="text"
           value={formData.title}
@@ -637,7 +690,9 @@ function EditInquiryForm({ inq, onCancel, onSuccess }: { inq: Inquiry, onCancel:
       </div>
 
       <div className="space-y-3">
-        <label className="text-[11px] font-black text-[#5C6B68]/40 uppercase tracking-[0.2em] ml-2">내용</label>
+        <label className="text-[11px] font-black text-[#5C6B68]/40 uppercase tracking-[0.2em] ml-2">
+          내용
+        </label>
         <textarea
           value={formData.content}
           onChange={(e) => setFormData((prev) => ({ ...prev, content: e.target.value }))}
@@ -661,7 +716,11 @@ function EditInquiryForm({ inq, onCancel, onSuccess }: { inq: Inquiry, onCancel:
           disabled={loading || !formData.title || formData.content.length < 10}
           className={`flex-[2] py-5 rounded-3xl font-black text-[17px] shadow-xl flex items-center justify-center gap-2 transition-all ${loading || !formData.title || formData.content.length < 10 ? 'bg-black/5 text-black/20' : 'bg-[#1B4332] text-white hover:bg-[#2D6A4F]'}`}
         >
-          {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : '수정 완료'}
+          {loading ? (
+            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+          ) : (
+            '수정 완료'
+          )}
         </button>
       </div>
     </form>
@@ -669,7 +728,11 @@ function EditInquiryForm({ inq, onCancel, onSuccess }: { inq: Inquiry, onCancel:
 }
 
 // ── 메인 페이지 ───────────────────────────────────────────────────────
-export function SupportPage({ openAuth }: { openAuth: (mode: 'login' | 'signup', callback?: () => void) => void; }) {
+export function SupportPage({
+  openAuth,
+}: {
+  openAuth: (mode: 'login' | 'signup', callback?: () => void) => void;
+}) {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const initialTab = (searchParams.get('tab') as SupportTab) || 'faq';
@@ -681,15 +744,20 @@ export function SupportPage({ openAuth }: { openAuth: (mode: 'login' | 'signup',
   const [faqData, setFaqData] = useState<FaqItem[]>(FALLBACK_FAQ);
 
   useEffect(() => {
-    api.get<FaqItem[]>('/support/faqs')
-      .then((data) => { if (Array.isArray(data) && data.length > 0) setFaqData(data); })
+    api
+      .get<FaqItem[]>('/support/faqs')
+      .then((data) => {
+        if (Array.isArray(data) && data.length > 0) setFaqData(data);
+      })
       .catch((err) => console.warn('Using fallback FAQs:', err));
   }, []);
 
   const filteredFaqs = useMemo(() => {
     return faqData.filter((item) => {
       const matchesCategory = activeCategory === '전체' || item.category === activeCategory;
-      const matchesSearch = item.q.toLowerCase().includes(searchQuery.toLowerCase()) || item.a.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesSearch =
+        item.q.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.a.toLowerCase().includes(searchQuery.toLowerCase());
       return matchesCategory && matchesSearch;
     });
   }, [faqData, activeCategory, searchQuery]);
@@ -698,7 +766,10 @@ export function SupportPage({ openAuth }: { openAuth: (mode: 'login' | 'signup',
     if (k !== 'faq') {
       const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken');
       if (!token) {
-        openAuth?.('login', () => { setActiveTab(k); setSearchParams({ tab: k }); });
+        openAuth?.('login', () => {
+          setActiveTab(k);
+          setSearchParams({ tab: k });
+        });
         return;
       }
     }
@@ -711,18 +782,47 @@ export function SupportPage({ openAuth }: { openAuth: (mode: 'login' | 'signup',
       <Navbar openAuth={openAuth} />
 
       {/* Hero Section */}
-      <section className="relative pt-[120px] sm:pt-[180px] pb-[60px] sm:pb-[80px] px-4 sm:px-6 overflow-hidden bg-[#F8FAF9]">
+      <section className="relative pt-[100px] sm:pt-[180px] pb-[40px] sm:pb-[80px] px-4 sm:px-6 overflow-hidden bg-[#F8FAF9]">
         <div className="absolute top-[-10%] left-[-10%] w-[45%] h-[45%] bg-[#52B788] blur-[140px] rounded-full opacity-[0.1]" />
         <div className="absolute bottom-[-10%] right-[-10%] w-[45%] h-[45%] bg-[#E8A838] blur-[140px] rounded-full opacity-[0.08]" />
 
         <div className="max-w-5xl mx-auto text-center relative z-10">
-          <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} className="inline-flex items-center gap-2.5 px-5 py-2.5 bg-[#1B4332]/5 rounded-full mb-10 border border-[#1B4332]/5">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="inline-flex items-center gap-2.5 px-5 py-2.5 bg-[#1B4332]/5 rounded-full mb-10 border border-[#1B4332]/5"
+          >
             <Sparkles size={14} className="text-[#E8A838]" />
-            <span className="text-[12px] font-black text-[#1B4332] uppercase tracking-[0.25em]">Customer Support</span>
+            <span className="text-[12px] font-black text-[#1B4332] uppercase tracking-[0.25em]">
+              Customer Support
+            </span>
           </motion.div>
 
-          <motion.h1 initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }} className="text-4xl sm:text-6xl md:text-8xl font-black mb-8 sm:mb-12 leading-[1.1] sm:leading-[0.95] tracking-tighter text-[#1A2B27]">
-            우리가 무엇을<br /><span className="text-transparent bg-clip-text bg-gradient-to-r from-[#1B4332] via-[#2D6A4F] to-[#52B788]">도와드릴까요?</span>
+          <motion.h1
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="text-4xl sm:text-7xl md:text-8xl font-black mb-10 sm:mb-16 leading-[1.1] sm:leading-[1] tracking-tighter text-[#1A2B27]"
+          >
+            <div className="overflow-hidden py-2">
+              <motion.span
+                initial={{ y: "100%" }}
+                animate={{ y: 0 }}
+                transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+                className="block"
+              >
+                우리가 무엇을
+              </motion.span>
+            </div>
+            <div className="overflow-hidden py-2 -mt-2">
+              <motion.span
+                initial={{ y: "100%" }}
+                animate={{ y: 0 }}
+                transition={{ duration: 0.8, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+                className="block text-transparent bg-clip-text bg-[length:300%_auto] bg-gradient-to-r from-[#1B4332] via-[#E8A838] to-[#52B788] animate-text-shimmer"
+              >
+                도와드릴까요?
+              </motion.span>
+            </div>
           </motion.h1>
 
           <ModernSearch value={searchQuery} onChange={setSearchQuery} />
@@ -732,36 +832,68 @@ export function SupportPage({ openAuth }: { openAuth: (mode: 'login' | 'signup',
 
       {/* Main Content Area */}
       <main className="relative z-10 bg-white">
-        <div className="max-w-[1240px] mx-auto px-4 sm:px-6 pt-[40px] sm:pt-[60px] pb-[80px] sm:pb-[120px] flex flex-col lg:flex-row gap-8 sm:gap-16">
+        <div className="max-w-[1240px] mx-auto px-4 sm:px-6 pt-4 sm:pt-[60px] pb-[80px] sm:pb-[120px] flex flex-col lg:flex-row gap-8 sm:gap-16">
           <aside className="w-full lg:w-[260px] shrink-0">
-            <div className="sticky top-[120px] space-y-12">
-              <div className="flex flex-col gap-2.5">
+            <div className="sticky top-[120px] space-y-8 lg:space-y-12 max-w-full">
+              <div className="flex flex-wrap lg:flex-col gap-3 pb-2">
                 {[
-                  { id: 'faq' as const, label: '자주 묻는 질문', icon: <MessageSquare size={19} /> },
+                  {
+                    id: 'faq' as const,
+                    label: '자주 묻는 질문',
+                    icon: <MessageSquare size={19} />,
+                  },
                   { id: 'inquiry' as const, label: '1:1 문의하기', icon: <Plus size={19} /> },
-                  { id: 'myinquiry' as const, label: '나의 문의 내역', icon: <FileText size={19} /> },
+                  {
+                    id: 'myinquiry' as const,
+                    label: '나의 문의 내역',
+                    icon: <FileText size={19} />,
+                  },
                 ].map((tab) => (
                   <button
                     key={tab.id}
                     onClick={() => handleTabChange(tab.id)}
-                    className={`flex items-center justify-between group px-4 sm:px-6 py-4 sm:py-5 rounded-[18px] sm:rounded-[22px] transition-all duration-300 relative overflow-hidden ${activeTab === tab.id ? 'bg-[#1B4332] text-white shadow-2xl scale-[1.03]' : 'bg-[#f4f9f6] hover:bg-[#eaf4ee] text-[#5C6B68]'}`}
+                    className={`flex items-center justify-between group px-5 sm:px-6 py-3.5 sm:py-5 rounded-2xl sm:rounded-[22px] transition-all duration-300 relative overflow-visible flex-grow lg:flex-grow-0 ${activeTab === tab.id ? 'bg-[#1B4332] text-white shadow-lg lg:shadow-2xl scale-[1.02]' : 'bg-[#f4f9f6] hover:bg-[#eaf4ee] text-[#5C6B68]'}`}
                   >
-                    <div className="flex items-center gap-4 relative z-10">
-                      <span className={activeTab === tab.id ? 'text-[#52B788]' : 'text-[#5C6B68]/40 group-hover:text-[#52B788]'}>{tab.icon}</span>
-                      <span className="text-[15px] font-black tracking-tight">{tab.label}</span>
+                    <div className="flex items-center gap-2 sm:gap-4 relative z-10">
+                      <span
+                        className={
+                          activeTab === tab.id
+                            ? 'text-[#52B788]'
+                            : 'text-[#5C6B68]/40 group-hover:text-[#52B788]'
+                        }
+                      >
+                        {tab.icon}
+                      </span>
+                      <span className="text-[13px] sm:text-[15px] font-black tracking-tight">
+                        {tab.label}
+                      </span>
                     </div>
-                    <ArrowRight size={16} className={`relative z-10 transition-transform duration-500 ${activeTab === tab.id ? 'translate-x-0 opacity-100' : '-translate-x-6 opacity-0 group-hover:translate-x-0 group-hover:opacity-100'}`} />
+                    <ArrowRight
+                      size={16}
+                      className={`hidden lg:block relative z-10 transition-transform duration-500 ${activeTab === tab.id ? 'translate-x-0 opacity-100' : '-translate-x-6 opacity-0 group-hover:translate-x-0 group-hover:opacity-100'}`}
+                    />
                   </button>
                 ))}
               </div>
 
               <AnimatePresence>
                 {activeTab === 'faq' && (
-                  <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }} className="space-y-5">
-                    <div className="flex items-center gap-2.5 px-3 text-[11px] font-black text-[#5C6B68]/40 uppercase tracking-[0.2em]"><Filter size={13} /> CATEGORIES</div>
-                    <div className="grid grid-cols-2 lg:flex lg:flex-col gap-2 px-1">
+                  <motion.div
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -10 }}
+                    className="space-y-5"
+                  >
+                    <div className="flex items-center gap-2.5 px-3 text-[11px] font-black text-[#5C6B68]/40 uppercase tracking-[0.2em]">
+                      <Filter size={13} /> CATEGORIES
+                    </div>
+                    <div className="flex flex-wrap lg:flex-col gap-2 pb-2 px-1">
                       {CATEGORIES.map((cat) => (
-                        <button key={cat} onClick={() => setActiveCategory(cat)} className={`px-5 py-3 rounded-2xl text-[14px] font-black text-left transition-all ${activeCategory === cat ? 'bg-[#52B788]/15 text-[#1B4332] shadow-sm' : 'bg-transparent text-[#5C6B68]/50 hover:text-[#1A2B27] hover:bg-[#f4f9f6]'}`}>
+                        <button
+                          key={cat}
+                          onClick={() => setActiveCategory(cat)}
+                          className={`px-4 sm:px-5 py-2.5 sm:py-3 rounded-full lg:rounded-2xl text-[12px] sm:text-[14px] font-black text-left transition-all ${activeCategory === cat ? 'bg-[#52B788]/15 text-[#1B4332] shadow-sm' : 'bg-transparent text-[#5C6B68]/50 hover:text-[#1A2B27] hover:bg-[#f4f9f6]'}`}
+                        >
                           {cat}
                         </button>
                       ))}
@@ -773,10 +905,16 @@ export function SupportPage({ openAuth }: { openAuth: (mode: 'login' | 'signup',
               <div className="hidden lg:block bg-gradient-to-br from-[#1B4332] to-[#0A1F17] rounded-[36px] p-8 text-white overflow-hidden relative group shadow-2xl">
                 <div className="absolute -bottom-6 -right-6 w-32 h-32 bg-[#52B788]/20 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-1000" />
                 <div className="relative z-10">
-                  <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center mb-6"><LifeBuoy className="text-[#52B788]" size={24} /></div>
+                  <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center mb-6">
+                    <LifeBuoy className="text-[#52B788]" size={24} />
+                  </div>
                   <h4 className="text-[17px] font-black mb-2">도움이 필요하신가요?</h4>
-                  <p className="text-[13px] text-white/50 leading-relaxed mb-6 font-medium">평일 09:00 - 18:00 운영<br />친밀하고 정확한 상담</p>
-                  <button 
+                  <p className="text-[13px] text-white/50 leading-relaxed mb-6 font-medium">
+                    평일 09:00 - 18:00 운영
+                    <br />
+                    친밀하고 정확한 상담
+                  </p>
+                  <button
                     onClick={() => navigate('/privacy')}
                     className="px-5 py-2.5 rounded-xl bg-[#52B788] text-[#1B4332] text-[12px] font-black hover:bg-white transition-colors duration-300"
                   >
@@ -791,39 +929,78 @@ export function SupportPage({ openAuth }: { openAuth: (mode: 'login' | 'signup',
             {/* 4번 효과: AnimatePresence를 사용한 탭 슬라이드 전환 */}
             <AnimatePresence mode="wait">
               {activeTab === 'faq' && (
-                <motion.div key="faq" variants={containerVariants} initial="initial" animate="animate" exit="exit" className="space-y-6">
+                <motion.div
+                  key="faq"
+                  variants={containerVariants}
+                  initial="initial"
+                  animate="animate"
+                  exit="exit"
+                  className="space-y-6"
+                >
                   <div className="flex items-center gap-4 mb-10 px-2 lg:px-0">
-                    <div className="p-4 bg-[#1B4332]/5 rounded-[22px] text-[#1B4332]"><MessageSquare size={24} /></div>
+                    <div className="p-4 bg-[#1B4332]/5 rounded-[22px] text-[#1B4332]">
+                      <MessageSquare size={24} />
+                    </div>
                     <div>
-                      <h2 className="text-2xl font-black text-[#1A2B27] tracking-tight">{activeCategory}</h2>
-                      <p className="text-[13px] font-bold text-[#5C6B68]/40">{filteredFaqs.length}개의 정제된 답변이 확인되었습니다.</p>
+                      <h2 className="text-2xl font-black text-[#1A2B27] tracking-tight">
+                        {activeCategory}
+                      </h2>
+                      <p className="text-[13px] font-bold text-[#5C6B68]/40">
+                        {filteredFaqs.length}개의 정제된 답변이 확인되었습니다.
+                      </p>
                     </div>
                   </div>
                   <div className="space-y-4">
                     {filteredFaqs.length > 0 ? (
                       filteredFaqs.map((item) => (
-                        <TrendyFaqItem key={item.id} item={item} isOpen={openFaqId === item.id} onToggle={() => setOpenFaqId(openFaqId === item.id ? null : item.id)} />
+                        <TrendyFaqItem
+                          key={item.id}
+                          item={item}
+                          isOpen={openFaqId === item.id}
+                          onToggle={() => setOpenFaqId(openFaqId === item.id ? null : item.id)}
+                        />
                       ))
                     ) : (
-                      <div className="text-center py-24 bg-[#f8faf9]/50 rounded-[44px] border border-black/[0.03]"><div className="text-5xl mb-6">🏜️</div><p className="text-[#5C6B68]/40 font-black text-lg">해당 키워드의 검색 결과가 없습니다</p></div>
+                      <div className="text-center py-24 bg-[#f8faf9]/50 rounded-[44px] border border-black/[0.03]">
+                        <div className="text-5xl mb-6">🏜️</div>
+                        <p className="text-[#5C6B68]/40 font-black text-lg">
+                          해당 키워드의 검색 결과가 없습니다
+                        </p>
+                      </div>
                     )}
                   </div>
                 </motion.div>
               )}
 
               {activeTab === 'inquiry' && (
-                <motion.div key="inquiry" variants={cardVariants} initial="initial" animate="animate" exit="exit">
+                <motion.div
+                  key="inquiry"
+                  variants={cardVariants}
+                  initial="initial"
+                  animate="animate"
+                  exit="exit"
+                >
                   <ModernInquiryForm onSuccess={() => handleTabChange('myinquiry')} />
                 </motion.div>
               )}
 
               {activeTab === 'myinquiry' && (
-                <motion.div key="myinquiry" variants={containerVariants} initial="initial" animate="animate" exit="exit">
+                <motion.div
+                  key="myinquiry"
+                  variants={containerVariants}
+                  initial="initial"
+                  animate="animate"
+                  exit="exit"
+                >
                   <div className="flex items-center gap-4 mb-10">
-                    <div className="p-4 bg-amber-100 rounded-[22px] text-amber-600 shadow-sm"><FileText size={24} /></div>
+                    <div className="p-4 bg-amber-100 rounded-[22px] text-amber-600 shadow-sm">
+                      <FileText size={24} />
+                    </div>
                     <div>
                       <h2 className="text-2xl font-black text-[#1A2B27]">나의 문의 내역</h2>
-                      <p className="text-[13px] font-bold text-[#5C6B68]/40">최근 3개월간의 내역입니다.</p>
+                      <p className="text-[13px] font-bold text-[#5C6B68]/40">
+                        최근 3개월간의 내역입니다.
+                      </p>
                     </div>
                   </div>
                   <ModernHistory />

@@ -27,6 +27,7 @@ services:
       - TOSS_SECRET_KEY=${TOSS_SECRET_KEY}
       - AI_SERVICE_URL=http://ai:8000
       - OPENSEARCH_URL=${OPENSEARCH_URL}
+      - SPRING_MAIN_ALLOW_BEAN_DEFINITION_OVERRIDING=true
     healthcheck:
       test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://localhost:8080/actuator/health"]
       interval: 30s

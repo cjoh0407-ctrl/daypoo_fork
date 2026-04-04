@@ -15,7 +15,8 @@
     "@commitlint/cli": "^20.4.3",
     "@commitlint/config-conventional": "^20.4.3",
     "husky": "^9.1.7",
-    "lint-staged": "^16.3.2"
+    "lint-staged": "^16.3.2",
+    "vite-plugin-pwa": "^1.2.0"
   },
   "lint-staged": {
     "frontend/**/*.{js,jsx,ts,tsx,css}": [

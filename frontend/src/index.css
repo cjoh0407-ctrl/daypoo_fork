@@ -140,3 +140,13 @@ body {
 .prose tr:hover td {
   background: rgba(27, 67, 50, 0.02);
 }
+
+@keyframes text-shimmer {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.animate-text-shimmer {
+  animation: text-shimmer 8s ease-in-out infinite;
+}
