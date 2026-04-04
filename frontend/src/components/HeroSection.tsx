@@ -210,7 +210,7 @@ export function HeroSection({ onCtaClick, openAuth }: HeroSectionProps) {
 
               {/* Data Analysis Pipeline — Completely removed on mobile for zero lag */}
               {!isMobile && (
-                <div className="space-y-5">
+                <div className="hidden md:block space-y-5">
                   <div className="flex justify-between items-center text-[10px] uppercase font-black tracking-widest">
                     <span className="text-slate-500 flex items-center gap-2">
                       <Activity size={12} className="text-emerald-500" /> 실시간 AI 데이터 분석 파이프라인
