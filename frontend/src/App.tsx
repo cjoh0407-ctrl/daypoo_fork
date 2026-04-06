@@ -1,16 +1,12 @@
 import { useState, useCallback, useEffect, lazy, Suspense } from 'react';
-import { BrowserRouter, Route, Routes, Navigate, useLocation } from 'react-router-dom';
+import { BrowserRouter, Route, Routes, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { LazyMotion, m } from 'framer-motion';
 
 // Lazy load all pages
-const SplashPage = lazy(() =>
-  import('./pages/SplashPage').then((m) => ({ default: m.SplashPage })),
-);
-const MainPage = lazy(() => import('./pages/MainPage').then((m) => ({ default: m.MainPage })));
-const MapPage = lazy(() => import('./pages/MapPage').then((m) => ({ default: m.MapPage })));
-const RankingPage = lazy(() =>
-  import('./pages/RankingPage').then((m) => ({ default: m.RankingPage })),
-);
+import { SplashPage } from './pages/SplashPage';
+import { MainPage } from './pages/MainPage';
+import { MapPage } from './pages/MapPage';
+import { RankingPage } from './pages/RankingPage';
 const NotFoundPage = lazy(() =>
   import('./pages/NotFoundPage').then((m) => ({ default: m.NotFoundPage })),
 );
@@ -28,19 +24,14 @@ const SupportPage = lazy(() =>
 const PaymentSuccessPage = lazy(() =>
   import('./pages/PaymentSuccessPage').then((m) => ({ default: m.PaymentSuccessPage })),
 );
-const AuthCallback = lazy(() =>
-  import('./pages/AuthCallback').then((m) => ({ default: m.AuthCallback })),
-);
+import { AuthCallback } from './pages/AuthCallback';
 const AdminPage = lazy(() => import('./pages/AdminPage').then((m) => ({ default: m.AdminPage })));
-const SocialSignupPage = lazy(() =>
-  import('./pages/SocialSignupPage').then((m) => ({ default: m.SocialSignupPage })),
-);
+import { SocialSignupPage } from './pages/SocialSignupPage';
 const PremiumPage = lazy(() =>
   import('./pages/PremiumPage').then((m) => ({ default: m.PremiumPage })),
 );
-const ServerErrorPage = lazy(() =>
-  import('./pages/ServerErrorPage').then((m) => ({ default: m.ServerErrorPage })),
-);
+import { ServerErrorPage } from './pages/ServerErrorPage';
+import { LoadingPage } from './pages/LoadingPage';
 
 import { TransitionProvider } from './context/TransitionContext';
 import { AuthModal } from './components/AuthModal';
@@ -48,6 +39,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { NotificationProvider } from './context/NotificationContext';
 import { NotificationSubscriber } from './components/NotificationSubscriber';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { LocationConsentBanner } from './components/LocationConsentBanner';
 
 // 동적 로드될 Framer Motion 기능들
 const loadFeatures = () => import('./utils/framerFeatures').then((res) => res.default);
@@ -83,11 +75,7 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
   });
 
   if (loading) {
-    return (
-      <div className="h-screen flex items-center justify-center bg-[#f8faf9] text-[#1B4332] font-black tracking-widest text-xl">
-        ADMIN GATEWAY LOADING...
-      </div>
-    );
+    return <LoadingPage />;
   }
 
   const isAdmin =
@@ -145,13 +133,8 @@ function App() {
             <TransitionProvider>
               <NotificationProvider>
                 <NotificationSubscriber />
-                <Suspense
-                  fallback={
-                    <div className="h-screen flex items-center justify-center bg-[#f8faf9]">
-                      <div className="w-10 h-10 border-4 border-[#1B4332] border-t-transparent rounded-full animate-spin"></div>
-                    </div>
-                  }
-                >
+                <LocationConsentBanner />
+                <Suspense fallback={<LoadingPage />}>
                   <Routes>
                     <Route path="/" element={<SplashPage />} />
                     <Route path="/main" element={<MainPage openAuth={openAuth} />} />
@@ -177,6 +160,7 @@ function App() {
                       }
                     />
                     <Route path="/404" element={<NotFoundPage />} />
+                    <Route path="/loading" element={<LoadingPage />} />
                     <Route path="*" element={<NotFoundPage />} />
                   </Routes>
                 </Suspense>

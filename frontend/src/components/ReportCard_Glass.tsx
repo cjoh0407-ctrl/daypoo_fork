@@ -71,37 +71,17 @@ export function ReportCard({ openAuth }: { openAuth: (mode: 'login' | 'signup') 
     >
       {/* 배경 그라데이션 블롭 */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <motion.div
-          style={{ y: y1 }}
-          className="absolute top-1/4 -right-48 w-[500px] h-[500px] rounded-full opacity-15 will-change-transform"
-          animate={{
-            scale: [1, 1.1, 1],
-            rotate: [0, 45, 0],
-          }}
-          transition={{
-            duration: 25,
-            repeat: Infinity,
-            ease: "easeInOut"
-          }}
+        <div
+          className="absolute top-1/4 -right-48 w-[300px] h-[300px] sm:w-[500px] sm:h-[500px] rounded-full opacity-15 will-change-transform"
         >
-          <div className="w-full h-full rounded-full bg-gradient-to-br from-[#2d6a4f] via-[#52b788] to-[#95d5b2] blur-[80px]" />
-        </motion.div>
+          <div className="w-full h-full rounded-full bg-gradient-to-br from-[#2d6a4f] via-[#52b788] to-[#95d5b2] blur-[40px] sm:blur-[80px]" />
+        </div>
 
-        <motion.div
-          style={{ y: y2 }}
-          className="absolute bottom-1/4 -left-48 w-[500px] h-[500px] rounded-full opacity-12 will-change-transform"
-          animate={{
-            scale: [1.1, 1, 1.1],
-            rotate: [0, -45, 0],
-          }}
-          transition={{
-            duration: 30,
-            repeat: Infinity,
-            ease: "easeInOut"
-          }}
+        <div
+          className="absolute bottom-1/4 -left-48 w-[300px] h-[300px] sm:w-[500px] sm:h-[500px] rounded-full opacity-12 will-change-transform"
         >
-          <div className="w-full h-full rounded-full bg-gradient-to-br from-[#1b4332] via-[#2d6a4f] to-[#40916c] blur-[80px]" />
-        </motion.div>
+          <div className="w-full h-full rounded-full bg-gradient-to-br from-[#1b4332] via-[#2d6a4f] to-[#40916c] blur-[40px] sm:blur-[80px]" />
+        </div>
       </div>
 
       <div className="max-w-6xl mx-auto relative z-10">
@@ -155,10 +135,10 @@ export function ReportCard({ openAuth }: { openAuth: (mode: 'login' | 'signup') 
           <div
             className="relative p-5 sm:p-8 md:p-10 rounded-[24px] sm:rounded-[40px] overflow-hidden will-change-transform"
             style={{
-              background: 'rgba(248, 250, 249, 0.7)',
-              backdropFilter: 'blur(16px) saturate(160%)',
+              background: 'rgba(248, 250, 249, 0.85)',
+              backdropFilter: 'blur(8px)',
               border: '1px solid rgba(45, 106, 79, 0.12)',
-              boxShadow: '0 8px 32px 0 rgba(27, 67, 50, 0.1), 0 2px 8px rgba(45, 106, 79, 0.05), inset 0 1px 0 0 rgba(255,255,255,0.5)',
+              boxShadow: '0 8px 32px 0 rgba(27, 67, 50, 0.1)',
             }}
           >
             {/* 네온 보더 */}

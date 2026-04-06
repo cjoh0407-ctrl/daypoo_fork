@@ -560,7 +560,7 @@ const DashboardView = ({
                   />
                   <Tooltip
                     content={<CustomTooltip />}
-                    cursor={{ fill: 'rgba(0,0,0,0.02)', radius: [10, 10, 0, 0] }}
+                    cursor={{ fill: 'rgba(0,0,0,0.02)' }}
                   />
                   <Bar
                     dataKey="sales"

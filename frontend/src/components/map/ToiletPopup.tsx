@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { m, AnimatePresence } from 'framer-motion';
-import { X, Navigation, Star, Clock, Users, MessageCircle, Loader2, MapPin, Target, Sparkles, CheckCircle2, Smile, Wind, ScrollText, VolumeX, Check } from 'lucide-react';
+import { X, Navigation, Star, Clock, Users, MessageCircle, Loader2, MapPin, Target, Sparkles, CheckCircle2, Smile, Wind, ScrollText, VolumeX } from 'lucide-react';
 import WaveButtonComponent from '../WaveButton';
 import { ToiletData, EMOJI_TAG_MAP } from '../../types/toilet';
 import { getReviewSummary, ToiletReviewSummaryResponse } from '../../services/reviewService';
@@ -24,27 +24,17 @@ interface ToiletPopupProps {
   onReviewUpdate: () => void;
 }
 
-// 별점 렌더
 function StarRating({ rating }: { rating: number }) {
   return (
     <div className="flex items-center gap-0.5">
       {[1, 2, 3, 4, 5].map((i) => (
-        <Star
-          key={i}
-          size={16}
-          fill={i <= Math.round(rating) ? '#E8A838' : 'none'}
-          stroke={i <= Math.round(rating) ? '#E8A838' : '#d4e8db'}
-        />
+        <Star key={i} size={16} fill={i <= Math.round(rating) ? '#E8A838' : 'none'} stroke={i <= Math.round(rating) ? '#E8A838' : '#d4e8db'} />
       ))}
-      <span className="ml-1.5 text-sm font-bold" style={{ color: '#1B4332' }}>
-        {rating.toFixed(1)}
-      </span>
+      <span className="ml-1.5 text-sm font-bold" style={{ color: '#1B4332' }}>{rating.toFixed(1)}</span>
     </div>
   );
 }
 
-
-// ── 태그 아이콘 매핑 ──
 const TAG_ICON_MAP: Record<string, React.ReactNode> = {
   clean: <Smile size={12} />,
   smell: <Wind size={12} />,
@@ -54,79 +44,66 @@ const TAG_ICON_MAP: Record<string, React.ReactNode> = {
 };
 
 export function ToiletPopup({ 
-  toilet, 
-  onClose, 
-  onFavoriteToggle, 
-  onVisitRequest, 
-  userPosition, 
-  distanceInMeters,
-  openAuth,
-  onReviewUpdate
+  toilet, onClose, onFavoriteToggle, onVisitRequest, distanceInMeters, openAuth, onReviewUpdate 
 }: ToiletPopupProps) {
   const [reviewSummary, setReviewSummary] = useState<ToiletReviewSummaryResponse | null>(null);
   const [loadingReviews, setLoadingReviews] = useState(true);
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [showReviewListModal, setShowReviewListModal] = useState(false);
-
-  const fetchReviews = async () => {
-    try {
-      setLoadingReviews(true);
-      const summary = await getReviewSummary(Number(toilet.id));
-      setReviewSummary(summary);
-    } catch (error) {
-      console.error('리뷰 요약 조회 실패:', error);
-    } finally {
-      setLoadingReviews(false);
-    }
-  };
+  const [particles, setParticles] = useState<{ id: number; x: number; y: number; rotate: number; scale: number; duration: number; delay: number }[]>([]);
 
   useEffect(() => {
+    const fetchReviews = async () => {
+      try {
+        setLoadingReviews(true);
+        const summary = await getReviewSummary(Number(toilet.id));
+        setReviewSummary(summary);
+      } catch (error) {
+        console.error('리뷰 요약 조회 실패:', error);
+      } finally {
+        setLoadingReviews(false);
+      }
+    };
     fetchReviews();
   }, [toilet.id]);
 
   const handleReviewSuccess = () => {
-    fetchReviews(); // 내부 요약 정보 새로고침
-    onReviewUpdate(); // 부모(MapPage) 데이터 새로고침
+    getReviewSummary(Number(toilet.id)).then(setReviewSummary);
+    onReviewUpdate();
   };
 
-  const handleOpenReviewModal = () => {
-    const isLogged = !!(localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken'));
-    if (!isLogged) {
-      openAuth('login');
-      return;
-    }
+  const triggerBurst = () => {
+    const newParticles = Array.from({ length: 12 }).map((_, i) => ({ // 개수 증가 (8 -> 12)
+      id: Date.now() + i,
+      x: (Math.random() - 0.5) * 180, // 확산 범위 확대
+      y: (Math.random() - 1.2) * 160,  // 높이 가변성 확대
+      rotate: (Math.random() - 0.5) * 720, // 더 역동적인 회전
+      scale: Math.random() * 0.4 + 0.9,
+      duration: 0.8 + Math.random() * 0.7, // 제각각 다른 속도
+      delay: i * 0.02 // 미세한 순차 지연
+    }));
+    setParticles(prev => [...prev, ...newParticles]);
     
-    // 방문 인증 여부 체크
-    if (!toilet.isVisited) {
-      alert('방문 인증 후에만 리뷰를 남길 수 있습니다! \n 💩 인증 범위를 확인해주세요.');
-      return;
-    }
-    
-    setShowReviewModal(true);
+    setTimeout(() => {
+      setParticles(prev => prev.filter(p => !newParticles.find(np => np.id === p.id)));
+    }, 1500); // 제거 시간 연장
   };
 
-  const openKakaoMap = () => {
-    window.open(`https://map.kakao.com/link/to/${encodeURIComponent(toilet.name)},${toilet.lat},${toilet.lng}`, '_blank');
-  };
-  const openNaverMap = () => {
-    window.open(`https://map.naver.com/v5/directions/-/-/-/transit?lng=${toilet.lng}&lat=${toilet.lat}&title=${encodeURIComponent(toilet.name)}`, '_blank');
+  const handleFavoriteClick = () => {
+    onFavoriteToggle(toilet.id);
+    if (!toilet.isFavorite) triggerBurst();
   };
 
   const isWithinRange = distanceInMeters <= 150;
-  const distanceText = distanceInMeters < 1000
-    ? `${Math.round(distanceInMeters)}m`
-    : `${(distanceInMeters / 1000).toFixed(1)}km`;
+  const distanceText = distanceInMeters < 1000 ? `${Math.round(distanceInMeters)}m` : `${(distanceInMeters / 1000).toFixed(1)}km`;
 
   const formatTimeAgo = (dateString: string) => {
     const now = new Date();
     const date = new Date(dateString);
     const diffMs = now.getTime() - date.getTime();
     const diffHours = Math.floor(diffMs / 3600000);
-    const diffDays = Math.floor(diffMs / 86400000);
-
     if (diffHours < 1) return '방금 전';
     if (diffHours < 24) return `${diffHours}시간 전`;
-    if (diffDays < 7) return `${diffDays}일 전`;
     return date.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' });
   };
 
@@ -138,251 +115,106 @@ export function ToiletPopup({
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: 8, scale: 0.97 }}
           transition={{ type: 'spring', stiffness: 300, damping: 28 }}
-          className="relative z-50 w-[calc(100vw-32px)] max-w-96"
-          style={{
-            background: '#fff',
-            borderRadius: '20px',
-            boxShadow: '0 12px 60px rgba(27,67,50,0.25), 0 4px 12px rgba(0,0,0,0.1)',
-            border: '1px solid #d4e8db',
-            maxHeight: '85vh',
-            overflowY: 'auto',
-          }}
+          className="relative z-50 w-[calc(100vw-32px)] max-w-96 bg-white rounded-[20px] shadow-2xl border border-[#d4e8db] flex flex-col"
+          style={{ maxHeight: '85vh' }}
         >
-          {/* ── 헤더 ── */}
-          <div className="flex items-start justify-between p-5" style={{ borderBottom: '1px solid #eef5f0' }}>
+          <div className="flex items-start justify-between p-5 border-b border-[#eef5f0]">
             <div className="flex-1 pr-2">
               <div className="flex items-center gap-2 mb-2">
-                {toilet.isVisited ? (
-                  <CheckCircle2 size={18} style={{ color: '#2D6A4F' }} />
-                ) : (
-                  <CheckCircle2 size={18} className="opacity-30" style={{ color: '#7a9e8a' }} />
-                )}
-                {toilet.isOpen24h && <span className="text-xs font-bold px-2 py-1 rounded-full" style={{ background: '#e8f3ec', color: '#2D6A4F' }}>24H</span>}
-                {toilet.visitCount && toilet.visitCount > 0 && (
-                  <div className="flex items-center gap-1 bg-purple-50 text-purple-700 px-2 py-1 rounded-full text-xs font-bold">
-                    <MapPin size={12} />
-                    <span>{toilet.visitCount}회 방문</span>
-                  </div>
-                )}
+                {toilet.isVisited ? <CheckCircle2 size={18} style={{ color: '#2D6A4F' }} /> : <CheckCircle2 size={18} className="opacity-30" style={{ color: '#7a9e8a' }} />}
+                {toilet.isOpen24h && <span className="text-xs font-bold px-2 py-1 rounded-full bg-[#e8f3ec] text-[#2D6A4F]">24H</span>}
               </div>
-              <h3 className="font-black text-lg leading-tight" style={{ color: '#1a2b22' }}>{toilet.name}</h3>
-              <p className="text-sm mt-1 leading-relaxed" style={{ color: '#7a9e8a' }}>{toilet.roadAddress}</p>
+              <h3 className="font-black text-lg leading-tight text-[#1a2b22]">{toilet.name}</h3>
+              <p className="text-sm mt-1 text-[#7a9e8a] leading-relaxed">{toilet.roadAddress}</p>
               {toilet.rating && (
                 <div className="mt-2 flex items-center gap-2">
                   <StarRating rating={toilet.rating} />
-                  <span className="text-sm" style={{ color: '#7a9e8a' }}>({toilet.reviewCount}개)</span>
+                  <span className="text-sm text-[#7a9e8a]">({toilet.reviewCount}개)</span>
                 </div>
               )}
             </div>
             <div className="flex items-center gap-2 flex-shrink-0">
-              <m.button
-                onClick={() => onFavoriteToggle(toilet.id)}
-                whileHover={{ scale: 1.15, rotate: toilet.isFavorite ? -5 : 5, boxShadow: '0 4px 12px rgba(232, 168, 56, 0.25)' }}
-                whileTap={{ scale: 0.85 }}
-                className="w-11 h-11 rounded-full flex items-center justify-center transition-colors"
-                style={{
-                  background: toilet.isFavorite ? '#fdf3de' : '#f4faf6',
-                  border: toilet.isFavorite ? '2px solid #E8A838' : '2px solid #d4e8db',
-                  color: toilet.isFavorite ? '#E8A838' : '#95a99e',
-                }}
-              >
-                <Star 
-                  size={22} 
-                  fill={toilet.isFavorite ? '#E8A838' : 'none'} 
-                  stroke={toilet.isFavorite ? '#E8A838' : 'currentColor'}
-                  style={{ transform: 'translateY(-0.5px)' }}
-                />
-              </m.button>
-              <m.button 
-                onClick={onClose} 
-                whileHover={{ scale: 1.1, rotate: 90 }}
-                whileTap={{ scale: 0.9 }}
-                className="w-11 h-11 rounded-full flex items-center justify-center transition-colors" 
-                style={{ background: '#f4faf6', color: '#7a9e8a' }}
-              >
-                <X size={20} />
-              </m.button>
+              <div className="relative">
+                <AnimatePresence mode="popLayout">
+                  {particles.map(p => (
+                    <m.div 
+                      key={p.id} 
+                      initial={{ x: 0, y: 0, opacity: 0, scale: 0 }} 
+                      animate={{ 
+                        x: [0, p.x * 0.8, p.x], // 약간 꺾이는 궤적
+                        y: [0, p.y, p.y + 20],   // 솟구쳤다가 살짝 떨어짐 (중력)
+                        opacity: [0, 1, 1, 0],   // 생성-유지-소멸
+                        scale: [0, p.scale, p.scale * 0.7, 0], 
+                        rotate: p.rotate 
+                      }} 
+                      transition={{ 
+                        duration: p.duration, 
+                        delay: p.delay,
+                        times: [0, 0.4, 0.8, 1],
+                        ease: [0.23, 1, 0.32, 1] // 부드러운 가속도 곡선
+                      }} 
+                      className="absolute z-[100] pointer-events-none text-2xl" 
+                      style={{ left: '50%', top: '50%', marginLeft: '-12px', marginTop: '-12px' }}
+                    >
+                      ⭐
+                    </m.div>
+                  ))}
+                </AnimatePresence>
+                <m.button
+                  onClick={handleFavoriteClick}
+                  whileHover={{ scale: 1.15, rotate: toilet.isFavorite ? -5 : 5, boxShadow: '0 4px 12px rgba(232, 168, 56, 0.25)' }}
+                  whileTap={{ scale: 0.85 }}
+                  className={`relative w-11 h-11 rounded-full flex items-center justify-center border-2 transition-all ${toilet.isFavorite ? 'bg-[#fdf3de] border-[#E8A838] text-[#E8A838]' : 'bg-[#f4faf6] border-[#d4e8db] text-[#95a99e]'}`}
+                >
+                  <Star size={22} fill={toilet.isFavorite ? '#E8A838' : 'none'} stroke={toilet.isFavorite ? '#E8A838' : 'currentColor'} />
+                </m.button>
+              </div>
+              <m.button onClick={onClose} whileHover={{ scale: 1.1, rotate: 90 }} whileTap={{ scale: 0.9 }} className="w-11 h-11 rounded-full flex items-center justify-center bg-[#f4faf6] text-[#7a9e8a] border border-[#d4e8db]"><X size={20} /></m.button>
             </div>
           </div>
 
-          {/* ── 정보 ── */}
-          <div className="px-5 py-4 flex flex-col gap-3" style={{ borderBottom: '1px solid #eef5f0' }}>
-            <div className="flex items-center gap-2 text-sm" style={{ color: isWithinRange ? '#2D6A4F' : '#E85D5D' }}>
+          <div className="flex-1 overflow-y-auto custom-scrollbar rounded-b-[20px]">
+            <div className="px-5 py-4 flex flex-col gap-3 border-b border-[#eef5f0]">
+            <div className="flex items-center gap-2 text-sm font-bold" style={{ color: isWithinRange ? '#2D6A4F' : '#E85D5D' }}>
               {isWithinRange ? <MapPin size={16} /> : <Target size={16} />}
-              <span className="font-bold">
-                현위치에서 {distanceText} {isWithinRange ? '✓' : '(인증 범위: 150m 이내)'}
-              </span>
+              <span>현위치에서 {distanceText} {isWithinRange ? '✓' : '(인증 범위: 150m 이내)'}</span>
             </div>
-            {toilet.openTime && (
-              <div className="flex items-center gap-2 text-sm" style={{ color: '#5a7a6a' }}>
-                <Clock size={16} style={{ color: '#2D6A4F' }} />
-                <span>평일 {toilet.openTime}</span>
-              </div>
-            )}
-            <div className="flex items-center gap-2 text-sm" style={{ color: '#5a7a6a' }}>
+            <div className="flex items-center gap-2 text-sm text-[#5a7a6a]">
               <Users size={16} style={{ color: '#2D6A4F' }} />
               <span>{toilet.isMixedGender ? '남녀공용' : '남녀 구분'}</span>
             </div>
           </div>
 
-          {/* ── 최근 후기 ── */}
-          <div className="px-5 py-4" style={{ borderBottom: '1px solid #eef5f0' }}>
-            <div className="flex items-center justify-between mb-3">
-              <p className="text-sm font-bold" style={{ color: '#1a2b22' }}>최근 후기</p>
-              {reviewSummary && reviewSummary.reviewCount > 0 && (
-                <m.button
-                  onClick={() => setShowReviewListModal(true)}
-                  whileHover={{ scale: 1.05, backgroundColor: '#dcfce7' }}
-                  whileTap={{ scale: 0.95 }}
-                  className="text-xs font-bold px-3.5 py-1.5 rounded-full"
-                  style={{ background: '#e8f3ec', color: '#2D6A4F' }}
-                >
-                  전체 {reviewSummary.reviewCount}개 보기
-                </m.button>
-              )}
-            </div>
-
-            {loadingReviews ? (
-              <div className="flex items-center justify-center py-6">
-                <Loader2 className="animate-spin" size={20} style={{ color: '#7a9e8a' }} />
-              </div>
-            ) : reviewSummary && reviewSummary.reviewCount > 0 ? (
-              <>
-                {/* AI 요약 */}
-                {reviewSummary.aiSummary && (
-                  <div className="mb-3 px-3 py-2 rounded-xl flex items-center gap-2" style={{ background: '#f4faf6' }}>
-                    <Sparkles size={13} style={{ color: '#2D6A4F', flexShrink: 0 }} />
-                    <p className="text-xs font-bold truncate" style={{ color: '#5a7a6a' }}>
-                      {reviewSummary.aiSummary}
-                    </p>
-                  </div>
-                )}
-
-                {/* 최근 리뷰 3개 */}
-                <div className="space-y-3">
-                  {reviewSummary.recentReviews.slice(0, 2).map((review) => (
-                    <div key={review.id} className="pb-3 border-b last:border-0" style={{ borderColor: '#eef5f0' }}>
-                      <div className="flex items-center justify-between mb-1.5">
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-bold" style={{ color: '#1a2b22' }}>{review.userName}</span>
-                          <div className="flex items-center gap-0.5">
-                            {[1, 2, 3, 4, 5].map((i) => (
-                              <Star
-                                key={i}
-                                size={12}
-                                fill={i <= review.rating ? '#E8A838' : 'none'}
-                                stroke={i <= review.rating ? '#E8A838' : '#d4e8db'}
-                              />
-                            ))}
-                          </div>
-                        </div>
-                        <span className="text-xs" style={{ color: '#95a99e' }}>{formatTimeAgo(review.createdAt)}</span>
+          <div className="px-5 py-4 border-b border-[#eef5f0]">
+            <div className="flex items-center justify-between mb-3"><p className="text-sm font-bold text-[#1a2b22]">최근 후기</p></div>
+            {loadingReviews ? <div className="flex justify-center py-6"><Loader2 className="animate-spin text-[#7a9e8a]" size={20} /></div> : reviewSummary && reviewSummary.reviewCount > 0 ? (
+              <div className="space-y-3">
+                {reviewSummary.recentReviews.slice(0, 2).map((review) => (
+                  <div key={review.id} className="pb-3 border-b last:border-0 border-[#eef5f0]">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold text-[#1a2b22]">{review.userName}</span>
+                        <div className="flex gap-0.5">{[1,2,3,4,5].map(i => <Star key={i} size={10} fill={i <= review.rating ? '#E8A838' : 'none'} stroke={i <= review.rating ? '#E8A838' : '#d4e8db'} />)}</div>
                       </div>
-
-                      {review.emojiTags && review.emojiTags.length > 0 && (
-                        <div className="flex flex-wrap gap-1.5 mb-2">
-                          {review.emojiTags.map((tag) => {
-                            const emojiData = EMOJI_TAG_MAP[tag as keyof typeof EMOJI_TAG_MAP];
-                            const icon = TAG_ICON_MAP[tag];
-                            return emojiData ? (
-                              <span key={tag} className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full" style={{ background: '#f4faf6', color: '#5a7a6a' }}>
-                                {icon} {emojiData.label}
-                              </span>
-                            ) : null;
-                          })}
-                        </div>
-                      )}
-
-                      <p className="text-sm leading-relaxed" style={{ color: '#5a7a6a' }}>{review.comment}</p>
+                      <span className="text-xs text-[#95a99e]">{formatTimeAgo(review.createdAt)}</span>
                     </div>
-                  ))}
-                </div>
-
-                {/* 리뷰 작성 버튼 */}
-                <WaveButtonComponent
-                  onClick={handleOpenReviewModal}
-                  variant="ghost"
-                  size="sm"
-                  className="w-full mt-3 shadow-sm border border-emerald-100"
-                  icon={<MessageCircle size={16} />}
-                >
-                  후기 남기기
-                </WaveButtonComponent>
-              </>
-            ) : (
-              <div className="py-8 text-center flex flex-col items-center justify-center">
-                <p className="text-sm mb-4" style={{ color: '#7a9e8a' }}>아직 후기가 없어요</p>
-                <WaveButtonComponent
-                  onClick={handleOpenReviewModal}
-                  variant="primary"
-                  size="md"
-                  className="mx-auto shadow-md"
-                  icon={<Sparkles size={16} />}
-                >
-                  첫 후기 남기기
-                </WaveButtonComponent>
+                    <p className="text-sm text-[#5a7a6a] leading-relaxed">{review.comment}</p>
+                  </div>
+                ))}
+                <WaveButtonComponent onClick={() => setShowReviewListModal(true)} variant="ghost" size="sm" className="w-full mt-3">전체 {reviewSummary.reviewCount}개 후기 보기</WaveButtonComponent>
               </div>
-            )}
+            ) : <p className="py-6 text-center text-sm text-[#7a9e8a]">아직 후기가 없어요</p>}
           </div>
 
-          {/* ── 길찾기 버튼 ── */}
-          <div className="px-5 py-4 flex gap-3" style={{ borderBottom: '1px solid #eef5f0' }}>
-            <m.button 
-              onClick={openKakaoMap} 
-              whileHover={{ scale: 1.05, rotate: -1 }} 
-              whileTap={{ scale: 0.95 }}
-              className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-xl text-sm font-bold bg-[#FEE500] text-[#1a1a1a] shadow-sm"
-            >
-              <Navigation size={16} /> 카카오
-            </m.button>
-            <m.button 
-              onClick={openNaverMap} 
-              whileHover={{ scale: 1.05, rotate: 1 }} 
-              whileTap={{ scale: 0.95 }}
-              className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-xl text-sm font-bold bg-[#03C75A] text-white shadow-sm"
-            >
-              <Navigation size={16} /> 네이버
-            </m.button>
-          </div>
-
-          {/* ── 방문 인증 ── */}
           <div className="p-5">
-            {!isWithinRange && (
-              <p className="text-sm text-center mb-3 px-4 py-3 rounded-xl leading-relaxed flex items-center justify-center gap-2" style={{ background: '#FFF3E0', color: '#E8A838' }}>
-                <Target size={18} />
-                <span>화장실 근처(150m 이내)로<br />이동하면 인증할 수 있어요!</span>
-              </p>
-            )}
-            <WaveButtonComponent
-              onClick={onVisitRequest}
-              disabled={!isWithinRange}
-              variant="primary"
-              size="lg"
-              className="w-full shadow-lg"
-              icon={<CheckCircle2 size={18} />}
-            >
-              {toilet.isVisited ? '다시 방문 인증하기' : '방문 인증하기'}
-            </WaveButtonComponent>
+            <WaveButtonComponent onClick={onVisitRequest} disabled={!isWithinRange} variant="primary" size="lg" className="w-full shadow-lg" icon={<CheckCircle2 size={18} />}>방문 인증하기</WaveButtonComponent>
+            </div>
           </div>
         </m.div>
       </AnimatePresence>
 
-      {showReviewModal && createPortal(
-        <ReviewModal
-          toilet={toilet}
-          onClose={() => setShowReviewModal(false)}
-          onSuccess={handleReviewSuccess}
-        />,
-        document.body
-      )}
-
-      {showReviewListModal && createPortal(
-        <ReviewListModal
-          toilet={toilet}
-          onClose={() => setShowReviewListModal(false)}
-        />,
-        document.body
-      )}
+      {showReviewModal && createPortal(<ReviewModal toilet={toilet} onClose={() => setShowReviewModal(false)} onSuccess={handleReviewSuccess} />, document.body)}
+      {showReviewListModal && createPortal(<ReviewListModal toilet={toilet} onClose={() => setShowReviewListModal(false)} />, document.body)}
     </>
   );
 }

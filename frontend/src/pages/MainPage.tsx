@@ -12,14 +12,16 @@ import { NovaGlow } from '../components/NovaGlow';
 import { HealthLogModal, HealthLogResult } from '../components/map/HealthLogModal';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../services/apiClient';
-import { HealthRecordRequest } from '../types/api';
-import { AnimatePresence } from 'framer-motion';
+import { CreateRecordRequest } from '../types/api';
+import { motion, AnimatePresence, useReducedMotion, Variants } from "framer-motion";
+import { useTransitionContext } from '../context/TransitionContext';
 
 export function MainPage({ openAuth }: { openAuth: (mode: 'login' | 'signup') => void }) {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [showHealthLog, setShowHealthLog] = useState(false);
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
+  const { transitionTo } = useTransitionContext();
 
   const handleRecordClick = useCallback(() => {
     if (!isAuthenticated) {
@@ -33,7 +35,8 @@ export function MainPage({ openAuth }: { openAuth: (mode: 'login' | 'signup') =>
   const handleHealthLogComplete = async (result: HealthLogResult) => {
     try {
       const pos = { lat: 0, lng: 0 }; // Placeholder for location logic
-      const payload: HealthRecordRequest = {
+      const payload: CreateRecordRequest = {
+        toiletId: 0, // Global report doesn't have a specific toilet
         conditionTags: result.conditionTags,
         dietTags: result.foodTags,
         latitude: pos.lat,

@@ -75,10 +75,9 @@ export function MapSection() {
         setMapLoaded(true);
       };
 
-      navigator.geolocation.getCurrentPosition(
-        (pos) => initMap(pos.coords.latitude, pos.coords.longitude),
-        () => initMap(37.5666, 126.9784)
-      );
+      // We removed the automatic geolocation prompt to avoid double-pops
+      // The map will start at Seoul and update once permission is granted via banner
+      initMap(37.5666, 126.9784);
     });
 
     return () => { mapInstance.current = null; };

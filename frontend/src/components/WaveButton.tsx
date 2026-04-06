@@ -10,6 +10,8 @@ interface WaveButtonProps {
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
   type?: 'button' | 'submit' | 'reset';
   icon?: React.ReactNode;
+  onMouseEnter?: () => void;
+  onMouseLeave?: () => void;
 }
 
 const WaveButton: React.FC<WaveButtonProps> = ({
@@ -20,7 +22,9 @@ const WaveButton: React.FC<WaveButtonProps> = ({
   disabled = false,
   size = 'md',
   type = 'button',
-  icon
+  icon,
+  onMouseEnter,
+  onMouseLeave
 }) => {
   const [isHovered, setIsHovered] = useState(false);
 
@@ -78,8 +82,14 @@ const WaveButton: React.FC<WaveButtonProps> = ({
       type={type}
       disabled={disabled}
       onClick={onClick}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
+      onMouseEnter={() => {
+        setIsHovered(true);
+        onMouseEnter?.();
+      }}
+      onMouseLeave={() => {
+        setIsHovered(false);
+        onMouseLeave?.();
+      }}
       whileTap={{ scale: 0.96 }}
       className={`relative overflow-hidden font-black tracking-tight flex items-center justify-center gap-2 group transition-all duration-300 ${sizeClasses[size]} ${className} ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
       style={{

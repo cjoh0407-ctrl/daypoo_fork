@@ -30,6 +30,7 @@ export function VisitModal({ toilet, onClose, onComplete, checkInTime }: VisitMo
   // 건강 기록 모달 표시 여부
   const [showHealthLog, setShowHealthLog] = useState(false);
   const [showCloseConfirm, setShowCloseConfirm] = useState(false);
+  const [isRecordSubmitted, setIsRecordSubmitted] = useState(false);
   // 인증 완료 시각 (onComplete 호출 시 사용)
   const completedAtRef = useRef<string>('');
 
@@ -151,6 +152,7 @@ export function VisitModal({ toilet, onClose, onComplete, checkInTime }: VisitMo
   const handleHealthLogComplete = async (healthResult: HealthLogResult) => {
     try {
       await onComplete(buildResult(healthResult));
+      setIsRecordSubmitted(true);
     } catch (e: any) {
       if (e.code === 'R007') {
         alert('똥 사진이 아닌 것 같아요!\n변기 안의 변을 다시 촬영해주세요. 💩');
@@ -450,7 +452,13 @@ export function VisitModal({ toilet, onClose, onComplete, checkInTime }: VisitMo
             // initialColor={aiResult?.color as PoopColor ?? null}
             initialBristolType={null}
             initialColor={null}
-            onClose={() => setShowHealthLog(false)}
+            onClose={() => {
+              setShowHealthLog(false);
+              // 기록이 완료된 상태에서 건강기록 모달을 닫으면 방문인증 모달도 함께 닫음
+              if (isRecordSubmitted) {
+                onClose();
+              }
+            }}
             onComplete={handleHealthLogComplete}
           />
         )}

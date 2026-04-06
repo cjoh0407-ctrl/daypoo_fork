@@ -18,10 +18,32 @@ export function TransitionProvider({ children }: { children: ReactNode }) {
   const [targetPath, setTargetPath] = useState('');
 
   const transitionTo = useCallback((path: string) => {
+    // 1. Only '/ranking' uses the special curtain, and ONLY ONCE per session.
+    if (path === '/ranking') {
+      const hasPlayedRanking = sessionStorage.getItem('has_played_ranking');
+      if (hasPlayedRanking) {
+        navigate(path);
+        return;
+      }
+      sessionStorage.setItem('has_played_ranking', 'true');
+    } 
+    // 2. Only Splash ('/') to Main ('/main') uses the curtain.
+    else if (path === '/main') {
+      if (window.location.pathname !== '/') {
+        navigate(path);
+        return;
+      }
+    }
+    // 3. For all other paths (Map, Support, MyPage, etc.), it's immediate.
+    else {
+      navigate(path);
+      return;
+    }
+
     setTargetPath(path);
     setVisible(true);
     setPhase('down'); // 커튼 내려오기 시작
-  }, []);
+  }, [navigate]);
 
   const handleDownComplete = useCallback(() => {
     navigate(targetPath);         // 페이지 이동

@@ -284,7 +284,7 @@ export const MapView = memo(
           }
 
           // 새 마커 생성 (추가 또는 갱신된 경우)
-          const { marker, overlay } = createToiletMarker(window.kakao, toilet, onSelectToilet);
+          const { marker, overlay } = createToiletMarker(window.kakao, toilet);
           if (currentLevel < 5) overlay.setMap(mapRef.current);
           markersRef.current.set(toilet.id, { marker, overlay });
           newMarkers.push(marker);

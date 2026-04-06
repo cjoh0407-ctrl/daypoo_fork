@@ -15,12 +15,14 @@ import {
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { AnimatedUnderlink } from './AnimatedUnderlink';
+import WaveButton from './WaveButton';
 import { useAuth } from '../context/AuthContext';
 import { useNotification } from '../context/NotificationContext';
 import { NotificationPanel } from './NotificationPanel';
 import { HealthLogModal, HealthLogResult } from './map/HealthLogModal';
 import { api } from '../services/apiClient';
 import { HealthRecordRequest } from '../types/api';
+import { useTransitionContext } from '../context/TransitionContext';
 
 const NAV_LINKS = [
   { label: '지도', path: '/map', icon: Map, variant: 0 },
@@ -34,6 +36,7 @@ export function Navbar({ openAuth }: { openAuth: (mode: 'login' | 'signup') => v
   const [hidden, setHidden] = useState(false);
   const { user, logout, isAuthenticated } = useAuth();
   const { unreadCount, fetchNotifications } = useNotification();
+  const { transitionTo } = useTransitionContext();
   const [notifOpen, setNotifOpen] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [showHealthLog, setShowHealthLog] = useState(false);
@@ -91,9 +94,9 @@ export function Navbar({ openAuth }: { openAuth: (mode: 'login' | 'signup') => v
         dietTags: result.foodTags,
         ...(result.bristolType !== null && { bristolScale: result.bristolType }),
         ...(result.color !== null && { color: result.color }),
+        ...(result.imageBase64 && { imageBase64: result.imageBase64 }),
       };
       await api.post('/records', payload);
-      setShowHealthLog(false);
     } catch (e: any) {
       alert(`기록 저장 실패: ${e.message || '서버 오류'}`);
     }
@@ -113,13 +116,18 @@ export function Navbar({ openAuth }: { openAuth: (mode: 'login' | 'signup') => v
           style={{ scale }}
         >
           {/* 로고 */}
-          <Link
-            to="/main"
-            onClick={handleLogoClick}
-            className="font-['SchoolSafetyNotification'] text-[22px] text-white no-underline tracking-[-0.01em] font-bold shrink-0"
+          <button
+            onClick={() => {
+              if (location.pathname === '/main' || location.pathname === '/') {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              } else {
+                navigate('/main');
+              }
+            }}
+            className="font-['SchoolSafetyNotification'] text-[22px] text-white no-underline tracking-[-0.01em] font-bold shrink-0 cursor-pointer"
           >
             Day<span className="text-[#E8A838]">.</span>Poo
-          </Link>
+          </button>
 
           {/* 구분선 - 데스크톱 */}
           <div className="hidden md:block w-px h-4 bg-white/15" />
@@ -149,13 +157,15 @@ export function Navbar({ openAuth }: { openAuth: (mode: 'login' | 'signup') => v
             {isAuthenticated ? (
               <>
                 {/* 글로벌 기록하기 버튼 (로그인 시에만) */}
-                <button
+                <WaveButton
                   onClick={() => setShowHealthLog(true)}
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-bold transition-all hover:opacity-90 active:scale-95 bg-[#E8A838] text-[#1A2B27] shrink-0"
+                  variant="accent"
+                  size="sm"
+                  icon={<Plus size={14} />}
+                  className="shadow-lg shadow-amber-500/20 whitespace-nowrap"
                 >
-                  <Plus size={14} />
                   기록하기
-                </button>
+                </WaveButton>
 
                 <Link
                   to="/mypage"
@@ -263,26 +273,34 @@ export function Navbar({ openAuth }: { openAuth: (mode: 'login' | 'signup') => v
 
               {/* 네비 링크 */}
               <div className="flex-1 overflow-y-auto px-4 py-6 space-y-1">
-                <Link
-                  to="/main"
-                  onClick={() => setDrawerOpen(false)}
-                  className={`flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all ${isActivePath('/main')
+                <button
+                  onClick={() => {
+                    setDrawerOpen(false);
+                    navigate('/main');
+                  }}
+                  className={`flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all w-full text-left ${isActivePath('/main')
                       ? 'bg-white/10 text-white'
                       : 'text-white/60 hover:bg-white/5 hover:text-white/80'
                     }`}
                 >
                   <Home size={20} />
                   <span className="text-[15px] font-bold">홈</span>
-                </Link>
+                </button>
 
                 {NAV_LINKS.map((link) => {
                   const Icon = link.icon;
                   return (
-                    <Link
+                    <button
                       key={link.path}
-                      to={link.path}
-                      onClick={() => setDrawerOpen(false)}
-                      className={`flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all ${isActivePath(link.path)
+                      onClick={() => {
+                        setDrawerOpen(false);
+                        if (link.path === '/ranking') {
+                          transitionTo(link.path);
+                        } else {
+                          navigate(link.path);
+                        }
+                      }}
+                      className={`flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all w-full text-left ${isActivePath(link.path)
                           ? 'bg-white/10 text-white'
                           : 'text-white/60 hover:bg-white/5 hover:text-white/80'
                         }`}
@@ -292,15 +310,17 @@ export function Navbar({ openAuth }: { openAuth: (mode: 'login' | 'signup') => v
                       {isActivePath(link.path) && (
                         <div className="ml-auto w-1.5 h-1.5 rounded-full bg-[#E8A838]" />
                       )}
-                    </Link>
+                    </button>
                   );
                 })}
 
                 {isAuthenticated && (
-                  <Link
-                    to="/mypage"
-                    onClick={() => setDrawerOpen(false)}
-                    className={`flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all ${isActivePath('/mypage')
+                  <button
+                    onClick={() => {
+                      setDrawerOpen(false);
+                      navigate('/mypage');
+                    }}
+                    className={`flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all w-full text-left ${isActivePath('/mypage')
                         ? 'bg-white/10 text-white'
                         : 'text-white/60 hover:bg-white/5 hover:text-white/80'
                       }`}
@@ -310,7 +330,7 @@ export function Navbar({ openAuth }: { openAuth: (mode: 'login' | 'signup') => v
                     {isActivePath('/mypage') && (
                       <div className="ml-auto w-1.5 h-1.5 rounded-full bg-[#E8A838]" />
                     )}
-                  </Link>
+                  </button>
                 )}
 
                 {/* 글로벌 기록하기 버튼 — 로그인 시에만 표시 */}
@@ -327,17 +347,19 @@ export function Navbar({ openAuth }: { openAuth: (mode: 'login' | 'signup') => v
                   </button>
                 )}
 
-                <Link
-                  to="/premium"
-                  onClick={() => setDrawerOpen(false)}
-                  className={`flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all ${isActivePath('/premium')
+                <button
+                  onClick={() => {
+                    setDrawerOpen(false);
+                    navigate('/premium');
+                  }}
+                  className={`flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all w-full text-left ${isActivePath('/premium')
                       ? 'bg-white/10 text-white'
                       : 'text-white/60 hover:bg-white/5 hover:text-white/80'
                     }`}
                 >
                   <Crown size={20} />
                   <span className="text-[15px] font-bold">프리미엄</span>
-                </Link>
+                </button>
               </div>
 
               {/* 하단 인증 영역 */}

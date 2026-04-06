@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../services/apiClient';
+import { LoadingPage } from './LoadingPage';
 
 export const AuthCallback = () => {
   const [searchParams] = useSearchParams();
@@ -69,12 +70,5 @@ export const AuthCallback = () => {
     }
   }, [searchParams, navigate, login]);
 
-  return (
-    <div className="flex min-h-screen items-center justify-center bg-[#152e22] text-white">
-      <div className="text-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
-        <p className="text-lg">로그인 중입니다. 잠시만 기다려주세요...</p>
-      </div>
-    </div>
-  );
+  return <LoadingPage />;
 };

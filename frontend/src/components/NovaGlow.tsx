@@ -62,7 +62,7 @@ const FRAGMENT_SHADER = `
     vec4 m = max(0.6 - vec4(dot(x0,x0), dot(x1,x1), dot(x2,x2), dot(x3,x3)), 0.0);
     m = m * m;
     return 42.0 * dot( m*m, vec4( dot(p0,x0), dot(p1,x1), 
-                                  dot(p2,x2), dot(p3,x3) ) );
+                                   dot(p2,x2), dot(p3,x3) ) );
   }
 
   void main() {
@@ -92,7 +92,14 @@ const FRAGMENT_SHADER = `
   }
 `;
 
-export function NovaGlow() {
+interface NovaGlowProps {
+  color?: string;
+  size?: string;
+  className?: string;
+  style?: React.CSSProperties;
+}
+
+export function NovaGlow({ color, size, className, style }: NovaGlowProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const mouseRef = useRef({ x: 0.5, y: 0.5, hover: 0 });
 
@@ -199,7 +206,9 @@ export function NovaGlow() {
         zIndex: 0,
         pointerEvents: "none",
         opacity: 0.5,
+        ...style
       }}
+      className={className}
     />
   );
 }

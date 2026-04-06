@@ -83,10 +83,10 @@ function GlassPillarCard({
     >
       {/* 카드 본체 (Glassmorphism) */}
       <div className="relative w-full rounded-[48px] overflow-hidden p-8 md:p-10 flex flex-col items-center text-center transition-all duration-700"
-        style={{
-          background: 'rgba(255, 255, 255, 0.6)',
-          backdropFilter: 'blur(24px)',
-          WebkitBackdropFilter: 'blur(24px)',
+        style={{ 
+        background: 'rgba(255, 255, 255, 0.7)',
+        backdropFilter: 'blur(12px)',
+        WebkitBackdropFilter: 'blur(12px)',
           border: '1.5px solid rgba(255, 255, 255, 0.3)',
           boxShadow: isCenter 
             ? '0 30px 60px rgba(0,0,0,0.06), inset 0 0 20px rgba(255,255,255,0.2)' 
@@ -109,7 +109,7 @@ function GlassPillarCard({
             boxShadow: '0 8px 24px rgba(0,0,0,0.08)',
             border: `1px solid ${stat.color}20`
           }}>
-          <div className="absolute inset-0 rounded-full animate-ping opacity-5 bg-[#1B4332]" />
+          <div className="absolute inset-0 rounded-full opacity-10 bg-[#1B4332]" />
           <div style={{ color: stat.color }}>{stat.icon}</div>
         </div>
 
@@ -154,25 +154,13 @@ export function BlobStatsSection() {
     <section ref={ref} className="relative pt-12 pb-24 px-12 overflow-hidden">
       {/* 백그라운드 메쉬 그라데이션 */}
       <div className="absolute inset-0 pointer-events-none" style={{ zIndex: 0 }}>
-        <motion.div
-          animate={{ 
-            scale: [1, 1.2, 1],
-            x: [0, 50, 0],
-            y: [0, -30, 0]
-          }}
-          transition={{ duration: 15, repeat: Infinity, ease: 'easeInOut' }}
-          className="absolute top-1/4 left-1/4 w-[600px] h-[600px] rounded-full"
-          style={{ background: 'radial-gradient(circle, rgba(82,183,136,0.1) 0%, transparent 70%)', filter: 'blur(80px)' }}
+        <div
+          className="absolute top-1/4 left-1/4 w-[400px] h-[400px] sm:w-[600px] sm:h-[600px] rounded-full"
+          style={{ background: 'radial-gradient(circle, rgba(82,183,136,0.08) 0%, transparent 70%)', filter: 'blur(40px)' }}
         />
-        <motion.div
-          animate={{ 
-            scale: [1.2, 1, 1.2],
-            x: [0, -50, 0],
-            y: [0, 30, 0]
-          }}
-          transition={{ duration: 18, repeat: Infinity, ease: 'easeInOut' }}
-          className="absolute bottom-1/4 right-1/4 w-[500px] h-[500px] rounded-full"
-          style={{ background: 'radial-gradient(circle, rgba(232,168,56,0.08) 0%, transparent 70%)', filter: 'blur(80px)' }}
+        <div
+          className="absolute bottom-1/4 right-1/4 w-[300px] h-[300px] sm:w-[500px] sm:h-[500px] rounded-full"
+          style={{ background: 'radial-gradient(circle, rgba(232,168,56,0.06) 0%, transparent 70%)', filter: 'blur(40px)' }}
         />
       </div>
 

@@ -8,7 +8,7 @@ interface HeroProps {
   openAuth: (mode: 'login' | 'signup') => void;
 }
 
-export function HeroOption1({ onCtaClick }: HeroProps) {
+export function HeroOption1({ onCtaClick, openAuth }: HeroProps) {
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
 
